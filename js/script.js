@@ -374,7 +374,7 @@ $('document').ready(function(){
 		sin = b/R; cos = a/R;
 		svx = -(sin/V)*body.earth.m*10*t*t;
 		svy = (cos/V)*body.earth.m*10*t*t;
-		return [svx, svy];
+		return [svx/t, svy/t];
 	}
 
 	function obj_sp(point_x,point_y,ob_col){
