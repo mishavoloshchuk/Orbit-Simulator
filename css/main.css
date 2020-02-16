@@ -1,0 +1,225 @@
+body {
+	margin: 0;
+	padding: 0;
+	background-color: black;
+	text-align: center;
+	color: #fff;
+	font-family: calibri, arial;
+	overflow: hidden;
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	text-shadow: 2px 2px 2px black, -1px -1px 2px black;
+}
+
+html {
+	overflow: hidden;
+	width: 100%;
+	height: 100%;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+.checkbox {
+	width: 20px;
+	height: 20px;
+}
+
+.radius_select {
+	width: 100px;
+}
+
+#canvas {
+	display: block;
+	z-index: -1;
+}
+
+.menu {
+	top: 0;
+	padding: 1px;
+	min-width: 50px;
+	background-color: #fff2;
+	border: 1px solid #fff1;
+	display: inline-block;
+	z-index: 2;
+	color: white;
+	position: absolute;
+	display: flex;
+	-moz-user-select: none; /* Mozilla Firefox */
+	-ms-user-select: none; /* Internet Explorer (не поддерживается) */
+	-o-user-select: none; /* Opera Presto (не поддерживается) */
+	-webkit-user-select: none; /* Google Chrome, Opera Next, Safari */
+}
+
+.btn {
+	height: 50px;
+	width: 50px;
+	margin: 0 2px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 2px;
+}
+
+.btn img{
+	max-width: 40px;
+	max-height: 40px;
+}
+
+.btn:hover {
+	background-color: #fff2;
+	cursor: pointer;
+}
+
+.btn:active {
+	transition: 0s;
+	background-color: #fff8;
+}
+
+.time_speed {
+	display: inline-block;
+	position: absolute;
+	right: 10px;
+	top: 10px;
+}
+
+.time_speed h2{
+	color: #fffa;
+	margin: 0;
+	font-family: arial;
+}
+
+.object_count {
+	display: inline-block;
+	position: absolute;
+	left: 10px;
+	bottom: 10px;
+}
+
+.object_count h2{
+	color: #fffa;
+	margin: 0;
+	font-family: arial;
+}
+
+.menu_options {
+	position: absolute;
+	background-color: #fff2;
+	border: 2px solid #fff1;
+	display: block;
+	top: 54px;
+	left: 0;
+	min-height: 100px;
+	transition: 0.1s;
+	padding: 0 5px;
+	transition: 0.5s;
+	z-index: 2;
+}
+
+.option_item {
+	padding: 10px;
+	border-bottom: 1px solid #fff5;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.help_option_item {
+	border-bottom: 1px solid #fff5;
+	padding: 10px;
+	padding-left: 25px;
+	text-align: left;
+
+}
+
+
+.help_option_item div {
+	padding: 10px 0;
+	border-bottom: 2px solid #fff3;
+}
+
+.menu_close:hover {
+	background-color: #fff2;
+	cursor: pointer;
+}
+
+.del_menu_options {
+	position: absolute;
+	background-color: #fff2;
+	border: 2px solid #fff1;
+	display: none;
+	top: 54px;
+	left: 0;
+	min-height: 100px;
+	transition: 0.1s;
+	padding: 0 5px;
+	transition: 0.5s;
+}
+
+.state {
+	display: inline-block;
+	position: absolute;
+	right: 10px;
+	top: 50px;
+	right: : 10px;
+	opacity: 0.5;
+	width: 100px;
+	height: 100px;
+}
+
+.state img{
+	max-height: 100%;
+}
+
+.deleted {
+	display: inline-block;
+	position: absolute;
+	right: -150px;
+	top: 200px;
+}
+
+.help_menu {
+	position: absolute;
+	background-color: #fff2;
+	border: 2px solid #fff1;
+	display: none;
+	top: 54px;
+	left: 0;
+	min-height: 100px;
+	transition: 0.1s;
+	padding: 0 5px;
+	transition: 0.5s;
+	z-index: 2;
+	max-height: 80%;
+	overflow: auto;
+}
+
+.power {
+	-moz-user-select: none; /* Mozilla Firefox */
+	-ms-user-select: none; /* Internet Explorer (не поддерживается) */
+	-o-user-select: none; /* Opera Presto (не поддерживается) */
+	-webkit-user-select: none; /* Google Chrome, Opera Next, Safari */
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: none;
+	font-size: 20px;
+	font-style: bold;
+}
+
+.power_need {
+	-moz-user-select: none; /* Mozilla Firefox */
+	-ms-user-select: none; /* Internet Explorer (не поддерживается) */
+	-o-user-select: none; /* Opera Presto (не поддерживается) */
+	-webkit-user-select: none; /* Google Chrome, Opera Next, Safari */
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 10px;
+	display: none;
+	font-size: 20px;
+	font-style: bold;
+	color: silver;
+}

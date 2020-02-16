@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Orbit Simulator</title>
+	<link rel="stylesheet" type="text/css" href="/css/main.css">
+	<link rel="shortcut icon" href="/ico/favicon.png" type="image/icon">
+	<script type="text/javascript" src="/lib/jquery.js"></script>
+	<script type="text/javascript" src="/js/script.js"></script>
+</head>
+<body>
+	<canvas id="canvas">No browser support!</canvas>
+	<div class="menu">
+		<div class="btn" id='create'>
+			<img src="/ico/create.png" alt="create" title="Создать обьект">
+		</div>
+
+		<div class="btn" id='delete'>
+			<img src="/ico/delete.png" alt="delete" title="Удалить обьект">
+		</div>
+
+		<div class="btn" id='timedown'>
+			<img src="/ico/speeddown.png" alt="Time speed down" title="Замедлить">
+		</div>
+
+		<div class="btn" id='pause'>
+			<img src="/ico/pause.png" alt="pause" title="Пауза">
+		</div>
+
+		<div class="btn" id='play'>
+			<img src="/ico/play.png" alt="Time defoult" title="Обычная скорость">
+		</div>
+
+		<div class="btn" id='timeup'>
+			<img src="/ico/speedup.png" alt="Time speed down" title="Ускорить">
+		</div>
+
+		<div class="btn" id='move'>
+			<img src="/ico/move.png" alt="Move" title="Переместить">
+		</div>
+
+		<div class="btn" id='clear'>
+			<img src="/ico/clear.png" alt="Clear" title="Очистить">
+		</div>
+
+		<div class="btn" id='trajectory'>
+			<img src="/ico/trajectory.png" alt="Trajectory" title="Траектории">
+		</div>
+
+		<div class="btn" id='refresh'>
+			<img src="/ico/refresh.png" alt="Refresh" title="Перезапустить">
+		</div>
+
+		<div class="btn" id='music'>
+			<img src="/ico/music.png" alt="Music" title="Музыка">
+		</div>
+
+		<div class="btn" id='help'>
+			<img src="/ico/help.png" alt="Help" title="Помощь">
+		</div>
+	</div>
+	<div class="time_speed">
+		<h2></h2>
+	</div>
+	<div class="object_count">
+		<h2>Количество обьектов: 1</h2>
+	</div>
+	<!--Create menu-->
+	<div class="menu_options" id="menu_options">
+		<div class='option_item'>
+			<span>Параметры нового обьекта:</span>
+		</div>
+
+		<div class='option_item'>
+			<span>Цвет: </span>
+			<input type="color" class='col_select' onchange="obj_color = this.value; sessionStorage['obj_color'] = this.value;" style="padding: 0; border: none; width: 76px; height: 30px;" onmouseout="this.blur();">			
+		</div>
+
+		<div class='option_item'>
+			<span>Случайный цвет: </span>
+			<input type="checkbox" class='rand_col_select checkbox' onchange="obj_rand_color = this.checked; sessionStorage['obj_rand_color'] = this.checked;" onmouseout="this.blur();">			
+		</div>
+
+		<div class='option_item'>
+			<span>Масса: </span>
+			<input type="number" class='radius_select' min='1' onchange="obj_radius = +this.value; sessionStorage['obj_radius'] = +this.value;">	
+		</div>
+
+		<div class='option_item'>
+			<span>По часовой: </span>
+			<input type="checkbox" class="direction_reverse_select checkbox" onchange="obj_reverse = this.checked; sessionStorage['obj_reverse'] = this.checked;">		
+		</div>
+
+		<div class='option_item'>
+			<span>Клик - круговая орбита: </span>
+			<input type="checkbox" class="orbit_select checkbox" onchange="obj_cirle_orbit = this.checked; sessionStorage['obj_cirle_orbit'] = this.checked;" onmouseout="this.blur();">		
+		</div>
+
+		<div class='option_item menu_close e0' style="border-bottom: none;">
+			<div>Закрыть</div>
+		</div>
+
+	</div>
+	<!--Delete menu-->
+	<div class="del_menu_options" id="del_menu_options">
+		<div class='option_item'>
+			<span>Параметры удаления обьекта:</span>
+		</div>
+		<div class='option_item'>
+			<form onchange="switcher.del_radio = +this.del_method.value;">
+				<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px">
+					<span>Удалить ближайший к курсору обьект: </span>
+					<input type="radio" name="del_method" value=0 checked="">					
+				</div>
+				<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px">
+					<span>Удалить дальний от курсора обьект: </span>
+					<input type="radio" name="del_method" value=1>
+				</div>
+				<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px">
+					<span>Удалить последний добавленный обьект: </span>
+					<input type="radio" name="del_method" value=2>
+				</div>
+			</form>		
+			
+		</div>
+
+		<div class='option_item menu_close e1' style="border-bottom: none;">
+			<div>Закрыть</div>
+		</div>
+
+	</div>
+	<!--Help menu-->
+	<div class="help_menu" id="help_menu">
+		<div class='option_item'>
+			<span>Горячие клавиши:</span>
+		</div>
+		<div class='help_option_item'>
+			<div><span>• С - Перейти в меню создания обьектов.</span><br></div>
+			<div><span>• D - Перейти в меню удаления обьектов.</span><br></div>
+			<div><span>• Space (Пробел) - Создать новый обьект с круговой орбитой на позиции курсора.</span><br></div>
+			<div><span>• ">" - Ускорить время.</span><br></div>
+			<div><span>• "<" - Замедлить время.</span><br></div>
+			<div><span>• P - Пауза.</span><br></div>
+			<div><span>• "/" - Запустить, восстановить нормальное течение времени.</span><br></div>
+			<div><span>• M - Переместить главный обьект.</span><br></div>
+			<div><span>• Клик - Создать обьект.</span><br></div>
+
+			<div><span>• H - Меню помощи.</span><br></div>
+
+
+		</div>
+
+		<div class='option_item menu_close e0' style="border-bottom: none;">
+			<div>Закрыть</div>
+		</div>
+
+	</div>
+
+	<div class="state">
+	</div>
+
+	<div class="deleted">
+		<h1 style="color: #dd0;">Удален!</h1>
+	</div>
+
+	<div class="power">
+		140
+	</div>
+
+	<div class="power_need">
+		140
+	</div>
+</body>
+</html>
