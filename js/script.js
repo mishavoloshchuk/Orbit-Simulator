@@ -57,7 +57,7 @@ $('document').ready(function(){
 
 	change_state(mbut);
 
-	speed = 1.6;
+	speed = 16;
 	let simulation_refresh = setInterval(frame, speed);
 
 	G = 0.05;
