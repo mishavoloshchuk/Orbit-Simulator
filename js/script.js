@@ -1,4 +1,5 @@
 $('document').ready(function(){
+	alert('test');
 	var canv = document.getElementById('canvas');
 	var ctx = canv.getContext('2d');
 	canv.width = window.innerWidth;
@@ -43,7 +44,7 @@ $('document').ready(function(){
 	//======
 	obj_color = sessionStorage['obj_color'] ? sessionStorage['obj_color'] : '#FFFFFF';
 	obj_rand_color = sessionStorage['obj_rand_color'] ? (sessionStorage['obj_rand_color'] == 'true' ? true : false) : false;
-	obj_radius = sessionStorage['obj_radius'] ? +sessionStorage['obj_radius'] : 20;
+	obj_radius = sessionStorage['obj_radius'] ? +sessionStorage['obj_radius'] : Math.round(getRandomArbitrary(0.1, 10)*10)/10;
 	obj_reverse = sessionStorage['obj_reverse'] ? (sessionStorage['obj_reverse'] == 'true' ? true : false) : false;
 	obj_cirle_orbit = sessionStorage['obj_cirle_orbit'] ? (sessionStorage['obj_cirle_orbit'] == 'true' ? true : false) : true;
 
@@ -187,46 +188,7 @@ $('document').ready(function(){
 		mouse_coords[0] = event.clientX;
 		mouse_coords[1] = event.clientY;
 
-		if (mousedown && mbut == 'create'){
-			//clear('#000');
-			if (switcher.trajectory_ref && !(Math.abs(mouse[0]-mouse_coords[0]) <= 5 && Math.abs(mouse[1]-mouse_coords[1]) <= 5)){
-				clear('#000000');
-				$('.power').css({left: mouse_coords[0]-10, top: mouse_coords[1]-30, display: 'block', color: obj_color});
-				$('.power').html(Math.round(rad(mouse[0], mouse[1], mouse_coords[0], mouse_coords[1])));
-				if (!switcher.f_need_speed){
-					$('.power_need').css({display: 'block'});
-					switcher.f_need_speed = true;
-					console.log(123);
-				};
-			}
 
-			for (let i in body){
-				ctx.beginPath();
-				if (!body[i].color){body[i].color = 'gray';}
-				ctx.fillStyle = body[i].color;
-				ctx.arc(body[i].x, body[i].y, Math.sqrt(body[i].m), 0, 7);
-				ctx.fill();
-			}
-
-			ctx.strokeStyle = obj_color;
-			ctx.lineWidth = Math.sqrt(obj_radius)*2;
-			ctx.beginPath();
-			ctx.moveTo(mouse[0], mouse[1]);
-			ctx.lineTo(mouse_coords[0], mouse_coords[1]);
-			ctx.stroke();
-
-			ctx.strokeStyle = '#000a';
-			ctx.lineWidth = Math.sqrt(obj_radius)*2;
-			ctx.beginPath();
-			ctx.moveTo(mouse[0], mouse[1]);
-			ctx.lineTo(mouse_coords[0], mouse_coords[1]);
-			ctx.stroke();
-
-			ctx.beginPath();
-			ctx.fillStyle = obj_color;
-			ctx.arc(mpos[0], mpos[1], Math.sqrt(obj_radius), 0, 7);
-			ctx.fill();
-		}
 	};
 
 	function rad(x1, y1, x2, y2){
@@ -297,6 +259,7 @@ $('document').ready(function(){
 	}
 
 	function refresh(object){
+		visual_trajectory();
 		obj = body_prev[object];
 		for (let i in body){
 			if (i == object){continue;};
@@ -368,6 +331,49 @@ $('document').ready(function(){
 		//arr = Object.keys(body);
 		ctx.beginPath();
 	};
+
+	function visual_trajectory(){
+		if (mousedown && mbut == 'create'){
+			//clear('#000');
+			if (switcher.trajectory_ref && !(Math.abs(mouse[0]-mouse_coords[0]) <= 5 && Math.abs(mouse[1]-mouse_coords[1]) <= 5)){
+				clear('#000000');
+				$('.power').css({left: mouse_coords[0]-10, top: mouse_coords[1]-30, display: 'block', color: obj_color});
+				$('.power').html(Math.round(rad(mouse[0], mouse[1], mouse_coords[0], mouse_coords[1])));
+				if (!switcher.f_need_speed){
+					$('.power_need').css({display: 'block'});
+					switcher.f_need_speed = true;
+					console.log(123);
+				};
+			}
+
+			for (let i in body){
+				ctx.beginPath();
+				if (!body[i].color){body[i].color = 'gray';}
+				ctx.fillStyle = body[i].color;
+				ctx.arc(body[i].x, body[i].y, Math.sqrt(body[i].m), 0, 7);
+				ctx.fill();
+			}
+
+			ctx.strokeStyle = obj_color;
+			ctx.lineWidth = Math.sqrt(obj_radius)*2;
+			ctx.beginPath();
+			ctx.moveTo(mouse[0], mouse[1]);
+			ctx.lineTo(mouse_coords[0], mouse_coords[1]);
+			ctx.stroke();
+
+			ctx.strokeStyle = '#000a';
+			ctx.lineWidth = Math.sqrt(obj_radius)*2;
+			ctx.beginPath();
+			ctx.moveTo(mouse[0], mouse[1]);
+			ctx.lineTo(mouse_coords[0], mouse_coords[1]);
+			ctx.stroke();
+
+			ctx.beginPath();
+			ctx.fillStyle = obj_color;
+			ctx.arc(mpos[0], mpos[1], Math.sqrt(obj_radius), 0, 7);
+			ctx.fill();
+		}
+	}
 
 	function f_orbital_speed(px, py){
 		R = rad(px, py, body.earth.x, body.earth.y);
@@ -547,7 +553,10 @@ $('document').ready(function(){
 			change_state('move');
 		}else
 		if (mbut == 'refresh'){
-			location.href = location;
+			mbut = pfb;
+			if (confirm("Вы уверены?")){
+				location.href = location;
+			}
 		}else
 		if (mbut == 'music'){
 			mbut = pfb;
