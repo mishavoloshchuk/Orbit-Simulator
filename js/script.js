@@ -1,5 +1,4 @@
 $('document').ready(function(){
-	alert('test');
 	var canv = document.getElementById('canvas');
 	var ctx = canv.getContext('2d');
 	canv.width = window.innerWidth;
