@@ -66,7 +66,7 @@
 		<h2>Количество обьектов: 1</h2>
 	</div>
 	<!--Create menu-->
-	<div class="menu_options" id="menu_options">
+	<div class="menu_options menu_pos_size menu_pos menu_max_s" id="menu_options">
 		<div class='option_item'>
 			<span>Параметры нового обьекта:</span>
 		</div>
@@ -102,7 +102,7 @@
 
 	</div>
 	<!--Delete menu-->
-	<div class="del_menu_options" id="del_menu_options">
+	<div class="del_menu_options menu_pos_size menu_pos menu_max_s" id="del_menu_options">
 		<div class='option_item'>
 			<span>Параметры удаления обьекта:</span>
 		</div>
@@ -110,15 +110,15 @@
 			<form onchange="switcher.del_radio = +this.del_method.value;">
 				<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px">
 					<span>Удалить ближайший к курсору обьект: </span>
-					<input type="radio" name="del_method" value=0 checked="">					
+					<input class="checkbox" type="radio" name="del_method" value=0 checked="">					
 				</div>
 				<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px">
 					<span>Удалить дальний от курсора обьект: </span>
-					<input type="radio" name="del_method" value=1>
+					<input class="checkbox" type="radio" name="del_method" value=1>
 				</div>
 				<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px">
 					<span>Удалить последний добавленный обьект: </span>
-					<input type="radio" name="del_method" value=2>
+					<input class="checkbox" type="radio" name="del_method" value=2>
 				</div>
 			</form>		
 			
@@ -130,7 +130,7 @@
 
 	</div>
 	<!--Help menu-->
-	<div class="help_menu" id="help_menu">
+	<div class="help_menu menu_pos_size menu_pos menu_max_s" id="help_menu">
 		<div class='option_item'>
 			<span>Горячие клавиши:</span>
 		</div>

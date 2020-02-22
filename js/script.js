@@ -31,7 +31,7 @@ $('document').ready(function(){
 
 	switcher = {create: true, delete: false, del_radio: 0, 
 		del_pulse: 10, del_pulse_state: false, pause: false, trajectory_ref: false, music: false,
-		obj_count: obj_count, help: false, f_speed: 0, f_need_speed: false};
+		obj_count: obj_count, help: false, f_speed: 0, f_need_speed: false, device: 'desktop'};
 
 	show_obj_count();
 	//====time====
@@ -108,6 +108,9 @@ $('document').ready(function(){
 	$('#canvas').mouseup(function(){
 		$('.power').css({display: 'none'});
 		$('.power_need').css({display: 'none'});
+		if (switcher.device == 'mobile'){
+			close_all_menus();
+		}
 		switcher.f_need_speed = false;
 		mousedown = false;
 		mouse[2] = event.clientX; mouse[3] = event.clientY;
@@ -148,7 +151,7 @@ $('document').ready(function(){
 
 			console.log('Удален!');
 			$('.deleted').animate({right: 50});
-			timeout = setTimeout(function(){$('.deleted').animate({right: -150});}, 2000);
+			timeout = setTimeout(function(){$('.deleted').animate({right: -300});}, 2000);
 		}
 
 		ctx.strokeStyle = '#000';
@@ -383,6 +386,7 @@ $('document').ready(function(){
 			sessionStorage['obj_color'] = obj_color;
 		};
 		if (spawn){
+			show_obj_count();
 			num ++;
 			if (!point_x && !point_y){
 				svx = ((mouse[0]-mouse[2])/30)*t;
@@ -645,5 +649,27 @@ $('document').ready(function(){
 	}
 	function soundStop() {
 		audio.pause();
+	}
+
+	if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+		//$('.').css({width: , height: });
+		switcher.device = 'mobile';
+		if (window.innerHeight > window.innerWidth){
+			$('body').css({'font-size': 40});
+			$('.btn').css({'height': 100, 'width': 130});
+			$('.btn img').css({'max-width': 65, 'max-height': 65});
+			$('.menu_pos').css({top: 0, left: 139});
+			$('.menu').css({'flex-direction': 'column'});
+			$('.time_speed').css({left: 10, bottom: 80});
+			$('.state').css({top: 10});
+			$('.checkbox').css({width: 75, height: 75});
+			$('.radius_select').css({'font-size': 50, width: 200, 'border-radius': 10});
+			$('.col_select').css({width: 200, height: 60, 'border-radius': 10});
+			//$('.menu_pos_size').css({'border-bottom-right-radius': 50});
+		} else {
+			$('.time_speed').css({right: 10, top: 10});
+		}
+	  } else {
+	  	$('.time_speed').css({right: 10, top: 10});
 	}
 });
