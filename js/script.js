@@ -31,7 +31,16 @@ $('document').ready(function(){
 
 	switcher = {create: true, delete: false, del_radio: 0, 
 		del_pulse: 10, del_pulse_state: false, pause: false, trajectory_ref: false, music: false,
-		obj_count: obj_count, help: false, f_speed: 0, f_need_speed: false, device: 'desktop'};
+		obj_count: obj_count, help: false, f_speed: 0, f_need_speed: false, device: 'desktop',
+		sim_settings: false, gravit_mode: 1, r_gm: 1, interact: 0, ref_interact: 0};
+
+	/*(if (sessionStorage['switcher']){
+		switcher = sessionStorage['switcher'];
+	};
+
+	setInterval(function(){
+		sessionStorage['switcher'] = switcher;	
+	}, 5000);*/
 
 	show_obj_count();
 	//====time====
@@ -198,6 +207,7 @@ $('document').ready(function(){
 	function gipot(a,b){return Math.sqrt(a*a + b*b);}
 
 	function frame(){
+		visual_trajectory();
 		t = times;
 		body_prev = JSON.parse(JSON.stringify(body));
 
@@ -242,63 +252,94 @@ $('document').ready(function(){
 			ctx.arc(body[del_radius[1]].x, body[del_radius[1]].y, Math.sqrt(body[del_radius[1]].m)+switcher.del_pulse, 0, 7);
 			ctx.fill();
 		}
-		for (let i in body){	
-			if (tsw){
-				$('.time_speed h2').html('Скорость времени: x'+t);
-				for (let i in body){
-					c = times/pretime;
-					body[i].vx *= c;
-					body[i].vy *= c;
-				}
-				tsw = false;
+
+		if (switcher.interact != switcher.ref_interact){
+			switcher.ref_interact = switcher.interact;
+		}
+		if (switcher.r_gm != switcher.gravit_mode){
+			switcher.r_gm = switcher.gravit_mode;
+		}
+
+		if (tsw){
+			$('.time_speed h2').html('Скорость времени: X'+t);
+			for (let i in body){
+				c = times/pretime;
+				body[i].vx *= c;
+				body[i].vy *= c;
 			}
+			tsw = false;
+		}
+		for (let i in body){	
 			refresh(i);
 			//body = JSON.parse(JSON.stringify(body_prev));
 		}
 	}
 
 	function refresh(object){
-		visual_trajectory();
 		obj = body_prev[object];
-		for (let i in body){
-			if (i == object){continue;};
-			obj2 = body_prev[i];
+		if(switcher.ref_interact == 0){
+			for (let i in body){
+				if (i == object){continue;};
+				obj2 = body_prev[i];
 
-			//alert(object+';'+i);
+				//alert(object+';'+i);
 
-			R = rad(obj.x, obj.y, obj2.x, obj2.y);
-			//alert(R);
+				R = rad(obj.x, obj.y, obj2.x, obj2.y);
+				//alert(R);
 
-			if (R - (Math.sqrt(obj.m) + Math.sqrt(obj2.m)/2) <= 0){
-				if (obj.m >= obj2.m){
-					body[object].color = mixColors(body[object].color, obj2.color, body[object].m, obj2.m);
-					body[object].m += obj2.m;
-					if (!obj.lck){
-						body[object].vx = ((body[object].m * body[object].vx)+(obj2.m * obj2.vx))/(obj2.m+body[object].m);//(body[object].vx + obj2.vx)*(obj2.m/body[object].m);
-						body[object].vy = ((body[object].m * body[object].vy)+(obj2.m * obj2.vy))/(obj2.m+body[object].m);//(body[object].vy + obj2.vy)*(obj2.m/body[object].m);
+				if (R - (Math.sqrt(obj.m) + Math.sqrt(obj2.m)/2) <= 0){
+					if (obj.m >= obj2.m){
+						body[object].color = mixColors(body[object].color, obj2.color, body[object].m, obj2.m);
+						body[object].m += obj2.m;
+						if (!obj.lck){
+							body[object].vx = ((body[object].m * body[object].vx)+(obj2.m * obj2.vx))/(obj2.m+body[object].m);//(body[object].vx + obj2.vx)*(obj2.m/body[object].m);
+							body[object].vy = ((body[object].m * body[object].vy)+(obj2.m * obj2.vy))/(obj2.m+body[object].m);//(body[object].vy + obj2.vy)*(obj2.m/body[object].m);
+						}
+						delete body[i];
+
+						show_obj_count();
+
+						continue;
+					}else{
+						continue;
 					}
-					delete body[i];
 
-					show_obj_count();
-
-					continue;
-				}else{
-					continue;
 				}
 
+				a = obj2.x - obj.x;
+				b = obj2.y - obj.y;
+				sin = b/R; cos = a/R;
+
+				vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx');
+				vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy');
+
+				if(!obj.lck && !switcher.pause){
+					body[object].vx += vx;
+					body[object].vy += vy;
+				}	
 			}
+		}
+		if (switcher.ref_interact == 1){
+			if (object != 'earth'){
+				obj2 = body_prev['earth'];
 
-			a = obj2.x - obj.x;
-			b = obj2.y - obj.y;
-			sin = b/R; cos = a/R;
+				//alert(object+';'+i);
 
-			kff = obj2.m*10*t*t;
-			vx = kff*(cos/(R*R));//(obj2.x-obj.x)/10000;//~1;
-			vy = kff*(sin/(R*R));//(obj2.y-obj.y)/10000;//~-0.522;
-			if(!obj.lck && !switcher.pause){
-				body[object].vx += vx;
-				body[object].vy += vy;
-			}	
+				R = rad(obj.x, obj.y, obj2.x, obj2.y);
+				//alert(R);
+
+				a = obj2.x - obj.x;
+				b = obj2.y - obj.y;
+				sin = b/R; cos = a/R;
+
+				vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx');
+				vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy');
+
+				if(!obj.lck && !switcher.pause){
+					body[object].vx += vx;
+					body[object].vy += vy;
+				}			
+			};
 		}
 
 		//ctx.beginPath();
@@ -331,6 +372,47 @@ $('document').ready(function(){
 		ctx.beginPath();
 	};
 
+	function gravity_func(sin, cos, R, func_num, dir){
+		//Обратно-пропорционально квадрату расстояния
+		if (func_num == 1){
+			kff = obj2.m*10*t*t;
+			vx = kff*(cos/(R*R));//(obj2.x-obj.x)/10000;//~1;
+			vy = kff*(sin/(R*R));//(obj2.y-obj.y)/10000;//~-0.522;
+		}
+		//Обранто-пропорционально кубу расстояния
+		if (func_num == 0){
+			kff = obj2.m*1000*t*t;
+			vx = kff*(cos/(R*R*R));
+			vy = kff*(sin/(R*R*R));
+		}
+		//Обранто-пропорционально расстоянию
+		if (func_num == 2){
+			kff = obj2.m*0.1*t*t;
+			vx = kff*(cos/R);
+			vy = kff*(sin/R);
+		}
+		//Постоянное притяжение
+		if (func_num == 3){
+			kff = obj2.m*0.001*t*t;
+			vx = kff*(cos);
+			vy = kff*(sin);
+		}
+		//Пропорционально расстоянию
+		if (func_num == 4){
+			kff = obj2.m*0.00001*t*t;
+			vx = kff*(cos*R);
+			vy = kff*(sin*R);
+		}
+		//Отправить вектор x
+		if (dir == 'vx'){
+			return vx;
+		}
+		//Отправить вектор y 
+		if (dir == 'vy'){
+			return vy;
+		}
+	}
+
 	function visual_trajectory(){
 		if (mousedown && mbut == 'create'){
 			//clear('#000');
@@ -345,13 +427,13 @@ $('document').ready(function(){
 				};
 			}
 
-			for (let i in body){
-				ctx.beginPath();
-				if (!body[i].color){body[i].color = 'gray';}
-				ctx.fillStyle = body[i].color;
-				ctx.arc(body[i].x, body[i].y, Math.sqrt(body[i].m), 0, 7);
-				ctx.fill();
-			}
+			//for (let i in body){
+			//	ctx.beginPath();
+			//	if (!body[i].color){body[i].color = 'gray';}
+			//	ctx.fillStyle = body[i].color;
+			//	ctx.arc(body[i].x, body[i].y, Math.sqrt(body[i].m), 0, 7);
+			//	ctx.fill();
+			//}
 
 			ctx.strokeStyle = obj_color;
 			ctx.lineWidth = Math.sqrt(obj_radius)*2;
@@ -514,7 +596,7 @@ $('document').ready(function(){
 			switcher.pause = true;
 			//clearInterval(simulation_refresh);
 			//simulation_refresh = false;
-			$('.time_speed h2').html('Скорость времени: x0');
+			//$('.time_speed h2').html('Скорость времени: X0');
 			change_state('pause');
 			try{clearTimeout(change_state_play)}catch{};
 		} else
@@ -553,7 +635,7 @@ $('document').ready(function(){
 		}else
 		if (mbut == 'refresh'){
 			mbut = pfb;
-			if (confirm("Вы уверены?")){
+			if (confirm("Это действие приведёт к обновлению страницы. Вы уверены?")){
 				location.href = location;
 			}
 		}else
@@ -578,7 +660,20 @@ $('document').ready(function(){
 				$('.help_menu').fadeIn(0);
 			}
 			change_state('help');
+		}else
+		if (mbut == 'sim_settings'){
+			if (pfb == 'delete'){clear('#000');};
+			if (switcher.sim_settings){
+				$('.sim_settings').css('display', 'none');
+				switcher.sim_settings = false;			
+			} else {
+				close_all_menus();
+				switcher.sim_settings = true;
+				$('.sim_settings').fadeIn(0);
+			}
+			change_state('settings');
 		}
+
 		$('#'+pfb).css({background: 'none'});
 		$('#'+mbut).css({background: '#fff2'});
 		if (switcher[mbut]){$('#'+mbut).css({background: '#fff8'});}
@@ -590,6 +685,7 @@ $('document').ready(function(){
 		$('.menu_options').css('display', 'none'); switcher.create = false;
 		$('.del_menu_options').css('display', 'none'); switcher.delete = false;
 		$('.help_menu').css('display', 'none'); switcher.help = false;
+		$('.sim_settings').css('display', 'none'); switcher.sim_settings = false;
 		if (e){switcher[e] = true};
 	}
 	function change_state(img, format='png', path = '/ico/'){
