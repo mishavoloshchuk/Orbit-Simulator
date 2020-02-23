@@ -54,7 +54,7 @@ input {
 	padding: 1px;
 	max-height: 85%;
 	overflow: auto;
-	background-color: #aaa3;
+	background-color: #3E3E3EAA;
 	border: 1px solid #aaa2;
 	display: inline-block;
 	z-index: 2;
@@ -121,7 +121,7 @@ input {
 
 .menu_pos_size {
 	position: absolute;
-	background-color: #aaa3;
+	background-color: #3E3E3EAA;
 	border: 2px solid #aaa2;
 	display: none;
 	min-height: 100px;

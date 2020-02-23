@@ -371,6 +371,11 @@ $('document').ready(function(){
 			body[object].x += body[object].vx;
 			body[object].y += body[object].vy;
 
+			ctx.beginPath();
+			ctx.fillStyle = obj.color;
+			ctx.arc(prev_x, prev_y, Math.sqrt(obj.m), 0, 7);
+			ctx.fill();
+
 			ctx.strokeStyle = body[object].color;
 			ctx.lineWidth = Math.sqrt(body[object].m)*2;
 			ctx.beginPath();
