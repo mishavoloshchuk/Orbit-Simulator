@@ -84,7 +84,7 @@ $('document').ready(function(){
 	del = false;
 	body_prev = {};
 
-	function clear(col = '#00000002'){
+	function clear(col = '#00000004'){
 		if (!traj){col = '#000';}
 		ctx.fillStyle = col;
 		//ctx.beginPath();
