@@ -571,6 +571,11 @@ $('document').ready(function(){
 		if (e.keyCode == 72){
 			$('#help').mouseup();
 		}
+
+		//settings
+		if (e.keyCode == 83){
+			$('#sim_settings').mouseup();
+		}
 	});
 
 	$('.btn').mouseup(function(){
