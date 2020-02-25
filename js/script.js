@@ -32,7 +32,8 @@ $('document').ready(function(){
 	switcher = {create: true, delete: false, del_radio: 0, 
 		del_pulse: 10, del_pulse_state: false, pause: false, trajectory_ref: false, music: false,
 		obj_count: obj_count, help: false, f_speed: 0, f_need_speed: false, device: 'desktop',
-		sim_settings: false, gravit_mode: 1, r_gm: 1, interact: 0, ref_interact: 0};
+		sim_settings: false, gravit_mode: 1, r_gm: 1, interact: 0, ref_interact: 0,
+		lost_x: 0, lost_y: 0};
 
 	if (sessionStorage['gravit_mode']){
 		switcher.gravit_mode = sessionStorage['gravit_mode'];
@@ -58,7 +59,7 @@ $('document').ready(function(){
 	$('.time_speed h2').html('Скорость времени: X'+t);
 	//======
 	obj_color = sessionStorage['obj_color'] ? sessionStorage['obj_color'] : '#FFFFFF';
-	obj_rand_color = sessionStorage['obj_rand_color'] ? (sessionStorage['obj_rand_color'] == 'true' ? true : false) : false;
+	obj_rand_color = sessionStorage['obj_rand_color'] ? (sessionStorage['obj_rand_color'] == 'true' ? true : false) : true;
 	obj_radius = sessionStorage['obj_radius'] ? +sessionStorage['obj_radius'] : Math.round(getRandomArbitrary(0.1, 10)*10)/10;
 	obj_reverse = sessionStorage['obj_reverse'] ? (sessionStorage['obj_reverse'] == 'true' ? true : false) : false;
 	obj_cirle_orbit = sessionStorage['obj_cirle_orbit'] ? (sessionStorage['obj_cirle_orbit'] == 'true' ? true : false) : true;
@@ -131,7 +132,7 @@ $('document').ready(function(){
 			$('.power_need').html("*Для круговой орбиты, нужно примерно: "+ Math.round(Math.sqrt(switcher.f_speed[0]*switcher.f_speed[0] + switcher.f_speed[1]*switcher.f_speed[1])*30)+"*");
 		};
 	});
-	$('#canvas').mouseup(function(){
+	$('#canvas').mouseup(function(e){
 		$('.power').css({display: 'none'});
 		$('.power_need').css({display: 'none'});
 		if (switcher.device == 'mobile'){
@@ -184,7 +185,7 @@ $('document').ready(function(){
 		ctx.lineWidth = Math.sqrt(obj_radius)*2+1;
 		ctx.beginPath();
 		ctx.moveTo(mouse[0], mouse[1]);
-		ctx.lineTo(mouse[2], mouse[3]);
+		ctx.lineTo(lost_x, lost_y);
 		ctx.stroke();
 
 		if (mbut == 'create'){
@@ -229,6 +230,28 @@ $('document').ready(function(){
 		body_prev = JSON.parse(JSON.stringify(body));
 
 		if (mbut == 'delete' || switcher.move || mbut == 'move'){clear('#000');}else{if(!switcher.trajectory_ref){clear();};}
+
+		if (switcher.interact != switcher.ref_interact){
+			switcher.ref_interact = switcher.interact;
+		}
+		if (switcher.r_gm != switcher.gravit_mode){
+			switcher.r_gm = switcher.gravit_mode;
+		}
+
+		if (tsw){
+			$('.time_speed h2').html('Скорость времени: X'+t);
+			for (let i in body){
+				c = times/pretime;
+				body[i].vx *= c;
+				body[i].vy *= c;
+			}
+			tsw = false;
+		}
+		for (let i in body){	
+			refresh(i);
+			//body = JSON.parse(JSON.stringify(body_prev));
+		}
+
 		if (mbut == 'delete'){
 			del_radius = [Infinity, '', 0];
 			if (switcher.del_radio == 2){
@@ -268,27 +291,6 @@ $('document').ready(function(){
 			ctx.fillStyle = '#f006';
 			ctx.arc(body[del_radius[1]].x, body[del_radius[1]].y, Math.sqrt(body[del_radius[1]].m)+switcher.del_pulse, 0, 7);
 			ctx.fill();
-		}
-
-		if (switcher.interact != switcher.ref_interact){
-			switcher.ref_interact = switcher.interact;
-		}
-		if (switcher.r_gm != switcher.gravit_mode){
-			switcher.r_gm = switcher.gravit_mode;
-		}
-
-		if (tsw){
-			$('.time_speed h2').html('Скорость времени: X'+t);
-			for (let i in body){
-				c = times/pretime;
-				body[i].vx *= c;
-				body[i].vy *= c;
-			}
-			tsw = false;
-		}
-		for (let i in body){	
-			refresh(i);
-			//body = JSON.parse(JSON.stringify(body_prev));
 		}
 	}
 
@@ -391,7 +393,7 @@ $('document').ready(function(){
 		ctx.fill();
 		//console.log(R);
 		//arr = Object.keys(body);
-		ctx.beginPath();
+		//ctx.beginPath();
 	};
 
 	function gravity_func(sin, cos, R, func_num, dir){
@@ -450,14 +452,6 @@ $('document').ready(function(){
 				};
 			}
 
-			//for (let i in body){
-			//	ctx.beginPath();
-			//	if (!body[i].color){body[i].color = 'gray';}
-			//	ctx.fillStyle = body[i].color;
-			//	ctx.arc(body[i].x, body[i].y, Math.sqrt(body[i].m), 0, 7);
-			//	ctx.fill();
-			//}
-
 			ctx.strokeStyle = obj_color;
 			ctx.lineWidth = Math.sqrt(obj_radius)*2;
 			ctx.beginPath();
@@ -471,6 +465,8 @@ $('document').ready(function(){
 			ctx.moveTo(mouse[0], mouse[1]);
 			ctx.lineTo(mouse_coords[0], mouse_coords[1]);
 			ctx.stroke();
+			lost_x = mouse_coords[0];
+			lost_y = mouse_coords[1];
 
 			ctx.beginPath();
 			ctx.fillStyle = obj_color;
