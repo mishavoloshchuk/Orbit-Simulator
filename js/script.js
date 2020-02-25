@@ -33,7 +33,7 @@ $('document').ready(function(){
 		del_pulse: 10, del_pulse_state: false, pause: false, trajectory_ref: false, music: false,
 		obj_count: obj_count, help: false, f_speed: 0, f_need_speed: false, device: 'desktop',
 		sim_settings: false, gravit_mode: 1, r_gm: 1, interact: 0, ref_interact: 0,
-		lost_x: 0, lost_y: 0};
+		lost_x: false, lost_y: false};
 
 	if (sessionStorage['gravit_mode']){
 		switcher.gravit_mode = sessionStorage['gravit_mode'];
@@ -181,12 +181,14 @@ $('document').ready(function(){
 			timeout = setTimeout(function(){$('.deleted').animate({right: -300});}, 2000);
 		}
 
-		ctx.strokeStyle = '#000';
-		ctx.lineWidth = Math.sqrt(obj_radius)*2+1;
-		ctx.beginPath();
-		ctx.moveTo(mouse[0], mouse[1]);
-		ctx.lineTo(lost_x, lost_y);
-		ctx.stroke();
+		if (switcher.lost_x && switcher.lost_y){		
+			ctx.strokeStyle = '#000';
+			ctx.lineWidth = Math.sqrt(obj_radius)*2+1;
+			ctx.beginPath();
+			ctx.moveTo(mouse[0], mouse[1]);
+			ctx.lineTo(switcher.lost_x, switcher.lost_y);
+			ctx.stroke();
+		}
 
 		if (mbut == 'create'){
 			switcher.trajectory_ref = false;
@@ -465,8 +467,8 @@ $('document').ready(function(){
 			ctx.moveTo(mouse[0], mouse[1]);
 			ctx.lineTo(mouse_coords[0], mouse_coords[1]);
 			ctx.stroke();
-			lost_x = mouse_coords[0];
-			lost_y = mouse_coords[1];
+			switcher.lost_x = mouse_coords[0];
+			switcher.lost_y = mouse_coords[1];
 
 			ctx.beginPath();
 			ctx.fillStyle = obj_color;

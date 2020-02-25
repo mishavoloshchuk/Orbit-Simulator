@@ -47,6 +47,10 @@ input {
 #canvas {
 	display: block;
 	z-index: -1;
+	-moz-user-select: none; /* Mozilla Firefox */
+	-ms-user-select: none; /* Internet Explorer (не поддерживается) */
+	-o-user-select: none; /* Opera Presto (не поддерживается) */
+	-webkit-user-select: none; /* Google Chrome, Opera Next, Safari */
 }
 
 .menu {
