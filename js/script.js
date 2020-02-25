@@ -338,7 +338,7 @@ $('document').ready(function(){
 				}	
 			}
 		}
-		if (switcher.ref_interact == 1){
+		if (switcher.ref_interact == 1 && body_prev['earth']){
 			if (object != 'earth'){
 				obj2 = body_prev['earth'];
 
