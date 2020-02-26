@@ -10,10 +10,12 @@ $('document').ready(function(){
 	swt = false;
 	traj = true;
 
-	body = {
+	let body = {
 		'earth': {'x':window.innerWidth/2, 'y': window.innerHeight/2, 'vx': 0, 'vy': 0, m: 1000, 'color': '#ffff00', 'lck': true},
 		//'earth2': {'x':0, 'y': window.innerHeight/2, 'vx': 1, 'vy': 0, m: 1000, 'color': '#ffff00', 'lck': false},
 	};
+
+	earth_lck = body.earth;
 
 	let obj_count = 0;
 
@@ -64,6 +66,8 @@ $('document').ready(function(){
 	obj_reverse = sessionStorage['obj_reverse'] ? (sessionStorage['obj_reverse'] == 'true' ? true : false) : false;
 	obj_cirle_orbit = sessionStorage['obj_cirle_orbit'] ? (sessionStorage['obj_cirle_orbit'] == 'true' ? true : false) : true;
 
+	earth_lck.lck = sessionStorage['master_object_lock'] == "false" ? false : true;
+
 	usr_object = {obj_color, obj_radius, obj_reverse, obj_cirle_orbit};
 
 	$('.col_select').attr('value', obj_color);
@@ -71,6 +75,7 @@ $('document').ready(function(){
 	if (obj_reverse){$('.direction_reverse_select').attr('checked', 'on');};
 	if (obj_cirle_orbit){$('.orbit_select').attr('checked', 'on');};
 	if (obj_rand_color){$('.rand_col_select').attr('checked', 'on');};
+	if (earth_lck.lck){$('.master_object_lock').attr('checked', 'on');};
 
 	change_state(mbut);
 
@@ -372,8 +377,10 @@ $('document').ready(function(){
 			prev_x = body[object].x;
 			prev_y = body[object].y;
 
-			body[object].x += body[object].vx;
-			body[object].y += body[object].vy;
+			if(!obj.lck && !switcher.pause){
+				body[object].x += body[object].vx;
+				body[object].y += body[object].vy;
+			}
 
 			ctx.beginPath();
 			ctx.fillStyle = obj.color;

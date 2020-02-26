@@ -187,9 +187,9 @@
 					<span>Пропорционально от расстояния: </span>
 					<input id="gravit_mode_radio_4" class="checkbox" type="radio" name="gravit_mode" value=4>
 				</div>
-			</form>		
-			
+			</form>			
 		</div>
+
 		<div class='option_item title_option_item'>
 			<span>Режимы взаемодействия:</span>
 		</div>
@@ -207,9 +207,17 @@
 					<span>Без взаемодействий: </span>
 					<input id="interact_radio_2" class="checkbox" type="radio" name="interact" value=2>
 				</div>
-			</form>		
-			
+			</form>					
 		</div>
+
+		<div class='option_item title_option_item'>
+			<span>Главный обьект:</span>
+		</div>
+		<div class='option_item'>
+			<span>Неподвижный: </span>
+			<input type="checkbox" class='master_object_lock checkbox' onchange="sessionStorage['master_object_lock'] = this.checked; earth_lck.lck = this.checked;" onmouseout="this.blur();">			
+		</div>
+
 
 		<div class='option_item menu_close e1' style="border-bottom: none;">
 			<div>Закрыть</div>
