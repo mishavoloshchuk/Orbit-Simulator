@@ -296,12 +296,13 @@ $('document').ready(function(){
 		}
 
 		if (swch.t_object != swch.prev_t_obj){
+			switcher.pause = true;
 			crds = [0,0,0,0,0,0];
 			if (body[swch.t_object]){
 				if (anim_cam[2]){
 					f_obj_pos = [body[swch.t_object].vx, body[swch.t_object].vy, body[swch.t_object].x, body[swch.t_object].y];
 					object = swch.t_object;
-					for (let n = 0; n < 10; n++){					
+					for (let n = 0; n < 20; n++){					
 						if (object != 'earth'){
 							obj2 = body['earth'];
 							obj = body[object];
@@ -348,8 +349,8 @@ $('document').ready(function(){
 			}
 			crds[4] = crds[0] - crds[2];
 			crds[5] = crds[1] - crds[3];
-			crds[7] = crds[5]/10;
-			crds[6] = crds[4]/10;
+			crds[7] = crds[5]/20;
+			crds[6] = crds[4]/20;
 
 			anim_cam[0] -= crds[6];
 			anim_cam[1] -= crds[7];
@@ -359,6 +360,7 @@ $('document').ready(function(){
 				anim_cam[0] = 0;
 				anim_cam[1] = 0;
 				anim_cam[2] = true;
+				switcher.pause = false;
 			}
 		}
 
