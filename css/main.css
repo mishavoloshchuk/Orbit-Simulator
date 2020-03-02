@@ -151,6 +151,10 @@ input {
 	align-items: center;
 }
 
+.check_menu {
+	margin-left: 20px;
+}
+
 .help_option_item {
 	border-bottom: 1px solid #fff5;
 	padding: 10px;
@@ -249,4 +253,22 @@ input {
 .menu_pos {
 	top: 54px;
 	left: 0;
+}
+
+.button {
+	min-height: 10px;
+	min-width: 20px;
+	width: 100%;
+	background-color: #aaa2;
+	border-radius: 1em;
+	padding: 0.5em 1em;
+}
+
+.button:hover {
+	background-color: #aaa4;
+	cursor: pointer;
+}
+
+.button:active {
+	background-color: #aaa8;
 }

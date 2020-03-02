@@ -47,6 +47,10 @@
 			<img src="/ico/trajectory.png" alt="Trajectory" title="Траектории">
 		</div>
 
+		<div class="btn" id='camera'>
+			<img src="/ico/camera.png" alt="Camera" title="Камера">
+		</div>
+
 		<div class="btn" id='refresh'>
 			<img src="/ico/refresh.png" alt="Refresh" title="Перезапустить">
 		</div>
@@ -213,7 +217,7 @@
 		<div class='option_item title_option_item'>
 			<span>Главный обьект:</span>
 		</div>
-		<div class='option_item'>
+		<div class='option_item check_menu' style="border: none;">
 			<span>Неподвижный: </span>
 			<input type="checkbox" class='master_object_lock checkbox' onchange="sessionStorage['master_object_lock'] = this.checked; earth_lck.lck = this.checked;" onmouseout="this.blur();">			
 		</div>
@@ -222,6 +226,34 @@
 		<div class='option_item menu_close e1' style="border-bottom: none;">
 			<div>Закрыть</div>
 		</div>		
+	</div>
+	<!--Camera menu-->
+	<div class="camera_menu menu_pos_size menu_pos menu_max_s" id="camera_menu">
+		<div class='option_item title_option_item'>
+			<span>Параметры камеры:</span>
+		</div>
+
+		<div class='option_item'>
+			<span>Следить за объектом: </span>
+			<div class="button" id="select_track">
+				<span>
+					Выбрать объект 
+				</span>
+			</div>		
+		</div>
+
+		<div class='option_item'>
+			<div class="button" id="clear_camera_settings">
+				<span>
+					Сбросить настройки камеры
+				</span>
+			</div>		
+		</div>
+
+		<div class='option_item menu_close e0' style="border-bottom: none;">
+			<div>Закрыть</div>
+		</div>
+
 	</div>
 
 	<div class="state">

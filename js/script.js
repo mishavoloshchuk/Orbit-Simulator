@@ -6,13 +6,18 @@ $('document').ready(function(){
 	mouse = [];
 	mouse_coords = [];
 	mbut = 'create';
+	cbut = '';
 	pfb = mbut;
 	swt = false;
 	traj = true;
 
-	let body = {
+	cam_x = 0;
+	cam_y = 0;
+	anim_cam = [0, 0, true];
+
+	body = {
 		'earth': {'x':window.innerWidth/2, 'y': window.innerHeight/2, 'vx': 0, 'vy': 0, m: 1000, 'color': '#ffff00', 'lck': true},
-		//'earth2': {'x':0, 'y': window.innerHeight/2, 'vx': 1, 'vy': 0, m: 1000, 'color': '#ffff00', 'lck': false},
+		//'earth2': {'x':0, 'y': window.innerHeight/2, 'vx': 1, 'vy': 3, m: 100, 'color': '#ffff00', 'lck': false},
 	};
 
 	earth_lck = body.earth;
@@ -35,7 +40,9 @@ $('document').ready(function(){
 		del_pulse: 10, del_pulse_state: false, pause: false, trajectory_ref: false, music: false,
 		obj_count: obj_count, help: false, f_speed: 0, f_need_speed: false, device: 'desktop',
 		sim_settings: false, gravit_mode: 1, r_gm: 1, interact: 0, ref_interact: 0,
-		lost_x: false, lost_y: false};
+		lost_x: false, lost_y: false, camera: false};
+
+	swch = {s_track: false, t_object: false, prev_t_obj: false};
 
 	if (sessionStorage['gravit_mode']){
 		switcher.gravit_mode = sessionStorage['gravit_mode'];
@@ -162,7 +169,7 @@ $('document').ready(function(){
 				del_radius[1] = elem;
 			}else{
 				for (let i in body){
-					r = rad(mouse_coords[0], mouse_coords[1], body[i].x, body[i].y);
+					r = rad(mouse_coords[0], mouse_coords[1], body[i].x + cam_x, body[i].y + cam_y);
 					if (r < del_radius[0] && switcher.del_radio == 0){
 						del_radius[0] = r;
 						del_radius[1] = i;
@@ -203,6 +210,38 @@ $('document').ready(function(){
 			ctx.fill();
 		}
 
+		if (mbut == 'camera' && swch.s_track){
+			mod = 0;
+			obj_cam = [Infinity, '', 0];
+			if (mod == 2){
+				elem = '';
+				for (i in body){
+					elem = i;
+				}
+				obj_cam[1] = elem;
+			}else{
+				for (let i in body){
+					r = rad(mouse_coords[0], mouse_coords[1], body[i].x + cam_x, body[i].y + cam_y);
+					if (r < obj_cam[0] && mod == 0){
+						obj_cam[0] = r;
+						obj_cam[1] = i;
+					} else 
+					if (r > obj_cam[2] && mod == 1){
+						obj_cam[2] = r;
+						obj_cam[1] = i;
+					}
+				}
+			}
+
+			ctx.beginPath();
+			ctx.fillStyle = '#000';
+			ctx.arc(body[del_radius[1]].x, body[del_radius[1]].y, Math.sqrt(body[del_radius[1]].m)+1, 0, 7);
+			ctx.fill();
+
+			swch.t_object = obj_cam[1];	
+			swch.s_track = false;	
+		}
+
 		show_obj_count();
 		//clear('#000');
 
@@ -232,11 +271,12 @@ $('document').ready(function(){
 	function gipot(a,b){return Math.sqrt(a*a + b*b);}
 
 	function frame(){
-		visual_trajectory();
 		t = times;
 		body_prev = JSON.parse(JSON.stringify(body));
 
-		if (mbut == 'delete' || switcher.move || mbut == 'move'){clear('#000');}else{if(!switcher.trajectory_ref){clear();};}
+		if (mbut == 'delete' || switcher.move || mbut == 'move' || mbut == 'camera' || swch.t_object){clear('#000');}else{if(!switcher.trajectory_ref){clear();};}
+
+		visual_trajectory();
 
 		if (switcher.interact != switcher.ref_interact){
 			switcher.ref_interact = switcher.interact;
@@ -254,65 +294,105 @@ $('document').ready(function(){
 			}
 			tsw = false;
 		}
+
+		if (swch.t_object != swch.prev_t_obj){
+			crds = [0,0,0,0,0,0];
+			if (body[swch.t_object]){
+				if (anim_cam[2]){
+					f_obj_pos = [body[swch.t_object].vx, body[swch.t_object].vy, body[swch.t_object].x, body[swch.t_object].y];
+					object = swch.t_object;
+					for (let n = 0; n < 10; n++){					
+						if (object != 'earth'){
+							obj2 = body['earth'];
+							obj = body[object];
+
+							R = rad(obj.x, obj.y, obj2.x, obj2.y);
+							
+							a = obj2.x - f_obj_pos[2];
+							b = obj2.y - f_obj_pos[3];
+							sin = b/R; cos = a/R;
+
+							vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx');
+							vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy');
+
+							if(!obj.lck && !switcher.pause){
+								f_obj_pos[0] += vx;
+								f_obj_pos[1] += vy;
+								f_obj_pos[2] += f_obj_pos[0];
+								f_obj_pos[3] += f_obj_pos[1];
+							}
+							
+							ctx.beginPath();
+
+							//ctx.fillStyle = '#ffffff';
+							//ctx.arc(f_obj_pos[2], f_obj_pos[3], Math.sqrt(obj.m), 0, 7);
+							//ctx.fill();								
+						};			
+					}
+					anim_cam[2] = false;
+				}
+				//alert(f_obj_pos[2] + '; ' + f_obj_pos[3]);
+				//alert(body[swch.t_object].x + '; ' + body[swch.t_object].x);
+				crds[0] = f_obj_pos[2];
+				crds[1] = f_obj_pos[3];
+			} else {
+				crds[0] = window.innerWidth/2;
+				crds[1] = window.innerHeight/2;
+			}
+			if (body[swch.prev_t_obj]){
+				crds[2] = body[swch.prev_t_obj].x;
+				crds[3] = body[swch.prev_t_obj].y;
+			} else {
+				crds[2] = window.innerWidth/2;
+				crds[3] = window.innerHeight/2;
+			}
+			crds[4] = crds[0] - crds[2];
+			crds[5] = crds[1] - crds[3];
+			crds[7] = crds[5]/10;
+			crds[6] = crds[4]/10;
+
+			anim_cam[0] -= crds[6];
+			anim_cam[1] -= crds[7];
+
+			if (Math.abs(anim_cam[0]) > Math.abs(crds[4])){
+				swch.prev_t_obj = swch.t_object;
+				anim_cam[0] = 0;
+				anim_cam[1] = 0;
+				anim_cam[2] = true;
+			}
+		}
+
+		if (swch.prev_t_obj && body[swch.prev_t_obj]){
+			cam_x = (window.innerWidth / 2) - (body[swch.prev_t_obj].x + body[swch.prev_t_obj].vx) + anim_cam[0];
+			cam_y = (window.innerHeight / 2) - (body[swch.prev_t_obj].y + body[swch.prev_t_obj].vy) + anim_cam[1];		
+		} else {
+			cam_x = 0 + anim_cam[0];
+			cam_y = 0 + anim_cam[1];
+		}
+
 		for (let i in body){	
 			refresh(i);
 			//body = JSON.parse(JSON.stringify(body_prev));
 		}
 
 		if (mbut == 'delete'){
-			del_radius = [Infinity, '', 0];
-			if (switcher.del_radio == 2){
-				elem = '';
-				for (i in body){
-					elem = i;
-				}
-				del_radius[1] = elem;
-			}else{
-				for (let i in body){
-					r = rad(mouse_coords[0], mouse_coords[1], body[i].x, body[i].y);
-					if (r < del_radius[0] && switcher.del_radio == 0){
-						del_radius[0] = r;
-						del_radius[1] = i;
-					} else 
-					if (r > del_radius[2] && switcher.del_radio == 1){
-						del_radius[2] = r;
-						del_radius[1] = i;
-					}
-				}
-			}
+			visual_select(switcher.del_radio, '#f006');
+		}
 
-			if (switcher.del_pulse <= 5){
-				switcher.del_pulse_state = true;
-			} 
-			if (switcher.del_pulse >= 30){
-				switcher.del_pulse_state = false;
-			}
-
-			if (switcher.del_pulse_state){
-				switcher.del_pulse += 1;
-			}else{
-				switcher.del_pulse -= 0.5;
-			}
-
-			ctx.beginPath();
-			ctx.fillStyle = '#f006';
-			ctx.arc(body[del_radius[1]].x, body[del_radius[1]].y, Math.sqrt(body[del_radius[1]].m)+switcher.del_pulse, 0, 7);
-			ctx.fill();
+		if (mbut == 'camera' && cbut == 'select_track' && swch.s_track){
+			visual_select(0, '#0af6');
 		}
 	}
 
 	function refresh(object){
 		obj = body_prev[object];
-		if(switcher.ref_interact == 0){
+		if(switcher.ref_interact == 0 && !switcher.pause){
 			for (let i in body){
 				if (i == object){continue;};
 				obj2 = body_prev[i];
 
-				//alert(object+';'+i);
-
 				R = rad(obj.x, obj.y, obj2.x, obj2.y);
-				//alert(R);
-
+				
 				if (R - (Math.sqrt(obj.m) + Math.sqrt(obj2.m)/2) <= 0){
 					if (obj.m >= obj2.m){
 						body[object].color = mixColors(body[object].color, obj2.color, body[object].m, obj2.m);
@@ -345,7 +425,7 @@ $('document').ready(function(){
 				}	
 			}
 		}
-		if (switcher.ref_interact == 1 && body_prev['earth']){
+		if (switcher.ref_interact == 1 && body_prev['earth'] && !switcher.pause){
 			if (object != 'earth'){
 				obj2 = body_prev['earth'];
 
@@ -372,7 +452,8 @@ $('document').ready(function(){
 		//ctx.fillStyle = '#0005';
 		//ctx.arc(obj.x, obj.y, Math.sqrt(obj.m), 0, 7);
 		//ctx.fill();
-
+		//cam_x = 0;
+		//cam_y = 0;
 		if (!switcher.pause){
 			prev_x = body[object].x;
 			prev_y = body[object].y;
@@ -382,23 +463,25 @@ $('document').ready(function(){
 				body[object].y += body[object].vy;
 			}
 
-			ctx.beginPath();
-			ctx.fillStyle = obj.color;
-			ctx.arc(prev_x, prev_y, Math.sqrt(obj.m), 0, 7);
-			ctx.fill();
+			if (swch.prev_t_obj != object){
+				ctx.beginPath();
+				ctx.fillStyle = obj.color;
+				ctx.arc(prev_x + cam_x, prev_y + cam_y, Math.sqrt(obj.m), 0, 7);
+				ctx.fill();
 
-			ctx.strokeStyle = body[object].color;
-			ctx.lineWidth = Math.sqrt(body[object].m)*2;
-			ctx.beginPath();
-			ctx.moveTo(prev_x, prev_y);
-			ctx.lineTo(body[object].x, body[object].y);
-			ctx.stroke();
+				ctx.strokeStyle = body[object].color;
+				ctx.lineWidth = Math.sqrt(body[object].m)*2;
+				ctx.beginPath();
+				ctx.moveTo(prev_x + cam_x, prev_y + cam_y);
+				ctx.lineTo(body[object].x + cam_x, body[object].y + cam_y);
+				ctx.stroke();			
+			}
 		}
 
 		ctx.beginPath();
 		if (!obj.color){obj.color = 'gray';}
 		ctx.fillStyle = obj.color;
-		ctx.arc(body[object].x, body[object].y, Math.sqrt(obj.m), 0, 7);
+		ctx.arc(body[object].x + cam_x, body[object].y + cam_y, Math.sqrt(obj.m), 0, 7);
 		ctx.fill();
 		//console.log(R);
 		//arr = Object.keys(body);
@@ -454,13 +537,12 @@ $('document').ready(function(){
 				$('.power').css({left: mouse_coords[0]-10, top: mouse_coords[1]-30, display: 'block', color: obj_color});
 				$('.power').html(Math.round(rad(mouse[0], mouse[1], mouse_coords[0], mouse_coords[1])));
 				if (!switcher.f_need_speed){
-					if (switcher.gravit_mode == 1){					
+					if (switcher.gravit_mode == 1 && (swch.t_object == false || (swch.t_object == 'earth' && body.earth.lck))){					
 						$('.power_need').css({display: 'block'});
 					}
 					switcher.f_need_speed = true;
 				};
 			}
-
 			ctx.strokeStyle = obj_color;
 			ctx.lineWidth = Math.sqrt(obj_radius)*2;
 			ctx.beginPath();
@@ -495,6 +577,48 @@ $('document').ready(function(){
 		return [svx/t, svy/t];
 	}
 
+	function visual_select(mode, color) {
+		del_radius = [Infinity, '', 0];
+		if (mode == 2){
+			elem = '';
+			for (i in body){
+				elem = i;
+			}
+			del_radius[1] = elem;
+		}else{
+			for (let i in body){
+				r = rad(mouse_coords[0], mouse_coords[1], body[i].x + cam_x, body[i].y + cam_y);
+				if (r < del_radius[0] && mode == 0){
+					del_radius[0] = r;
+					del_radius[1] = i;
+				} else 
+				if (r > del_radius[2] && mode == 1){
+					del_radius[2] = r;
+					del_radius[1] = i;
+				}
+			}
+		}
+
+		if (switcher.del_pulse <= 5){
+			switcher.del_pulse_state = true;
+		} 
+		if (switcher.del_pulse >= 30){
+			switcher.del_pulse_state = false;
+		}
+
+		if (switcher.del_pulse_state){
+			switcher.del_pulse += 1;
+		}else{
+			switcher.del_pulse -= 0.5;
+		}
+
+		ctx.beginPath();
+		ctx.fillStyle = color;
+		ctx.arc(body[del_radius[1]].x + cam_x, body[del_radius[1]].y + cam_y, Math.sqrt(body[del_radius[1]].m)+switcher.del_pulse, 0, 7);
+		ctx.fill();
+		ctx.beginPath();
+	}
+
 	function obj_sp(point_x,point_y,ob_col){
 		if (obj_rand_color){
 			if (!ob_col){obj_color = randColor();}else{obj_color = ob_col;};
@@ -522,10 +646,19 @@ $('document').ready(function(){
 					svy = -svy;
 				}
 			}
-			body['ast'+num] = {'x': px, 'y': py, 'vx': svx, 'vy': svy, m: obj_radius, 'lck': false, 'color': obj_color};
+			body['ast'+num] = {'x': px - cam_x, 'y': py - cam_y, 'vx': svx, 'vy': svy, m: obj_radius, 'lck': false, 'color': obj_color};
 			spawn = false;
 		}
 	}
+	scale = 1;
+	document.addEventListener('wheel', function(e){
+		if (e.deltaY > 0){
+			scale += 0.2;
+		} else {
+			scale -= 0.2;
+		}
+		ctx.scale(scale, scale);
+	});
 
 	document.addEventListener('keydown', function(e){
 		//console.log(e.keyCode);
@@ -615,6 +748,18 @@ $('document').ready(function(){
 				traj = true;
 			}
 			mbut = pfb;	
+		} else
+		if (mbut == 'camera'){
+			if (pfb == 'delete'){clear('#000');};
+			if (switcher.camera){
+				$('.camera_menu').css('display', 'none');
+				switcher.camera = false;
+			}else{
+				close_all_menus();
+				switcher.camera = true;
+				$('.camera_menu').fadeIn(0);
+			}
+			change_state('camera');
 		} else
 		if (mbut == 'timedown' && simulation_refresh){
 			mbut = pfb;
@@ -713,12 +858,30 @@ $('document').ready(function(){
 	});
 	$('#'+mbut).css({background: '#fff8'});
 
+	$('.button').mouseup(function(){
+		//alert($(this).attr('id'));
+		cbut = $(this).attr('id');
+		if (cbut == 'select_track'){
+			if (swch.s_track){
+				swch.s_track = false;
+			} else {
+				swch.s_track = true;
+			}		
+		}
+
+		if (cbut == 'clear_camera_settings'){
+			swch.t_object = false;		
+		}
+
+	});
+
 	function close_all_menus(e){
 		$('#'+mbut).css({background: '#fff2'});
 		$('.menu_options').css('display', 'none'); switcher.create = false;
 		$('.del_menu_options').css('display', 'none'); switcher.delete = false;
 		$('.help_menu').css('display', 'none'); switcher.help = false;
 		$('.sim_settings').css('display', 'none'); switcher.sim_settings = false;
+		$('.camera_menu').css('display', 'none'); switcher.camera = false;
 		if (e){switcher[e] = true};
 	}
 	function change_state(img, format='png', path = '/ico/'){
