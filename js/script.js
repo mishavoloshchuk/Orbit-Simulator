@@ -131,7 +131,10 @@ $('document').ready(function(){
 		//console.log(body.moon.vx+'  '+body.moon.vy);
 		mousedown = true;
 		mpos[0] = event.clientX; mpos[1] = event.clientY;
-		//mpos[2] = body.earth.x; mpos[3] = body.earth.y;
+		if (body.earth){
+			mpos[2] = body.earth.x; mpos[3] = body.earth.y;			
+		}
+		
 		mouse[0] = event.clientX; mouse[1] = event.clientY;
 		//if (mbut == 'create'){
 		//	clearInterval(simulation_refresh);
@@ -154,7 +157,7 @@ $('document').ready(function(){
 		switcher.f_need_speed = false;
 		mousedown = false;
 		mouse[2] = event.clientX; mouse[3] = event.clientY;
-		
+
 		if (mbut == 'delete'){
 			del_radius = [Infinity, '', 0];
 			if (switcher.del_radio == 2){
