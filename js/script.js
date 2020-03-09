@@ -86,8 +86,9 @@ $('document').ready(function(){
 
 	change_state(mbut);
 
-	speed = 16;
-	let simulation_refresh = setInterval(frame, speed);
+	//speed = 16;
+	//let simulation_refresh = setInterval(frame, speed);
+	window.requestAnimationFrame(frame);
 
 	G = 0.05;
 	mousedown = false;
@@ -130,7 +131,7 @@ $('document').ready(function(){
 		//console.log(body.moon.vx+'  '+body.moon.vy);
 		mousedown = true;
 		mpos[0] = event.clientX; mpos[1] = event.clientY;
-		mpos[2] = body.earth.x; mpos[3] = body.earth.y;
+		//mpos[2] = body.earth.x; mpos[3] = body.earth.y;
 		mouse[0] = event.clientX; mouse[1] = event.clientY;
 		//if (mbut == 'create'){
 		//	clearInterval(simulation_refresh);
@@ -140,7 +141,7 @@ $('document').ready(function(){
 			if (obj_rand_color){
 				obj_color = randColor();
 			};		
-			switcher.f_speed = f_orbital_speed(mouse[0], mouse[1]);
+			switcher.f_speed = f_orbital_speed(mouse[0], mouse[1], 'earth');
 			$('.power_need').html("*Для круговой орбиты, нужно примерно: "+ Math.round(Math.sqrt(switcher.f_speed[0]*switcher.f_speed[0] + switcher.f_speed[1]*switcher.f_speed[1])*30)+"*");
 		};
 	});
@@ -153,12 +154,7 @@ $('document').ready(function(){
 		switcher.f_need_speed = false;
 		mousedown = false;
 		mouse[2] = event.clientX; mouse[3] = event.clientY;
-		if (mbut == 'create'){
-			spawn = true;
-			obj_sp(false, false, obj_color);
-			//if (!switcher.pause){simulation_refresh = setInterval(frame, speed);};
-		}
-
+		
 		if (mbut == 'delete'){
 			del_radius = [Infinity, '', 0];
 			if (switcher.del_radio == 2){
@@ -203,6 +199,10 @@ $('document').ready(function(){
 		}
 
 		if (mbut == 'create'){
+			//if (!switcher.pause){simulation_refresh = setInterval(frame, speed);};
+			spawn = true;
+			obj_sp(false, false, obj_color);
+
 			switcher.trajectory_ref = false;
 			ctx.beginPath();
 			ctx.fillStyle = obj_color;
@@ -271,6 +271,7 @@ $('document').ready(function(){
 	function gipot(a,b){return Math.sqrt(a*a + b*b);}
 
 	function frame(){
+		window.requestAnimationFrame(frame);
 		t = times;
 		body_prev = JSON.parse(JSON.stringify(body));
 
@@ -302,34 +303,34 @@ $('document').ready(function(){
 				if (anim_cam[2]){
 					f_obj_pos = [body[swch.t_object].vx, body[swch.t_object].vy, body[swch.t_object].x, body[swch.t_object].y];
 					object = swch.t_object;
-					for (let n = 0; n < 20; n++){					
-						if (object != 'earth'){
-							obj2 = body['earth'];
-							obj = body[object];
-
-							R = rad(obj.x, obj.y, obj2.x, obj2.y);
-							
-							a = obj2.x - f_obj_pos[2];
-							b = obj2.y - f_obj_pos[3];
-							sin = b/R; cos = a/R;
-
-							vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx');
-							vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy');
-
-							if(!obj.lck && !switcher.pause){
-								f_obj_pos[0] += vx;
-								f_obj_pos[1] += vy;
-								f_obj_pos[2] += f_obj_pos[0];
-								f_obj_pos[3] += f_obj_pos[1];
-							}
-							
-							ctx.beginPath();
-
-							//ctx.fillStyle = '#ffffff';
-							//ctx.arc(f_obj_pos[2], f_obj_pos[3], Math.sqrt(obj.m), 0, 7);
-							//ctx.fill();								
-						};			
-					}
+					//for (let n = 0; n < 20; n++){					
+					//	if (object != 'earth'){
+					//		obj2 = body['earth'];
+					//		obj = body[object];
+//
+					//		R = rad(obj.x, obj.y, obj2.x, obj2.y);
+					//		
+					//		a = obj2.x - f_obj_pos[2];
+					//		b = obj2.y - f_obj_pos[3];
+					//		sin = b/R; cos = a/R;
+//
+					//		vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx');
+					//		vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy');
+//
+					//		if(!obj.lck && !switcher.pause){
+					//			f_obj_pos[0] += vx;
+					//			f_obj_pos[1] += vy;
+					//			f_obj_pos[2] += f_obj_pos[0];
+					//			f_obj_pos[3] += f_obj_pos[1];
+					//		}
+					//		
+					//		ctx.beginPath();
+//
+					//		ctx.fillStyle = '#ffffff';
+					//		ctx.arc(f_obj_pos[2], f_obj_pos[3], Math.sqrt(obj.m), 0, 7);
+					//		ctx.fill();								
+					//	};			
+					//}
 					anim_cam[2] = false;
 				}
 				//alert(f_obj_pos[2] + '; ' + f_obj_pos[3]);
@@ -395,13 +396,21 @@ $('document').ready(function(){
 
 				R = rad(obj.x, obj.y, obj2.x, obj2.y);
 				
+
+				a = obj2.x - obj.x;
+				b = obj2.y - obj.y;
+				sin = b/R; cos = a/R;
+
+				vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx');
+				vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy');
+
 				if (R - (Math.sqrt(obj.m) + Math.sqrt(obj2.m)/2) <= 0){
 					if (obj.m >= obj2.m){
 						body[object].color = mixColors(body[object].color, obj2.color, body[object].m, obj2.m);
 						body[object].m += obj2.m;
 						if (!obj.lck){
-							body[object].vx = ((body[object].m * body[object].vx)+(obj2.m * obj2.vx))/(obj2.m+body[object].m);//(body[object].vx + obj2.vx)*(obj2.m/body[object].m);
-							body[object].vy = ((body[object].m * body[object].vy)+(obj2.m * obj2.vy))/(obj2.m+body[object].m);//(body[object].vy + obj2.vy)*(obj2.m/body[object].m);
+							body[object].vx = (obj.m*obj.vx+obj2.m*obj2.vx)/(obj.m+obj2.m);//((body[object].m * body[object].vx)+(obj2.m * obj2.vx))/(obj2.m+body[object].m);//(body[object].vx + obj2.vx)*(obj2.m/body[object].m);
+							body[object].vy = (obj.m*obj.vy+obj2.m*obj2.vy)/(obj.m+obj2.m);//((body[object].m * body[object].vy)+(obj2.m * obj2.vy))/(obj2.m+body[object].m);//(body[object].vy + obj2.vy)*(obj2.m/body[object].m);
 						}
 						delete body[i];
 
@@ -413,14 +422,6 @@ $('document').ready(function(){
 					}
 
 				}
-
-				a = obj2.x - obj.x;
-				b = obj2.y - obj.y;
-				sin = b/R; cos = a/R;
-
-				vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx');
-				vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy');
-
 				if(!obj.lck && !switcher.pause){
 					body[object].vx += vx;
 					body[object].vy += vy;
@@ -440,13 +441,26 @@ $('document').ready(function(){
 				b = obj2.y - obj.y;
 				sin = b/R; cos = a/R;
 
-				vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx');
-				vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy');
+				vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx', body_prev[object].m);
+				vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy', body_prev[object].m);
 
 				if(!obj.lck && !switcher.pause){
 					body[object].vx += vx;
 					body[object].vy += vy;
-				}			
+				}	
+				//ctx.beginPath();
+				//ctx.lineWidth = Math.sqrt(body[object].m);
+				//if (!obj.color){obj.color = 'gray';};
+				//ctx.strokeStyle = obj.color;
+				//ell_sin = body[object].vx / body[object].vy;
+				//ell_cos = body[object].vy / body[object].vx;
+				//V = gipot(body[object].vx, body[object].vy);
+				//Mu = 100000;
+				//M = (Math.pow(V, 2) / 2) - (Mu / R);//Mechanical Energy
+				//ell_a = 1 / ( 2/R - (V*V) / M );
+				//ctx.ellipse(body.earth.x + cam_x, body.earth.y + cam_y, Math.abs(ell_a), 250, 0, 0, 7);
+				//ctx.stroke();
+
 			};
 		}
 
@@ -490,7 +504,7 @@ $('document').ready(function(){
 		//ctx.beginPath();
 	};
 
-	function gravity_func(sin, cos, R, func_num, dir){
+	function gravity_func(sin, cos, R, func_num, dir, mass, user_func){
 		//Обратно-пропорционально квадрату расстояния
 		if (func_num == 1){
 			kff = obj2.m*10*t*t;
@@ -520,6 +534,10 @@ $('document').ready(function(){
 			kff = obj2.m*0.00001*t*t;
 			vx = kff*(cos*R);
 			vy = kff*(sin*R);
+		}
+		//Функция пользователя
+		if (user_func){
+			//
 		}
 		//Отправить вектор x
 		if (dir == 'vx'){
@@ -568,57 +586,67 @@ $('document').ready(function(){
 		}
 	}
 
-	function f_orbital_speed(px, py){
-		R = rad(px, py, body.earth.x, body.earth.y);
-		V = Math.sqrt((body.earth.m*10*t*t)*(R));
-		a = body.earth.x - px;
-		b = body.earth.y - py;
-		sin = b/R; cos = a/R;
-		svx = -(sin/V)*body.earth.m*10*t*t;
-		svy = (cos/V)*body.earth.m*10*t*t;
-		return [svx/t, svy/t];
+	function f_orbital_speed(px, py, obj){
+		if (obj){
+			R = rad(px, py, body.earth.x, body.earth.y);
+			V = Math.sqrt((body.earth.m*10*t*t)*(R));
+			a = body.earth.x - px;
+			b = body.earth.y - py;
+			sin = b/R; cos = a/R;
+			svx = -(sin/V)*body.earth.m*10*t*t;
+			svy = (cos/V)*body.earth.m*10*t*t;
+			return [svx/t, svy/t];		
+		} else {
+			return [0, 0];
+		}
 	}
 
 	function visual_select(mode, color) {
-		del_radius = [Infinity, '', 0];
-		if (mode == 2){
-			elem = '';
-			for (i in body){
-				elem = i;
-			}
-			del_radius[1] = elem;
-		}else{
-			for (let i in body){
-				r = rad(mouse_coords[0], mouse_coords[1], body[i].x + cam_x, body[i].y + cam_y);
-				if (r < del_radius[0] && mode == 0){
-					del_radius[0] = r;
-					del_radius[1] = i;
-				} else 
-				if (r > del_radius[2] && mode == 1){
-					del_radius[2] = r;
-					del_radius[1] = i;
+		obj_count = 0;
+		for (let i in body){
+			obj_count ++;
+		}
+		if (obj_count >= 1){
+			del_radius = [Infinity, '', 0];
+			if (mode == 2){
+				elem = '';
+				for (i in body){
+					elem = i;
+				}
+				del_radius[1] = elem;
+			}else{
+				for (let i in body){
+					r = rad(mouse_coords[0], mouse_coords[1], body[i].x + cam_x, body[i].y + cam_y);
+					if (r < del_radius[0] && mode == 0){
+						del_radius[0] = r;
+						del_radius[1] = i;
+					} else 
+					if (r > del_radius[2] && mode == 1){
+						del_radius[2] = r;
+						del_radius[1] = i;
+					}
 				}
 			}
-		}
 
-		if (switcher.del_pulse <= 5){
-			switcher.del_pulse_state = true;
-		} 
-		if (switcher.del_pulse >= 30){
-			switcher.del_pulse_state = false;
-		}
+			if (switcher.del_pulse <= 5){
+				switcher.del_pulse_state = true;
+			} 
+			if (switcher.del_pulse >= 30){
+				switcher.del_pulse_state = false;
+			}
 
-		if (switcher.del_pulse_state){
-			switcher.del_pulse += 1;
-		}else{
-			switcher.del_pulse -= 0.5;
-		}
+			if (switcher.del_pulse_state){
+				switcher.del_pulse += 1;
+			}else{
+				switcher.del_pulse -= 0.5;
+			}
 
-		ctx.beginPath();
-		ctx.fillStyle = color;
-		ctx.arc(body[del_radius[1]].x + cam_x, body[del_radius[1]].y + cam_y, Math.sqrt(body[del_radius[1]].m)+switcher.del_pulse, 0, 7);
-		ctx.fill();
-		ctx.beginPath();
+			ctx.beginPath();
+			ctx.fillStyle = color;
+			ctx.arc(body[del_radius[1]].x + cam_x, body[del_radius[1]].y + cam_y, Math.sqrt(body[del_radius[1]].m)+switcher.del_pulse, 0, 7);
+			ctx.fill();
+			ctx.beginPath();			
+		}
 	}
 
 	function obj_sp(point_x,point_y,ob_col){
@@ -634,7 +662,7 @@ $('document').ready(function(){
 				svy = ((mouse[1]-mouse[3])/30)*t;				
 			}
 			px = mouse[0]; py = mouse[1];
-			if ((Math.abs((mouse[0]-mouse[2]) <= 5 && Math.abs(mouse[1]-mouse[3]) <= 5) && obj_cirle_orbit) || (point_x && point_y)) {
+			if (((Math.abs(mouse[0]-mouse[2]) <= 5 && Math.abs(mouse[1]-mouse[3]) <= 5 && obj_cirle_orbit) || (point_x && point_y))&&body.earth) {
 				if (point_x && point_y){px = point_x; py = point_y;};
 				R = rad(px, py, body.earth.x, body.earth.y);
 				V = Math.sqrt((body.earth.m*10*t*t)*(R));
@@ -648,26 +676,32 @@ $('document').ready(function(){
 					svy = -svy;
 				}
 			}
+			if (!body.earth && (point_x && point_y)){
+				svx = 0; svy = 0;
+				px = mouse_coords[0]; py = mouse_coords[1];
+			}
 			body['ast'+num] = {'x': px - cam_x, 'y': py - cam_y, 'vx': svx, 'vy': svy, m: obj_radius, 'lck': false, 'color': obj_color};
 			spawn = false;
 		}
 	}
 	scale = 1;
-	document.addEventListener('wheel', function(e){
-		if (e.deltaY > 0){
-			scale += 0.2;
-		} else {
-			scale -= 0.2;
-		}
-		ctx.scale(scale, scale);
-	});
+
+	//Scene scale
+	//document.addEventListener('wheel', function(e){
+	//	if (e.deltaY > 0){
+	//		scale += 0.2;
+	//	} else {
+	//		scale -= 0.2;
+	//	}
+	//	ctx.scale(scale, scale);
+	//});
 
 	document.addEventListener('keydown', function(e){
 		//console.log(e.keyCode);
 
 		//delete
 		if (e.keyCode==68){
-			$('#delete').mouseup();
+			$('#delete').mousedown();
 		};
 
 		//Space button creato circle orbit object
@@ -684,46 +718,51 @@ $('document').ready(function(){
 
 		//create
 		if (e.keyCode == 67){
-			$('#create').mouseup();
+			$('#create').mousedown();
 		}
 
 		//timedown
 		if (e.keyCode == 188){
-			$('#timedown').mouseup();
+			$('#timedown').mousedown();
 		}
 
 		//play
 		if (e.keyCode == 191){
-			$('#play').mouseup();
+			$('#play').mousedown();
 		}
 
 		//timeup
 		if (e.keyCode == 190){
-			$('#timeup').mouseup();
+			$('#timeup').mousedown();
 		}
 
 		//move
 		if (e.keyCode == 77){
-			$('#move').mouseup();
+			$('#move').mousedown();
 		}
 
 		//pause
 		if (e.keyCode == 80){
-			$('#pause').mouseup();
+			$('#pause').mousedown();
 		}
 
 		//help
 		if (e.keyCode == 72){
-			$('#help').mouseup();
+			$('#help').mousedown();
 		}
 
 		//settings
 		if (e.keyCode == 83){
-			$('#sim_settings').mouseup();
+			$('#sim_settings').mousedown();
+		}
+
+		//camera
+		if (e.keyCode == 86){
+			$('#camera').mousedown();
 		}
 	});
 
-	$('.btn').mouseup(function(){
+	$('.btn').mousedown(function(){
 		//alert($(this).attr('id'));
 		pfb = mbut;
 		mbut = $(this).attr('id');
@@ -763,13 +802,13 @@ $('document').ready(function(){
 			}
 			change_state('camera');
 		} else
-		if (mbut == 'timedown' && simulation_refresh){
+		if (mbut == 'timedown'){
 			mbut = pfb;
 			pretime = times;
 			times /= 2;
 			tsw = true;
 		} else
-		if (mbut == 'pause' && simulation_refresh){
+		if (mbut == 'pause'){
 			mbut = pfb;
 			pretime = times;
 			tsw = true;
@@ -791,7 +830,7 @@ $('document').ready(function(){
 			change_state('play');
 			change_state_play = setTimeout(function(){change_state(pfb);}, 1000);
 		} else
-		if (mbut == 'timeup' && simulation_refresh){
+		if (mbut == 'timeup'){
 			mbut = pfb;
 			pretime = times;
 			times *= 2;
@@ -925,6 +964,10 @@ $('document').ready(function(){
 		return Math.random() * (max - min) + min;
 	}
 
+	$('.col_select').on('change', function(){
+		this.value = obj_color;
+	});
+
 	function randColor() {
 		var r = Math.floor(getRandomArbitrary(40, 255)),
 			g = Math.floor(getRandomArbitrary(40, 255)),
@@ -936,7 +979,10 @@ $('document').ready(function(){
 		g = g.length < 2 ? '0'+g.toString(16) : g.toString(16);
 		b = b.length < 2 ? '0'+b.toString(16) : b.toString(16);
 		color = '#' + r + g + b;
-		$('.col_select').attr({'value': color});
+		//$('#col_select').attr({'value': color});
+		$('.div_col_select').html('<input type=color class=col_select value='+color+
+			' id=col_select onchange="obj_color = this.value; sessionStorage[\'obj_color\'] = this.value;"\
+			 style="padding: 0; border: none; width: 76px; height: 30px;" onmouseout="this.blur();">');
 		return color;
 	}
 

@@ -81,7 +81,9 @@
 
 		<div class='option_item'>
 			<span>Цвет: </span>
-			<input type="color" class='col_select' onchange="obj_color = this.value; sessionStorage['obj_color'] = this.value;" style="padding: 0; border: none; width: 76px; height: 30px;" onmouseout="this.blur();">			
+			<div class="div_col_select">
+				<input type=color class=col_select value=#ffffff id=col_select onchange="obj_color = this.value; sessionStorage['obj_color'] = this.value;" style="padding: 0; border: none; width: 76px; height: 30px;" onmouseout="this.blur();">			
+			</div>
 		</div>
 
 		<div class='option_item'>
@@ -91,7 +93,7 @@
 
 		<div class='option_item'>
 			<span>Масса: </span>
-			<input type="number" class='radius_select' min='1' onchange="obj_radius = +this.value; sessionStorage['obj_radius'] = +this.value;">	
+			<input type="number" class='radius_select' min='0.1' onchange="obj_radius = +this.value; sessionStorage['obj_radius'] = +this.value;">	
 		</div>
 
 		<div class='option_item'>
