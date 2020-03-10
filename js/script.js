@@ -10,9 +10,12 @@ $('document').ready(function(){
 	pfb = mbut;
 	swt = false;
 	traj = true;
+	mov_obj = '';
 
 	cam_x = 0;
 	cam_y = 0;
+	prev_cam_x = 0;
+	prev_cam_y = 0;
 	anim_cam = [0, 0, true];
 
 	body = {
@@ -42,7 +45,7 @@ $('document').ready(function(){
 		sim_settings: false, gravit_mode: 1, r_gm: 1, interact: 0, ref_interact: 0,
 		lost_x: false, lost_y: false, camera: false};
 
-	swch = {s_track: false, t_object: false, prev_t_obj: false};
+	swch = {s_track: false, t_object: false, prev_t_obj: false, vis_traj: false};
 
 	if (sessionStorage['gravit_mode']){
 		switcher.gravit_mode = sessionStorage['gravit_mode'];
@@ -131,22 +134,36 @@ $('document').ready(function(){
 		//console.log(body.moon.vx+'  '+body.moon.vy);
 		mousedown = true;
 		mpos[0] = event.clientX; mpos[1] = event.clientY;
-		if (body.earth){
-			mpos[2] = body.earth.x; mpos[3] = body.earth.y;			
-		}
-		
 		mouse[0] = event.clientX; mouse[1] = event.clientY;
 		//if (mbut == 'create'){
 		//	clearInterval(simulation_refresh);
 		//}
 		if (mbut == 'create'){
-			switcher.trajectory_ref = true;
 			if (obj_rand_color){
 				obj_color = randColor();
 			};		
 			switcher.f_speed = f_orbital_speed(mouse[0], mouse[1], 'earth');
 			$('.power_need').html("*Для круговой орбиты, нужно примерно: "+ Math.round(Math.sqrt(switcher.f_speed[0]*switcher.f_speed[0] + switcher.f_speed[1]*switcher.f_speed[1])*30)+"*");
 		};
+		//Перемещение ближайшео объекта
+		if (mbut == 'move'){
+			mov_radius = [Infinity, '', 0];
+			for (let i in body){
+				r = rad(mouse_coords[0], mouse_coords[1], body[i].x + cam_x, body[i].y + cam_y);
+				if (r < mov_radius[0]){
+					mov_radius[0] = r;
+					mov_radius[1] = i;
+				}
+			}
+			mov_obj = mov_radius[1];
+			delete mov_radius;
+		}
+
+		if (body[mov_obj]){
+			mpos[2] = body[mov_obj].x; mpos[3] = body[mov_obj].y; //Координаты перемещяемого объекта
+			mpos[4] = body[mov_obj].vx; mpos[5] = body[mov_obj].vy;	// Вектор перемещяемого объекта
+			body[mov_obj].vx = 0; body[mov_obj].vy = 0;
+		}
 	});
 	$('#canvas').mouseup(function(e){
 		$('.power').css({display: 'none'});
@@ -192,6 +209,12 @@ $('document').ready(function(){
 			timeout = setTimeout(function(){$('.deleted').animate({right: -300});}, 2000);
 		}
 
+		if (mbut == 'move' && body[mov_obj]){
+			body[mov_obj].vx = mpos[4];
+			body[mov_obj].vy = mpos[5];
+			mov_obj = '';
+		}
+
 		if (switcher.lost_x && switcher.lost_y){		
 			ctx.strokeStyle = '#000';
 			ctx.lineWidth = Math.sqrt(obj_radius)*2+1;
@@ -204,6 +227,7 @@ $('document').ready(function(){
 		if (mbut == 'create'){
 			//if (!switcher.pause){simulation_refresh = setInterval(frame, speed);};
 			spawn = true;
+			swch.vis_traj = false;
 			obj_sp(false, false, obj_color);
 
 			switcher.trajectory_ref = false;
@@ -254,10 +278,12 @@ $('document').ready(function(){
 	document.onmousemove = function(){
 
 		switcher.move = false;
-		if (mousedown && mbut == 'move'){
+		if (mousedown && mbut == 'move' && mov_obj){
 			switcher.move = true;
-			body.earth.x = event.clientX - mpos[0] + mpos[2];
-			body.earth.y = event.clientY - mpos[1] + mpos[3];
+			if (body[mov_obj]){
+				body[mov_obj].x = event.clientX - mpos[0] + mpos[2];
+				body[mov_obj].y = event.clientY - mpos[1] + mpos[3];				
+			}
 		}
 
 		mouse_coords[0] = event.clientX;
@@ -278,7 +304,7 @@ $('document').ready(function(){
 		t = times;
 		body_prev = JSON.parse(JSON.stringify(body));
 
-		if (mbut == 'delete' || switcher.move || mbut == 'move' || mbut == 'camera' || swch.t_object){clear('#000');}else{if(!switcher.trajectory_ref){clear();};}
+		if (mbut == 'delete' || switcher.move || mbut == 'move' || mbut == 'camera' || swch.vis_traj){clear('#000');}else{if(!switcher.trajectory_ref){clear();};}
 
 		visual_trajectory();
 
@@ -298,75 +324,43 @@ $('document').ready(function(){
 			}
 			tsw = false;
 		}
-
+		//Анимация перехода камеры
 		if (swch.t_object != swch.prev_t_obj){
-			switcher.pause = true;
-			crds = [0,0,0,0,0,0];
-			if (body[swch.t_object]){
-				if (anim_cam[2]){
-					f_obj_pos = [body[swch.t_object].vx, body[swch.t_object].vy, body[swch.t_object].x, body[swch.t_object].y];
-					object = swch.t_object;
-					//for (let n = 0; n < 20; n++){					
-					//	if (object != 'earth'){
-					//		obj2 = body['earth'];
-					//		obj = body[object];
-//
-					//		R = rad(obj.x, obj.y, obj2.x, obj2.y);
-					//		
-					//		a = obj2.x - f_obj_pos[2];
-					//		b = obj2.y - f_obj_pos[3];
-					//		sin = b/R; cos = a/R;
-//
-					//		vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx');
-					//		vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy');
-//
-					//		if(!obj.lck && !switcher.pause){
-					//			f_obj_pos[0] += vx;
-					//			f_obj_pos[1] += vy;
-					//			f_obj_pos[2] += f_obj_pos[0];
-					//			f_obj_pos[3] += f_obj_pos[1];
-					//		}
-					//		
-					//		ctx.beginPath();
-//
-					//		ctx.fillStyle = '#ffffff';
-					//		ctx.arc(f_obj_pos[2], f_obj_pos[3], Math.sqrt(obj.m), 0, 7);
-					//		ctx.fill();								
-					//	};			
-					//}
-					anim_cam[2] = false;
-				}
-				//alert(f_obj_pos[2] + '; ' + f_obj_pos[3]);
-				//alert(body[swch.t_object].x + '; ' + body[swch.t_object].x);
-				crds[0] = f_obj_pos[2];
-				crds[1] = f_obj_pos[3];
-			} else {
-				crds[0] = window.innerWidth/2;
-				crds[1] = window.innerHeight/2;
+			switcher.pause = true; //Пауза
+			crds = [0,0,0,0,0,0];//Координаты и расстояния
+			if (body[swch.t_object]){ //Если целевой объект существует
+				crds[0] = body[swch.t_object].x; //Координаты целевого объекта по x
+				crds[1] = body[swch.t_object].y; //Координаты целевого объекта по y
+			} else { //Если нет
+				crds[0] = window.innerWidth/2; //Цель - центр окна
+				crds[1] = window.innerHeight/2; //Цель - центр окна
 			}
-			if (body[swch.prev_t_obj]){
-				crds[2] = body[swch.prev_t_obj].x;
-				crds[3] = body[swch.prev_t_obj].y;
-			} else {
-				crds[2] = window.innerWidth/2;
-				crds[3] = window.innerHeight/2;
-			}
-			crds[4] = crds[0] - crds[2];
-			crds[5] = crds[1] - crds[3];
-			crds[7] = crds[5]/20;
-			crds[6] = crds[4]/20;
+			if (body[swch.prev_t_obj]){ //Если предыдущий целевой объект существует
+				crds[2] = body[swch.prev_t_obj].x; //Координаты предыдущео целевого объекта
+				crds[3] = body[swch.prev_t_obj].y; //Координаты предыдущео целевого объекта
+			} else { //Если нет
+				crds[2] = window.innerWidth/2; //Цель - центр окна
+				crds[3] = window.innerHeight/2; //Цель - центр окна
+			};
+			crds[4] = crds[0] - crds[2]; //Расстояние между предыдущим целевым и целевым объектом по x
+			crds[5] = crds[1] - crds[3]; //Расстояние между предыдущим целевым и целевым объектом по y
+			crds[7] = crds[5]/20; //Размер шага анимации
+			crds[6] = crds[4]/20; //Размер шага анимации
 
-			anim_cam[0] -= crds[6];
-			anim_cam[1] -= crds[7];
+			anim_cam[0] -= crds[6]; //Шаг анимации
+			anim_cam[1] -= crds[7]; //Шаг анимации
 
-			if (Math.abs(anim_cam[0]) > Math.abs(crds[4])){
+			if (Math.abs(anim_cam[0]) > Math.abs(crds[4]) || Math.abs(anim_cam[0]) == 0){ //Конец анимации
 				swch.prev_t_obj = swch.t_object;
 				anim_cam[0] = 0;
 				anim_cam[1] = 0;
 				anim_cam[2] = true;
-				switcher.pause = false;
+				switcher.pause = false; //Снимается пауза
 			}
 		}
+
+		prev_cam_x = cam_x;
+		prev_cam_y = cam_y;
 
 		if (swch.prev_t_obj && body[swch.prev_t_obj]){
 			cam_x = (window.innerWidth / 2) - (body[swch.prev_t_obj].x + body[swch.prev_t_obj].vx) + anim_cam[0];
@@ -388,6 +382,10 @@ $('document').ready(function(){
 		if (mbut == 'camera' && cbut == 'select_track' && swch.s_track){
 			visual_select(0, '#0af6');
 		}
+
+		if (mbut == 'move'){
+			visual_select(0, '#bbb6', mov_obj);
+		}
 	}
 
 	function refresh(object){
@@ -399,7 +397,6 @@ $('document').ready(function(){
 
 				R = rad(obj.x, obj.y, obj2.x, obj2.y);
 				
-
 				a = obj2.x - obj.x;
 				b = obj2.y - obj.y;
 				sin = b/R; cos = a/R;
@@ -412,20 +409,21 @@ $('document').ready(function(){
 						body[object].color = mixColors(body[object].color, obj2.color, body[object].m, obj2.m);
 						body[object].m += obj2.m;
 						if (!obj.lck){
-							body[object].vx = (obj.m*obj.vx+obj2.m*obj2.vx)/(obj.m+obj2.m);//((body[object].m * body[object].vx)+(obj2.m * obj2.vx))/(obj2.m+body[object].m);//(body[object].vx + obj2.vx)*(obj2.m/body[object].m);
-							body[object].vy = (obj.m*obj.vy+obj2.m*obj2.vy)/(obj.m+obj2.m);//((body[object].m * body[object].vy)+(obj2.m * obj2.vy))/(obj2.m+body[object].m);//(body[object].vy + obj2.vy)*(obj2.m/body[object].m);
+							body[object].vx = (obj.m*obj.vx+obj2.m*obj2.vx)/(obj.m+obj2.m);//Формула абсолютно-неупругого столкновения
+							body[object].vy = (obj.m*obj.vy+obj2.m*obj2.vy)/(obj.m+obj2.m);//Формула абсолютно-неупругого столкновения
+							//((body[object].m * body[object].vx)+(obj2.m * obj2.vx))/(obj2.m+body[object].m);
+							//((body[object].m * body[object].vy)+(obj2.m * obj2.vy))/(obj2.m+body[object].m);
 						}
+
 						delete body[i];
-
 						show_obj_count();
-
 						continue;
 					}else{
 						continue;
-					}
 
+					}
 				}
-				if(!obj.lck && !switcher.pause){
+				if(!obj.lck && !switcher.pause && !(mbut == 'move' && mousedown && object == mov_obj)){
 					body[object].vx += vx;
 					body[object].vy += vy;
 				}	
@@ -435,10 +433,7 @@ $('document').ready(function(){
 			if (object != 'earth'){
 				obj2 = body_prev['earth'];
 
-				//alert(object+';'+i);
-
 				R = rad(obj.x, obj.y, obj2.x, obj2.y);
-				//alert(R);
 
 				a = obj2.x - obj.x;
 				b = obj2.y - obj.y;
@@ -447,10 +442,29 @@ $('document').ready(function(){
 				vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx', body_prev[object].m);
 				vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy', body_prev[object].m);
 
-				if(!obj.lck && !switcher.pause){
+				if (R - (Math.sqrt(obj.m) + Math.sqrt(obj2.m)/2) <= 0){
+					if (obj.m >= obj2.m){
+						body[object].color = mixColors(body[object].color, obj2.color, body[object].m, obj2.m);
+						body[object].m += obj2.m;
+						if (!obj.lck){
+							body[object].vx = ( obj.m*obj.vx + obj2.m*obj2.vx )/( obj.m + obj2.m );//Формула абсолютно-неупругого столкновения
+							body[object].vy = ( obj.m*obj.vy + obj2.m*obj2.vy )/( obj.m + obj2.m );//Формула абсолютно-неупругого столкновения
+							//((body[object].m * body[object].vx)+(obj2.m * obj2.vx))/(obj2.m+body[object].m);
+							//((body[object].m * body[object].vy)+(obj2.m * obj2.vy))/(obj2.m+body[object].m);
+						}
+						delete body[i];
+						show_obj_count();
+						//
+
+					}else{
+						//
+					}
+				}
+				if(!obj.lck && !switcher.pause && !(mbut == 'move' && mousedown && object == mov_obj)){
 					body[object].vx += vx;
 					body[object].vy += vy;
-				}	
+				}
+				//Эллипс	
 				//ctx.beginPath();
 				//ctx.lineWidth = Math.sqrt(body[object].m);
 				//if (!obj.color){obj.color = 'gray';};
@@ -474,8 +488,8 @@ $('document').ready(function(){
 		//cam_x = 0;
 		//cam_y = 0;
 		if (!switcher.pause){
-			prev_x = body[object].x;
-			prev_y = body[object].y;
+			prev_x = body[object].x + prev_cam_x;
+			prev_y = body[object].y + prev_cam_y;
 
 			if(!obj.lck && !switcher.pause){
 				body[object].x += body[object].vx;
@@ -485,13 +499,13 @@ $('document').ready(function(){
 			if (swch.prev_t_obj != object){
 				ctx.beginPath();
 				ctx.fillStyle = obj.color;
-				ctx.arc(prev_x + cam_x, prev_y + cam_y, Math.sqrt(obj.m), 0, 7);
+				ctx.arc(prev_x, prev_y, Math.sqrt(obj.m), 0, 7);
 				ctx.fill();
 
 				ctx.strokeStyle = body[object].color;
 				ctx.lineWidth = Math.sqrt(body[object].m)*2;
 				ctx.beginPath();
-				ctx.moveTo(prev_x + cam_x, prev_y + cam_y);
+				ctx.moveTo(prev_x, prev_y);
 				ctx.lineTo(body[object].x + cam_x, body[object].y + cam_y);
 				ctx.stroke();			
 			}
@@ -555,8 +569,9 @@ $('document').ready(function(){
 	function visual_trajectory(){
 		if (mousedown && mbut == 'create'){
 			//clear('#000');
-			if (switcher.trajectory_ref && !(Math.abs(mouse[0]-mouse_coords[0]) <= 5 && Math.abs(mouse[1]-mouse_coords[1]) <= 5)){
+			if (!(Math.abs(mouse[0]-mouse_coords[0]) <= 5 && Math.abs(mouse[1]-mouse_coords[1]) <= 5)){
 				clear('#000000');
+				swch.vis_traj = true;
 				$('.power').css({left: mouse_coords[0]-10, top: mouse_coords[1]-30, display: 'block', color: obj_color});
 				$('.power').html(Math.round(rad(mouse[0], mouse[1], mouse_coords[0], mouse_coords[1])));
 				if (!switcher.f_need_speed){
@@ -604,31 +619,35 @@ $('document').ready(function(){
 		}
 	}
 
-	function visual_select(mode, color) {
+	function visual_select(mode, color, object = '') {
 		obj_count = 0;
 		for (let i in body){
 			obj_count ++;
 		}
 		if (obj_count >= 1){
 			del_radius = [Infinity, '', 0];
-			if (mode == 2){
-				elem = '';
-				for (i in body){
-					elem = i;
-				}
-				del_radius[1] = elem;
-			}else{
-				for (let i in body){
-					r = rad(mouse_coords[0], mouse_coords[1], body[i].x + cam_x, body[i].y + cam_y);
-					if (r < del_radius[0] && mode == 0){
-						del_radius[0] = r;
-						del_radius[1] = i;
-					} else 
-					if (r > del_radius[2] && mode == 1){
-						del_radius[2] = r;
-						del_radius[1] = i;
+			if (!body[object]){
+				if (mode == 2){
+					elem = '';
+					for (i in body){
+						elem = i;
 					}
-				}
+					del_radius[1] = elem;
+				}else{
+					for (let i in body){
+						r = rad(mouse_coords[0], mouse_coords[1], body[i].x + cam_x, body[i].y + cam_y);
+						if (r < del_radius[0] && mode == 0){
+							del_radius[0] = r;
+							del_radius[1] = i;
+						} else 
+						if (r > del_radius[2] && mode == 1){
+							del_radius[2] = r;
+							del_radius[1] = i;
+						}
+					}
+				}			
+			} else {
+				del_radius[1] = object;
 			}
 
 			if (switcher.del_pulse <= 5){
@@ -774,7 +793,6 @@ $('document').ready(function(){
 			mbut = pfb;
 		} else
 		if (mbut == 'create'){
-			if (pfb == 'delete'){clear('#000');};
 			if (switcher.create){
 				$('.menu_options').css('display', 'none');
 				switcher.create = false;
@@ -794,7 +812,6 @@ $('document').ready(function(){
 			mbut = pfb;	
 		} else
 		if (mbut == 'camera'){
-			if (pfb == 'delete'){clear('#000');};
 			if (switcher.camera){
 				$('.camera_menu').css('display', 'none');
 				switcher.camera = false;
@@ -872,7 +889,6 @@ $('document').ready(function(){
 			}
 		}else
 		if (mbut == 'help'){
-			if (pfb == 'delete'){clear('#000');};
 			if (switcher.help){
 				$('.help_menu').css('display', 'none');
 				switcher.help = false;
@@ -884,7 +900,6 @@ $('document').ready(function(){
 			change_state('help');
 		}else
 		if (mbut == 'sim_settings'){
-			if (pfb == 'delete'){clear('#000');};
 			if (switcher.sim_settings){
 				$('.sim_settings').css('display', 'none');
 				switcher.sim_settings = false;			
@@ -895,6 +910,8 @@ $('document').ready(function(){
 			}
 			change_state('settings');
 		}
+
+		if (pfb == 'move' || pfb == 'delete' || pfb == 'camera'){clear('#000');};
 
 		$('#'+pfb).css({background: 'none'});
 		$('#'+mbut).css({background: '#fff2'});
