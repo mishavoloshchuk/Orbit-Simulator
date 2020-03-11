@@ -57,6 +57,7 @@ input {
 	top: 0;
 	padding: 1px;
 	max-height: 85%;
+	max-width: 80%;
 	overflow: auto;
 	background-color: #3E3E3EAA;
 	border: 1px solid #aaa2;
@@ -180,6 +181,7 @@ input {
 	justify-content: center;
 	border-radius: 1em;
 	margin: 5px 0;
+	text-shadow: none;
 }
 
 .menu_close:hover {
@@ -195,7 +197,7 @@ input {
 	display: inline-block;
 	position: absolute;
 	right: 10px;
-	top: 50px;
+	top: 10px;
 	right: : 10px;
 	opacity: 0.5;
 	width: 100px;
@@ -262,6 +264,7 @@ input {
 	background-color: #aaa2;
 	border-radius: 1em;
 	padding: 0.5em 1em;
+	text-shadow: none;
 }
 
 .button:hover {

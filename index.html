@@ -19,6 +19,10 @@
 			<img src="/ico/delete.png" alt="delete" title="Удалить обьект">
 		</div>
 
+		<div class="btn" id='edit'>
+			<img src="/ico/edit.png" alt="edit" title="Редактировать обьект">
+		</div>
+
 		<div class="btn" id='timedown'>
 			<img src="/ico/speeddown.png" alt="Time speed down" title="Замедлить">
 		</div>
@@ -106,6 +110,11 @@
 			<input type="checkbox" class="orbit_select checkbox" onchange="obj_cirle_orbit = this.checked; sessionStorage['obj_cirle_orbit'] = this.checked;" onmouseout="this.blur();">		
 		</div>
 
+		<div class='option_item'>
+			<span>Неподвижный: </span>
+			<input type="checkbox" class="checkbox" onchange="obj_lck = this.checked;" onmouseout="this.blur();">		
+		</div>
+
 		<div class='option_item menu_close e0' style="border-bottom: none;">
 			<div>Закрыть</div>
 		</div>
@@ -135,6 +144,51 @@
 		</div>
 
 		<div class='option_item menu_close e1' style="border-bottom: none;">
+			<div>Закрыть</div>
+		</div>
+
+	</div>
+	<!--Edit menu-->
+	<div class="edit_menu menu_pos_size menu_pos menu_max_s" id="edit_menu">
+		<div class='option_item title_option_item'>
+			<span>Редактиование свойств обьекта:</span>
+		</div>
+
+		<div class='option_item'>
+			<div class="button" id="select_edit_obj">
+				<span>Выбрать объект</span>
+			</div>	
+		</div>
+
+		<div class='option_item'>
+			<span>Цвет: </span>
+			<div class="div_col_edit">
+				<input type="color" id="col_edit" style="padding: 0; border: none; width: 76px; height: 30px;" onmouseout="this.blur();">	
+			</div>
+		</div>
+
+		<div class='option_item'>
+			<span>Масса: </span>
+			<div class="edit_mass_div">
+				<input type="number" class='radius_select' id='mass_edit' min='0.1'>
+			</div>		
+		</div>
+
+		<div class='option_item'>
+			<span>Неподвижный: </span>
+			<div class="lck_edit_div">
+				<input type="checkbox" class='checkbox' id='check_edit_lck' onchange="" onmouseout="this.blur();">
+			</div>
+			
+		</div>
+
+		<div class='option_item'>
+			<div class="button" id="reset_speed_btn">
+				<span>Обнулить скорость</span>
+			</div>	
+		</div>
+
+		<div class='option_item menu_close e0' style="border-bottom: none;">
 			<div>Закрыть</div>
 		</div>
 
@@ -216,15 +270,6 @@
 			</form>					
 		</div>
 
-		<div class='option_item title_option_item'>
-			<span>Главный обьект:</span>
-		</div>
-		<div class='option_item check_menu' style="border: none;">
-			<span>Неподвижный: </span>
-			<input type="checkbox" class='master_object_lock checkbox' onchange="sessionStorage['master_object_lock'] = this.checked; earth_lck.lck = this.checked;" onmouseout="this.blur();">			
-		</div>
-
-
 		<div class='option_item menu_close e1' style="border-bottom: none;">
 			<div>Закрыть</div>
 		</div>		
@@ -266,7 +311,7 @@
 	</div>
 
 	<div class="power">
-		140
+		0
 	</div>
 
 	<div class="power_need">
