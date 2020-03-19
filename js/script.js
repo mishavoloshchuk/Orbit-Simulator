@@ -12,6 +12,8 @@ $('document').ready(function(){
 	swt = false;
 	traj = true;
 	mov_obj = '';
+	ref_sped = 1;
+	new_obj_param = [0,0,0,0];
 
 	cam_x = 0;
 	cam_y = 0;
@@ -20,7 +22,8 @@ $('document').ready(function(){
 	anim_cam = [0, 0, true];
 
 	body = {
-		'earth': {'x':window.innerWidth/2, 'y': window.innerHeight/2, 'vx': 0, 'vy': 0, m: 1000, 'color': '#ffff00', 'lck': true},
+		'earth': {x:window.innerWidth/2, y: window.innerHeight/2, vx: 0, vy: 0, m: 1000, color: '#ffff00', lck: true},
+		//'ast': {x:window.innerWidth/2 - 300, y: window.innerHeight/2, vx: 0, vy: 5, m: 100, color: randColor(), lck: false},
 		//'earth2': {'x':0, 'y': window.innerHeight/2, 'vx': 1, 'vy': 3, m: 100, 'color': '#ffff00', 'lck': false},
 	};
 
@@ -41,7 +44,7 @@ $('document').ready(function(){
 	}
 
 	switcher = {create: true, delete: false, del_radio: 0, 
-		del_pulse: 10, del_pulse_state: false, pause: false, trajectory_ref: false, music: false,
+		del_pulse: 10, del_pulse_state: false, pause: false, pause2: false, trajectory_ref: false, music: false,
 		obj_count: obj_count, help: false, f_speed: 0, f_need_speed: false, device: 'desktop',
 		sim_settings: false, gravit_mode: 1, r_gm: 1, interact: 0, ref_interact: 0,
 		lost_x: false, lost_y: false, camera: false, edit: false};
@@ -94,7 +97,9 @@ $('document').ready(function(){
 
 	//speed = 16;
 	//let simulation_refresh = setInterval(frame, speed);
-	window.requestAnimationFrame(frame);
+	for (let i = 0; i < 1; i++){
+		window.requestAnimationFrame(frame);	
+	}
 
 	G = 0.05;
 	mousedown = false;
@@ -107,7 +112,6 @@ $('document').ready(function(){
 	function clear(col = '#00000004'){
 		if (!traj){col = '#000';}
 		ctx.fillStyle = col;
-		//ctx.beginPath();
 		ctx.fillRect(0, 0, canv.width, canv.height);
 	}
 
@@ -144,7 +148,7 @@ $('document').ready(function(){
 		if (mbut == 'create'){
 			if (obj_rand_color){
 				obj_color = randColor();
-			};		
+			};
 			switcher.f_speed = f_orbital_speed(mouse[0], mouse[1], 'earth');
 			$('.power_need').html("*Для круговой орбиты, нужно примерно: "+ Math.round(Math.sqrt(switcher.f_speed[0]*switcher.f_speed[0] + switcher.f_speed[1]*switcher.f_speed[1])*30)+"*");
 		};
@@ -280,7 +284,9 @@ $('document').ready(function(){
 			//if (!switcher.pause){simulation_refresh = setInterval(frame, speed);};
 			spawn = true;
 			swch.vis_traj = false;
-			obj_sp(false, false, obj_color);
+			//clear('#000');
+			//obj_sp(new_obj_param[0], new_obj_param[1], obj_color, new_obj_param[2], new_obj_param[3]);
+			//obj_sp(false, false, obj_color);
 
 			switcher.trajectory_ref = false;
 			ctx.beginPath();
@@ -341,7 +347,6 @@ $('document').ready(function(){
 		mouse_coords[0] = event.clientX;
 		mouse_coords[1] = event.clientY;
 
-
 	};
 
 	function rad(x1, y1, x2, y2){
@@ -354,11 +359,30 @@ $('document').ready(function(){
 	function frame(){
 		window.requestAnimationFrame(frame);
 		t = times;
-		body_prev = JSON.parse(JSON.stringify(body));
 
 		if (mbut == 'delete' || switcher.move || mbut == 'move' || mbut == 'camera' || swch.s_edit || swch.vis_traj){clear('#000');}else{if(!switcher.trajectory_ref){clear();};}
 
-		visual_trajectory();
+		if (mbut == 'create' && mousedown){
+			if (!switcher.pause){
+				switcher.pause = true;
+				switcher.traj_pause = true;				
+			}
+			visual_trajectory();
+			obj_for_traj = {x: mouse[0], y: mouse[1], vx: ((mouse[0]-mouse_coords[0])/30)*t, vy: ((mouse[1]-mouse_coords[1])/30)*t, m: obj_radius, color: obj_color, lck: obj_lck};
+			//console.log(obj_for_traj);
+			if (!(Math.abs(mouse[0]-mouse_coords[0])<5&&Math.abs(mouse[1]-mouse_coords[1])<5)){
+				traj_prev(obj_for_traj, 100, '#ffffff33', true);
+			};
+		}
+
+		if (mbut == 'create' && !mousedown){
+			if (switcher.traj_pause){
+				switcher.pause = false;
+				delete switcher.traj_pause;
+			} else {
+
+			}		
+		}
 
 		if (switcher.interact != switcher.ref_interact){
 			switcher.ref_interact = switcher.interact;
@@ -426,10 +450,20 @@ $('document').ready(function(){
 		for (let i in body){
 			body_length ++;
 		}
-		if (body_length > 0){
-			for (let i in body){	
-				refresh(i);
-				//body = JSON.parse(JSON.stringify(body_prev));
+		if (switcher.pause){switcher.pause2 = true};
+		if (!switcher.pause){switcher.pause2 = false};
+		if (!switcher.pause){
+			if (spawn){
+				obj_sp(new_obj_param[0], new_obj_param[1], obj_color, new_obj_param[2], new_obj_param[3]);
+			}		
+		}
+		for (let i = 0; i < ref_sped; i++){
+			body_prev = JSON.parse(JSON.stringify(body));
+			if (body_length > 0){
+				for (let obj in body){	
+					//traj_prev(obj, 200, '#ffffff33');
+					refresh(obj);
+				}			
 			}			
 		}
 
@@ -454,7 +488,7 @@ $('document').ready(function(){
 		body_length = 0; for (let i in body){body_length ++;};
 
 		obj = body_prev[object];
-		if(switcher.ref_interact == 0 && !switcher.pause && body_length > 1){
+		if(switcher.ref_interact == 0 && !switcher.pause2 && body_length > 1){
 			for (let i in body){
 				if (i == object){continue;};
 				obj2 = body_prev[i];
@@ -465,13 +499,18 @@ $('document').ready(function(){
 				b = obj2.y - obj.y;
 				sin = b/R; cos = a/R;
 
-				vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx');
-				vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy');
+				vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx', obj2.m);
+				vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy', obj2.m);
+
+				if(!obj.lck && !switcher.pause2 && !(mbut == 'move' && mousedown && object == mov_obj)){
+					body[object].vx += vx;
+					body[object].vy += vy;
+				}
 
 				if (R - (Math.sqrt(obj.m) + Math.sqrt(obj2.m)/2) <= 0){
 					if (obj.m >= obj2.m){
-						body[object].color = mixColors(body[object].color, obj2.color, body[object].m, obj2.m);
-						body[object].m = Math.round((body[object].m + obj2.m)*1000)/1000;
+						body[object].color = mixColors(obj.color, obj2.color, obj.m, obj2.m);
+						body[object].m = Math.round((obj.m + obj2.m)*1000)/1000;
 						if (!obj.lck){
 							body[object].vx = (obj.m*obj.vx+obj2.m*obj2.vx)/(obj.m+obj2.m);//Формула абсолютно-неупругого столкновения
 							body[object].vy = (obj.m*obj.vy+obj2.m*obj2.vy)/(obj.m+obj2.m);//Формула абсолютно-неупругого столкновения
@@ -487,13 +526,9 @@ $('document').ready(function(){
 
 					}
 				}
-				if(!obj.lck && !switcher.pause && !(mbut == 'move' && mousedown && object == mov_obj)){
-					body[object].vx += vx;
-					body[object].vy += vy;
-				}	
 			}
 		}
-		if (switcher.ref_interact == 1 && body_prev['earth'] && !switcher.pause && body_length > 1){
+		if (switcher.ref_interact == 1 && body_prev['earth'] && !switcher.pause2 && body_length > 1){
 			if (object != 'earth' && body[object]){
 				obj2 = body_prev['earth'];
 
@@ -503,8 +538,13 @@ $('document').ready(function(){
 				b = obj2.y - obj.y;
 				sin = b/R; cos = a/R;
 
-				vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx', body_prev[object].m);
-				vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy', body_prev[object].m);
+				vx = Math.round(gravity_func(sin, cos, R, switcher.r_gm, 'vx', obj2.m)*100000)/100000;
+				vy = Math.round(gravity_func(sin, cos, R, switcher.r_gm, 'vy', obj2.m)*100000)/100000;
+
+				if(!obj.lck && !switcher.pause2 && !(mbut == 'move' && mousedown && object == mov_obj)){
+					body[object].vx += vx;
+					body[object].vy += vy;
+				}
 
 				//Столкновение в режиме взаемодействия с главным объектом
 				//if (R - (Math.sqrt(obj.m) + Math.sqrt(obj2.m)/2) <= 0){
@@ -525,10 +565,6 @@ $('document').ready(function(){
 				//		//
 				//	}
 				//}
-				if(!obj.lck && !switcher.pause && !(mbut == 'move' && mousedown && object == mov_obj)){
-					body[object].vx += vx;
-					body[object].vy += vy;
-				}
 				//Эллипс	
 				//ctx.beginPath();
 				//ctx.lineWidth = Math.sqrt(body[object].m);
@@ -546,29 +582,23 @@ $('document').ready(function(){
 			};
 		}
 
-		//ctx.beginPath();
-		//ctx.fillStyle = '#0005';
-		//ctx.arc(obj.x, obj.y, Math.sqrt(obj.m), 0, 7);
-		//ctx.fill();
-		//cam_x = 0;
-		//cam_y = 0;
-		if (!switcher.pause){
-			prev_x = body[object].x + prev_cam_x;
-			prev_y = body[object].y + prev_cam_y;
+		prev_x = body[object].x + prev_cam_x;
+		prev_y = body[object].y + prev_cam_y;
 
-			if(!obj.lck && !switcher.pause){
-				body[object].x += body[object].vx;
-				body[object].y += body[object].vy;
-			}
+		if(!obj.lck && !switcher.pause2){
+			body[object].x += body[object].vx;
+			body[object].y += body[object].vy;
+		}
 
+		if (!switcher.pause2){
 			if (swch.prev_t_obj != object){
 				ctx.beginPath();
 				ctx.fillStyle = obj.color;
 				ctx.arc(prev_x, prev_y, Math.sqrt(obj.m), 0, 7);
 				ctx.fill();
 
-				ctx.strokeStyle = body[object].color;
-				ctx.lineWidth = Math.sqrt(body[object].m)*2;
+				ctx.strokeStyle = obj.color;
+				ctx.lineWidth = Math.sqrt(obj.m)*2;
 				ctx.beginPath();
 				ctx.moveTo(prev_x, prev_y);
 				ctx.lineTo(body[object].x + cam_x, body[object].y + cam_y);
@@ -589,31 +619,31 @@ $('document').ready(function(){
 	function gravity_func(sin, cos, R, func_num, dir, mass, user_func){
 		//Обратно-пропорционально квадрату расстояния
 		if (func_num == 1){
-			kff = obj2.m*10*t*t;
+			kff = mass*10*t*t;
 			vx = kff*(cos/(R*R));//(obj2.x-obj.x)/10000;//~1;
 			vy = kff*(sin/(R*R));//(obj2.y-obj.y)/10000;//~-0.522;
 		}
 		//Обранто-пропорционально кубу расстояния
 		if (func_num == 0){
-			kff = obj2.m*1000*t*t;
+			kff = mass*1000*t*t;
 			vx = kff*(cos/(R*R*R));
 			vy = kff*(sin/(R*R*R));
 		}
 		//Обранто-пропорционально расстоянию
 		if (func_num == 2){
-			kff = obj2.m*0.1*t*t;
+			kff = mass*0.1*t*t;
 			vx = kff*(cos/R);
 			vy = kff*(sin/R);
 		}
 		//Постоянное притяжение
 		if (func_num == 3){
-			kff = obj2.m*0.001*t*t;
+			kff = mass*0.001*t*t;
 			vx = kff*(cos);
 			vy = kff*(sin);
 		}
 		//Пропорционально расстоянию
 		if (func_num == 4){
-			kff = obj2.m*0.00001*t*t;
+			kff = mass*0.00001*t*t;
 			vx = kff*(cos*R);
 			vy = kff*(sin*R);
 		}
@@ -632,41 +662,39 @@ $('document').ready(function(){
 	}
 
 	function visual_trajectory(){
-		if (mousedown && mbut == 'create'){
-			//clear('#000');
-			if (!(Math.abs(mouse[0]-mouse_coords[0]) <= 5 && Math.abs(mouse[1]-mouse_coords[1]) <= 5)){
-				clear('#000000');
-				swch.vis_traj = true;
-				$('.power').css({left: mouse_coords[0]-10, top: mouse_coords[1]-30, display: 'block', color: obj_color});
-				$('.power').html(Math.round(rad(mouse[0], mouse[1], mouse_coords[0], mouse_coords[1])));
-				if (!switcher.f_need_speed){
-					if (switcher.gravit_mode == 1 && (swch.t_object == false || (swch.t_object == 'earth' && body.earth.lck))){					
-						$('.power_need').css({display: 'block'});
-					}
-					switcher.f_need_speed = true;
-				};
-			}
-			ctx.strokeStyle = obj_color;
-			ctx.lineWidth = Math.sqrt(obj_radius)*2;
-			ctx.beginPath();
-			ctx.moveTo(mouse[0], mouse[1]);
-			ctx.lineTo(mouse_coords[0], mouse_coords[1]);
-			ctx.stroke();
-
-			ctx.strokeStyle = '#000a';
-			ctx.lineWidth = Math.sqrt(obj_radius)*2;
-			ctx.beginPath();
-			ctx.moveTo(mouse[0], mouse[1]);
-			ctx.lineTo(mouse_coords[0], mouse_coords[1]);
-			ctx.stroke();
-			switcher.lost_x = mouse_coords[0];
-			switcher.lost_y = mouse_coords[1];
-
-			ctx.beginPath();
-			ctx.fillStyle = obj_color;
-			ctx.arc(mpos[0], mpos[1], Math.sqrt(obj_radius), 0, 7);
-			ctx.fill();
+		//clear('#000');
+		if (!(Math.abs(mouse[0]-mouse_coords[0]) <= 5 && Math.abs(mouse[1]-mouse_coords[1]) <= 5)){
+			clear('#000000');
+			swch.vis_traj = true;
+			$('.power').css({left: mouse_coords[0]-10, top: mouse_coords[1]-30, display: 'block', color: obj_color});
+			$('.power').html(Math.round(rad(mouse[0], mouse[1], mouse_coords[0], mouse_coords[1])));
+			if (!switcher.f_need_speed){
+				if (switcher.gravit_mode == 1 && (swch.t_object == false || (swch.t_object == 'earth' && body.earth.lck))){					
+					$('.power_need').css({display: 'block'});
+				}
+				switcher.f_need_speed = true;
+			};
 		}
+		ctx.strokeStyle = obj_color;
+		ctx.lineWidth = Math.sqrt(obj_radius)*2;
+		ctx.beginPath();
+		ctx.moveTo(mouse[0], mouse[1]);
+		ctx.lineTo(mouse_coords[0], mouse_coords[1]);
+		ctx.stroke();
+
+		ctx.strokeStyle = '#000a';
+		ctx.lineWidth = Math.sqrt(obj_radius)*2;
+		ctx.beginPath();
+		ctx.moveTo(mouse[0], mouse[1]);
+		ctx.lineTo(mouse_coords[0], mouse_coords[1]);
+		ctx.stroke();
+		switcher.lost_x = mouse_coords[0];
+		switcher.lost_y = mouse_coords[1];
+
+		ctx.beginPath();
+		ctx.fillStyle = obj_color;
+		ctx.arc(mpos[0], mpos[1], Math.sqrt(obj_radius), 0, 7);
+		ctx.fill();
 	}
 
 	function f_orbital_speed(px, py, obj){
@@ -736,11 +764,12 @@ $('document').ready(function(){
 		}
 	}
 
-	function obj_sp(point_x,point_y,ob_col){
+	function obj_sp(point_x,point_y,ob_col,vx,vy){
 		if (obj_rand_color){
 			if (!ob_col){obj_color = randColor();}else{obj_color = ob_col;};
 			sessionStorage['obj_color'] = obj_color;
 		};
+
 		if (spawn){
 			show_obj_count();
 			num ++;
@@ -767,7 +796,11 @@ $('document').ready(function(){
 				svx = 0; svy = 0;
 				px = mouse_coords[0]; py = mouse_coords[1];
 			}
-			body['ast'+num] = {'x': px - cam_x, 'y': py - cam_y, 'vx': svx, 'vy': svy, m: obj_radius, 'lck': false, 'color': obj_color, lck: obj_lck};
+			if (vx&&vy){
+				body['ast'+num] = {'x': px - cam_x, 'y': py - cam_y, 'vx': vx, 'vy': vy, m: obj_radius, 'lck': false, 'color': obj_color, lck: obj_lck};
+			}else{
+				body['ast'+num] = {'x': px - cam_x, 'y': py - cam_y, 'vx': svx, 'vy': svy, m: obj_radius, 'lck': false, 'color': obj_color, lck: obj_lck};	
+			}
 			spawn = false;
 		}
 	}
@@ -783,12 +816,95 @@ $('document').ready(function(){
 	//	ctx.scale(scale, scale);
 	//});
 
+	//Прощет траэктории
+	function traj_prev(obj, count = 1, col, full_object = false){
+		body_traj = JSON.parse(JSON.stringify(body));
+		sp_obj = [0,1];
+		if (full_object){
+			virtual = JSON.parse(JSON.stringify(obj));
+			body_traj['virtual'] = JSON.parse(JSON.stringify(virtual));
+		}
+
+		if (sp_obj[0]<sp_obj[1]){
+			new_obj_param = [body_traj.virtual.x, body_traj.virtual.y, body_traj.virtual.vx, body_traj.virtual.vy];
+			sp_obj[0] == 10;
+		}
+		
+		for (let i = 0; i < count; i++){
+			body_traj_prev = JSON.parse(JSON.stringify(body_traj));
+			for (let object in body_traj){
+				//Refresh_func===============
+				obj1 = body_traj_prev[object];
+				for (let i in body_traj){	
+					if (i == object){continue;};
+					obj2 = body_traj_prev[i];
+					R = rad(obj1.x, obj1.y, obj2.x, obj2.y);
+					
+					a = obj2.x - obj1.x;
+					b = obj2.y - obj1.y;
+					sin = b/R; cos = a/R;
+
+					vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx', obj2.m);
+					vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy', obj2.m);
+
+					if(!obj1.lck && !(mbut == 'move' && mousedown && object == mov_obj) && body_traj[object]){
+						body_traj[object].vx += vx;
+						body_traj[object].vy += vy;
+					}
+
+					if (R - (Math.sqrt(obj1.m) + Math.sqrt(obj2.m)/2) <= 0){
+						if (obj1.m >= obj2.m){
+							if (body_traj[object]){
+								body_traj[object].color = mixColors(obj1.color, obj2.color, obj1.m, obj2.m);
+								body_traj[object].m = Math.round((obj.m + obj2.m)*1000)/1000;
+								if (!obj1.lck){
+									body_traj[object].vx = (obj1.m*obj1.vx+obj2.m*obj2.vx)/(obj1.m+obj2.m);//Формула абсолютно-неупругого столкновения
+									body_traj[object].vy = (obj1.m*obj1.vy+obj2.m*obj2.vy)/(obj1.m+obj2.m);//Формула абсолютно-неупругого столкновения
+									//((body[object].m * body[object].vx)+(obj2.m * obj2.vx))/(obj2.m+body[object].m);
+									//((body[object].m * body[object].vy)+(obj2.m * obj2.vy))/(obj2.m+body[object].m);
+								}
+
+								delete body_traj[i];
+								delete body_traj[object];
+								continue;
+							}
+						}else{
+							continue;
+						}
+					}
+				}
+				//End refresh_func========
+
+				prev_x = obj1.x;
+				prev_y = obj1.y;
+				if(!obj1.lck && body_traj[object]){
+					body_traj[object].x += body_traj[object].vx;
+					body_traj[object].y += body_traj[object].vy;
+				}
+			}
+			if (body_traj.virtual){
+				ctx.strokeStyle = col;
+				ctx.lineWidth = 2;
+				ctx.beginPath();
+				ctx.moveTo(prev_x, prev_y);
+				ctx.lineTo(body_traj.virtual.x + cam_x, body_traj.virtual.y + cam_y);
+				ctx.stroke();				
+			}
+			
+		}
+	}
+
 	document.addEventListener('keydown', function(e){
 		//console.log(e.keyCode);
 
 		//delete
 		if (e.keyCode==68){
 			$('#delete').mousedown();
+		};
+
+		//edit
+		if (e.keyCode==69){
+			$('#edit').mousedown();
 		};
 
 		//Space button creato circle orbit object
