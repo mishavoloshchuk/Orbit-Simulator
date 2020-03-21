@@ -163,7 +163,7 @@
 		<div class='option_item'>
 			<span>Цвет: </span>
 			<div class="div_col_edit">
-				<input type="color" id="col_edit" style="padding: 0; border: none; width: 76px; height: 30px;" onmouseout="this.blur();">	
+				<input type="color" id="col_edit" value="#ffffff" style="padding: 0; border: none; width: 76px; height: 30px;" onmouseout="this.blur();">	
 			</div>
 		</div>
 
@@ -296,6 +296,46 @@
 					Сбросить настройки камеры
 				</span>
 			</div>		
+		</div>
+
+		<div class='option_item menu_close e0' style="border-bottom: none;">
+			<div>Закрыть</div>
+		</div>
+
+	</div>
+
+	<!--Trajectory menu-->
+	<div class="traj_menu menu_pos_size menu_pos menu_max_s" id="traj_menu">
+		<div class='option_item title_option_item'>
+			<span>Параметры траекторий:</span>
+		</div>
+		<div class='option_item' style="border: none;">
+			<form id="traj_radio_buttons" style="width: 100%;">
+				<div class="radio_button_menu">
+					<span>Нет траекторий: </span>
+					<input id="traj_radio_0" class="checkbox" type="radio" name="traj" value=0>					
+				</div>
+				<div class="radio_button_menu">
+					<span>Режим траекторий - 1: </span>
+					<input id="traj_radio_1" class="checkbox" type="radio" name="traj" value=1>
+				</div>
+				<div class="radio_button_menu">
+					<span>Режим траекторий - 2: </span>
+					<input id="traj_radio_2" disabled="" class="checkbox" type="radio" name="traj" value=2>
+				</div>
+			</form>
+		</div>
+		
+		<div class='option_item title_option_item'>
+			<span>Параметры прощета траекторий:</span>
+		</div>
+		<div class='option_item'>
+			<span>Прощет траекторий: </span>
+			<input type="checkbox" class='checkbox' id="traj_prev_check">	
+		</div>
+		<div class='option_item'>
+			<span>Дальность прощета траектории <br>(влияет на быстродействие): </span>
+			<input type="number" class='input_num' id="traj_calc_samples">	
 		</div>
 
 		<div class='option_item menu_close e0' style="border-bottom: none;">

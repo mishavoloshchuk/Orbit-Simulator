@@ -47,7 +47,7 @@ $('document').ready(function(){
 		del_pulse: 10, del_pulse_state: false, pause: false, pause2: false, trajectory_ref: false, music: false,
 		obj_count: obj_count, help: false, f_speed: 0, f_need_speed: false, device: 'desktop',
 		sim_settings: false, gravit_mode: 1, r_gm: 1, interact: 0, ref_interact: 0,
-		lost_x: false, lost_y: false, camera: false, edit: false};
+		lost_x: false, lost_y: false, camera: false, edit: false, traj: false, traj_mode: 1, traj_prev_on: true};
 
 	swch = {s_track: false, t_object: false, prev_t_obj: false, vis_traj: false,
 		s_edit: false, edit_obj: false};
@@ -59,14 +59,24 @@ $('document').ready(function(){
 	if (sessionStorage['interact']){
 		switcher.interact = sessionStorage['interact'];
 	};
+	if (sessionStorage['traj_prev_on']){
+		switcher.traj_prev_on = sessionStorage['traj_prev_on'] != 'true' ? false : true;	
+	}
 
 	radio_select('gravit_mode_radio', switcher.gravit_mode);
 	radio_select('interact_radio', switcher.interact);
+	radio_select('traj_radio', switcher.traj_mode);
+	check_select('traj_prev_check', switcher.traj_prev_on);
 
 	show_obj_count();
 
 	function radio_select(radio_id_prefix, numb){
 		$('#'+radio_id_prefix+'_'+numb).attr('checked', '');	
+	}
+	function check_select(check_id, state){
+		if (state){
+			$('#'+check_id).attr('checked', '');
+		}
 	}
 	//====time====
 	t = 1;
@@ -86,8 +96,11 @@ $('document').ready(function(){
 
 	usr_object = {obj_color, obj_radius, obj_reverse, obj_cirle_orbit};
 
+	traj_calc_smpls = sessionStorage['traj_calc_samples'] ? +sessionStorage['traj_calc_samples'] : 100;
+
 	$('.col_select').attr('value', obj_color);
 	$('.radius_select').attr('value', obj_radius);
+	$('#traj_calc_samples').attr('value', traj_calc_smpls);
 	if (obj_reverse){$('.direction_reverse_select').attr('checked', 'on');};
 	if (obj_cirle_orbit){$('.orbit_select').attr('checked', 'on');};
 	if (obj_rand_color){$('.rand_col_select').attr('checked', 'on');};
@@ -110,7 +123,7 @@ $('document').ready(function(){
 	body_prev = {};
 
 	function clear(col = '#00000004'){
-		if (!traj){col = '#000';}
+		if (switcher.traj_mode == 0){col = '#000';}
 		ctx.fillStyle = col;
 		ctx.fillRect(0, 0, canv.width, canv.height);
 	}
@@ -212,6 +225,22 @@ $('document').ready(function(){
 		}
 		if (chck == 'col_edit' && body[swch.edit_obj]){
 			body[swch.edit_obj].color = document.getElementById(chck).value;
+		}
+		if (chck == 'traj_radio_0'){
+			switcher.traj_mode = 0;
+		}
+		if (chck == 'traj_radio_1'){
+			switcher.traj_mode = 1;
+		}
+		if (chck == 'traj_radio_2'){
+			switcher.traj_mode = 2;
+		}
+		if (chck == 'traj_calc_samples'){
+			traj_calc_smpls = +this.value;
+			sessionStorage['traj_calc_samples'] = +this.value;
+		}
+		if (chck == 'traj_prev_check'){
+			sessionStorage['traj_prev_on'] = switcher.traj_prev_on = (this.checked == false) ? false : true;
 		}
 	});
 
@@ -370,8 +399,8 @@ $('document').ready(function(){
 			visual_trajectory();
 			obj_for_traj = {x: mouse[0], y: mouse[1], vx: ((mouse[0]-mouse_coords[0])/30)*t, vy: ((mouse[1]-mouse_coords[1])/30)*t, m: obj_radius, color: obj_color, lck: obj_lck};
 			//console.log(obj_for_traj);
-			if (!(Math.abs(mouse[0]-mouse_coords[0])<5&&Math.abs(mouse[1]-mouse_coords[1])<5)){
-				traj_prev(obj_for_traj, 100, '#ffffff33', true);
+			if ((!(Math.abs(mouse[0]-mouse_coords[0])<5&&Math.abs(mouse[1]-mouse_coords[1])<5))&&switcher.traj_prev_on){
+				traj_prev(obj_for_traj, traj_calc_smpls, '#ffffff33', true);
 			};
 		}
 
@@ -521,10 +550,7 @@ $('document').ready(function(){
 						delete body[i];
 						show_obj_count();
 						continue;
-					}else{
-						continue;
-
-					}
+					}else{continue;}
 				}
 			}
 		}
@@ -590,6 +616,8 @@ $('document').ready(function(){
 			body[object].y += body[object].vy;
 		}
 
+		render = (prev_x != body[object].x + cam_x && prev_y != body[object].y + cam_y)?true:false;
+
 		if (!switcher.pause2){
 			if (swch.prev_t_obj != object){
 				ctx.beginPath();
@@ -606,6 +634,12 @@ $('document').ready(function(){
 			}
 		}
 
+		if (!render){
+			ctx.beginPath();
+			ctx.fillStyle = '#000000';
+			ctx.arc(body[object].x + cam_x, body[object].y + cam_y, Math.sqrt(obj.m)+0.5, 0, 7);
+			ctx.fill();
+		}
 		ctx.beginPath();
 		if (!obj.color){obj.color = 'gray';}
 		ctx.fillStyle = obj.color;
@@ -803,6 +837,7 @@ $('document').ready(function(){
 			}
 			spawn = false;
 		}
+		new_obj_param = false;
 	}
 	scale = 1;
 
@@ -820,6 +855,7 @@ $('document').ready(function(){
 	function traj_prev(obj, count = 1, col, full_object = false){
 		body_traj = JSON.parse(JSON.stringify(body));
 		sp_obj = [0,1];
+		virt_obj = 'virtual';
 		if (full_object){
 			virtual = JSON.parse(JSON.stringify(obj));
 			body_traj['virtual'] = JSON.parse(JSON.stringify(virtual));
@@ -829,13 +865,14 @@ $('document').ready(function(){
 			new_obj_param = [body_traj.virtual.x, body_traj.virtual.y, body_traj.virtual.vx, body_traj.virtual.vy];
 			sp_obj[0] == 10;
 		}
-		
-		for (let i = 0; i < count; i++){
+		trash = false;
+		nlock = body_traj.virtual.lck ? false : true;
+		for (let i = 0; i < count && nlock; i++){
 			body_traj_prev = JSON.parse(JSON.stringify(body_traj));
 			for (let object in body_traj){
 				//Refresh_func===============
 				obj1 = body_traj_prev[object];
-				for (let i in body_traj){	
+				for (let i in body_traj){
 					if (i == object){continue;};
 					obj2 = body_traj_prev[i];
 					R = rad(obj1.x, obj1.y, obj2.x, obj2.y);
@@ -844,33 +881,32 @@ $('document').ready(function(){
 					b = obj2.y - obj1.y;
 					sin = b/R; cos = a/R;
 
-					vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx', obj2.m);
-					vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy', obj2.m);
+					if (body_traj[object]){
+						vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx', obj2.m);
+						vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy', obj2.m);
 
-					if(!obj1.lck && !(mbut == 'move' && mousedown && object == mov_obj) && body_traj[object]){
-						body_traj[object].vx += vx;
-						body_traj[object].vy += vy;
+						if(!obj1.lck && !(mbut == 'move' && mousedown && object == mov_obj) && body_traj[object]){
+							body_traj[object].vx += vx;
+							body_traj[object].vy += vy;
+						}
+
 					}
-
 					if (R - (Math.sqrt(obj1.m) + Math.sqrt(obj2.m)/2) <= 0){
 						if (obj1.m >= obj2.m){
-							if (body_traj[object]){
-								body_traj[object].color = mixColors(obj1.color, obj2.color, obj1.m, obj2.m);
-								body_traj[object].m = Math.round((obj.m + obj2.m)*1000)/1000;
-								if (!obj1.lck){
-									body_traj[object].vx = (obj1.m*obj1.vx+obj2.m*obj2.vx)/(obj1.m+obj2.m);//Формула абсолютно-неупругого столкновения
-									body_traj[object].vy = (obj1.m*obj1.vy+obj2.m*obj2.vy)/(obj1.m+obj2.m);//Формула абсолютно-неупругого столкновения
-									//((body[object].m * body[object].vx)+(obj2.m * obj2.vx))/(obj2.m+body[object].m);
-									//((body[object].m * body[object].vy)+(obj2.m * obj2.vy))/(obj2.m+body[object].m);
-								}
-
-								delete body_traj[i];
-								delete body_traj[object];
-								continue;
+							body_traj[object].color = mixColors(obj1.color, obj2.color, obj1.m, obj2.m);
+							body_traj[object].m = Math.round((obj1.m + obj2.m)*1000)/1000;
+							if (!obj1.lck){
+								body_traj[object].vx = (obj1.m*obj1.vx+obj2.m*obj2.vx)/(obj1.m+obj2.m);//Формула абсолютно-неупругого столкновения
+								body_traj[object].vy = (obj1.m*obj1.vy+obj2.m*obj2.vy)/(obj1.m+obj2.m);//Формула абсолютно-неупругого столкновения
 							}
-						}else{
+							delete body_traj[i];
+							if (i == virt_obj){
+								trash = true;
+								virt_obj = object;
+								nlock = obj1.lck ? false : true;
+							}
 							continue;
-						}
+						}else{continue;}
 					}
 				}
 				//End refresh_func========
@@ -882,13 +918,23 @@ $('document').ready(function(){
 					body_traj[object].y += body_traj[object].vy;
 				}
 			}
-			if (body_traj.virtual){
-				ctx.strokeStyle = col;
-				ctx.lineWidth = 2;
-				ctx.beginPath();
-				ctx.moveTo(prev_x, prev_y);
-				ctx.lineTo(body_traj.virtual.x + cam_x, body_traj.virtual.y + cam_y);
-				ctx.stroke();				
+		if (trash){
+			col = '#ff666666';
+			trash = false;		
+		}
+		if (body_traj[virt_obj]){
+			//ctx.strokeStyle = col;
+			//ctx.lineWidth = 2;
+			//ctx.beginPath();
+			//ctx.moveTo(prev_x, prev_y);
+			//ctx.lineTo(body_traj.virtual.x + cam_x, body_traj.virtual.y + cam_y);
+			//ctx.stroke();
+
+			ctx.beginPath();
+			ctx.fillStyle = col;
+			ctx.arc(body_traj[virt_obj].x + cam_x, body_traj[virt_obj].y + cam_y, 1, 0, 7);
+			ctx.fill();
+			ctx.beginPath();				
 			}
 			
 		}
@@ -996,12 +1042,15 @@ $('document').ready(function(){
 			change_state('edit');
 		} else
 		if (mbut == 'trajectory'){
-			if (traj){
-				traj = false;
+			if (switcher.traj){
+				$('.traj_menu').css('display', 'none');
+				switcher.traj = false;
 			}else{
-				traj = true;
+				close_all_menus();
+				switcher.traj = true;	
+				$('.traj_menu').fadeIn(0);
 			}
-			mbut = pfb;	
+			change_state('trajectory');
 		} else
 		if (mbut == 'camera'){
 			if (switcher.camera){
@@ -1148,6 +1197,7 @@ $('document').ready(function(){
 		$('.sim_settings').css('display', 'none'); switcher.sim_settings = false;
 		$('.camera_menu').css('display', 'none'); switcher.camera = false;
 		$('.edit_menu').css('display', 'none'); switcher.edit = false;
+		$('.traj_menu').css('display', 'none'); switcher.traj = false;
 		if (e){switcher[e] = true};
 	}
 	function change_state(img, format='png', path = '/ico/'){

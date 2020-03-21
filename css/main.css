@@ -31,6 +31,10 @@ input {
 	flex-shrink: 0;
 }
 
+span {
+	text-align: left;
+}
+
 .radio_button_menu {
 	border-bottom: 1px solid #fff2;
 	display: flex;
@@ -42,6 +46,12 @@ input {
 
 .radius_select {
 	width: 100px;
+	margin-left: 10px;
+}
+
+.input_num {
+	width: 100px;
+	margin-left: 10px;
 }
 
 #canvas {
