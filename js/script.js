@@ -35,39 +35,35 @@ $('document').ready(function(){
 	function crd(coord, axis, mode){
 		if (mode == 0){
 			if (axis == 'x'){
-				return (coord + cam_x)*zm+mcamX+mov[0];
+				return (coord + cam_x)*zm + mcamX + mov[0];
 			}
 			if (axis == 'y'){
-				return (coord + cam_y)*zm+mcamY+mov[1];
+				return (coord + cam_y)*zm + mcamY + mov[1];
 			}		
 		}
 		if (mode == 1){
 			if (axis == 'x'){
-				return ((coord + cam_x - mcamX - mov[0])/zm);
+				return ((coord - mcamX - mov[0])/zm-cam_x);
 			}
 			if (axis == 'y'){
-				return ((coord + cam_y - mcamY - mov[1])/zm);
+				return ((coord - mcamY - mov[1])/zm-cam_y);
 			}			
 		}
 	}
 
-	//ctx.scale(cam_scale, cam_scale);
-
 	body = {
 		'earth': {x:window.innerWidth/2, y: window.innerHeight/2, vx: 0, vy: 0, m: 1000, color: '#ffff00', lck: true},
-		//'ast': {x:window.innerWidth/2 - 300, y: window.innerHeight/2, vx: 0, vy: 5, m: 100, color: randColor(), lck: false},
+		//'ast': {x:window.innerWidth/2 - 100, y: window.innerHeight/2, vx: 0, vy: 10, m: 10, color: randColor(), lck: false},
 		//'earth2': {'x':0, 'y': window.innerHeight/2, 'vx': 1, 'vy': 3, m: 100, 'color': '#ffff00', 'lck': false},
 	};
 
+	//View=================
+	//ctx.scale(cam_scale, cam_scale);
 	//ctx.translate(mov[0], mov[1]);
-
 	//myImageData = ctx.createImageData(0, 0, window.innerWidth, window.innerHeight);
 	//ctx.putImageData(myImageData, 0, 0);
 
-	earth_lck = body.earth;
-
-	let obj_count = 0;
-
+	obj_count = 0;
 	function show_obj_count(){
 		obj_count = 0;
 		for (let i in body){
@@ -84,26 +80,23 @@ $('document').ready(function(){
 		del_pulse: 10, del_pulse_state: false, pause: false, pause2: false, trajectory_ref: false, music: false,
 		obj_count: obj_count, help: false, f_speed: 0, f_need_speed: false, device: 'desktop',
 		sim_settings: false, gravit_mode: 1, r_gm: 1, interact: 0, ref_interact: 0,
-		lost_x: false, lost_y: false, camera: false, edit: false, traj: false, traj_mode: 1, traj_prev_on: true};
+		lost_x: false, lost_y: false, camera: false, edit: false, traj: false, traj_mode: 1, traj_prev_on: true,
+		zoomToMouse: true};
 
 	swch = {s_track: false, t_object: false, prev_t_obj: false, vis_traj: false,
-		s_edit: false, edit_obj: false};
+		s_edit: false, edit_obj: false, orb_obj: 'earth', equilib_orb: false};
 
-	if (sessionStorage['gravit_mode']){
-		switcher.gravit_mode = sessionStorage['gravit_mode'];
-	};
-
-	if (sessionStorage['interact']){
-		switcher.interact = sessionStorage['interact'];
-	};
-	if (sessionStorage['traj_prev_on']){
-		switcher.traj_prev_on = sessionStorage['traj_prev_on'] != 'true' ? false : true;	
-	}
+	choise_restore('gravit_mode', 'gravit_mode', 'radio');
+	choise_restore('interact', 'interact', 'radio');
+	choise_restore('traj_mode', 'traj_mode', 'radio');
+	choise_restore('traj_prev_on', 'traj_prev_on', 'checkbox');
+	choise_restore('chck_zoomToMouse', 'zoomToMouse', 'checkbox');
 
 	radio_select('gravit_mode_radio', switcher.gravit_mode);
 	radio_select('interact_radio', switcher.interact);
 	radio_select('traj_radio', switcher.traj_mode);
 	check_select('traj_prev_check', switcher.traj_prev_on);
+	check_select('chck_zoomToMouse', switcher.zoomToMouse);
 
 	show_obj_count();
 
@@ -113,6 +106,16 @@ $('document').ready(function(){
 	function check_select(check_id, state){
 		if (state){
 			$('#'+check_id).attr('checked', '');
+		}
+	}
+	function choise_restore(name_session, var_name, cr = 'c'){
+		if (sessionStorage[name_session]){
+			if (cr == 'checkbox'){
+				switcher[var_name] = sessionStorage[name_session] != 'true' ? false : true;	
+			}
+			if (cr == 'radio'){
+				switcher[var_name] = sessionStorage[name_session];
+			}			
 		}
 	}
 	//====time====
@@ -129,10 +132,6 @@ $('document').ready(function(){
 	obj_cirle_orbit = sessionStorage['obj_cirle_orbit'] ? (sessionStorage['obj_cirle_orbit'] == 'true' ? true : false) : true;
 	obj_lck = false;
 
-	earth_lck.lck = sessionStorage['master_object_lock'] == "false" ? false : true;
-
-	usr_object = {obj_color, obj_radius, obj_reverse, obj_cirle_orbit};
-
 	traj_calc_smpls = sessionStorage['traj_calc_samples'] ? +sessionStorage['traj_calc_samples'] : 100;
 
 	$('.col_select').attr('value', obj_color);
@@ -141,15 +140,12 @@ $('document').ready(function(){
 	if (obj_reverse){$('.direction_reverse_select').attr('checked', 'on');};
 	if (obj_cirle_orbit){$('.orbit_select').attr('checked', 'on');};
 	if (obj_rand_color){$('.rand_col_select').attr('checked', 'on');};
-	if (earth_lck.lck){$('.master_object_lock').attr('checked', 'on');};
 
 	change_state(mbut);
 
 	//speed = 16;
 	//let simulation_refresh = setInterval(frame, speed);
-	for (let i = 0; i < 1; i++){
-		window.requestAnimationFrame(frame);	
-	}
+	window.requestAnimationFrame(frame);	
 
 	G = 0.05;
 	mousedown = false;
@@ -207,16 +203,7 @@ $('document').ready(function(){
 			};
 			//Перемещение ближайшео объекта
 			if (mbut == 'move'){
-				mov_radius = [Infinity, '', 0];
-				for (let i in body){
-					r = rad(crd(mouse_coords[0], 'x', 1), crd(mouse_coords[1], 'y', 1), body[i].x + cam_x, body[i].y + cam_y);
-					if (r < mov_radius[0]){
-						mov_radius[0] = r;
-						mov_radius[1] = i;
-					}
-				}
-				mov_obj = mov_radius[1];
-				delete mov_radius;
+				mov_obj = select_object();
 			}
 
 			if (body[mov_obj]){
@@ -226,15 +213,7 @@ $('document').ready(function(){
 			}
 			//Выбор объекта для редактирования
 			if (mbut == 'edit' && swch.s_edit){
-				edit_radius = [Infinity, '', 0];
-				for (let i in body){
-					r = rad(crd(mouse_coords[0], 'x', 1), crd(mouse_coords[1], 'y', 1), body[i].x + cam_x, body[i].y + cam_y);
-					if (r < edit_radius[0]){
-						edit_radius[0] = r;
-						edit_radius[1] = i;
-					}
-				}
-				swch.edit_obj = edit_radius[1];
+				swch.edit_obj = select_object(0);
 				swch.s_edit = false;
 				clear('#000');
 				if (body[swch.edit_obj]){
@@ -277,13 +256,13 @@ $('document').ready(function(){
 			body[swch.edit_obj].color = document.getElementById(chck).value;
 		}
 		if (chck == 'traj_radio_0'){
-			switcher.traj_mode = 0;
+			switcher.traj_mode = sessionStorage['traj_mode'] = 0;
 		}
 		if (chck == 'traj_radio_1'){
-			switcher.traj_mode = 1;
+			switcher.traj_mode = sessionStorage['traj_mode'] = 1;
 		}
 		if (chck == 'traj_radio_2'){
-			switcher.traj_mode = 2;
+			switcher.traj_mode = sessionStorage['traj_mode'] = 2;
 		}
 		if (chck == 'traj_calc_samples'){
 			traj_calc_smpls = +this.value;
@@ -292,19 +271,22 @@ $('document').ready(function(){
 		if (chck == 'traj_prev_check'){
 			sessionStorage['traj_prev_on'] = switcher.traj_prev_on = (this.checked == false) ? false : true;
 		}
+		if (chck == 'chck_zoomToMouse'){
+			sessionStorage['chck_zoomToMouse'] = switcher.zoomToMouse = (this.checked == false) ? false : true;
+		}
 	});
 
 
 	$('#canvas').mouseup(function(e){
 		if (event.which == 1){
+			mousedown = false;
+			mouse[2] = event.clientX; mouse[3] = event.clientY;
 			$('.power').css({display: 'none'});
 			$('.power_need').css({display: 'none'});
 			if (switcher.device == 'mobile'){
 				close_all_menus();
 			}
 			switcher.f_need_speed = false;
-			mousedown = false;
-			mouse[2] = event.clientX; mouse[3] = event.clientY;
 
 			body_length = 0;
 			for (let i in body){
@@ -312,35 +294,16 @@ $('document').ready(function(){
 			}
 
 			if (mbut == 'delete' && body_length > 0){
-				del_radius = [Infinity, '', 0];
-				if (switcher.del_radio == 2){
-					elem = '';
-					for (i in body){
-						elem = i;
-					}
-					del_radius[1] = elem;
-				}else{
-					for (let i in body){
-						r = rad(crd(mouse_coords[0], 'x', 1), crd(mouse_coords[1], 'y', 1), body[i].x + cam_x, body[i].y + cam_y);
-						if (r < del_radius[0] && switcher.del_radio == 0){
-							del_radius[0] = r;
-							del_radius[1] = i;
-						} else 
-						if (r > del_radius[2] && switcher.del_radio == 1){
-							del_radius[2] = r;
-							del_radius[1] = i;
-						}
-					}
-				}
+				del_obj = select_object(switcher.del_radio);
 
 				ctx.beginPath();
 				ctx.fillStyle = '#000';
-				ctx.arc(body[del_radius[1]].x, body[del_radius[1]].y, Math.sqrt(body[del_radius[1]].m)+1, 0, 7);
+				ctx.arc(body[del_obj].x, body[del_obj].y, Math.sqrt(body[del_obj].m)+1, 0, 7);
 				ctx.fill();
 
-				delete body[del_radius[1]];
+				delete body[del_obj];
 
-				console.log('Удален!');
+				//console.log('Удален!');
 				$('.deleted').animate({right: 50});
 				timeout = setTimeout(function(){$('.deleted').animate({right: -300});}, 2000);
 			}
@@ -361,66 +324,34 @@ $('document').ready(function(){
 			}
 
 			if (mbut == 'create'){
-				//if (!switcher.pause){simulation_refresh = setInterval(frame, speed);};
 				spawn = true;
 				swch.vis_traj = false;
-				//clear('#000');
-				//obj_sp(new_obj_param[0], new_obj_param[1], obj_color, new_obj_param[2], new_obj_param[3]);
-				//obj_sp(false, false, obj_color);
-
 				switcher.trajectory_ref = false;
 				ctx.beginPath();
 				ctx.fillStyle = obj_color;
 				ctx.arc(mpos[0], mpos[1], Math.sqrt(obj_radius)*zm, 0, 7);
 				ctx.fill();
+				//if (!switcher.pause){simulation_refresh = setInterval(frame, speed);};
+				//clear('#000');
+				//obj_sp(new_obj_param[0], new_obj_param[1], obj_color, new_obj_param[2], new_obj_param[3]);
+				//obj_sp(false, false, obj_color);
 			}
 
 			if (mbut == 'camera' && swch.s_track){
 				paus = switcher.pause ? true : false; //Пауза уже включена
-				mod = 0;
-				obj_cam = [Infinity, '', 0];
-				if (mod == 2){
-					elem = '';
-					for (i in body){
-						elem = i;
-					}
-					obj_cam[1] = elem;
-				}else{
-					for (let i in body){
-						r = rad(crd(mouse_coords[0], 'x', 1), crd(mouse_coords[1], 'y', 1), body[i].x + cam_x, body[i].y + cam_y);
-						if (r < obj_cam[0] && mod == 0){
-							obj_cam[0] = r;
-							obj_cam[1] = i;
-						} else 
-						if (r > obj_cam[2] && mod == 1){
-							obj_cam[2] = r;
-							obj_cam[1] = i;
-						}
-					}
-				}
-				if (mov[0] != 0 && mov[1] != 0){
+				swch.t_object = select_object();
+
+				if (mov[0] != 0 || mov[1] != 0){
 					movAnim[4] = false;
-				} else {
-					movAnim[4] = true;
 				}
 				mov[0] = 0;
 				mov[1] = 0;
 				mov[2] = 0;
 				mov[3] = 0;
 
-				//ctx.beginPath();
-				//ctx.fillStyle = '#000';
-				//ctx.arc(body[del_radius[1]].x/zm, body[del_radius[1]].y/zm, Math.sqrt(body[del_radius[1]].m)*zm+1, 0, 7);
-				//ctx.fill();
-
-				swch.t_object = obj_cam[1];	
 				swch.s_track = false;
 			}
-
 			show_obj_count();
-			//clear('#000');
-
-			//mouse = [];
 		};
 		if (event.which == 2){
 			middleMouseDown = false;
@@ -435,8 +366,8 @@ $('document').ready(function(){
 		if (mousedown && mbut == 'move' && mov_obj){
 			switcher.move = true;
 			if (body[mov_obj]){
-				body[mov_obj].x = event.clientX - mpos[0] + mpos[2];
-				body[mov_obj].y = event.clientY - mpos[1] + mpos[3];
+				body[mov_obj].x = (event.clientX - mpos[0])/zm + mpos[2];
+				body[mov_obj].y = (event.clientY - mpos[1])/zm + mpos[3];
 			}
 		}
 
@@ -461,6 +392,8 @@ $('document').ready(function(){
 	function frame(){
 		window.requestAnimationFrame(frame);
 		t = times;
+
+		swch.orb_obj = select_object(3);
 
 		mcamX = -window.innerWidth/2 * (zm-1);
 		mcamY = -window.innerHeight/2 * (zm-1);
@@ -538,9 +471,10 @@ $('document').ready(function(){
 				anim_cam[0] = 0;
 				anim_cam[1] = 0;
 				anim_cam[2] = true;
-
-				switcher.pause = paus; //Снимается пауза, если пауза была включена
+				switcher.pause = paus; //Снимается пауза, если пауза была выключена
 			}
+		} else {
+			swch.prev_t_obj = swch.t_object;
 		}
 
 		if (!middleMouseDown){
@@ -552,8 +486,53 @@ $('document').ready(function(){
 		}
 
 		if (swch.prev_t_obj && body[swch.prev_t_obj]){
-			cam_x = (window.innerWidth / 2) - (body[swch.prev_t_obj].x + body[swch.prev_t_obj].vx) + anim_cam[0];
-			cam_y = (window.innerHeight / 2) - (body[swch.prev_t_obj].y + body[swch.prev_t_obj].vy) + anim_cam[1];		
+			cam_vx = !switcher.pause2 ? body[swch.prev_t_obj].vx : 0;
+			cam_vy = !switcher.pause2 ? body[swch.prev_t_obj].vy : 0;
+
+			if (swch.t_object && !switcher.pause){
+				body_prev = JSON.parse(JSON.stringify(body));
+				obj = body_prev[swch.t_object];
+				body_length = 0; for (let i in body){body_length ++;};
+				if (switcher.ref_interact == 0 && !switcher.pause2 && body_length > 1){
+					for(let i in body){
+						if (i != swch.t_object){
+							obj2 = body_prev[i];
+							R = rad(obj.x, obj.y, obj2.x, obj2.y);
+							a = obj2.x - obj.x;
+							b = obj2.y - obj.y;
+							sin = b/R; cos = a/R;
+
+							vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx', obj2.m);
+							vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy', obj2.m);
+
+							if(!obj.lck && !switcher.pause2 && !(mbut == 'move' && mousedown && object == mov_obj)){
+								cam_vx += vx;
+								cam_vy += vy;
+							}
+						};
+					}
+				}
+				if (switcher.ref_interact == 1 && body_prev['earth'] && !switcher.pause2 && body_length > 1){
+					obj2 = body_prev['earth'];
+
+					R = rad(obj.x, obj.y, obj2.x, obj2.y);
+
+					a = obj2.x - obj.x;
+					b = obj2.y - obj.y;
+					sin = b/R; cos = a/R;
+
+					vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx', obj2.m);
+					vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy', obj2.m);
+
+					if(!obj.lck && !switcher.pause2 && !(mbut == 'move' && mousedown && object == mov_obj)){
+						cam_vx += vx;
+						cam_vy += vy;
+					}
+				};					
+			}
+
+			cam_x = (window.innerWidth / 2) - (body[swch.prev_t_obj].x + cam_vx) + anim_cam[0];
+			cam_y = (window.innerHeight / 2) - (body[swch.prev_t_obj].y + cam_vy) + anim_cam[1];		
 		} else {
 			cam_x = 0 + anim_cam[0];
 			cam_y = 0 + anim_cam[1];
@@ -577,6 +556,9 @@ $('document').ready(function(){
 					//traj_prev(obj, 200, '#ffffff33');
 					refresh(obj);
 				}			
+			}
+			if (!movAnim[4]){
+				movAnim[4] = true;
 			}			
 		}
 
@@ -585,15 +567,17 @@ $('document').ready(function(){
 		}
 
 		if (mbut == 'camera' && cbut == 'select_track' && swch.s_track){
-			visual_select(0, '#0af6');
+			visual_select(0, '#0af6', select_object());
 		}
 
 		if (mbut == 'move'){
 			visual_select(0, '#bbb6', mov_obj);
 		}
 
-		if (mbut == 'edit' && swch.s_edit){
-			visual_select(0, '#11f6', mov_obj);
+		if (mbut == 'edit'){
+			if (swch.s_edit){
+				visual_select(0, '#11f6', mov_obj);
+			}
 		}
 		if (show_center){
 			ctx.strokeStyle = '#000000';
@@ -671,8 +655,8 @@ $('document').ready(function(){
 				b = obj2.y - obj.y;
 				sin = b/R; cos = a/R;
 
-				vx = Math.round(gravity_func(sin, cos, R, switcher.r_gm, 'vx', obj2.m)*100000)/100000;
-				vy = Math.round(gravity_func(sin, cos, R, switcher.r_gm, 'vy', obj2.m)*100000)/100000;
+				vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx', obj2.m);
+				vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy', obj2.m);
 
 				if(!obj.lck && !switcher.pause2 && !(mbut == 'move' && mousedown && object == mov_obj)){
 					body[object].vx += vx;
@@ -725,7 +709,7 @@ $('document').ready(function(){
 
 		render = (prev_x != body[object].x + cam_x + mov[0]/zm && prev_y != body[object].y + cam_y + mov[1]/zm)?true:false;
 
-		if (!switcher.pause2){
+		if (!switcher.pause2 && movAnim[4]){
 			if (swch.prev_t_obj != object){
 				ctx.beginPath();
 				ctx.fillStyle = obj.color;
@@ -751,7 +735,7 @@ $('document').ready(function(){
 		ctx.fillStyle = obj.color;
 		ctx.beginPath();
 		if (switcher.pause2){
-			ctx.arc(crd(body[object].x+body[object].vx, 'x', 0), crd(body[object].y+body[object].vy, 'y', 0), Math.sqrt(obj.m)*zm, 0, 7);		
+			ctx.arc(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0), Math.sqrt(obj.m)*zm, 0, 7);		
 		} else {
 			ctx.arc(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0), Math.sqrt(obj.m)*zm, 0, 7);		
 		}
@@ -844,17 +828,50 @@ $('document').ready(function(){
 
 	function f_orbital_speed(px, py, obj){
 		if (body[obj]){
-			R = rad(px, py, body.earth.x*zm, body.earth.y*zm);
-			V = Math.sqrt((body.earth.m/zm*10*t*t)*(R));
-			a = body.earth.x*zm - px;
-			b = body.earth.y*zm - py;
+			R = rad(px, py, body[obj].x*zm, body[obj].y*zm);
+			V = Math.sqrt((body[obj].m/zm*10*t*t)*(R));
+			a = body[obj].x*zm - px;
+			b = body[obj].y*zm - py;
 			sin = b/R; cos = a/R;
-			svx = -(sin/V)*body.earth.m*10*t*t;
-			svy = (cos/V)*body.earth.m*10*t*t;
+			svx = -(sin/V)*body[obj].m*10*t*t;
+			svy = (cos/V)*body[obj].m*10*t*t;
 			return [svx/t, svy/t];		
 		} else {
 			return [0, 0];
 		}
+	}
+
+	function select_object(mode = 0){
+		sel = [Infinity, '', 0];
+		if (mode == 2){
+			elem = '';
+			for (i in body){
+				elem = i;
+			}
+			sel[1] = elem;
+		}
+		if (mode == 0 || mode == 1){
+			for (let i in body){
+				r = rad(mouse_coords[0], mouse_coords[1], crd(body[i].x, 'x', 0), crd(body[i].y, 'y', 0));
+				if (r < sel[0] && mode == 0){
+					sel[0] = r;
+					sel[1] = i;
+				} else 
+				if (r > sel[2] && mode == 1){
+					sel[2] = r;
+					sel[1] = i;
+				}
+			}
+		}
+		if (mode == 3){
+			for(let i in body){
+				if (body[i].m > sel[2]){
+					sel[2] = body[i].m;
+					sel[1] = i;
+				}
+			}
+		}
+		return 	sel[1];
 	}
 
 	function visual_select(mode, color, object = '') {
@@ -865,25 +882,7 @@ $('document').ready(function(){
 		if (obj_count >= 1){
 			del_radius = [Infinity, '', 0];
 			if (!body[object]){
-				if (mode == 2){
-					elem = '';
-					for (i in body){
-						elem = i;
-					}
-					del_radius[1] = elem;
-				}else{
-					for (let i in body){
-						r = rad(crd(mouse_coords[0], 'x', 1), crd(mouse_coords[1], 'y', 1), body[i].x + cam_x, body[i].y + cam_y);
-						if (r < del_radius[0] && mode == 0){
-							del_radius[0] = r;
-							del_radius[1] = i;
-						} else 
-						if (r > del_radius[2] && mode == 1){
-							del_radius[2] = r;
-							del_radius[1] = i;
-						}
-					}
-				}			
+				del_radius[1] = select_object(mode);			
 			} else {
 				del_radius[1] = object;
 			}
@@ -923,53 +922,50 @@ $('document').ready(function(){
 				svy = ((mouse[1]-mouse[3])/30)*t;				
 			}
 			px = mouse[0]; py = mouse[1];
-			if (((Math.abs(mouse[0]-mouse[2]) <= 5 && Math.abs(mouse[1]-mouse[3]) <= 5 && obj_cirle_orbit) || (point_x && point_y))&&body.earth) {
+			if (((Math.abs(mouse[0]-mouse[2]) <= 5 && Math.abs(mouse[1]-mouse[3]) <= 5 && obj_cirle_orbit) || (point_x && point_y))&&body[swch.orb_obj]) {
 				if (point_x && point_y){px = point_x; py = point_y;};
-				R = rad(crd(px, 'x', 1), crd(py, 'y', 1), body.earth.x, body.earth.y);
-				V = Math.sqrt((body.earth.m*10*t*t)*(R));
-				a = body.earth.x - crd(px, 'x', 1);
-				b = body.earth.y - crd(py, 'y', 1);
+				R = rad(crd(px, 'x', 1), crd(py, 'y', 1), body[swch.orb_obj].x, body[swch.orb_obj].y);
+				V = Math.sqrt((body[swch.orb_obj].m*10*t*t)*(R));
+				a = body[swch.orb_obj].x - crd(px, 'x', 1);
+				b = body[swch.orb_obj].y - crd(py, 'y', 1);
 				sin = b/R; cos = a/R;
-				svx = -(sin/V)*body.earth.m*10*t*t;
-				svy = (cos/V)*body.earth.m*10*t*t;
+				svx = -(sin/V)*body[swch.orb_obj].m*10*t*t;
+				svy = (cos/V)*body[swch.orb_obj].m*10*t*t;
 				if (obj_reverse){
 					svx = -svx;
 					svy = -svy;
 				}
+				if (!body[swch.orb_obj].lck){
+					svx += body[swch.orb_obj].vx;
+					svy += body[swch.orb_obj].vy;
+				}
 			}
-			if (!body.earth && (point_x && point_y)){
+			if (!body[swch.orb_obj] && (point_x && point_y)){
 				svx = 0; svy = 0;
 				px = mouse_coords[0]; py = mouse_coords[1];
+			}
+			let equilib = false;
+			let cff = 1.42;
+			if (swch.equilib_orb){
+				svx /= cff; svy /= cff;
+				vx /= cff; vy /= cff;
+				equilib = true;
 			}
 			if (vx&&vy){
 				body['ast'+num] = {'x': crd(px, 'x', 1), 'y': crd(py, 'y', 1), 'vx': vx, 'vy': vy, m: obj_radius, 'lck': false, 'color': obj_color, lck: obj_lck};
 			}else{
 				body['ast'+num] = {'x': crd(px, 'x', 1), 'y': crd(py, 'y', 1), 'vx': svx, 'vy': svy, m: obj_radius, 'lck': false, 'color': obj_color, lck: obj_lck};	
 			}
+			if (equilib && body[swch.orb_obj]){
+				vel2 = f_orbital_speed(crd(body[swch.orb_obj].x, 'x', 1), crd(body[swch.orb_obj].y, 'y', 1), ('ast'+num));
+				body[swch.orb_obj].vx = vel2[0]/cff; body[swch.orb_obj].vy = vel2[1]/cff;			
+				equilib = false;
+			}
 			spawn = false;
 		}
 		new_obj_param = false;
 	}
 	scale = 1;
-
-	//Scene scale
-	document.addEventListener('wheel', function(e){
-		if (!middleMouseDown){
-			if (e.deltaY > 0){
-				zm /= 1.25
-				mov[0] /= 1.25;
-				mov[1] /= 1.25;
-				mov[2] = mov[0]; mov[3] = mov[1];
-				clear('#000');
-			} else {
-				zm *= 1.25
-				mov[0] *= 1.25;
-				mov[1] *= 1.25;
-				mov[2] = mov[0]; mov[3] = mov[1];
-				clear('#000');
-			}			
-		}
-	});
 
 	//Прощет траэктории
 	function traj_prev(obj, count = 1, col, full_object = false){
@@ -1047,7 +1043,7 @@ $('document').ready(function(){
 			//ctx.lineWidth = 2;
 			//ctx.beginPath();
 			//ctx.moveTo(prev_x, prev_y);
-			//ctx.lineTo(body_traj.virtual.x + cam_x, body_traj.virtual.y + cam_y);
+			//ctx.lineTo(body_traj[virt_obj].x + cam_x, body_traj[virt_obj].y + cam_y);
 			//ctx.stroke();
 
 			ctx.beginPath();
@@ -1060,18 +1056,42 @@ $('document').ready(function(){
 		}
 	}
 
+	//Scene scale
+	document.addEventListener('wheel', function(e){
+		ms = [e.clientX, e.clientY];
+		if (!middleMouseDown){
+			vl = 1.25;
+			if (!swch.prev_t_obj && switcher.zoomToMouse){
+				if (e.deltaY > 0){
+					zm /= vl;
+					mov[0] = mov[0] / vl - (wind_width/2 - ms[0]) / (vl/(vl-1));
+					mov[1] = mov[1] / vl - (wind_height/2 - ms[1]) / (vl/(vl-1));
+					mov[2] = mov[0]; mov[3] = mov[1];
+				} else {
+					zm *= vl
+					mov[0] = mov[0] * vl + (wind_width/2 - ms[0]) / (1/(vl-1));
+					mov[1] = mov[1] * vl + (wind_height/2 - ms[1]) / (1/(vl-1));
+					mov[2] = mov[0]; mov[3] = mov[1];
+				}
+			} else {
+				if (e.deltaY > 0){
+					zm /= vl;
+					mov[0] /= vl;
+					mov[1] /= vl;
+					mov[2] = mov[0]; mov[3] = mov[1];
+				} else {
+					zm *= vl
+					mov[0] *= vl;
+					mov[1] *= vl;
+					mov[2] = mov[0]; mov[3] = mov[1];
+				}
+			}
+			clear('#000');
+		}
+	});
+
 	document.addEventListener('keydown', function(e){
 		//console.log(e.keyCode);
-
-		//delete
-		if (e.keyCode==68){
-			$('#delete').mousedown();
-		};
-
-		//edit
-		if (e.keyCode==69){
-			$('#edit').mousedown();
-		};
 
 		//Space button creato circle orbit object
 		if (e.keyCode == 32){
@@ -1084,51 +1104,30 @@ $('document').ready(function(){
 				$('#canvas').mouseup();
 			}
 		}
-
 		//create
-		if (e.keyCode == 67){
-			$('#create').mousedown();
-		}
-
+		if (e.keyCode == 67){ $('#create').mousedown(); }
+		//delete
+		if (e.keyCode==68){ $('#delete').mousedown(); }
+		//edit
+		if (e.keyCode==69){ $('#edit').mousedown(); }
+		//trajectory
+		if (e.keyCode == 84){ $('#trajectory').mousedown(); }
 		//timedown
-		if (e.keyCode == 188){
-			$('#timedown').mousedown();
-		}
-
+		if (e.keyCode == 188){ $('#timedown').mousedown(); }
 		//play
-		if (e.keyCode == 191){
-			$('#play').mousedown();
-		}
-
+		if (e.keyCode == 191){ $('#play').mousedown(); }
 		//timeup
-		if (e.keyCode == 190){
-			$('#timeup').mousedown();
-		}
-
+		if (e.keyCode == 190){ $('#timeup').mousedown(); }
 		//move
-		if (e.keyCode == 77){
-			$('#move').mousedown();
-		}
-
+		if (e.keyCode == 77){ $('#move').mousedown(); }
 		//pause
-		if (e.keyCode == 80){
-			$('#pause').mousedown();
-		}
-
+		if (e.keyCode == 80){ $('#pause').mousedown(); }
 		//help
-		if (e.keyCode == 72){
-			$('#help').mousedown();
-		}
-
+		if (e.keyCode == 72){ $('#help').mousedown(); }
 		//settings
-		if (e.keyCode == 83){
-			$('#sim_settings').mousedown();
-		}
-
+		if (e.keyCode == 83){ $('#sim_settings').mousedown(); }
 		//camera
-		if (e.keyCode == 86){
-			$('#camera').mousedown();
-		}
+		if (e.keyCode == 86){ $('#camera').mousedown(); }
 		//T+
 		if (e.keyCode == 187){
 			ref_sped *= 2;
