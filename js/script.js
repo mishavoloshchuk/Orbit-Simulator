@@ -1,10 +1,10 @@
 $('document').ready(function(){
 	var canv = document.getElementById('canvas');
-	var ctx = canv.getContext('2d');
+	var ctx = canv.getContext('2d', {alpha: false});
 	canv.width = window.innerWidth;
 	canv.height = window.innerHeight;
+	mouse_coords = [canv.width/2, canv.height/2];
 	mouse = [];
-	mouse_coords = [];
 	mbut = 'create';
 	cbut = '';
 	chck = '';
@@ -14,6 +14,7 @@ $('document').ready(function(){
 	mov_obj = '';
 	new_obj_param = [0,0,0,0];
 	paus = false;
+	traj_smpls = [0, 2, false];
 
 	//Camera
 	cam_x = 0;
@@ -52,9 +53,9 @@ $('document').ready(function(){
 	}
 
 	body = {
-		'earth': {x:window.innerWidth/2, y: window.innerHeight/2, vx: 0, vy: 0, m: 1000, color: '#ffff00', lck: true},
-		//'ast': {x:window.innerWidth/2 - 100, y: window.innerHeight/2, vx: 0, vy: 10, m: 10, color: randColor(), lck: false},
-		//'earth2': {'x':0, 'y': window.innerHeight/2, 'vx': 1, 'vy': 3, m: 100, 'color': '#ffff00', 'lck': false},
+		'earth': {x:window.innerWidth/2, y: window.innerHeight/2, vx: 0, vy: 0, m: 1000, color: '#ffff00', lck: true, trace: []},
+		//'ast': {x:window.innerWidth/2 - 100, y: window.innerHeight/2, vx: 0, vy: 10, m: 10, color: randColor(), lck: false, trace: []},
+		//'earth2': {'x':0, 'y': window.innerHeight/2, 'vx': 1, 'vy': 3, m: 100, 'color': '#ffff00', 'lck': false, trace: []},
 	};
 
 	//View=================
@@ -358,7 +359,7 @@ $('document').ready(function(){
 			mov[2] = mov[0];
 			mov[3] = mov[1];
 		}
-	});
+	});	
 
 	document.onmousemove = function(){
 
@@ -398,7 +399,7 @@ $('document').ready(function(){
 		mcamX = -window.innerWidth/2 * (zm-1);
 		mcamY = -window.innerHeight/2 * (zm-1);
 
-		if (mbut == 'delete' || switcher.move || mbut == 'move' || mbut == 'camera' || swch.s_edit || swch.vis_traj){clear('#000');}else{if(!switcher.trajectory_ref){clear();};}
+		if (mbut == 'delete' || switcher.move || mbut == 'move' || mbut == 'camera' || swch.s_edit || swch.vis_traj || switcher.traj_mode == 2){clear('#000');}else{if(!switcher.trajectory_ref){clear();};}
 
 		if (middleMouseDown || mbut=='move'){canv.style.cursor = "move";}else{canv.style.cursor = "default";};
 
@@ -602,6 +603,13 @@ $('document').ready(function(){
 			ctx.lineTo(wind_width/2 - 5, wind_height/2 + 5);
 			ctx.stroke();			
 		}
+		if(traj_smpls[0] >= traj_smpls[1]){
+			traj_smpls[2] = true;
+			traj_smpls[0] = 0;
+		} else {
+			traj_smpls[0] ++;
+			traj_smpls[2] = false;
+		}
 	}
 
 	function refresh(object){
@@ -645,9 +653,9 @@ $('document').ready(function(){
 				}
 			}
 		}
-		if (switcher.ref_interact == 1 && body_prev['earth'] && !switcher.pause2 && body_length > 1){
-			if (object != 'earth' && body[object]){
-				obj2 = body_prev['earth'];
+		if (switcher.ref_interact == 1 && body_prev[swch.orb_obj] && !switcher.pause2 && body_length > 1){
+			if (object != swch.orb_obj && body[object]){
+				obj2 = body_prev[swch.orb_obj];
 
 				R = rad(obj.x, obj.y, obj2.x, obj2.y);
 
@@ -709,7 +717,7 @@ $('document').ready(function(){
 
 		render = (prev_x != body[object].x + cam_x + mov[0]/zm && prev_y != body[object].y + cam_y + mov[1]/zm)?true:false;
 
-		if (!switcher.pause2 && movAnim[4]){
+		if (!switcher.pause2 && movAnim[4] && switcher.traj_mode == 1){
 			if (swch.prev_t_obj != object){
 				ctx.beginPath();
 				ctx.fillStyle = obj.color;
@@ -728,18 +736,58 @@ $('document').ready(function(){
 		if (!render){
 			ctx.beginPath();
 			ctx.fillStyle = '#000000';
-			ctx.arc(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0), (Math.sqrt(obj.m)+0.5)*zm, 0, 7);
+			ctx.arc(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0), (Math.sqrt(obj.m)+0.5*zm)*zm, 0, 7);
 			ctx.fill();
 		}
 		if (!obj.color){obj.color = 'gray';}
 		ctx.fillStyle = obj.color;
 		ctx.beginPath();
-		if (switcher.pause2){
-			ctx.arc(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0), Math.sqrt(obj.m)*zm, 0, 7);		
-		} else {
-			ctx.arc(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0), Math.sqrt(obj.m)*zm, 0, 7);		
-		}
+		ctx.arc(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0), Math.sqrt(obj.m)*zm, 0, 7);
 		ctx.fill();
+
+		//Trajectory mode 2 =====
+		if (switcher.traj_mode == 2 && !obj.lck){
+			res = 16;
+			rand_kf = 0.5;
+			if (traj_smpls[2] && !switcher.pause2){
+				body[object].trace.unshift([obj.x, obj.y]);
+				if (body[object].trace.length > res){
+					body[object].trace.pop();
+				}			
+			}
+			prev_randX = 0;
+			prev_randY = 0;
+			randX = 0;
+			randY = 0;
+
+			ctx.fillStyle = obj.color;
+			ctx.strokeStyle = obj.color;
+			if (body[object].trace[0]){
+				ctx.lineWidth = Math.sqrt(obj.m)*zm*2;
+				ctx.beginPath();
+				ctx.moveTo(crd(body[object].x, 'x', 0)+randX, crd(body[object].y, 'y', 0)+randY);
+				ctx.lineTo(crd(body[object].trace[0][0], 'x', 0)+prev_randX, crd(body[object].trace[0][1], 'y', 0)+prev_randY);
+				ctx.stroke();				
+			}
+			for (let i in body[object].trace){
+				itr = i-1;
+				itr = itr < 0?0:itr;
+				prev_randX = randX; prev_randY = randY;
+				randX = getRandomArbitrary(-(Math.sqrt(obj.m)*zm*i/10), Math.sqrt(obj.m)*zm*i/10)*rand_kf;
+				randY = getRandomArbitrary(-(Math.sqrt(obj.m)*zm*i/10), Math.sqrt(obj.m)*zm*i/10)*rand_kf;
+				ctx.beginPath();
+				ctx.arc(Math.floor(crd(body[object].trace[itr][0], 'x', 0)+randX*2), Math.floor(crd(body[object].trace[itr][1], 'y', 0)+randY*2), Math.sqrt(obj.m)*zm - (Math.sqrt(obj.m)*zm)/res*i, 0, 7);
+				ctx.fill();
+
+				ctx.lineWidth = Math.sqrt(obj.m)*zm*1.7 - (Math.sqrt(obj.m)*zm*2)/32*i*2;
+				ctx.beginPath();
+				ctx.moveTo(crd(body[object].trace[i][0], 'x', 0)+randX, crd(body[object].trace[i][1], 'y', 0)+randY);
+				ctx.lineTo(crd(body[object].trace[itr][0], 'x', 0)+prev_randX, crd(body[object].trace[itr][1], 'y', 0)+prev_randY);
+				ctx.stroke();
+			}
+		}
+		if (switcher.traj_mode != 2) {body[object].trace = [];};
+
 		//console.log(R);
 		//arr = Object.keys(body);
 		//ctx.beginPath();
@@ -904,7 +952,20 @@ $('document').ready(function(){
 			ctx.fillStyle = color;
 			ctx.arc((crd(body[del_radius[1]].x, 'x', 0)), (crd(body[del_radius[1]].y, 'y', 0)), Math.sqrt(body[del_radius[1]].m)*zm+switcher.del_pulse, 0, 7);
 			ctx.fill();
-			ctx.beginPath();			
+			ctx.beginPath();
+
+			col = '#fff';
+			if (color.length == 4){col = color;}
+			if (color.length == 5){col = color.slice(0, 4);}
+			if (color.length == 7){col = color;}
+			if (color.length == 9){col = color.slice(0, 8);}
+
+			ctx.beginPath();
+			ctx.strokeStyle = col;
+			ctx.lineWidth = 0.7;
+			ctx.arc((crd(body[del_radius[1]].x, 'x', 0)), (crd(body[del_radius[1]].y, 'y', 0)), Math.sqrt(body[del_radius[1]].m)*zm+switcher.del_pulse, 0, 7);
+			ctx.stroke();
+			ctx.beginPath();		
 		}
 	}
 
@@ -952,9 +1013,9 @@ $('document').ready(function(){
 				equilib = true;
 			}
 			if (vx&&vy){
-				body['ast'+num] = {'x': crd(px, 'x', 1), 'y': crd(py, 'y', 1), 'vx': vx, 'vy': vy, m: obj_radius, 'lck': false, 'color': obj_color, lck: obj_lck};
+				body['ast'+num] = {'x': crd(px, 'x', 1), 'y': crd(py, 'y', 1), 'vx': vx, 'vy': vy, m: obj_radius, 'lck': false, 'color': obj_color, lck: obj_lck, trace: []};
 			}else{
-				body['ast'+num] = {'x': crd(px, 'x', 1), 'y': crd(py, 'y', 1), 'vx': svx, 'vy': svy, m: obj_radius, 'lck': false, 'color': obj_color, lck: obj_lck};	
+				body['ast'+num] = {'x': crd(px, 'x', 1), 'y': crd(py, 'y', 1), 'vx': svx, 'vy': svy, m: obj_radius, 'lck': false, 'color': obj_color, lck: obj_lck, trace: []};	
 			}
 			if (equilib && body[swch.orb_obj]){
 				vel2 = f_orbital_speed(crd(body[swch.orb_obj].x, 'x', 1), crd(body[swch.orb_obj].y, 'y', 1), ('ast'+num));
@@ -988,41 +1049,70 @@ $('document').ready(function(){
 			for (let object in body_traj){
 				//Refresh_func===============
 				obj1 = body_traj_prev[object];
-				for (let i in body_traj){
-					if (i == object){continue;};
-					obj2 = body_traj_prev[i];
-					R = rad(obj1.x, obj1.y, obj2.x, obj2.y);
-					
-					a = obj2.x - obj1.x;
-					b = obj2.y - obj1.y;
-					sin = b/R; cos = a/R;
+				if (switcher.interact == 0){
+					for (let i in body_traj){
+						if (i == object){continue;};
+						obj2 = body_traj_prev[i];
+						R = rad(obj1.x, obj1.y, obj2.x, obj2.y);
+						
+						a = obj2.x - obj1.x;
+						b = obj2.y - obj1.y;
+						sin = b/R; cos = a/R;
 
-					if (body_traj[object]){
-						vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx', obj2.m);
-						vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy', obj2.m);
+						if (body_traj[object]){
+							vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx', obj2.m);
+							vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy', obj2.m);
 
-						if(!obj1.lck && !(mbut == 'move' && mousedown && object == mov_obj) && body_traj[object]){
-							body_traj[object].vx += vx;
-							body_traj[object].vy += vy;
+							if(!obj1.lck && !(mbut == 'move' && mousedown && object == mov_obj) && body_traj[object]){
+								body_traj[object].vx += vx;
+								body_traj[object].vy += vy;
+							}
+
+						}
+						if (R - (Math.sqrt(obj1.m) + Math.sqrt(obj2.m)/2) <= 0){
+							if (obj1.m >= obj2.m){
+								body_traj[object].color = mixColors(obj1.color, obj2.color, obj1.m, obj2.m);
+								body_traj[object].m = Math.round((obj1.m + obj2.m)*1000)/1000;
+								if (!obj1.lck){
+									body_traj[object].vx = (obj1.m*obj1.vx+obj2.m*obj2.vx)/(obj1.m+obj2.m);//Формула абсолютно-неупругого столкновения
+									body_traj[object].vy = (obj1.m*obj1.vy+obj2.m*obj2.vy)/(obj1.m+obj2.m);//Формула абсолютно-неупругого столкновения
+								}
+								delete body_traj[i];
+								if (i == virt_obj){
+									trash = true;
+									virt_obj = object;
+									nlock = obj1.lck ? false : true;
+								}
+								continue;
+							}else{continue;}
+						}
+					}			
+				}
+				if (switcher.interact == 1 && body_traj_prev[swch.orb_obj]){
+					if (object != swch.orb_obj && body_traj[object]){
+						obj2 = body_traj_prev[swch.orb_obj];
+
+						R = rad(obj1.x, obj1.y, obj2.x, obj2.y);
+
+						a = obj2.x - obj1.x;
+						b = obj2.y - obj1.y;
+						sin = b/R; cos = a/R;
+
+						if (body_traj[object]){
+							vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx', obj2.m);
+							vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy', obj2.m);
+
+							if(!obj1.lck && !(mbut == 'move' && mousedown && object == mov_obj) && body_traj[object]){
+								body_traj[object].vx += vx;
+								body_traj[object].vy += vy;
+							}
+
 						}
 
-					}
-					if (R - (Math.sqrt(obj1.m) + Math.sqrt(obj2.m)/2) <= 0){
-						if (obj1.m >= obj2.m){
-							body_traj[object].color = mixColors(obj1.color, obj2.color, obj1.m, obj2.m);
-							body_traj[object].m = Math.round((obj1.m + obj2.m)*1000)/1000;
-							if (!obj1.lck){
-								body_traj[object].vx = (obj1.m*obj1.vx+obj2.m*obj2.vx)/(obj1.m+obj2.m);//Формула абсолютно-неупругого столкновения
-								body_traj[object].vy = (obj1.m*obj1.vy+obj2.m*obj2.vy)/(obj1.m+obj2.m);//Формула абсолютно-неупругого столкновения
-							}
-							delete body_traj[i];
-							if (i == virt_obj){
-								trash = true;
-								virt_obj = object;
-								nlock = obj1.lck ? false : true;
-							}
-							continue;
-						}else{continue;}
+						if(!obj1.lck && !switcher.pause2 && !(mbut == 'move' && mousedown && object == mov_obj)){
+							body[object].vx += vx;
+							body[object].vy += vy;
+						}
 					}
 				}
 				//End refresh_func========
@@ -1162,6 +1252,9 @@ $('document').ready(function(){
 		mbut = $(this).attr('id');
 		if (mbut == 'clear'){
 			clear('#000');
+			for (let i in body){
+				body[i].trace = [];
+			}
 			mbut = pfb;
 		} else
 		if (mbut == 'create'){
