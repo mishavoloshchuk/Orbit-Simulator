@@ -9,7 +9,8 @@
 	<script type="text/javascript" src="/js/script.js"></script>
 </head>
 <body>
-	<canvas id="canvas">No browser support!</canvas>
+	<canvas id="canvas" class="canvas">No browser support!</canvas>
+	<canvas id="canvas2" class="canvas">No browser support!</canvas>
 	<div class="menu">
 		<div class="btn" id='create'>
 			<img src="/ico/create.png" alt="create" title="Создать обьект">
@@ -114,6 +115,15 @@
 			<span>Неподвижный: </span>
 			<input type="checkbox" class="checkbox" onchange="obj_lck = this.checked;" onmouseout="this.blur();">		
 		</div>
+		
+		<div class='option_item'>
+			<span>Главный обьект: </span>
+			<div class="button" id="select_main_obj">
+				<span>
+					Выбрать 
+				</span>
+			</div>
+		</div>
 
 		<div class='option_item menu_close e0' style="border-bottom: none;">
 			<div>Закрыть</div>
@@ -136,7 +146,7 @@
 					<input class="checkbox" type="radio" name="del_method" value=1>
 				</div>
 				<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px">
-					<span>Удалить последний добавленный обьект: </span>
+					<span>Удалить последний добавленный обьект (Ctrl+Z): </span>
 					<input class="checkbox" type="radio" name="del_method" value=2>
 				</div>
 			</form>		
@@ -270,6 +280,13 @@
 				</div>
 			</form>					
 		</div>
+		<div class='option_item'>
+			<div class="button" id="wrap_time">
+				<span>
+					Развернуть время
+				</span>
+			</div>		
+		</div>
 
 		<div class='option_item menu_close e1' style="border-bottom: none;">
 			<div>Закрыть</div>
@@ -330,7 +347,7 @@
 				</div>
 				<div class="radio_button_menu">
 					<span>Режим следа - 3: </span>
-					<input disabled="" id="traj_radio_3" class="checkbox" type="radio" name="traj" value=3>
+					<input id="traj_radio_3" class="checkbox" type="radio" name="traj" value=3>
 				</div>
 			</form>
 		</div>
@@ -345,6 +362,10 @@
 		<div class='option_item'>
 			<span>Дальность прощета траектории <br>(влияет на быстродействие): </span>
 			<input type="number" class='input_num' id="traj_calc_samples">	
+		</div>
+		<div class='option_item'>
+			<span>Показывать рассояние: </span>
+			<input type="checkbox" class='checkbox' id="vis_distance_check">	
 		</div>
 
 		<div class='option_item menu_close e0' style="border-bottom: none;">

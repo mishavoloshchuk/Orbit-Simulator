@@ -1,8 +1,12 @@
 $('document').ready(function(){
 	var canv = document.getElementById('canvas');
-	var ctx = canv.getContext('2d', {alpha: false});
+	var ctx = canv.getContext('2d');
+	var canv2 = document.getElementById('canvas2');
+	var ctx2 = canv2.getContext('2d');
 	canv.width = window.innerWidth;
 	canv.height = window.innerHeight;
+	canv2.width = window.innerWidth;
+	canv2.height = window.innerHeight;
 	mouse_coords = [canv.width/2, canv.height/2];
 	mouse = [];
 	mbut = 'create';
@@ -32,6 +36,7 @@ $('document').ready(function(){
 	//Debug
 	ref_sped = 1;
 	show_center = false;
+	usr_orb_obj = NaN;
 
 	function crd(coord, axis, mode){
 		if (mode == 0){
@@ -53,9 +58,9 @@ $('document').ready(function(){
 	}
 
 	body = {
-		'earth': {x:window.innerWidth/2, y: window.innerHeight/2, vx: 0, vy: 0, m: 1000, color: '#ffff00', lck: true, trace: []},
-		//'ast': {x:window.innerWidth/2 - 100, y: window.innerHeight/2, vx: 0, vy: 10, m: 10, color: randColor(), lck: false, trace: []},
-		//'earth2': {'x':0, 'y': window.innerHeight/2, 'vx': 1, 'vy': 3, m: 100, 'color': '#ffff00', 'lck': false, trace: []},
+		'earth': {x:window.innerWidth/2, y: window.innerHeight/2, vx: 0, vy: 0, m: 1000, color: '#ffff00', lck: true, trace: [], main_obj: false},
+		//'ast': {x:window.innerWidth/2 - 100, y: window.innerHeight/2, vx: 0, vy: 10, m: 10, color: randColor(), lck: false, trace: [], main_obj: 'earth'},
+		//'earth2': {'x':0, 'y': window.innerHeight/2, 'vx': 1, 'vy': 3, m: 100, 'color': '#ffff00', 'lck': false, trace: [], main_obj: 'earth'},
 	};
 
 	//View=================
@@ -82,7 +87,7 @@ $('document').ready(function(){
 		obj_count: obj_count, help: false, f_speed: 0, f_need_speed: false, device: 'desktop',
 		sim_settings: false, gravit_mode: 1, r_gm: 1, interact: 0, ref_interact: 0,
 		lost_x: false, lost_y: false, camera: false, edit: false, traj: false, traj_mode: 1, traj_prev_on: true,
-		zoomToMouse: true};
+		zoomToMouse: true, vis_distance: false, sel_orb_obj: false};
 
 	swch = {s_track: false, t_object: false, prev_t_obj: false, vis_traj: false,
 		s_edit: false, edit_obj: false, orb_obj: 'earth', equilib_orb: false};
@@ -92,12 +97,14 @@ $('document').ready(function(){
 	choise_restore('traj_mode', 'traj_mode', 'radio');
 	choise_restore('traj_prev_on', 'traj_prev_on', 'checkbox');
 	choise_restore('chck_zoomToMouse', 'zoomToMouse', 'checkbox');
+	choise_restore('vis_distance_check', 'vis_distance', 'checkbox');
 
 	radio_select('gravit_mode_radio', switcher.gravit_mode);
 	radio_select('interact_radio', switcher.interact);
 	radio_select('traj_radio', switcher.traj_mode);
 	check_select('traj_prev_check', switcher.traj_prev_on);
 	check_select('chck_zoomToMouse', switcher.zoomToMouse);
+	check_select('vis_distance_check', switcher.vis_distance);
 
 	show_obj_count();
 
@@ -123,6 +130,7 @@ $('document').ready(function(){
 	t = 1;
 	times = 1;
 	tsw = false;
+	t_wrap = false;
 	pretime = 1;
 	$('.time_speed h2').html('T - X'+t);
 	//======
@@ -161,7 +169,13 @@ $('document').ready(function(){
 		if (switcher.traj_mode == 0){col = '#000';}
 		ctx.fillStyle = col;
 		ctx.fillRect(0, 0, canv.width, canv.height);
+
+		clear2();
 		//ctx.clearRect(0, 0, canvas.width, canvas.height);
+	}
+	function clear2(){
+		myImageData = ctx2.createImageData(window.innerWidth, window.innerHeight, 0, 0);
+		ctx2.putImageData(myImageData, 0, 0);
 	}
 
 	function minusup(a, b){
@@ -186,7 +200,7 @@ $('document').ready(function(){
 		}
 	}
 
-	$('#canvas').mousedown(function(event){
+	$('.canvas').mousedown(function(event){
 		if (event.which == 1){
 			//console.log(body.moon.vx+'  '+body.moon.vy);
 			mousedown = true;
@@ -216,7 +230,6 @@ $('document').ready(function(){
 			if (mbut == 'edit' && swch.s_edit){
 				swch.edit_obj = select_object(0);
 				swch.s_edit = false;
-				clear('#000');
 				if (body[swch.edit_obj]){
 					document.getElementById('col_edit').value = body[swch.edit_obj].color;
 					document.getElementById('mass_edit').value = body[swch.edit_obj].m;
@@ -265,6 +278,9 @@ $('document').ready(function(){
 		if (chck == 'traj_radio_2'){
 			switcher.traj_mode = sessionStorage['traj_mode'] = 2;
 		}
+		if (chck == 'traj_radio_3'){
+			switcher.traj_mode = sessionStorage['traj_mode'] = 3;
+		}
 		if (chck == 'traj_calc_samples'){
 			traj_calc_smpls = +this.value;
 			sessionStorage['traj_calc_samples'] = +this.value;
@@ -275,10 +291,14 @@ $('document').ready(function(){
 		if (chck == 'chck_zoomToMouse'){
 			sessionStorage['chck_zoomToMouse'] = switcher.zoomToMouse = (this.checked == false) ? false : true;
 		}
+		if (chck == 'vis_distance_check'){
+			sessionStorage['vis_distance_check'] = switcher.vis_distance = (this.checked == false) ? false : true;
+			$('.power').css({display: 'none'});
+		}
 	});
 
 
-	$('#canvas').mouseup(function(e){
+	$('.canvas').mouseup(function(e){
 		if (event.which == 1){
 			mousedown = false;
 			mouse[2] = event.clientX; mouse[3] = event.clientY;
@@ -293,35 +313,24 @@ $('document').ready(function(){
 			for (let i in body){
 				body_length ++;
 			}
-
 			if (mbut == 'delete' && body_length > 0){
-				del_obj = select_object(switcher.del_radio);
+				delete_obj = select_object(switcher.del_radio);
 
 				ctx.beginPath();
 				ctx.fillStyle = '#000';
-				ctx.arc(body[del_obj].x, body[del_obj].y, Math.sqrt(body[del_obj].m)+1, 0, 7);
+				ctx.arc(body[delete_obj].x, body[delete_obj].y, Math.sqrt(body[delete_obj].m)+1, 0, 7);
 				ctx.fill();
 
-				delete body[del_obj];
+				del_obj(delete_obj);
 
 				//console.log('Удален!');
 				$('.deleted').animate({right: 50});
 				timeout = setTimeout(function(){$('.deleted').animate({right: -300});}, 2000);
 			}
-
 			if (mbut == 'move' && body[mov_obj]){
 				body[mov_obj].vx = mpos[4];
 				body[mov_obj].vy = mpos[5];
 				mov_obj = '';
-			}
-
-			if (switcher.lost_x && switcher.lost_y && mbut=='create'){	
-				ctx.strokeStyle = '#000';
-				ctx.lineWidth = Math.sqrt(obj_radius)*2*zm+1;
-				ctx.beginPath();
-				ctx.moveTo(mouse[0], mouse[1]);
-				ctx.lineTo(switcher.lost_x, switcher.lost_y);
-				ctx.stroke();
 			}
 
 			if (mbut == 'create'){
@@ -332,15 +341,15 @@ $('document').ready(function(){
 				ctx.fillStyle = obj_color;
 				ctx.arc(mpos[0], mpos[1], Math.sqrt(obj_radius)*zm, 0, 7);
 				ctx.fill();
-				//if (!switcher.pause){simulation_refresh = setInterval(frame, speed);};
-				//clear('#000');
-				//obj_sp(new_obj_param[0], new_obj_param[1], obj_color, new_obj_param[2], new_obj_param[3]);
+				if (!paus){
+					obj_sp(new_obj_param[0], new_obj_param[1], obj_color, new_obj_param[2], new_obj_param[3]);
+				}
 				//obj_sp(false, false, obj_color);
 			}
-
 			if (mbut == 'camera' && swch.s_track){
 				paus = switcher.pause ? true : false; //Пауза уже включена
 				swch.t_object = select_object();
+				clear('#000000');
 
 				if (mov[0] != 0 || mov[1] != 0){
 					movAnim[4] = false;
@@ -351,6 +360,11 @@ $('document').ready(function(){
 				mov[3] = 0;
 
 				swch.s_track = false;
+			}
+			if (mbut == 'sel_orb_obj'){
+				usr_orb_obj = select_object();
+				switcher.sel_orb_obj = false;
+				mbut = 'create';
 			}
 			show_obj_count();
 		};
@@ -394,12 +408,16 @@ $('document').ready(function(){
 		window.requestAnimationFrame(frame);
 		t = times;
 
-		swch.orb_obj = select_object(3);
+		if (!body[usr_orb_obj]){
+			swch.orb_obj = select_object(3);		
+		} else {
+			swch.orb_obj = usr_orb_obj;
+		}
 
 		mcamX = -window.innerWidth/2 * (zm-1);
 		mcamY = -window.innerHeight/2 * (zm-1);
 
-		if (mbut == 'delete' || switcher.move || mbut == 'move' || mbut == 'camera' || swch.s_edit || swch.vis_traj || switcher.traj_mode == 2){clear('#000');}else{if(!switcher.trajectory_ref){clear();};}
+		if (switcher.move || switcher.traj_mode == 2 || switcher.traj_mode == 3){clear('#000');}else{if(!switcher.trajectory_ref && !switcher.pause2){clear();}; clear2();}
 
 		if (middleMouseDown || mbut=='move'){canv.style.cursor = "move";}else{canv.style.cursor = "default";};
 
@@ -412,7 +430,7 @@ $('document').ready(function(){
 			obj_for_traj = {x: crd(mouse[0], 'x', 1), y: crd(mouse[1], 'y', 1), vx: ((mouse[0]-mouse_coords[0])/30)*t, vy: ((mouse[1]-mouse_coords[1])/30)*t, m: obj_radius, color: obj_color, lck: obj_lck};
 			//console.log(obj_for_traj);
 			if ((!(Math.abs(mouse[0]-mouse_coords[0])<5&&Math.abs(mouse[1]-mouse_coords[1])<5))&&switcher.traj_prev_on){
-				traj_prev(obj_for_traj, traj_calc_smpls, '#ffffff33', true);
+				traj_prev(obj_for_traj, traj_calc_smpls, ['#ffffff33', '#ffffff88'], true);
 			};
 		}
 
@@ -422,7 +440,7 @@ $('document').ready(function(){
 				delete switcher.traj_pause;
 			} else {
 
-			}		
+			}
 		}
 
 		if (switcher.interact != switcher.ref_interact){
@@ -432,15 +450,7 @@ $('document').ready(function(){
 			switcher.r_gm = switcher.gravit_mode;
 		}
 
-		if (tsw){
-			$('.time_speed h2').html('T - X'+t);
-			for (let i in body){
-				c = times/pretime;
-				body[i].vx *= c;
-				body[i].vy *= c;
-			}
-			tsw = false;
-		}
+		
 		//Анимация перехода камеры
 		if (swch.t_object != swch.prev_t_obj && movAnim[4]){
 			switcher.pause = true; //Пауза
@@ -474,6 +484,7 @@ $('document').ready(function(){
 				anim_cam[2] = true;
 				switcher.pause = paus; //Снимается пауза, если пауза была выключена
 			}
+			clear('#000');
 		} else {
 			swch.prev_t_obj = swch.t_object;
 		}
@@ -539,6 +550,16 @@ $('document').ready(function(){
 			cam_y = 0 + anim_cam[1];
 		}
 
+		if (tsw){
+			$('.time_speed h2').html('T - X'+t);
+			for (let i in body){
+				c = times/pretime;
+				body[i].vx *= c;
+				body[i].vy *= c;
+			}
+			tsw = false;
+		}
+
 		body_length = 0;
 		for (let i in body){
 			body_length ++;
@@ -561,6 +582,15 @@ $('document').ready(function(){
 			if (!movAnim[4]){
 				movAnim[4] = true;
 			}			
+		}
+		if (t_wrap){
+			$('.time_speed h2').html('T - X'+t);
+			for (let i in body){
+				c = times/pretime;
+				body[i].vx *= c;
+				body[i].vy *= c;
+			}
+			t_wrap = false;
 		}
 
 		if (mbut == 'delete'){
@@ -610,6 +640,15 @@ $('document').ready(function(){
 			traj_smpls[0] ++;
 			traj_smpls[2] = false;
 		}
+		if ((mbut == 'create' || mbut == 'trajectory') && !mousedown && switcher.vis_distance){
+			vis_distance([mouse_coords[0], mouse_coords[1]], '#888888');
+		}
+		if (mbut == 'sel_orb_obj' && switcher.sel_orb_obj){
+			visual_select(0, '#bf06', mov_obj);
+		}
+		if (mbut != 'create' && mbut != 'trajectory'){
+			$('.power').css({display: 'none'});
+		}
 	}
 
 	function refresh(object){
@@ -646,7 +685,7 @@ $('document').ready(function(){
 							//((body[object].m * body[object].vy)+(obj2.m * obj2.vy))/(obj2.m+body[object].m);
 						}
 
-						delete body[i];
+						del_obj(i);
 						show_obj_count();
 						continue;
 					}else{continue;}
@@ -654,8 +693,8 @@ $('document').ready(function(){
 			}
 		}
 		if (switcher.ref_interact == 1 && body_prev[swch.orb_obj] && !switcher.pause2 && body_length > 1){
-			if (object != swch.orb_obj && body[object]){
-				obj2 = body_prev[swch.orb_obj];
+			if (object != obj.main_obj && body[object] && obj.main_obj){
+				obj2 = body_prev[obj.main_obj];
 
 				R = rad(obj.x, obj.y, obj2.x, obj2.y);
 
@@ -671,25 +710,6 @@ $('document').ready(function(){
 					body[object].vy += vy;
 				}
 
-				//Столкновение в режиме взаемодействия с главным объектом
-				//if (R - (Math.sqrt(obj.m) + Math.sqrt(obj2.m)/2) <= 0){
-				//	if (obj.m >= obj2.m){
-				//		body[object].color = mixColors(body[object].color, obj2.color, body[object].m, obj2.m);
-				//		body[object].m += obj2.m;
-				//		if (!obj.lck){
-				//			body[object].vx = ( obj.m*obj.vx + obj2.m*obj2.vx )/( obj.m + obj2.m );//Формула абсолютно-неупругого столкновения
-				//			body[object].vy = ( obj.m*obj.vy + obj2.m*obj2.vy )/( obj.m + obj2.m );//Формула абсолютно-неупругого столкновения
-				//			//((body[object].m * body[object].vx)+(obj2.m * obj2.vx))/(obj2.m+body[object].m);
-				//			//((body[object].m * body[object].vy)+(obj2.m * obj2.vy))/(obj2.m+body[object].m);
-				//		}
-				//		delete body[object];
-				//		show_obj_count();
-				//		//
-//
-				//	}else{
-				//		//
-				//	}
-				//}
 				//Эллипс	
 				//ctx.beginPath();
 				//ctx.lineWidth = Math.sqrt(body[object].m);
@@ -703,14 +723,13 @@ $('document').ready(function(){
 				//ell_a = 1 / ( 2/R - (V*V) / M );
 				//ctx.ellipse(body.earth.x + cam_x, body.earth.y + cam_y, Math.abs(ell_a), 250, 0, 0, 7);
 				//ctx.stroke();
-
 			};
 		}
 
 		prev_x = body[object].x + prev_cam_x + mov[0]/zm;
 		prev_y = body[object].y + prev_cam_y + mov[1]/zm;
 
-		if(!obj.lck && !switcher.pause2){
+		if(!obj.lck && !switcher.pause2 && !t_wrap){
 			body[object].x += body[object].vx;
 			body[object].y += body[object].vy;
 		}
@@ -736,7 +755,7 @@ $('document').ready(function(){
 		if (!render){
 			ctx.beginPath();
 			ctx.fillStyle = '#000000';
-			ctx.arc(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0), (Math.sqrt(obj.m)+0.5*zm)*zm, 0, 7);
+			ctx.arc(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0), (Math.sqrt(obj.m)*zm+0.25), 0, 7);
 			ctx.fill();
 		}
 		if (!obj.color){obj.color = 'gray';}
@@ -747,7 +766,7 @@ $('document').ready(function(){
 
 		//Trajectory mode 2 =====
 		if (switcher.traj_mode == 2 && !obj.lck){
-			res = 16;
+			res = 20;
 			rand_kf = 0.5;
 			if (traj_smpls[2] && !switcher.pause2){
 				body[object].trace.unshift([obj.x, obj.y]);
@@ -775,18 +794,47 @@ $('document').ready(function(){
 				prev_randX = randX; prev_randY = randY;
 				randX = getRandomArbitrary(-(Math.sqrt(obj.m)*zm*i/10), Math.sqrt(obj.m)*zm*i/10)*rand_kf;
 				randY = getRandomArbitrary(-(Math.sqrt(obj.m)*zm*i/10), Math.sqrt(obj.m)*zm*i/10)*rand_kf;
+
+				ctx.lineWidth = Math.abs(Math.sqrt(obj.m)*zm*1.9 - (Math.sqrt(obj.m)*zm*2)/32*i*2*0.8);
 				ctx.beginPath();
 				ctx.arc(Math.floor(crd(body[object].trace[itr][0], 'x', 0)+randX*2), Math.floor(crd(body[object].trace[itr][1], 'y', 0)+randY*2), Math.sqrt(obj.m)*zm - (Math.sqrt(obj.m)*zm)/res*i, 0, 7);
 				ctx.fill();
-
-				ctx.lineWidth = Math.sqrt(obj.m)*zm*1.7 - (Math.sqrt(obj.m)*zm*2)/32*i*2;
 				ctx.beginPath();
 				ctx.moveTo(crd(body[object].trace[i][0], 'x', 0)+randX, crd(body[object].trace[i][1], 'y', 0)+randY);
 				ctx.lineTo(crd(body[object].trace[itr][0], 'x', 0)+prev_randX, crd(body[object].trace[itr][1], 'y', 0)+prev_randY);
 				ctx.stroke();
 			}
 		}
-		if (switcher.traj_mode != 2) {body[object].trace = [];};
+		if (switcher.traj_mode == 3 && !obj.lck){
+			res = 20;
+			rand_kf = 0.5;
+			if (traj_smpls[2] && !switcher.pause2){
+				body[object].trace.unshift([obj.x, obj.y]);
+				if (body[object].trace.length > res){
+					body[object].trace.pop();
+				}			
+			}
+			ctx.fillStyle = obj.color;
+			ctx.strokeStyle = obj.color;
+			if (body[object].trace[0]){
+				ctx.lineWidth = Math.sqrt(obj.m)*zm*2*0.9;
+				ctx.beginPath();
+				ctx.moveTo(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0));
+				ctx.lineTo(crd(body[object].trace[0][0], 'x', 0), crd(body[object].trace[0][1], 'y', 0));
+				ctx.stroke();				
+			}
+			for (let i in body[object].trace){
+				itr = i-1;
+				itr = itr < 0?0:itr;
+
+				ctx.lineWidth = Math.abs(Math.sqrt(obj.m)*zm*1.9 - (Math.sqrt(obj.m)*zm*2)/32*i*2*0.8);
+				ctx.beginPath();
+				ctx.moveTo(crd(body[object].trace[i][0], 'x', 0), crd(body[object].trace[i][1], 'y', 0));
+				ctx.lineTo(crd(body[object].trace[itr][0], 'x', 0), crd(body[object].trace[itr][1], 'y', 0));
+				ctx.stroke();
+			}
+		}
+		if (switcher.traj_mode != 2 && switcher.traj_mode != 3) {body[object].trace = [];};
 
 		//console.log(R);
 		//arr = Object.keys(body);
@@ -841,7 +889,7 @@ $('document').ready(function(){
 	function visual_trajectory(){
 		//clear('#000');
 		if (!(Math.abs(mouse[0]-mouse_coords[0]) <= 5 && Math.abs(mouse[1]-mouse_coords[1]) <= 5)){
-			clear('#000000');
+			//clear('#000000');
 			swch.vis_traj = true;
 			$('.power').css({left: mouse_coords[0]-10, top: mouse_coords[1]-30, display: 'block', color: obj_color});
 			$('.power').html(Math.round(rad(mouse[0], mouse[1], mouse_coords[0], mouse_coords[1])));
@@ -852,26 +900,26 @@ $('document').ready(function(){
 				switcher.f_need_speed = true;
 			};
 		}
-		ctx.strokeStyle = obj_color;
-		ctx.lineWidth = Math.sqrt(obj_radius)*2*zm;
-		ctx.beginPath();
-		ctx.moveTo(mouse[0], mouse[1]);
-		ctx.lineTo(mouse_coords[0], mouse_coords[1]);
-		ctx.stroke();
+		ctx2.strokeStyle = obj_color;
+		ctx2.lineWidth = Math.sqrt(obj_radius)*2*zm;
+		ctx2.beginPath();
+		ctx2.moveTo(mouse[0], mouse[1]);
+		ctx2.lineTo(mouse_coords[0], mouse_coords[1]);
+		ctx2.stroke();
 
-		ctx.strokeStyle = '#000a';
-		ctx.lineWidth = Math.sqrt(obj_radius)*2*zm;
-		ctx.beginPath();
-		ctx.moveTo(mouse[0], mouse[1]);
-		ctx.lineTo(mouse_coords[0], mouse_coords[1]);
-		ctx.stroke();
+		ctx2.strokeStyle = '#000a';
+		ctx2.lineWidth = Math.sqrt(obj_radius)*2*zm;
+		ctx2.beginPath();
+		ctx2.moveTo(mouse[0], mouse[1]);
+		ctx2.lineTo(mouse_coords[0], mouse_coords[1]);
+		ctx2.stroke();
 		switcher.lost_x = mouse_coords[0];
 		switcher.lost_y = mouse_coords[1];
 
-		ctx.beginPath();
-		ctx.fillStyle = obj_color;
-		ctx.arc(mpos[0], mpos[1], Math.sqrt(obj_radius)*zm, 0, 7);
-		ctx.fill();
+		ctx2.beginPath();
+		ctx2.fillStyle = obj_color;
+		ctx2.arc(mpos[0], mpos[1], Math.sqrt(obj_radius)*zm, 0, 7);
+		ctx2.fill();
 	}
 
 	function f_orbital_speed(px, py, obj){
@@ -922,6 +970,42 @@ $('document').ready(function(){
 		return 	sel[1];
 	}
 
+	function vis_distance(obj_cord, col = '#888888', targ_obj = swch.orb_obj){
+		if (body[targ_obj]){
+			size = rad(obj_cord[0], obj_cord[1], crd(body[targ_obj].x, 'x', 0), crd(body[targ_obj].y, 'y', 0));
+			if (size > Math.sqrt(body[targ_obj].m)*zm){
+				ctx2.strokeStyle = col;
+				ctx2.lineWidth = 2;
+				ctx2.beginPath();
+				ctx2.moveTo(obj_cord[0], obj_cord[1]);
+				ctx2.lineTo(crd(body[targ_obj].x, 'x', 0), crd(body[targ_obj].y, 'y', 0));
+				ctx2.stroke();
+
+				ctx2.lineWidth = 0.5;
+				ctx2.beginPath();
+				ctx2.arc(crd(body[targ_obj].x, 'x', 0), crd(body[targ_obj].y, 'y', 0), size, 0, 7);
+				//ctx2.ellipse(crd(body[targ_obj].x, 'x', 0), crd(body[targ_obj].y, 'y', 0), size, size, 0, 0, 7);
+				ctx2.stroke();
+
+				ctx2.beginPath();
+				ctx2.fillStyle = col;
+				ctx2.arc(crd(body[targ_obj].x, 'x', 0), crd(body[targ_obj].y, 'y', 0), 3, 0, 7);
+				ctx2.arc(obj_cord[0], obj_cord[1], 3, 0, 7);
+				ctx2.fill();
+				ctx2.beginPath();
+
+				$('.power').css({left: mouse_coords[0]-10, top: mouse_coords[1]-30, display: 'block', color: col});
+				$('.power').html((Math.round(size/zm*1000)/1000));
+			} else {
+				if (!mousedown){
+					$('.power').css({display: 'none'});			
+				}
+			}		
+		} else {
+			$('.power').css({display: 'none'});
+		}
+	}
+
 	function visual_select(mode, color, object = '') {
 		obj_count = 0;
 		for (let i in body){
@@ -948,11 +1032,11 @@ $('document').ready(function(){
 				switcher.del_pulse -= 0.5;
 			}
 
-			ctx.beginPath();
-			ctx.fillStyle = color;
-			ctx.arc((crd(body[del_radius[1]].x, 'x', 0)), (crd(body[del_radius[1]].y, 'y', 0)), Math.sqrt(body[del_radius[1]].m)*zm+switcher.del_pulse, 0, 7);
-			ctx.fill();
-			ctx.beginPath();
+			ctx2.beginPath();
+			ctx2.fillStyle = color;
+			ctx2.arc((crd(body[del_radius[1]].x, 'x', 0)), (crd(body[del_radius[1]].y, 'y', 0)), Math.sqrt(body[del_radius[1]].m)*zm+switcher.del_pulse, 0, 7);
+			ctx2.fill();
+			ctx2.beginPath();
 
 			col = '#fff';
 			if (color.length == 4){col = color;}
@@ -960,13 +1044,18 @@ $('document').ready(function(){
 			if (color.length == 7){col = color;}
 			if (color.length == 9){col = color.slice(0, 8);}
 
-			ctx.beginPath();
-			ctx.strokeStyle = col;
-			ctx.lineWidth = 0.7;
-			ctx.arc((crd(body[del_radius[1]].x, 'x', 0)), (crd(body[del_radius[1]].y, 'y', 0)), Math.sqrt(body[del_radius[1]].m)*zm+switcher.del_pulse, 0, 7);
-			ctx.stroke();
-			ctx.beginPath();		
+			ctx2.beginPath();
+			ctx2.strokeStyle = col;
+			ctx2.lineWidth = 0.7;
+			ctx2.arc((crd(body[del_radius[1]].x, 'x', 0)), (crd(body[del_radius[1]].y, 'y', 0)), Math.sqrt(body[del_radius[1]].m)*zm+switcher.del_pulse, 0, 7);
+			ctx2.stroke();
+			ctx2.beginPath();		
 		}
+	}
+
+	function del_obj(obj_name_id){
+		delete body[obj_name_id];
+		show_obj_count();
 	}
 
 	function obj_sp(point_x,point_y,ob_col,vx,vy){
@@ -976,7 +1065,6 @@ $('document').ready(function(){
 		};
 
 		if (spawn){
-			show_obj_count();
 			num ++;
 			if (!point_x && !point_y){
 				svx = ((mouse[0]-mouse[2])/30)*t;
@@ -1013,9 +1101,9 @@ $('document').ready(function(){
 				equilib = true;
 			}
 			if (vx&&vy){
-				body['ast'+num] = {'x': crd(px, 'x', 1), 'y': crd(py, 'y', 1), 'vx': vx, 'vy': vy, m: obj_radius, 'lck': false, 'color': obj_color, lck: obj_lck, trace: []};
+				body['ast'+num] = {'x': crd(px, 'x', 1), 'y': crd(py, 'y', 1), 'vx': vx, 'vy': vy, m: obj_radius, 'lck': false, 'color': obj_color, lck: obj_lck, trace: [], main_obj: swch.orb_obj};
 			}else{
-				body['ast'+num] = {'x': crd(px, 'x', 1), 'y': crd(py, 'y', 1), 'vx': svx, 'vy': svy, m: obj_radius, 'lck': false, 'color': obj_color, lck: obj_lck, trace: []};	
+				body['ast'+num] = {'x': crd(px, 'x', 1), 'y': crd(py, 'y', 1), 'vx': svx, 'vy': svy, m: obj_radius, 'lck': false, 'color': obj_color, lck: obj_lck, trace: [], main_obj: swch.orb_obj};	
 			}
 			if (equilib && body[swch.orb_obj]){
 				vel2 = f_orbital_speed(crd(body[swch.orb_obj].x, 'x', 1), crd(body[swch.orb_obj].y, 'y', 1), ('ast'+num));
@@ -1025,11 +1113,11 @@ $('document').ready(function(){
 			spawn = false;
 		}
 		new_obj_param = false;
+		show_obj_count();
 	}
-	scale = 1;
 
 	//Прощет траэктории
-	function traj_prev(obj, count = 1, col, full_object = false){
+	function traj_prev(obj, count = 100, col, full_object = false){
 		body_traj = JSON.parse(JSON.stringify(body));
 		sp_obj = [0,1];
 		virt_obj = 'virtual';
@@ -1044,6 +1132,7 @@ $('document').ready(function(){
 		}
 		trash = false;
 		nlock = body_traj.virtual.lck ? false : true;
+		refMov = [0, 0];
 		for (let i = 0; i < count && nlock; i++){
 			body_traj_prev = JSON.parse(JSON.stringify(body_traj));
 			for (let object in body_traj){
@@ -1067,8 +1156,7 @@ $('document').ready(function(){
 								body_traj[object].vx += vx;
 								body_traj[object].vy += vy;
 							}
-
-						}
+						}					
 						if (R - (Math.sqrt(obj1.m) + Math.sqrt(obj2.m)/2) <= 0){
 							if (obj1.m >= obj2.m){
 								body_traj[object].color = mixColors(obj1.color, obj2.color, obj1.m, obj2.m);
@@ -1078,6 +1166,7 @@ $('document').ready(function(){
 									body_traj[object].vy = (obj1.m*obj1.vy+obj2.m*obj2.vy)/(obj1.m+obj2.m);//Формула абсолютно-неупругого столкновения
 								}
 								delete body_traj[i];
+								body_traj[object].trash = true;
 								if (i == virt_obj){
 									trash = true;
 									virt_obj = object;
@@ -1124,23 +1213,34 @@ $('document').ready(function(){
 					body_traj[object].y += body_traj[object].vy;
 				}
 			}
-		if (trash){
-			col = '#ff666666';
-			trash = false;		
-		}
-		if (body_traj[virt_obj]){
-			//ctx.strokeStyle = col;
-			//ctx.lineWidth = 2;
-			//ctx.beginPath();
-			//ctx.moveTo(prev_x, prev_y);
-			//ctx.lineTo(body_traj[virt_obj].x + cam_x, body_traj[virt_obj].y + cam_y);
-			//ctx.stroke();
 
-			ctx.beginPath();
-			ctx.fillStyle = col;
-			ctx.arc(crd(body_traj[virt_obj].x, 'x', 0), crd(body_traj[virt_obj].y, 'y', 0), 1.5, 0, 7);
-			ctx.fill();
-			ctx.beginPath();				
+			if (body_traj[virt_obj]){
+				//ctx2.strokeStyle = col;
+				//ctx2.lineWidth = 2;
+				//ctx2.beginPath();
+				//ctx2.moveTo(prev_x, prev_y);
+				//ctx2.lineTo(body_traj[virt_obj].x + cam_x, body_traj[virt_obj].y + cam_y);
+				//ctx2.stroke();
+				if (swch.t_object == swch.orb_obj && body_traj[swch.orb_obj]){
+					refMov[0] += body_traj[swch.orb_obj].vx;
+					refMov[1] += body_traj[swch.orb_obj].vy;					
+				}
+				for (let ob in body_traj){
+					clr = ob == virt_obj ? col[1]:col[0];
+					if (body_traj[ob].trash){
+						clr = '#ff666666';
+					}
+					ctx2.beginPath();
+					ctx2.fillStyle = clr;
+					ctx2.arc(crd(body_traj[ob].x-refMov[0], 'x', 0), crd(body_traj[ob].y-refMov[1], 'y', 0), 1.5, 0, 7);
+					ctx2.fill();
+					ctx2.beginPath();		
+				}
+			//ctx2.beginPath();
+			//ctx2.fillStyle = col;
+			//ctx2.arc(crd(body_traj[virt_obj].x, 'x', 0), crd(body_traj[virt_obj].y, 'y', 0), 1.5, 0, 7);
+			//ctx2.fill();
+			//ctx2.beginPath();				
 			}
 			
 		}
@@ -1187,11 +1287,19 @@ $('document').ready(function(){
 		if (e.keyCode == 32){
 			if (mbut == 'create'){
 				spawn = true;
-				obj_sp(mouse_coords[0], mouse_coords[1]);				
+				obj_sp(mouse_coords[0], mouse_coords[1]);			
 			}
 			if (mbut == 'delete'){
-				$('#canvas').mousedown();
-				$('#canvas').mouseup();
+				//$('.canvas').mousedown();
+				//$('.canvas').mouseup();
+				delete_obj = select_object(switcher.del_radio);
+				ctx.beginPath();
+				ctx.fillStyle = '#000';
+				ctx.arc(body[delete_obj].x, body[delete_obj].y, Math.sqrt(body[delete_obj].m)+1, 0, 7);
+				ctx.fill();
+				del_obj(delete_obj);
+				$('.deleted').animate({right: 50});
+				timeout = setTimeout(function(){$('.deleted').animate({right: -300});}, 2000);
 			}
 		}
 		//create
@@ -1218,6 +1326,8 @@ $('document').ready(function(){
 		if (e.keyCode == 83){ $('#sim_settings').mousedown(); }
 		//camera
 		if (e.keyCode == 86){ $('#camera').mousedown(); }
+		//Ctrl+Z
+		if (e.keyCode == 90){ if(e.ctrlKey){del_obj(select_object(2)); show_obj_count();} }
 		//T+
 		if (e.keyCode == 187){
 			ref_sped *= 2;
@@ -1390,7 +1500,7 @@ $('document').ready(function(){
 			change_state('settings');
 		}
 
-		if (pfb == 'move' || pfb == 'delete' || pfb == 'camera'){clear('#000');};
+		//if (pfb == 'move' || pfb == 'delete' || pfb == 'camera'){clear('#000');};
 		$('#'+pfb).css({background: 'none'});
 		$('#'+mbut).css({background: '#fff2'});
 		if (switcher[mbut]){$('#'+mbut).css({background: '#fff8'});}
@@ -1408,6 +1518,7 @@ $('document').ready(function(){
 			}		
 		}
 		if (cbut == 'clear_camera_settings'){
+			clear('#000');
 			swch.t_object = false;
 			zm = 1;
 			mov[0] = 0;
@@ -1418,7 +1529,6 @@ $('document').ready(function(){
 		if (cbut == 'select_edit_obj'){
 			if (swch.s_edit){
 				swch.s_edit = false;
-				clear('#000');
 			} else {
 				swch.s_edit = true;
 			}				
@@ -1426,6 +1536,15 @@ $('document').ready(function(){
 		if (cbut == 'reset_speed_btn' && body[swch.edit_obj]){
 			body[swch.edit_obj].vx = 0;
 			body[swch.edit_obj].vy = 0;
+		}
+		if (cbut == 'select_main_obj'){
+			switcher.sel_orb_obj = switcher.sel_orb_obj?false:true;
+			mbut = switcher.sel_orb_obj?'sel_orb_obj':'create';
+		}
+		if (cbut == 'wrap_time'){
+			pretime = times;
+			times *= -1;
+			t_wrap = true;
 		}
 
 	});
