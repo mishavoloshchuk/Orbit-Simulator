@@ -64,7 +64,7 @@
 			<img src="/ico/music.png" alt="Music" title="Музыка">
 		</div>
 
-		<div class="btn" id='sim_settings'>
+		<div class="btn" id='settings'>
 			<img src="/ico/settings.png" alt="Settings" title="Настройки">
 		</div>
 
@@ -232,7 +232,7 @@
 
 	</div>
 	<!--Simulation Settings-->
-	<div class="sim_settings menu_pos_size menu_pos menu_max_s" id="sim_settings">
+	<div class="settings menu_pos_size menu_pos menu_max_s" id="settings">
 		<div class='option_item title_option_item'>
 			<span>Режимы силы притяжения:</span>
 		</div>
@@ -264,7 +264,7 @@
 		<div class='option_item title_option_item'>
 			<span>Режимы взаемодействия:</span>
 		</div>
-		<div class='option_item' style="border: none;">
+		<div class='option_item without_border' style="padding-bottom: 0;">
 			<form id="interact_radio_buttons" onchange="switcher.interact = +this.interact.value; sessionStorage['interact'] = +this.interact.value;" style="width: 100%;">
 				<div class="radio_button_menu">
 					<span>Взаемодействие между всеми обьектами: </span>
@@ -280,10 +280,27 @@
 				</div>
 			</form>					
 		</div>
-		<div class='option_item'>
+		<div class='option_item without_border'>
 			<div class="button" id="wrap_time">
 				<span>
 					Развернуть время
+				</span>
+			</div>		
+		</div>
+
+		<div class='option_item title_option_item'>
+			<span>Загрузить/сохранить состояние обьектов:</span>
+		</div>
+		<div class='option_item'>
+			<input class="button file_input" type="file" accept=".txt" id="select_file" style="display: none;">
+			<div class="button" id="sel_file_but" style="margin: 0 5px;">
+				<span>
+					Загрузить
+				</span>
+			</div>
+			<div class="button" id="save_file" style="margin: 0 5px;">
+				<span>
+					Сохранить
 				</span>
 			</div>		
 		</div>

@@ -58,9 +58,9 @@ $('document').ready(function(){
 	}
 
 	body = {
-		'earth': {x:window.innerWidth/2, y: window.innerHeight/2, vx: 0, vy: 0, m: 1000, color: '#ffff00', lck: true, trace: [], main_obj: false},
-		//'ast': {x:window.innerWidth/2 - 100, y: window.innerHeight/2, vx: 0, vy: 10, m: 10, color: randColor(), lck: false, trace: [], main_obj: 'earth'},
-		//'earth2': {'x':0, 'y': window.innerHeight/2, 'vx': 1, 'vy': 3, m: 100, 'color': '#ffff00', 'lck': false, trace: [], main_obj: 'earth'},
+		'sun': {x:window.innerWidth/2, y: window.innerHeight/2, vx: 0, vy: 0, m: 1000, color: '#ffff00', lck: true, trace: [], main_obj: false},
+		//'ast': {x:window.innerWidth/2 - 100, y: window.innerHeight/2, vx: 0, vy: 10, m: 10, color: randColor(), lck: false, trace: [], main_obj: 'sun'},
+		//'sun2': {'x':0, 'y': window.innerHeight/2, 'vx': 1, 'vy': 3, m: 100, 'color': '#ffff00', 'lck': false, trace: [], main_obj: 'sun'},
 	};
 
 	//View=================
@@ -85,12 +85,12 @@ $('document').ready(function(){
 	switcher = {create: true, delete: false, del_radio: 0, 
 		del_pulse: 10, del_pulse_state: false, pause: false, pause2: false, trajectory_ref: false, music: false,
 		obj_count: obj_count, help: false, f_speed: 0, f_need_speed: false, device: 'desktop',
-		sim_settings: false, gravit_mode: 1, r_gm: 1, interact: 0, ref_interact: 0,
+		settings: false, gravit_mode: 1, r_gm: 1, interact: 0, ref_interact: 0,
 		lost_x: false, lost_y: false, camera: false, edit: false, traj: false, traj_mode: 1, traj_prev_on: true,
 		zoomToMouse: true, vis_distance: false, sel_orb_obj: false};
 
 	swch = {s_track: false, t_object: false, prev_t_obj: false, vis_traj: false,
-		s_edit: false, edit_obj: false, orb_obj: 'earth', equilib_orb: false};
+		s_edit: false, edit_obj: false, orb_obj: 'sun', equilib_orb: false};
 
 	choise_restore('gravit_mode', 'gravit_mode', 'radio');
 	choise_restore('interact', 'interact', 'radio');
@@ -99,14 +99,36 @@ $('document').ready(function(){
 	choise_restore('chck_zoomToMouse', 'zoomToMouse', 'checkbox');
 	choise_restore('vis_distance_check', 'vis_distance', 'checkbox');
 
-	radio_select('gravit_mode_radio', switcher.gravit_mode);
-	radio_select('interact_radio', switcher.interact);
-	radio_select('traj_radio', switcher.traj_mode);
-	check_select('traj_prev_check', switcher.traj_prev_on);
-	check_select('chck_zoomToMouse', switcher.zoomToMouse);
-	check_select('vis_distance_check', switcher.vis_distance);
+	function sel_and_rest(){
+		radio_select('gravit_mode_radio', switcher.gravit_mode);
+		radio_select('interact_radio', switcher.interact);
+		radio_select('traj_radio', switcher.traj_mode);
+		check_select('traj_prev_check', switcher.traj_prev_on);
+		check_select('chck_zoomToMouse', switcher.zoomToMouse);
+		check_select('vis_distance_check', switcher.vis_distance);
 
-	show_obj_count();
+		show_obj_count();
+
+		obj_color = sessionStorage['obj_color'] ? sessionStorage['obj_color'] : '#FFFFFF';
+		obj_rand_color = sessionStorage['obj_rand_color'] ? (sessionStorage['obj_rand_color'] == 'true' ? true : false) : true;
+		obj_radius = sessionStorage['obj_radius'] ? +sessionStorage['obj_radius'] : Math.round(getRandomArbitrary(0.1, 10)*10)/10;
+		obj_reverse = sessionStorage['obj_reverse'] ? (sessionStorage['obj_reverse'] == 'true' ? true : false) : false;
+		obj_cirle_orbit = sessionStorage['obj_cirle_orbit'] ? (sessionStorage['obj_cirle_orbit'] == 'true' ? true : false) : true;
+		obj_lck = false;
+
+		traj_calc_smpls = sessionStorage['traj_calc_samples'] ? +sessionStorage['traj_calc_samples'] : 100;
+
+		$('.col_select').attr('value', obj_color);
+		$('.radius_select').attr('value', obj_radius);
+		$('#traj_calc_samples').attr('value', traj_calc_smpls);
+		if (obj_reverse){$('.direction_reverse_select').attr('checked', 'on');};
+		if (obj_cirle_orbit){$('.orbit_select').attr('checked', 'on');};
+		if (obj_rand_color){$('.rand_col_select').attr('checked', 'on');};
+
+	}
+
+	change_state(mbut);
+	sel_and_rest();
 
 	function radio_select(radio_id_prefix, numb){
 		$('#'+radio_id_prefix+'_'+numb).attr('checked', '');	
@@ -134,23 +156,6 @@ $('document').ready(function(){
 	pretime = 1;
 	$('.time_speed h2').html('T - X'+t);
 	//======
-	obj_color = sessionStorage['obj_color'] ? sessionStorage['obj_color'] : '#FFFFFF';
-	obj_rand_color = sessionStorage['obj_rand_color'] ? (sessionStorage['obj_rand_color'] == 'true' ? true : false) : true;
-	obj_radius = sessionStorage['obj_radius'] ? +sessionStorage['obj_radius'] : Math.round(getRandomArbitrary(0.1, 10)*10)/10;
-	obj_reverse = sessionStorage['obj_reverse'] ? (sessionStorage['obj_reverse'] == 'true' ? true : false) : false;
-	obj_cirle_orbit = sessionStorage['obj_cirle_orbit'] ? (sessionStorage['obj_cirle_orbit'] == 'true' ? true : false) : true;
-	obj_lck = false;
-
-	traj_calc_smpls = sessionStorage['traj_calc_samples'] ? +sessionStorage['traj_calc_samples'] : 100;
-
-	$('.col_select').attr('value', obj_color);
-	$('.radius_select').attr('value', obj_radius);
-	$('#traj_calc_samples').attr('value', traj_calc_smpls);
-	if (obj_reverse){$('.direction_reverse_select').attr('checked', 'on');};
-	if (obj_cirle_orbit){$('.orbit_select').attr('checked', 'on');};
-	if (obj_rand_color){$('.rand_col_select').attr('checked', 'on');};
-
-	change_state(mbut);
 
 	//speed = 16;
 	//let simulation_refresh = setInterval(frame, speed);
@@ -213,7 +218,7 @@ $('document').ready(function(){
 				if (obj_rand_color){
 					obj_color = randColor();
 				};
-				switcher.f_speed = f_orbital_speed(mouse[0], mouse[1], 'earth');
+				switcher.f_speed = f_orbital_speed(mouse[0], mouse[1], 'sun');
 				$('.power_need').html("*Для круговой орбиты, нужно примерно: "+ Math.round(Math.sqrt(switcher.f_speed[0]*switcher.f_speed[0] + switcher.f_speed[1]*switcher.f_speed[1])*30)+"*");
 			};
 			//Перемещение ближайшео объекта
@@ -295,8 +300,13 @@ $('document').ready(function(){
 			sessionStorage['vis_distance_check'] = switcher.vis_distance = (this.checked == false) ? false : true;
 			$('.power').css({display: 'none'});
 		}
+		if (chck == 'select_file'){
+			var selectedFile = $('#select_file')[0].files[0];
+			if (selectedFile !== undefined){
+				readFile(document.getElementById('select_file'));
+			}
+		}
 	});
-
 
 	$('.canvas').mouseup(function(e){
 		if (event.which == 1){
@@ -524,8 +534,8 @@ $('document').ready(function(){
 						};
 					}
 				}
-				if (switcher.ref_interact == 1 && body_prev['earth'] && !switcher.pause2 && body_length > 1){
-					obj2 = body_prev['earth'];
+				if (switcher.ref_interact == 1 && body_prev['sun'] && !switcher.pause2 && body_length > 1){
+					obj2 = body_prev['sun'];
 
 					R = rad(obj.x, obj.y, obj2.x, obj2.y);
 
@@ -721,7 +731,7 @@ $('document').ready(function(){
 				//Mu = 100000;
 				//M = (Math.pow(V, 2) / 2) - (Mu / R);//Mechanical Energy
 				//ell_a = 1 / ( 2/R - (V*V) / M );
-				//ctx.ellipse(body.earth.x + cam_x, body.earth.y + cam_y, Math.abs(ell_a), 250, 0, 0, 7);
+				//ctx.ellipse(body.sun.x + cam_x, body.sun.y + cam_y, Math.abs(ell_a), 250, 0, 0, 7);
 				//ctx.stroke();
 			};
 		}
@@ -736,15 +746,21 @@ $('document').ready(function(){
 
 		render = (prev_x != body[object].x + cam_x + mov[0]/zm && prev_y != body[object].y + cam_y + mov[1]/zm)?true:false;
 
+		obj_rad = Math.sqrt(obj.m)*zm;
+		obj_rad = obj_rad < 0.5 ? 0.5 : obj_rad;
+
+		obCol = obj.color;
+		//obCol = randColor();
+
 		if (!switcher.pause2 && movAnim[4] && switcher.traj_mode == 1){
 			if (swch.prev_t_obj != object){
 				ctx.beginPath();
-				ctx.fillStyle = obj.color;
-				ctx.arc(prev_x*zm+mcamX, prev_y*zm+mcamY, Math.sqrt(obj.m)*zm, 0, 7);
+				ctx.fillStyle = obCol;
+				ctx.arc(prev_x*zm+mcamX, prev_y*zm+mcamY, obj_rad, 0, 7);
 				ctx.fill();
 
-				ctx.strokeStyle = obj.color;
-				ctx.lineWidth = Math.sqrt(obj.m)*2*zm;
+				ctx.strokeStyle = obCol;
+				ctx.lineWidth = obj_rad*2;
 				ctx.beginPath();
 				ctx.moveTo(prev_x*zm+mcamX, prev_y*zm+mcamY);
 				ctx.lineTo(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0));
@@ -755,13 +771,13 @@ $('document').ready(function(){
 		if (!render){
 			ctx.beginPath();
 			ctx.fillStyle = '#000000';
-			ctx.arc(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0), (Math.sqrt(obj.m)*zm+0.25), 0, 7);
+			ctx.arc(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0), (obj_rad+0.25), 0, 7);
 			ctx.fill();
 		}
-		if (!obj.color){obj.color = 'gray';}
-		ctx.fillStyle = obj.color;
+		if (!obCol){obCol = 'gray';}
+		ctx.fillStyle = obCol;
 		ctx.beginPath();
-		ctx.arc(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0), Math.sqrt(obj.m)*zm, 0, 7);
+		ctx.arc(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0), obj_rad, 0, 7);
 		ctx.fill();
 
 		//Trajectory mode 2 =====
@@ -779,10 +795,10 @@ $('document').ready(function(){
 			randX = 0;
 			randY = 0;
 
-			ctx.fillStyle = obj.color;
-			ctx.strokeStyle = obj.color;
+			ctx.fillStyle = obCol;
+			ctx.strokeStyle = obCol;
 			if (body[object].trace[0]){
-				ctx.lineWidth = Math.sqrt(obj.m)*zm*2;
+				ctx.lineWidth = obj_rad*2;
 				ctx.beginPath();
 				ctx.moveTo(crd(body[object].x, 'x', 0)+randX, crd(body[object].y, 'y', 0)+randY);
 				ctx.lineTo(crd(body[object].trace[0][0], 'x', 0)+prev_randX, crd(body[object].trace[0][1], 'y', 0)+prev_randY);
@@ -795,7 +811,7 @@ $('document').ready(function(){
 				randX = getRandomArbitrary(-(Math.sqrt(obj.m)*zm*i/10), Math.sqrt(obj.m)*zm*i/10)*rand_kf;
 				randY = getRandomArbitrary(-(Math.sqrt(obj.m)*zm*i/10), Math.sqrt(obj.m)*zm*i/10)*rand_kf;
 
-				ctx.lineWidth = Math.abs(Math.sqrt(obj.m)*zm*1.9 - (Math.sqrt(obj.m)*zm*2)/32*i*2*0.8);
+				ctx.lineWidth = Math.abs(obj_rad*1.9 - (obj_rad*2)/32*i*2*0.8);
 				ctx.beginPath();
 				ctx.arc(Math.floor(crd(body[object].trace[itr][0], 'x', 0)+randX*2), Math.floor(crd(body[object].trace[itr][1], 'y', 0)+randY*2), Math.sqrt(obj.m)*zm - (Math.sqrt(obj.m)*zm)/res*i, 0, 7);
 				ctx.fill();
@@ -805,6 +821,7 @@ $('document').ready(function(){
 				ctx.stroke();
 			}
 		}
+		//Trajectory mode 3 =====
 		if (switcher.traj_mode == 3 && !obj.lck){
 			res = 20;
 			rand_kf = 0.5;
@@ -814,10 +831,10 @@ $('document').ready(function(){
 					body[object].trace.pop();
 				}			
 			}
-			ctx.fillStyle = obj.color;
-			ctx.strokeStyle = obj.color;
+			ctx.fillStyle = obCol;
+			ctx.strokeStyle = obCol;
 			if (body[object].trace[0]){
-				ctx.lineWidth = Math.sqrt(obj.m)*zm*2*0.9;
+				ctx.lineWidth = obj_rad*2*0.9;
 				ctx.beginPath();
 				ctx.moveTo(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0));
 				ctx.lineTo(crd(body[object].trace[0][0], 'x', 0), crd(body[object].trace[0][1], 'y', 0));
@@ -827,7 +844,7 @@ $('document').ready(function(){
 				itr = i-1;
 				itr = itr < 0?0:itr;
 
-				ctx.lineWidth = Math.abs(Math.sqrt(obj.m)*zm*1.9 - (Math.sqrt(obj.m)*zm*2)/32*i*2*0.8);
+				ctx.lineWidth = Math.abs(obj_rad*1.9 - (obj_rad*2)/32*i*2*0.8);
 				ctx.beginPath();
 				ctx.moveTo(crd(body[object].trace[i][0], 'x', 0), crd(body[object].trace[i][1], 'y', 0));
 				ctx.lineTo(crd(body[object].trace[itr][0], 'x', 0), crd(body[object].trace[itr][1], 'y', 0));
@@ -894,7 +911,7 @@ $('document').ready(function(){
 			$('.power').css({left: mouse_coords[0]-10, top: mouse_coords[1]-30, display: 'block', color: obj_color});
 			$('.power').html(Math.round(rad(mouse[0], mouse[1], mouse_coords[0], mouse_coords[1])));
 			if (!switcher.f_need_speed){
-				if (switcher.gravit_mode == 1 && (swch.t_object == false || (swch.t_object == 'earth' && body.earth.lck))){					
+				if (switcher.gravit_mode == 1 && (swch.t_object == false || (swch.t_object == 'sun' && body.sun.lck))){					
 					$('.power_need').css({display: 'block'});
 				}
 				switcher.f_need_speed = true;
@@ -1199,8 +1216,8 @@ $('document').ready(function(){
 						}
 
 						if(!obj1.lck && !switcher.pause2 && !(mbut == 'move' && mousedown && object == mov_obj)){
-							body[object].vx += vx;
-							body[object].vy += vy;
+							body_traj[object].vx += vx;
+							body_traj[object].vy += vy;
 						}
 					}
 				}
@@ -1282,78 +1299,80 @@ $('document').ready(function(){
 
 	document.addEventListener('keydown', function(e){
 		//console.log(e.keyCode);
-
-		//Space button creato circle orbit object
-		if (e.keyCode == 32){
-			if (mbut == 'create'){
-				spawn = true;
-				obj_sp(mouse_coords[0], mouse_coords[1]);			
+		if (!e.ctrlKey){
+			//Space button creato circle orbit object
+			if (e.keyCode == 32){
+				if (mbut == 'create'){
+					spawn = true;
+					obj_sp(mouse_coords[0], mouse_coords[1]);			
+				}
+				if (mbut == 'delete'){
+					//$('.canvas').mousedown();
+					//$('.canvas').mouseup();
+					delete_obj = select_object(switcher.del_radio);
+					ctx.beginPath();
+					ctx.fillStyle = '#000';
+					ctx.arc(body[delete_obj].x, body[delete_obj].y, Math.sqrt(body[delete_obj].m)+1, 0, 7);
+					ctx.fill();
+					del_obj(delete_obj);
+					$('.deleted').animate({right: 50});
+					timeout = setTimeout(function(){$('.deleted').animate({right: -300});}, 2000);
+				}
 			}
-			if (mbut == 'delete'){
-				//$('.canvas').mousedown();
-				//$('.canvas').mouseup();
-				delete_obj = select_object(switcher.del_radio);
-				ctx.beginPath();
-				ctx.fillStyle = '#000';
-				ctx.arc(body[delete_obj].x, body[delete_obj].y, Math.sqrt(body[delete_obj].m)+1, 0, 7);
-				ctx.fill();
-				del_obj(delete_obj);
-				$('.deleted').animate({right: 50});
-				timeout = setTimeout(function(){$('.deleted').animate({right: -300});}, 2000);
+			//create
+			if (e.keyCode == 67){ $('#create').mousedown(); }
+			//delete
+			if (e.keyCode==68){ $('#delete').mousedown(); }
+			//edit
+			if (e.keyCode==69){ $('#edit').mousedown(); }
+			//trajectory
+			if (e.keyCode == 84){ $('#trajectory').mousedown(); }
+			//timedown
+			if (e.keyCode == 188){ $('#timedown').mousedown(); }
+			//play
+			if (e.keyCode == 191){ $('#play').mousedown(); }
+			//timeup
+			if (e.keyCode == 190){ $('#timeup').mousedown(); }
+			//move
+			if (e.keyCode == 77){ $('#move').mousedown(); }
+			//pause
+			if (e.keyCode == 80){ $('#pause').mousedown(); }
+			//help
+			if (e.keyCode == 72){ $('#help').mousedown(); }
+			//settings
+			if (e.keyCode == 83){ $('#settings').mousedown(); }
+			//camera
+			if (e.keyCode == 86){ $('#camera').mousedown(); }
+			//T+
+			if (e.keyCode == 187){
+				ref_sped *= 2;
+				console.log(ref_sped);
 			}
+			//T-
+			if (e.keyCode == 189){
+				if (ref_sped > 1){ref_sped /= 2;}
+				console.log(ref_sped);
+			}
+			//zoom in
+			if (e.keyCode == 107){
+				//ctx.scale(2, 2);
+				//glob_scale *= 2;
+				//ctx.translate(-canv.width/4, -canv.height/4);
+				zm *= 2;
+				clear('#000');
+			}
+			//zoom out
+			if (e.keyCode == 109){
+				//ctx.scale(0.5, 0.5);
+				//glob_scale *= 0.5;
+				//ctx.translate(canv.width/2, canv.height/2);
+				zm *= 0.5;
+				clear('#000');
+			}	
 		}
-		//create
-		if (e.keyCode == 67){ $('#create').mousedown(); }
-		//delete
-		if (e.keyCode==68){ $('#delete').mousedown(); }
-		//edit
-		if (e.keyCode==69){ $('#edit').mousedown(); }
-		//trajectory
-		if (e.keyCode == 84){ $('#trajectory').mousedown(); }
-		//timedown
-		if (e.keyCode == 188){ $('#timedown').mousedown(); }
-		//play
-		if (e.keyCode == 191){ $('#play').mousedown(); }
-		//timeup
-		if (e.keyCode == 190){ $('#timeup').mousedown(); }
-		//move
-		if (e.keyCode == 77){ $('#move').mousedown(); }
-		//pause
-		if (e.keyCode == 80){ $('#pause').mousedown(); }
-		//help
-		if (e.keyCode == 72){ $('#help').mousedown(); }
-		//settings
-		if (e.keyCode == 83){ $('#sim_settings').mousedown(); }
-		//camera
-		if (e.keyCode == 86){ $('#camera').mousedown(); }
+		//Ctrl keys
 		//Ctrl+Z
 		if (e.keyCode == 90){ if(e.ctrlKey){del_obj(select_object(2)); show_obj_count();} }
-		//T+
-		if (e.keyCode == 187){
-			ref_sped *= 2;
-			console.log(ref_sped);
-		}
-		//T-
-		if (e.keyCode == 189){
-			if (ref_sped > 1){ref_sped /= 2;}
-			console.log(ref_sped);
-		}
-		//zoom in
-		if (e.keyCode == 107){
-			//ctx.scale(2, 2);
-			//glob_scale *= 2;
-			//ctx.translate(-canv.width/4, -canv.height/4);
-			zm *= 2;
-			clear('#000');
-		}
-		//zoom out
-		if (e.keyCode == 109){
-			//ctx.scale(0.5, 0.5);
-			//glob_scale *= 0.5;
-			//ctx.translate(canv.width/2, canv.height/2);
-			zm *= 0.5;
-			clear('#000');
-		}
 	});
 
 	$('.btn').mousedown(function(){
@@ -1488,14 +1507,14 @@ $('document').ready(function(){
 			}
 			change_state('help');
 		}else
-		if (mbut == 'sim_settings'){
-			if (switcher.sim_settings){
-				$('.sim_settings').css('display', 'none');
-				switcher.sim_settings = false;			
+		if (mbut == 'settings'){
+			if (switcher.settings){
+				$('.settings').css('display', 'none');
+				switcher.settings = false;			
 			} else {
 				close_all_menus();
-				switcher.sim_settings = true;
-				$('.sim_settings').fadeIn(0);
+				switcher.settings = true;
+				$('.settings').fadeIn(0);
 			}
 			change_state('settings');
 		}
@@ -1546,6 +1565,16 @@ $('document').ready(function(){
 			times *= -1;
 			t_wrap = true;
 		}
+		if (cbut == 'save_file'){
+			switcher.pause = true;
+			my_data = {body: body, switcher: switcher, t_wrap: t_wrap};
+			my_data = JSON.stringify(my_data);
+			writeFile("No Name.txt", my_data);
+			//saveFile(name, forat, value, event);
+		}
+		if (cbut == 'sel_file_but'){
+			$('#select_file').click();
+		}
 
 	});
 
@@ -1554,7 +1583,7 @@ $('document').ready(function(){
 		$('.menu_options').css('display', 'none'); switcher.create = false;
 		$('.del_menu_options').css('display', 'none'); switcher.delete = false;
 		$('.help_menu').css('display', 'none'); switcher.help = false;
-		$('.sim_settings').css('display', 'none'); switcher.sim_settings = false;
+		$('.settings').css('display', 'none'); switcher.settings = false;
 		$('.camera_menu').css('display', 'none'); switcher.camera = false;
 		$('.edit_menu').css('display', 'none'); switcher.edit = false;
 		$('.traj_menu').css('display', 'none'); switcher.traj = false;
@@ -1657,4 +1686,53 @@ $('document').ready(function(){
 	  	$('.time_speed').css({right: 10, top: 130});
 	  	$('.menu_pos').css({top: $('.menu').outerHeight() , left: 0});
 	}
+	//Запись файла
+	function writeFile(name, value) {
+		var val = value;
+		if (value === undefined) {
+			val = "";
+		}
+		var download = document.createElement("a");
+		download.href = 'data:application/txt;charset=utf-8,' + encodeURIComponent(val);
+		download.download = name;
+		download.style.display = "none";
+		download.id = "download";
+		document.body.appendChild(download);
+		document.getElementById("download").click();
+		document.body.removeChild(download);
+	}
+
+	function saveFile(name, forat, value, event){
+		var csvData = 'data:application/txt;charset=utf-8,' + encodeURIComponent(value);
+		event.href = csvData;
+		event.target = '_blank';
+		event.download = name+'.'+format;		
+	}
+
+	function readFile(input) {
+		let file = input.files[0];
+
+		let reader = new FileReader();
+
+		reader.readAsText(file);
+
+		reader.onload = function() {
+			try {
+			  	file_data = JSON.parse(reader.result);
+			  	body = file_data.body;
+			  	switcher.interact = file_data.switcher.interact;
+			  	switcher.gravit_mode = file_data.switcher.gravit_mode;
+			  	sel_and_rest();
+			} catch(err) {
+				alert('Несовместимый файл!');
+			}
+			document.getElementById('select_file').value = '';
+		};
+
+		reader.onerror = function() {
+			alert("Ошибка чтения файла!");
+		};
+
+	}
+
 });

@@ -176,6 +176,10 @@ span {
 	align-items: center;
 }
 
+.without_border {
+	border: none;
+}
+
 .check_menu {
 	margin-left: 20px;
 }
