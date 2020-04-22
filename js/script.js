@@ -176,12 +176,12 @@ $('document').ready(function(){
 		ctx.fillStyle = col;
 		ctx.fillRect(0, 0, canv.width, canv.height);
 
-		clear2();
 		//ctx.clearRect(0, 0, canvas.width, canvas.height);
 	}
 	function clear2(){
-		myImageData = ctx2.createImageData(window.innerWidth, window.innerHeight, 0, 0);
-		ctx2.putImageData(myImageData, 0, 0);
+		//myImageData = ctx2.createImageData(window.innerWidth, window.innerHeight, 0, 0);
+		//ctx2.putImageData(myImageData, 0, 0);
+		ctx2.clearRect(0, 0, window.innerWidth, window.innerHeight);
 	}
 
 	function minusup(a, b){
@@ -428,7 +428,8 @@ $('document').ready(function(){
 		mcamX = -window.innerWidth/2 * (zm-1);
 		mcamY = -window.innerHeight/2 * (zm-1);
 
-		if (switcher.move || switcher.traj_mode == 2 || switcher.traj_mode == 3){clear('#000');}else{if(!switcher.trajectory_ref && !switcher.pause2){clear();}; clear2();}
+		clear2();
+		if (switcher.move || switcher.traj_mode == 2 || switcher.traj_mode == 3){clear('#000');}else{if(!switcher.trajectory_ref && !switcher.pause2){clear();};};
 
 		if (middleMouseDown || mbut=='move'){canv.style.cursor = "move";}else{canv.style.cursor = "default";};
 
@@ -1269,7 +1270,7 @@ $('document').ready(function(){
 	}
 	//Scene scale
 	document.addEventListener('wheel', function(e){
-		e_elem = e.path[0];
+		e_elem = e.target;
 		if (layers_id.includes(e_elem.id)){
 			ms = [e.clientX, e.clientY];
 			if (!middleMouseDown){
