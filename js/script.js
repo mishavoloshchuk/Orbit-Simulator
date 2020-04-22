@@ -8,6 +8,7 @@ $('document').ready(function(){
 	canv2.width = window.innerWidth;
 	canv2.height = window.innerHeight;
 	mouse_coords = [canv.width/2, canv.height/2];
+	layers_id = ['canvas', 'canvas2']
 	mouse = [];
 	mbut = 'create';
 	cbut = '';
@@ -684,10 +685,14 @@ $('document').ready(function(){
 					body[object].vy += vy;
 				}
 
+				A = R;
+				B = rad(obj.x+vx, obj.y+vy, obj2.x, obj2.y);
+				C = rad(obj.x+vx, obj.y+vy, obj.x, obj.y);
+
 				if (R - (Math.sqrt(obj.m) + Math.sqrt(obj2.m)/2) <= 0){
 					if (obj.m >= obj2.m){
 						body[object].color = mixColors(obj.color, obj2.color, obj.m, obj2.m);
-						body[object].m = Math.round((obj.m + obj2.m)*1000)/1000;
+						body[object].m = obj.m + obj2.m;
 						if (!obj.lck){
 							body[object].vx = (obj.m*obj.vx+obj2.m*obj2.vx)/(obj.m+obj2.m);//Формула абсолютно-неупругого столкновения
 							body[object].vy = (obj.m*obj.vy+obj2.m*obj2.vy)/(obj.m+obj2.m);//Формула абсолютно-неупругого столкновения
@@ -857,7 +862,7 @@ $('document').ready(function(){
 		//arr = Object.keys(body);
 		//ctx.beginPath();
 	};
-
+	//Функции притяжения
 	function gravity_func(sin, cos, R, func_num, dir, mass, user_func){
 		//Обратно-пропорционально квадрату расстояния
 		if (func_num == 1){
@@ -917,15 +922,16 @@ $('document').ready(function(){
 				switcher.f_need_speed = true;
 			};
 		}
+		D = Math.sqrt(obj_radius)*zm*2 < 0.5 ? 0.5 : Math.sqrt(obj_radius)*zm*2;
 		ctx2.strokeStyle = obj_color;
-		ctx2.lineWidth = Math.sqrt(obj_radius)*2*zm;
+		ctx2.lineWidth = D;
 		ctx2.beginPath();
 		ctx2.moveTo(mouse[0], mouse[1]);
 		ctx2.lineTo(mouse_coords[0], mouse_coords[1]);
 		ctx2.stroke();
 
 		ctx2.strokeStyle = '#000a';
-		ctx2.lineWidth = Math.sqrt(obj_radius)*2*zm;
+		ctx2.lineWidth = D;
 		ctx2.beginPath();
 		ctx2.moveTo(mouse[0], mouse[1]);
 		ctx2.lineTo(mouse_coords[0], mouse_coords[1]);
@@ -935,10 +941,10 @@ $('document').ready(function(){
 
 		ctx2.beginPath();
 		ctx2.fillStyle = obj_color;
-		ctx2.arc(mpos[0], mpos[1], Math.sqrt(obj_radius)*zm, 0, 7);
+		ctx2.arc(mpos[0], mpos[1], D/2, 0, 7);
 		ctx2.fill();
 	}
-
+	//Необходимая скорость для круговой орбиты
 	function f_orbital_speed(px, py, obj){
 		if (body[obj]){
 			R = rad(px, py, body[obj].x*zm, body[obj].y*zm);
@@ -953,7 +959,7 @@ $('document').ready(function(){
 			return [0, 0];
 		}
 	}
-
+	//Выбор объекта по функции
 	function select_object(mode = 0){
 		sel = [Infinity, '', 0];
 		if (mode == 2){
@@ -986,7 +992,7 @@ $('document').ready(function(){
 		}
 		return 	sel[1];
 	}
-
+	//Визуальная дистанция до главного объекта
 	function vis_distance(obj_cord, col = '#888888', targ_obj = swch.orb_obj){
 		if (body[targ_obj]){
 			size = rad(obj_cord[0], obj_cord[1], crd(body[targ_obj].x, 'x', 0), crd(body[targ_obj].y, 'y', 0));
@@ -1022,7 +1028,7 @@ $('document').ready(function(){
 			$('.power').css({display: 'none'});
 		}
 	}
-
+	//Визуальное выдиление объекта
 	function visual_select(mode, color, object = '') {
 		obj_count = 0;
 		for (let i in body){
@@ -1069,12 +1075,12 @@ $('document').ready(function(){
 			ctx2.beginPath();		
 		}
 	}
-
+	//Удаление объекта
 	function del_obj(obj_name_id){
 		delete body[obj_name_id];
 		show_obj_count();
 	}
-
+	//Создание нового объекта
 	function obj_sp(point_x,point_y,ob_col,vx,vy){
 		if (obj_rand_color){
 			if (!ob_col){obj_color = randColor();}else{obj_color = ob_col;};
@@ -1118,9 +1124,9 @@ $('document').ready(function(){
 				equilib = true;
 			}
 			if (vx&&vy){
-				body['ast'+num] = {'x': crd(px, 'x', 1), 'y': crd(py, 'y', 1), 'vx': vx, 'vy': vy, m: obj_radius, 'lck': false, 'color': obj_color, lck: obj_lck, trace: [], main_obj: swch.orb_obj};
+				body['obj_'+num] = {'x': crd(px, 'x', 1), 'y': crd(py, 'y', 1), 'vx': vx, 'vy': vy, m: obj_radius, 'lck': false, 'color': obj_color, lck: obj_lck, trace: [], main_obj: swch.orb_obj};
 			}else{
-				body['ast'+num] = {'x': crd(px, 'x', 1), 'y': crd(py, 'y', 1), 'vx': svx, 'vy': svy, m: obj_radius, 'lck': false, 'color': obj_color, lck: obj_lck, trace: [], main_obj: swch.orb_obj};	
+				body['obj_'+num] = {'x': crd(px, 'x', 1), 'y': crd(py, 'y', 1), 'vx': svx, 'vy': svy, m: obj_radius, 'lck': false, 'color': obj_color, lck: obj_lck, trace: [], main_obj: swch.orb_obj};	
 			}
 			if (equilib && body[swch.orb_obj]){
 				vel2 = f_orbital_speed(crd(body[swch.orb_obj].x, 'x', 1), crd(body[swch.orb_obj].y, 'y', 1), ('ast'+num));
@@ -1132,7 +1138,6 @@ $('document').ready(function(){
 		new_obj_param = false;
 		show_obj_count();
 	}
-
 	//Прощет траэктории
 	function traj_prev(obj, count = 100, col, full_object = false){
 		body_traj = JSON.parse(JSON.stringify(body));
@@ -1177,7 +1182,7 @@ $('document').ready(function(){
 						if (R - (Math.sqrt(obj1.m) + Math.sqrt(obj2.m)/2) <= 0){
 							if (obj1.m >= obj2.m){
 								body_traj[object].color = mixColors(obj1.color, obj2.color, obj1.m, obj2.m);
-								body_traj[object].m = Math.round((obj1.m + obj2.m)*1000)/1000;
+								body_traj[object].m = obj1.m + obj2.m;
 								if (!obj1.lck){
 									body_traj[object].vx = (obj1.m*obj1.vx+obj2.m*obj2.vx)/(obj1.m+obj2.m);//Формула абсолютно-неупругого столкновения
 									body_traj[object].vy = (obj1.m*obj1.vy+obj2.m*obj2.vy)/(obj1.m+obj2.m);//Формула абсолютно-неупругого столкновения
@@ -1262,41 +1267,43 @@ $('document').ready(function(){
 			
 		}
 	}
-
 	//Scene scale
 	document.addEventListener('wheel', function(e){
-		ms = [e.clientX, e.clientY];
-		if (!middleMouseDown){
-			vl = 1.25;
-			if (!swch.prev_t_obj && switcher.zoomToMouse){
-				if (e.deltaY > 0){
-					zm /= vl;
-					mov[0] = mov[0] / vl - (wind_width/2 - ms[0]) / (vl/(vl-1));
-					mov[1] = mov[1] / vl - (wind_height/2 - ms[1]) / (vl/(vl-1));
-					mov[2] = mov[0]; mov[3] = mov[1];
+		e_elem = e.path[0];
+		if (layers_id.includes(e_elem.id)){
+			ms = [e.clientX, e.clientY];
+			if (!middleMouseDown){
+				vl = 1.25;
+				if (!swch.prev_t_obj && switcher.zoomToMouse){
+					if (e.deltaY > 0){
+						zm /= vl;
+						mov[0] = mov[0] / vl - (wind_width/2 - ms[0]) / (vl/(vl-1));
+						mov[1] = mov[1] / vl - (wind_height/2 - ms[1]) / (vl/(vl-1));
+						mov[2] = mov[0]; mov[3] = mov[1];
+					} else {
+						zm *= vl
+						mov[0] = mov[0] * vl + (wind_width/2 - ms[0]) / (1/(vl-1));
+						mov[1] = mov[1] * vl + (wind_height/2 - ms[1]) / (1/(vl-1));
+						mov[2] = mov[0]; mov[3] = mov[1];
+					}
 				} else {
-					zm *= vl
-					mov[0] = mov[0] * vl + (wind_width/2 - ms[0]) / (1/(vl-1));
-					mov[1] = mov[1] * vl + (wind_height/2 - ms[1]) / (1/(vl-1));
-					mov[2] = mov[0]; mov[3] = mov[1];
+					if (e.deltaY > 0){
+						zm /= vl;
+						mov[0] /= vl;
+						mov[1] /= vl;
+						mov[2] = mov[0]; mov[3] = mov[1];
+					} else {
+						zm *= vl
+						mov[0] *= vl;
+						mov[1] *= vl;
+						mov[2] = mov[0]; mov[3] = mov[1];
+					}
 				}
-			} else {
-				if (e.deltaY > 0){
-					zm /= vl;
-					mov[0] /= vl;
-					mov[1] /= vl;
-					mov[2] = mov[0]; mov[3] = mov[1];
-				} else {
-					zm *= vl
-					mov[0] *= vl;
-					mov[1] *= vl;
-					mov[2] = mov[0]; mov[3] = mov[1];
-				}
+				clear('#000');
 			}
-			clear('#000');
 		}
 	});
-
+	//События клавиатуры
 	document.addEventListener('keydown', function(e){
 		//console.log(e.keyCode);
 		if (!e.ctrlKey){
@@ -1340,7 +1347,7 @@ $('document').ready(function(){
 			//help
 			if (e.keyCode == 72){ $('#help').mousedown(); }
 			//settings
-			if (e.keyCode == 83){ $('#settings').mousedown(); }
+			if (e.keyCode == 83 && !e.ctrlKey){ $('#settings').mousedown(); }
 			//camera
 			if (e.keyCode == 86){ $('#camera').mousedown(); }
 			//T+
@@ -1589,7 +1596,7 @@ $('document').ready(function(){
 		$('.traj_menu').css('display', 'none'); switcher.traj = false;
 		if (e){switcher[e] = true};
 	}
-	function change_state(img, format='png', path = '/ico/'){
+	function change_state(img, format='png', path = 'ico/'){
 		$('.state').html('<img src="'+path+img+'.'+format+'" alt="">');
 	}
 
@@ -1732,7 +1739,57 @@ $('document').ready(function(){
 		reader.onerror = function() {
 			alert("Ошибка чтения файла!");
 		};
+	}
 
+	function intin(n, a, b){
+		if (a-b>0){
+			if (n<a&&n>b){
+				return true;
+			}else{
+				return false;
+			}		
+		} else {
+			if (n>a&&n<b){
+				return true;
+			}else{
+				return false;
+			}
+		}
 	}
 
 });
+
+//$('document').ready(function(){
+//	$('#hover_img').hover(function(){
+//		$(this).attr({'src': 'img/Без имени-1-2.png'});
+//	});
+//	$('#hover_img').mouseout(function(){
+//		$(this).attr({'src': '=====Картинка_без_наведення_мишкою====='});
+//	});
+//});
+
+//$('document').ready(function(){
+//	switcher = {div: false};
+//	$('#my_div').click(function(){
+//		if (switcher.div){
+//			switcher.div = false;
+//			$(this).css({display: 'block'});
+//		} else {
+//			switcher.div = true;
+//			$(this).css({display: 'none'});
+//		}
+//	});
+//});
+//var ObjAuthentication = new function() {
+// 
+//  this.objectShowHide = function() {
+//    $(document).click(function(){
+//      $('#photo-bag-2,#photo2').slideUp("slow");
+//      $('.Development').click(function(event){
+//        $('#photo-bag-1' ).slideDown("slow");
+//        event.stopPropagation();
+//      });
+//    });
+//  };
+// 
+//};
