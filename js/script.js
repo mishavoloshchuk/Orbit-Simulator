@@ -85,7 +85,7 @@ $('document').ready(function(){
 
 	switcher = {create: true, delete: false, del_radio: 0, 
 		del_pulse: 10, del_pulse_state: false, pause: false, pause2: false, trajectory_ref: false, music: false,
-		obj_count: obj_count, help: false, f_speed: 0, f_need_speed: false, device: 'desktop',
+		obj_count: obj_count, help: false, f_speed: 0, device: 'desktop',
 		settings: false, gravit_mode: 1, r_gm: 1, interact: 0, ref_interact: 0,
 		lost_x: false, lost_y: false, camera: false, edit: false, traj: false, traj_mode: 1, traj_prev_on: true,
 		zoomToMouse: true, vis_distance: false, sel_orb_obj: false};
@@ -318,7 +318,6 @@ $('document').ready(function(){
 			if (switcher.device == 'mobile'){
 				close_all_menus();
 			}
-			switcher.f_need_speed = false;
 
 			body_length = 0;
 			for (let i in body){
@@ -390,10 +389,18 @@ $('document').ready(function(){
 
 		switcher.move = false;
 		if (mousedown && mbut == 'move' && mov_obj){
-			switcher.move = true;
+			//switcher.move = true;
 			if (body[mov_obj]){
+				ctx.strokeStyle = body[mov_obj].color;
+				ctx.lineWidth = Math.sqrt(body[mov_obj].m)*2*zm < 0.5 ? 0.5 : Math.sqrt(body[mov_obj].m)*2*zm;
+				ctx.beginPath();
+				ctx.moveTo(crd(body[mov_obj].x, 'x', 0), crd(body[mov_obj].y, 'y', 0));
+
 				body[mov_obj].x = (event.clientX - mpos[0])/zm + mpos[2];
 				body[mov_obj].y = (event.clientY - mpos[1])/zm + mpos[3];
+
+				ctx.lineTo(crd(body[mov_obj].x, 'x', 0), crd(body[mov_obj].y, 'y', 0));
+				ctx.stroke();
 			}
 		}
 
@@ -442,7 +449,7 @@ $('document').ready(function(){
 			obj_for_traj = {x: crd(mouse[0], 'x', 1), y: crd(mouse[1], 'y', 1), vx: ((mouse[0]-mouse_coords[0])/30)*t, vy: ((mouse[1]-mouse_coords[1])/30)*t, m: obj_radius, color: obj_color, lck: obj_lck};
 			//console.log(obj_for_traj);
 			if ((!(Math.abs(mouse[0]-mouse_coords[0])<5&&Math.abs(mouse[1]-mouse_coords[1])<5))&&switcher.traj_prev_on){
-				traj_prev(obj_for_traj, traj_calc_smpls, ['#ffffff33', '#ffffff88'], true);
+				traj_prev(obj_for_traj, traj_calc_smpls, ['#006BDE88', '#ffffff44'], true);
 			};
 		}
 
@@ -711,6 +718,7 @@ $('document').ready(function(){
 		if (switcher.ref_interact == 1 && body_prev[swch.orb_obj] && !switcher.pause2 && body_length > 1){
 			if (object != obj.main_obj && body[object] && obj.main_obj){
 				obj2 = body_prev[obj.main_obj];
+				if (!body[obj.main_obj]){obj.main_obj = select_object(3)};
 
 				R = rad(obj.x, obj.y, obj2.x, obj2.y);
 
@@ -777,7 +785,7 @@ $('document').ready(function(){
 		if (!render){
 			ctx.beginPath();
 			ctx.fillStyle = '#000000';
-			ctx.arc(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0), (obj_rad+0.25), 0, 7);
+			ctx.arc(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0), (obj_rad+0.125), 0, 7);
 			ctx.fill();
 		}
 		if (!obCol){obCol = 'gray';}
@@ -916,12 +924,6 @@ $('document').ready(function(){
 			swch.vis_traj = true;
 			$('.power').css({left: mouse_coords[0]-10, top: mouse_coords[1]-30, display: 'block', color: obj_color});
 			$('.power').html(Math.round(rad(mouse[0], mouse[1], mouse_coords[0], mouse_coords[1])));
-			if (!switcher.f_need_speed){
-				if (switcher.gravit_mode == 1 && (swch.t_object == false || (swch.t_object == 'sun' && body.sun.lck))){					
-					$('.power_need').css({display: 'block'});
-				}
-				switcher.f_need_speed = true;
-			};
 		}
 		D = Math.sqrt(obj_radius)*zm*2 < 0.5 ? 0.5 : Math.sqrt(obj_radius)*zm*2;
 		ctx2.strokeStyle = obj_color;
@@ -1153,14 +1155,20 @@ $('document').ready(function(){
 			new_obj_param = [crd(body_traj.virtual.x, 'x', 0), crd(body_traj.virtual.y, 'y', 0), body_traj.virtual.vx, body_traj.virtual.vy];
 			sp_obj[0] == 10;
 		}
-		trash = false;
 		nlock = body_traj.virtual.lck ? false : true;
 		refMov = [0, 0];
+		distance = [Infinity, {}, 0];
 		for (let i = 0; i < count && nlock; i++){
 			body_traj_prev = JSON.parse(JSON.stringify(body_traj));
 			for (let object in body_traj){
 				//Refresh_func===============
 				obj1 = body_traj_prev[object];
+				radius = rad(body_traj_prev[virt_obj].x, body_traj_prev[virt_obj].y, body_traj_prev[object].x, body_traj_prev[object].y);
+				if (object != virt_obj && radius < distance[0]){
+					distance[0] = radius;
+					distance[1] = {x: body_traj_prev[object].x, y: body_traj_prev[object].y, x2: body_traj_prev[virt_obj].x, y2: body_traj_prev[virt_obj].y, obj_name: object};
+					distance[2] = i;
+				}
 				if (switcher.interact == 0){
 					for (let i in body_traj){
 						if (i == object){continue;};
@@ -1191,7 +1199,6 @@ $('document').ready(function(){
 								delete body_traj[i];
 								body_traj[object].trash = true;
 								if (i == virt_obj){
-									trash = true;
 									virt_obj = object;
 									nlock = obj1.lck ? false : true;
 								}
@@ -1249,23 +1256,37 @@ $('document').ready(function(){
 					refMov[1] += body_traj[swch.orb_obj].vy;					
 				}
 				for (let ob in body_traj){
-					clr = ob == virt_obj ? col[1]:col[0];
+					R_size = ob == virt_obj ? 1.5 : 0.8;
+					clr = ob == virt_obj ? col[1]:body_traj[ob].color+'88';
 					if (body_traj[ob].trash){
 						clr = '#ff666666';
+						R_size = 2;
 					}
 					ctx2.beginPath();
 					ctx2.fillStyle = clr;
-					ctx2.arc(crd(body_traj[ob].x-refMov[0], 'x', 0), crd(body_traj[ob].y-refMov[1], 'y', 0), 1.5, 0, 7);
+					ctx2.arc(crd(body_traj[ob].x-refMov[0], 'x', 0), crd(body_traj[ob].y-refMov[1], 'y', 0), R_size, 0, 7);
 					ctx2.fill();
-					ctx2.beginPath();		
+					ctx2.beginPath();
 				}
 			//ctx2.beginPath();
 			//ctx2.fillStyle = col;
 			//ctx2.arc(crd(body_traj[virt_obj].x, 'x', 0), crd(body_traj[virt_obj].y, 'y', 0), 1.5, 0, 7);
 			//ctx2.fill();
 			//ctx2.beginPath();				
-			}
-			
+			}	
+		}
+		if (distance[2] <= count){
+			ctx2.beginPath();
+			ctx2.fillStyle = body[distance[1].obj_name].color+'88';
+			mass = Math.sqrt(body[distance[1].obj_name].m) < 2 ? 2 : Math.sqrt(body[distance[1].obj_name].m);
+			ctx2.arc(crd(distance[1].x-refMov[0], 'x', 0), crd(distance[1].y-refMov[1], 'y', 0), mass*zm, 0, 7);
+			ctx2.fill();
+			ctx2.beginPath();
+			ctx2.fillStyle = obj_color+'aa';
+			mass = Math.sqrt(obj_radius)*zm < 2 ? 2 : Math.sqrt(obj_radius)*zm;
+			ctx2.arc(crd(distance[1].x2-refMov[0], 'x', 0), crd(distance[1].y2-refMov[1], 'y', 0), mass, 0, 7);
+			ctx2.fill();
+			ctx2.beginPath();
 		}
 	}
 	//Scene scale
@@ -1314,7 +1335,7 @@ $('document').ready(function(){
 					spawn = true;
 					obj_sp(mouse_coords[0], mouse_coords[1]);			
 				}
-				if (mbut == 'delete'){
+				if (mbut == 'delete' && body_length > 0){
 					//$('.canvas').mousedown();
 					//$('.canvas').mouseup();
 					delete_obj = select_object(switcher.del_radio);
