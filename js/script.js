@@ -20,6 +20,7 @@ $('document').ready(function(){
 	new_obj_param = [0,0,0,0];
 	paus = false;
 	traj_smpls = [0, 2, false];
+	bodyEmpty = false;
 
 	//Camera
 	cam_x = 0;
@@ -319,11 +320,7 @@ $('document').ready(function(){
 				close_all_menus();
 			}
 
-			body_length = 0;
-			for (let i in body){
-				body_length ++;
-			}
-			if (mbut == 'delete' && body_length > 0){
+			if (mbut == 'delete' && !bodyEmpty){
 				delete_obj = select_object(switcher.del_radio);
 
 				ctx.beginPath();
@@ -376,7 +373,6 @@ $('document').ready(function(){
 				switcher.sel_orb_obj = false;
 				mbut = 'create';
 			}
-			show_obj_count();
 		};
 		if (event.which == 2){
 			middleMouseDown = false;
@@ -425,6 +421,8 @@ $('document').ready(function(){
 	function frame(){
 		window.requestAnimationFrame(frame);
 		t = times;
+
+		bodyEmpty = isEmptyObject(body);
 
 		if (!body[usr_orb_obj]){
 			swch.orb_obj = select_object(3);		
@@ -523,8 +521,8 @@ $('document').ready(function(){
 			if (swch.t_object && !switcher.pause){
 				body_prev = JSON.parse(JSON.stringify(body));
 				obj = body_prev[swch.t_object];
-				body_length = 0; for (let i in body){body_length ++;};
-				if (switcher.ref_interact == 0 && !switcher.pause2 && body_length > 1){
+
+				if (switcher.ref_interact == 0 && !switcher.pause2 && !bodyEmpty){
 					for(let i in body){
 						if (i != swch.t_object){
 							obj2 = body_prev[i];
@@ -543,7 +541,7 @@ $('document').ready(function(){
 						};
 					}
 				}
-				if (switcher.ref_interact == 1 && body_prev['sun'] && !switcher.pause2 && body_length > 1){
+				if (switcher.ref_interact == 1 && body_prev['sun'] && !switcher.pause2 && !bodyEmpty){
 					obj2 = body_prev['sun'];
 
 					R = rad(obj.x, obj.y, obj2.x, obj2.y);
@@ -579,10 +577,6 @@ $('document').ready(function(){
 			tsw = false;
 		}
 
-		body_length = 0;
-		for (let i in body){
-			body_length ++;
-		}
 		if (switcher.pause){switcher.pause2 = true};
 		if (!switcher.pause){switcher.pause2 = false};
 		if (!switcher.pause){
@@ -592,7 +586,7 @@ $('document').ready(function(){
 		}
 		for (let i = 0; i < ref_sped; i++){
 			body_prev = JSON.parse(JSON.stringify(body));
-			if (body_length > 0){
+			if (!bodyEmpty){
 				for (let obj in body){	
 					//traj_prev(obj, 200, '#ffffff33');
 					refresh(obj);
@@ -671,31 +665,25 @@ $('document').ready(function(){
 	}
 
 	function refresh(object){
-		body_length = 0; for (let i in body){body_length ++;};
-
 		obj = body_prev[object];
-		if(switcher.ref_interact == 0 && !switcher.pause2 && body_length > 1){
+		if(switcher.ref_interact == 0 && !switcher.pause2 && !bodyEmpty){
 			for (let i in body){
 				if (i == object){continue;};
 				obj2 = body_prev[i];
 
 				R = rad(obj.x, obj.y, obj2.x, obj2.y);
 				
-				a = obj2.x - obj.x;
-				b = obj2.y - obj.y;
-				sin = b/R; cos = a/R;
+				sin = (obj2.y - obj.y)/R;
+				cos = (obj2.x - obj.x)/R;
 
-				vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx', obj2.m);
-				vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy', obj2.m);
-
-				if(!obj.lck && !switcher.pause2 && !(mbut == 'move' && mousedown && object == mov_obj)){
-					body[object].vx += vx;
-					body[object].vy += vy;
+				if(!obj.lck && !(mbut == 'move' && mousedown && object == mov_obj)){
+					body[object].vx += gravity_func(sin, cos, R, switcher.r_gm, 'vx', obj2.m);
+					body[object].vy += gravity_func(sin, cos, R, switcher.r_gm, 'vy', obj2.m);
 				}
 
-				A = R;
-				B = rad(obj.x+vx, obj.y+vy, obj2.x, obj2.y);
-				C = rad(obj.x+vx, obj.y+vy, obj.x, obj.y);
+				//A = R;
+				//B = rad(obj.x+vx, obj.y+vy, obj2.x, obj2.y);
+				//C = rad(obj.x+vx, obj.y+vy, obj.x, obj.y);
 
 				if (R - (Math.sqrt(obj.m) + Math.sqrt(obj2.m)/2) <= 0){
 					if (obj.m >= obj2.m){
@@ -709,29 +697,23 @@ $('document').ready(function(){
 						}
 
 						del_obj(i);
-						show_obj_count();
 						continue;
 					}else{continue;}
 				}
 			}
 		}
-		if (switcher.ref_interact == 1 && body_prev[swch.orb_obj] && !switcher.pause2 && body_length > 1){
-			if (object != obj.main_obj && body[object] && obj.main_obj){
+		if (switcher.ref_interact == 1 && body_prev[swch.orb_obj] && !switcher.pause2 && !bodyEmpty){
+			if (object != obj.main_obj && body[object] && body[obj.main_obj]){
 				obj2 = body_prev[obj.main_obj];
-				if (!body[obj.main_obj]){obj.main_obj = select_object(3)};
 
 				R = rad(obj.x, obj.y, obj2.x, obj2.y);
 
-				a = obj2.x - obj.x;
-				b = obj2.y - obj.y;
-				sin = b/R; cos = a/R;
+				sin = (obj2.y - obj.y)/R;
+				cos = (obj2.x - obj.x)/R;
 
-				vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx', obj2.m);
-				vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy', obj2.m);
-
-				if(!obj.lck && !switcher.pause2 && !(mbut == 'move' && mousedown && object == mov_obj)){
-					body[object].vx += vx;
-					body[object].vy += vy;
+				if(!obj.lck && !(mbut == 'move' && mousedown && object == mov_obj)){
+					body[object].vx += gravity_func(sin, cos, R, switcher.r_gm, 'vx', obj2.m);
+					body[object].vy += gravity_func(sin, cos, R, switcher.r_gm, 'vy', obj2.m);
 				}
 
 				//Эллипс	
@@ -758,21 +740,29 @@ $('document').ready(function(){
 			body[object].y += body[object].vy;
 		}
 
-		render = (prev_x != body[object].x + cam_x + mov[0]/zm && prev_y != body[object].y + cam_y + mov[1]/zm)?true:false;
-
 		obj_rad = Math.sqrt(obj.m)*zm;
 		obj_rad = obj_rad < 0.5 ? 0.5 : obj_rad;
-
 		obCol = obj.color;
-		//obCol = randColor();
+
+		render = (prev_x != body[object].x + cam_x + mov[0]/zm && prev_y != body[object].y + cam_y + mov[1]/zm)?true:false;
+
+		if (!render){
+			ctx.beginPath();
+			ctx.fillStyle = '#000000';
+			ctx.arc(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0), (obj_rad+0.125), 0, 7);
+			ctx.fill();
+		}
+		ctx.fillStyle = obCol;
+		ctx.beginPath();
+		ctx.arc(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0), obj_rad, 0, 7);
+		ctx.fill();
 
 		if (!switcher.pause2 && movAnim[4] && switcher.traj_mode == 1){
 			if (swch.prev_t_obj != object){
-				ctx.beginPath();
-				ctx.fillStyle = obCol;
-				ctx.arc(prev_x*zm+mcamX, prev_y*zm+mcamY, obj_rad, 0, 7);
-				ctx.fill();
-
+				//ctx.beginPath();
+				//ctx.fillStyle = obCol;
+				//ctx.arc(prev_x*zm+mcamX, prev_y*zm+mcamY, obj_rad, 0, 7);
+				//ctx.fill();
 				ctx.strokeStyle = obCol;
 				ctx.lineWidth = obj_rad*2;
 				ctx.beginPath();
@@ -782,17 +772,6 @@ $('document').ready(function(){
 			}
 		}
 
-		if (!render){
-			ctx.beginPath();
-			ctx.fillStyle = '#000000';
-			ctx.arc(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0), (obj_rad+0.125), 0, 7);
-			ctx.fill();
-		}
-		if (!obCol){obCol = 'gray';}
-		ctx.fillStyle = obCol;
-		ctx.beginPath();
-		ctx.arc(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0), obj_rad, 0, 7);
-		ctx.fill();
 
 		//Trajectory mode 2 =====
 		if (switcher.traj_mode == 2 && !obj.lck){
@@ -865,7 +844,7 @@ $('document').ready(function(){
 				ctx.stroke();
 			}
 		}
-		if (switcher.traj_mode != 2 && switcher.traj_mode != 3) {body[object].trace = [];};
+		if (!isEmptyObject(body[object].trace) && switcher.traj_mode != 2 && switcher.traj_mode != 3) {body[object].trace = []; console.log('a')};
 
 		//console.log(R);
 		//arr = Object.keys(body);
@@ -1033,11 +1012,7 @@ $('document').ready(function(){
 	}
 	//Визуальное выдиление объекта
 	function visual_select(mode, color, object = '') {
-		obj_count = 0;
-		for (let i in body){
-			obj_count ++;
-		}
-		if (obj_count >= 1){
+		if (!bodyEmpty){
 			del_radius = [Infinity, '', 0];
 			if (!body[object]){
 				del_radius[1] = select_object(mode);			
@@ -1335,7 +1310,7 @@ $('document').ready(function(){
 					spawn = true;
 					obj_sp(mouse_coords[0], mouse_coords[1]);			
 				}
-				if (mbut == 'delete' && body_length > 0){
+				if (mbut == 'delete' && !bodyEmpty){
 					//$('.canvas').mousedown();
 					//$('.canvas').mouseup();
 					delete_obj = select_object(switcher.del_radio);
@@ -1401,7 +1376,7 @@ $('document').ready(function(){
 		}
 		//Ctrl keys
 		//Ctrl+Z
-		if (e.keyCode == 90){ if(e.ctrlKey){del_obj(select_object(2)); show_obj_count();} }
+		if (e.keyCode == 90){ if(e.ctrlKey){del_obj(select_object(2));} }
 	});
 
 	$('.btn').mousedown(function(){
@@ -1596,7 +1571,7 @@ $('document').ready(function(){
 		}
 		if (cbut == 'save_file'){
 			switcher.pause = true;
-			my_data = {body: body, switcher: switcher, t_wrap: t_wrap};
+			my_data = {body: body, switcher: switcher, t_wrap: t_wrap, num: num};
 			my_data = JSON.stringify(my_data);
 			writeFile("No Name.txt", my_data);
 			//saveFile(name, forat, value, event);
@@ -1731,12 +1706,12 @@ $('document').ready(function(){
 		document.body.removeChild(download);
 	}
 
-	function saveFile(name, forat, value, event){
-		var csvData = 'data:application/txt;charset=utf-8,' + encodeURIComponent(value);
-		event.href = csvData;
-		event.target = '_blank';
-		event.download = name+'.'+format;		
-	}
+//function saveFile(name, forat, value, event){
+//	var csvData = 'data:application/txt;charset=utf-8,' + encodeURIComponent(value);
+//	event.href = csvData;
+//	event.target = '_blank';
+//	event.download = name+'.'+format;		
+//}
 
 	function readFile(input) {
 		let file = input.files[0];
@@ -1751,6 +1726,7 @@ $('document').ready(function(){
 			  	body = file_data.body;
 			  	switcher.interact = file_data.switcher.interact;
 			  	switcher.gravit_mode = file_data.switcher.gravit_mode;
+			  	num = file_data.num;
 			  	sel_and_rest();
 			} catch(err) {
 				alert('Несовместимый файл!');
@@ -1761,6 +1737,15 @@ $('document').ready(function(){
 		reader.onerror = function() {
 			alert("Ошибка чтения файла!");
 		};
+	}
+
+	function isEmptyObject(obj) {
+	    for (var i in obj) {
+	        //if (obj.hasOwnProperty(i)) {
+	        return false;
+	        //}
+	    }
+	    return true;
 	}
 
 	function intin(n, a, b){
