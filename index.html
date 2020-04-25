@@ -98,7 +98,7 @@
 
 		<div class='option_item'>
 			<span>Масса: </span>
-			<input type="number" class='radius_select' min='0.1' onchange="obj_radius = +this.value; sessionStorage['obj_radius'] = +this.value;">	
+			<input type="number" class='input_num' id='create_mass' min="0" onchange="obj_radius = +this.value; sessionStorage['obj_radius'] = +this.value;">	
 		</div>
 
 		<div class='option_item'>
@@ -123,6 +123,11 @@
 					Выбрать 
 				</span>
 			</div>
+		</div>
+
+		<div class='option_item'>
+			<span>Множитель<br> скорости запуска: </span>
+			<input type="number" class='input_num' id='launch_power' value="1">	
 		</div>
 
 		<div class='option_item menu_close e0' style="border-bottom: none;">
@@ -180,7 +185,7 @@
 		<div class='option_item'>
 			<span>Масса: </span>
 			<div class="edit_mass_div">
-				<input type="number" class='radius_select' id='mass_edit' min='0.1'>
+				<input type="number" class='input_num' id='mass_edit' min="0">
 			</div>		
 		</div>
 

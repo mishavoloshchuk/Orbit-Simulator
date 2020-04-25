@@ -45,14 +45,14 @@ span {
 	margin-left: 20px;
 }
 
-.radius_select {
-	width: 100px;
-	margin-left: 10px;
-}
-
 .input_num {
 	width: 100px;
 	margin-left: 10px;
+	background-color: #fff2;
+	border: 2px solid #fff3;
+	border-radius: 3px;
+	padding: 5px;
+	color: white;
 }
 
 #canvas {

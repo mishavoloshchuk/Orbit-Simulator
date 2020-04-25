@@ -21,6 +21,7 @@ $('document').ready(function(){
 	paus = false;
 	traj_smpls = [0, 2, false];
 	bodyEmpty = false;
+	traj_ref = true;
 
 	//Camera
 	cam_x = 0;
@@ -88,8 +89,8 @@ $('document').ready(function(){
 		del_pulse: 10, del_pulse_state: false, pause: false, pause2: false, trajectory_ref: false, music: false,
 		obj_count: obj_count, help: false, f_speed: 0, device: 'desktop',
 		settings: false, gravit_mode: 1, r_gm: 1, interact: 0, ref_interact: 0,
-		lost_x: false, lost_y: false, camera: false, edit: false, traj: false, traj_mode: 1, traj_prev_on: true,
-		zoomToMouse: true, vis_distance: false, sel_orb_obj: false};
+		camera: false, edit: false, traj: false, traj_mode: 1, traj_prev_on: true,
+		zoomToMouse: true, vis_distance: false, sel_orb_obj: false, launch_pwr: 1};
 
 	swch = {s_track: false, t_object: false, prev_t_obj: false, vis_traj: false,
 		s_edit: false, edit_obj: false, orb_obj: 'sun', equilib_orb: false};
@@ -101,39 +102,40 @@ $('document').ready(function(){
 	choise_restore('chck_zoomToMouse', 'zoomToMouse', 'checkbox');
 	choise_restore('vis_distance_check', 'vis_distance', 'checkbox');
 
+	obj_color = sessionStorage['obj_color'] ? sessionStorage['obj_color'] : '#FFFFFF';
+	obj_rand_color = sessionStorage['obj_rand_color'] ? (sessionStorage['obj_rand_color'] == 'true' ? true : false) : true;
+	obj_radius = sessionStorage['obj_radius'] ? +sessionStorage['obj_radius'] : Math.round(getRandomArbitrary(0.1, 10)*10)/10;
+	obj_reverse = sessionStorage['obj_reverse'] ? (sessionStorage['obj_reverse'] == 'true' ? true : false) : false;
+	obj_cirle_orbit = sessionStorage['obj_cirle_orbit'] ? (sessionStorage['obj_cirle_orbit'] == 'true' ? true : false) : true;
+	obj_lck = false;
+
+	traj_calc_smpls = sessionStorage['traj_calc_samples'] ? +sessionStorage['traj_calc_samples'] : 100;
+	switcher.launch_pwr = sessionStorage['launch_pwr'] ? +sessionStorage['launch_pwr'] : 1;
+
+	$('.col_select').attr('value', obj_color);
+	$('#create_mass').attr('value', obj_radius);
+	$('#traj_calc_samples').attr('value', traj_calc_smpls);
+	$('#launch_power').attr('value', switcher.launch_pwr);
+	if (obj_reverse){$('.direction_reverse_select').attr('checked', 'on');};
+	if (obj_cirle_orbit){$('.orbit_select').attr('checked', 'on');};
+	if (obj_rand_color){$('.rand_col_select').attr('checked', 'on');};
+
+	radio_select('traj_radio', switcher.traj_mode);
+	check_select('traj_prev_check', switcher.traj_prev_on);
+	check_select('chck_zoomToMouse', switcher.zoomToMouse);
+	check_select('vis_distance_check', switcher.vis_distance);
+
+	sel_and_rest();
 	function sel_and_rest(){
 		radio_select('gravit_mode_radio', switcher.gravit_mode);
 		radio_select('interact_radio', switcher.interact);
-		radio_select('traj_radio', switcher.traj_mode);
-		check_select('traj_prev_check', switcher.traj_prev_on);
-		check_select('chck_zoomToMouse', switcher.zoomToMouse);
-		check_select('vis_distance_check', switcher.vis_distance);
-
 		show_obj_count();
-
-		obj_color = sessionStorage['obj_color'] ? sessionStorage['obj_color'] : '#FFFFFF';
-		obj_rand_color = sessionStorage['obj_rand_color'] ? (sessionStorage['obj_rand_color'] == 'true' ? true : false) : true;
-		obj_radius = sessionStorage['obj_radius'] ? +sessionStorage['obj_radius'] : Math.round(getRandomArbitrary(0.1, 10)*10)/10;
-		obj_reverse = sessionStorage['obj_reverse'] ? (sessionStorage['obj_reverse'] == 'true' ? true : false) : false;
-		obj_cirle_orbit = sessionStorage['obj_cirle_orbit'] ? (sessionStorage['obj_cirle_orbit'] == 'true' ? true : false) : true;
-		obj_lck = false;
-
-		traj_calc_smpls = sessionStorage['traj_calc_samples'] ? +sessionStorage['traj_calc_samples'] : 100;
-
-		$('.col_select').attr('value', obj_color);
-		$('.radius_select').attr('value', obj_radius);
-		$('#traj_calc_samples').attr('value', traj_calc_smpls);
-		if (obj_reverse){$('.direction_reverse_select').attr('checked', 'on');};
-		if (obj_cirle_orbit){$('.orbit_select').attr('checked', 'on');};
-		if (obj_rand_color){$('.rand_col_select').attr('checked', 'on');};
-
 	}
 
 	change_state(mbut);
-	sel_and_rest();
 
 	function radio_select(radio_id_prefix, numb){
-		$('#'+radio_id_prefix+'_'+numb).attr('checked', '');	
+		$('#'+radio_id_prefix+'_'+numb).click();	
 	}
 	function check_select(check_id, state){
 		if (state){
@@ -151,8 +153,8 @@ $('document').ready(function(){
 		}
 	}
 	//====time====
-	t = 1;
 	times = 1;
+	t = times;
 	tsw = false;
 	t_wrap = false;
 	pretime = 1;
@@ -308,6 +310,9 @@ $('document').ready(function(){
 				readFile(document.getElementById('select_file'));
 			}
 		}
+		if (chck == 'launch_power'){
+			switcher.launch_pwr = sessionStorage['launch_pwr'] = +this.value;
+		}
 	});
 
 	$('.canvas').mouseup(function(e){
@@ -381,8 +386,7 @@ $('document').ready(function(){
 		}
 	});	
 
-	document.onmousemove = function(){
-
+	document.onmousemove = function(e){
 		switcher.move = false;
 		if (mousedown && mbut == 'move' && mov_obj){
 			//switcher.move = true;
@@ -399,15 +403,21 @@ $('document').ready(function(){
 				ctx.stroke();
 			}
 		}
-
 		if (middleMouseDown){
 			mov[0] = event.clientX - mpos[0] + mov[2];
 			mov[1] = event.clientY - mpos[1] + mov[3];
 			clear('#000000');
 		}
-
 		mouse_coords[0] = event.clientX;
 		mouse_coords[1] = event.clientY;
+		if (e.ctrlKey){
+			if (!mouse_coords[2]){
+				mouse_coords[2] = mouse_coords[0];
+				mouse_coords[3] = mouse_coords[1];			
+			}
+		} else {
+			mouse_coords[2] = mouse_coords [3] = false;
+		}
 
 	};
 
@@ -444,9 +454,12 @@ $('document').ready(function(){
 				switcher.traj_pause = true;				
 			}
 			visual_trajectory();
-			obj_for_traj = {x: crd(mouse[0], 'x', 1), y: crd(mouse[1], 'y', 1), vx: ((mouse[0]-mouse_coords[0])/30)*t, vy: ((mouse[1]-mouse_coords[1])/30)*t, m: obj_radius, color: obj_color, lck: obj_lck};
+
+			mcx = mouse_coords[2] ? mouse_coords[2] - (mouse_coords[2] - mouse_coords[0])/10 : mouse_coords[0];
+			mcy = mouse_coords[3] ? mouse_coords[3] - (mouse_coords[3] - mouse_coords[1])/10 : mouse_coords[1];
 			//console.log(obj_for_traj);
 			if ((!(Math.abs(mouse[0]-mouse_coords[0])<5&&Math.abs(mouse[1]-mouse_coords[1])<5))&&switcher.traj_prev_on){
+				obj_for_traj = {x: crd(mouse[0], 'x', 1), y: crd(mouse[1], 'y', 1), vx: ((mouse[0]-mcx)/30)*t*switcher.launch_pwr, vy: ((mouse[1]-mcy)/30)*t*switcher.launch_pwr, m: obj_radius, color: obj_color, lck: obj_lck};
 				traj_prev(obj_for_traj, traj_calc_smpls, ['#006BDE88', '#ffffff44'], true);
 			};
 		}
@@ -514,58 +527,6 @@ $('document').ready(function(){
 			prev_cam_y = 0;
 		}
 
-		if (swch.prev_t_obj && body[swch.prev_t_obj]){
-			cam_vx = !switcher.pause2 ? body[swch.prev_t_obj].vx : 0;
-			cam_vy = !switcher.pause2 ? body[swch.prev_t_obj].vy : 0;
-
-			if (swch.t_object && !switcher.pause){
-				body_prev = JSON.parse(JSON.stringify(body));
-				obj = body_prev[swch.t_object];
-
-				if (switcher.ref_interact == 0 && !switcher.pause2 && !bodyEmpty){
-					for(let i in body){
-						if (i != swch.t_object){
-							obj2 = body_prev[i];
-							R = rad(obj.x, obj.y, obj2.x, obj2.y);
-							a = obj2.x - obj.x;
-							b = obj2.y - obj.y;
-							sin = b/R; cos = a/R;
-
-							vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx', obj2.m);
-							vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy', obj2.m);
-
-							if(!obj.lck && !switcher.pause2 && !(mbut == 'move' && mousedown && object == mov_obj)){
-								cam_vx += vx;
-								cam_vy += vy;
-							}
-						};
-					}
-				}
-				if (switcher.ref_interact == 1 && body_prev['sun'] && !switcher.pause2 && !bodyEmpty){
-					obj2 = body_prev['sun'];
-
-					R = rad(obj.x, obj.y, obj2.x, obj2.y);
-
-					a = obj2.x - obj.x;
-					b = obj2.y - obj.y;
-					sin = b/R; cos = a/R;
-
-					vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx', obj2.m);
-					vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy', obj2.m);
-
-					if(!obj.lck && !switcher.pause2 && !(mbut == 'move' && mousedown && object == mov_obj)){
-						cam_vx += vx;
-						cam_vy += vy;
-					}
-				};					
-			}
-
-			cam_x = (window.innerWidth / 2) - (body[swch.prev_t_obj].x + cam_vx) + anim_cam[0];
-			cam_y = (window.innerHeight / 2) - (body[swch.prev_t_obj].y + cam_vy) + anim_cam[1];		
-		} else {
-			cam_x = 0 + anim_cam[0];
-			cam_y = 0 + anim_cam[1];
-		}
 
 		if (tsw){
 			$('.time_speed h2').html('T - X'+t);
@@ -577,14 +538,72 @@ $('document').ready(function(){
 			tsw = false;
 		}
 
-		if (switcher.pause){switcher.pause2 = true};
-		if (!switcher.pause){switcher.pause2 = false};
+		switcher.pause2 = switcher.pause ? true:false;
 		if (!switcher.pause){
 			if (spawn){
 				obj_sp(new_obj_param[0], new_obj_param[1], obj_color, new_obj_param[2], new_obj_param[3]);
 			}		
 		}
 		for (let i = 0; i < ref_sped; i++){
+			if (swch.prev_t_obj && body[swch.prev_t_obj]){
+				cam_vx = !switcher.pause2 ? body[swch.prev_t_obj].vx : 0;
+				cam_vy = !switcher.pause2 ? body[swch.prev_t_obj].vy : 0;
+
+				if (swch.t_object && !switcher.pause){
+					body_prev = JSON.parse(JSON.stringify(body));
+					obj = body_prev[swch.t_object];
+
+					if (switcher.ref_interact == 0 && !switcher.pause2 && !bodyEmpty){
+						for(let i in body){
+							if (i != swch.t_object){
+								obj2 = body_prev[i];
+								R = rad(obj.x, obj.y, obj2.x, obj2.y);
+								a = obj2.x - obj.x;
+								b = obj2.y - obj.y;
+								sin = b/R; cos = a/R;
+
+								vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx', obj2.m);
+								vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy', obj2.m);
+
+								if(!obj.lck && !switcher.pause2 && !(mbut == 'move' && mousedown && object == mov_obj)){
+									cam_vx += vx;
+									cam_vy += vy;
+								}
+							};
+						}
+					}
+					if (switcher.ref_interact == 1 && body_prev['sun'] && !switcher.pause2 && !bodyEmpty){
+						obj2 = body_prev['sun'];
+
+						R = rad(obj.x, obj.y, obj2.x, obj2.y);
+
+						a = obj2.x - obj.x;
+						b = obj2.y - obj.y;
+						sin = b/R; cos = a/R;
+
+						vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx', obj2.m);
+						vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy', obj2.m);
+
+						if(!obj.lck && !switcher.pause2 && !(mbut == 'move' && mousedown && object == mov_obj)){
+							cam_vx += vx;
+							cam_vy += vy;
+						}
+					};					
+				}
+
+				cam_x = (window.innerWidth / 2) - (body[swch.prev_t_obj].x + cam_vx) + anim_cam[0];
+				cam_y = (window.innerHeight / 2) - (body[swch.prev_t_obj].y + cam_vy) + anim_cam[1];		
+			} else {
+				cam_x = 0 + anim_cam[0];
+				cam_y = 0 + anim_cam[1];
+			}
+			if(traj_smpls[0] >= traj_smpls[1]){
+				traj_smpls[2] = true;
+				traj_smpls[0] = 0;
+			} else {
+				traj_smpls[0] ++;
+				traj_smpls[2] = false;
+			}
 			body_prev = JSON.parse(JSON.stringify(body));
 			if (!bodyEmpty){
 				for (let obj in body){	
@@ -594,8 +613,10 @@ $('document').ready(function(){
 			}
 			if (!movAnim[4]){
 				movAnim[4] = true;
-			}			
+			}
+			traj_ref = false;		
 		}
+		traj_ref = true;
 		if (t_wrap){
 			$('.time_speed h2').html('T - X'+t);
 			for (let i in body){
@@ -645,13 +666,6 @@ $('document').ready(function(){
 			ctx.moveTo(wind_width/2 + 5, wind_height/2 - 5);
 			ctx.lineTo(wind_width/2 - 5, wind_height/2 + 5);
 			ctx.stroke();			
-		}
-		if(traj_smpls[0] >= traj_smpls[1]){
-			traj_smpls[2] = true;
-			traj_smpls[0] = 0;
-		} else {
-			traj_smpls[0] ++;
-			traj_smpls[2] = false;
 		}
 		if ((mbut == 'create' || mbut == 'trajectory') && !mousedown && switcher.vis_distance){
 			vis_distance([mouse_coords[0], mouse_coords[1]], '#888888');
@@ -745,17 +759,18 @@ $('document').ready(function(){
 		obCol = obj.color;
 
 		render = (prev_x != body[object].x + cam_x + mov[0]/zm && prev_y != body[object].y + cam_y + mov[1]/zm)?true:false;
-
-		if (!render){
+		if (traj_ref){		
+			if (!render){
+				ctx.beginPath();
+				ctx.fillStyle = '#000000';
+				ctx.arc(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0), (obj_rad+0.125), 0, 7);
+				ctx.fill();
+			}
+			ctx.fillStyle = obCol;
 			ctx.beginPath();
-			ctx.fillStyle = '#000000';
-			ctx.arc(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0), (obj_rad+0.125), 0, 7);
+			ctx.arc(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0), obj_rad, 0, 7);
 			ctx.fill();
 		}
-		ctx.fillStyle = obCol;
-		ctx.beginPath();
-		ctx.arc(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0), obj_rad, 0, 7);
-		ctx.fill();
 
 		if (!switcher.pause2 && movAnim[4] && switcher.traj_mode == 1){
 			if (swch.prev_t_obj != object){
@@ -783,35 +798,37 @@ $('document').ready(function(){
 					body[object].trace.pop();
 				}			
 			}
-			prev_randX = 0;
-			prev_randY = 0;
-			randX = 0;
-			randY = 0;
+			if (traj_ref){
+				prev_randX = 0;
+				prev_randY = 0;
+				randX = 0;
+				randY = 0;
 
-			ctx.fillStyle = obCol;
-			ctx.strokeStyle = obCol;
-			if (body[object].trace[0]){
-				ctx.lineWidth = obj_rad*2;
-				ctx.beginPath();
-				ctx.moveTo(crd(body[object].x, 'x', 0)+randX, crd(body[object].y, 'y', 0)+randY);
-				ctx.lineTo(crd(body[object].trace[0][0], 'x', 0)+prev_randX, crd(body[object].trace[0][1], 'y', 0)+prev_randY);
-				ctx.stroke();				
-			}
-			for (let i in body[object].trace){
-				itr = i-1;
-				itr = itr < 0?0:itr;
-				prev_randX = randX; prev_randY = randY;
-				randX = getRandomArbitrary(-(Math.sqrt(obj.m)*zm*i/10), Math.sqrt(obj.m)*zm*i/10)*rand_kf;
-				randY = getRandomArbitrary(-(Math.sqrt(obj.m)*zm*i/10), Math.sqrt(obj.m)*zm*i/10)*rand_kf;
+				ctx.fillStyle = obCol;
+				ctx.strokeStyle = obCol;
+				if (body[object].trace[0]){
+					ctx.lineWidth = obj_rad*2;
+					ctx.beginPath();
+					ctx.moveTo(crd(body[object].x, 'x', 0)+randX, crd(body[object].y, 'y', 0)+randY);
+					ctx.lineTo(crd(body[object].trace[0][0], 'x', 0)+prev_randX, crd(body[object].trace[0][1], 'y', 0)+prev_randY);
+					ctx.stroke();				
+				}
+				for (let i in body[object].trace){
+					itr = i-1;
+					itr = itr < 0?0:itr;
+					prev_randX = randX; prev_randY = randY;
+					randX = getRandomArbitrary(-(Math.sqrt(obj.m)*zm*i/10), Math.sqrt(obj.m)*zm*i/10)*rand_kf;
+					randY = getRandomArbitrary(-(Math.sqrt(obj.m)*zm*i/10), Math.sqrt(obj.m)*zm*i/10)*rand_kf;
 
-				ctx.lineWidth = Math.abs(obj_rad*1.9 - (obj_rad*2)/32*i*2*0.8);
-				ctx.beginPath();
-				ctx.arc(Math.floor(crd(body[object].trace[itr][0], 'x', 0)+randX*2), Math.floor(crd(body[object].trace[itr][1], 'y', 0)+randY*2), Math.sqrt(obj.m)*zm - (Math.sqrt(obj.m)*zm)/res*i, 0, 7);
-				ctx.fill();
-				ctx.beginPath();
-				ctx.moveTo(crd(body[object].trace[i][0], 'x', 0)+randX, crd(body[object].trace[i][1], 'y', 0)+randY);
-				ctx.lineTo(crd(body[object].trace[itr][0], 'x', 0)+prev_randX, crd(body[object].trace[itr][1], 'y', 0)+prev_randY);
-				ctx.stroke();
+					ctx.lineWidth = Math.abs(obj_rad*1.9 - (obj_rad*2)/32*i*2*0.8);
+					ctx.beginPath();
+					ctx.arc(Math.floor(crd(body[object].trace[itr][0], 'x', 0)+randX*2), Math.floor(crd(body[object].trace[itr][1], 'y', 0)+randY*2), Math.sqrt(obj.m)*zm - (Math.sqrt(obj.m)*zm)/res*i, 0, 7);
+					ctx.fill();
+					ctx.beginPath();
+					ctx.moveTo(crd(body[object].trace[i][0], 'x', 0)+randX, crd(body[object].trace[i][1], 'y', 0)+randY);
+					ctx.lineTo(crd(body[object].trace[itr][0], 'x', 0)+prev_randX, crd(body[object].trace[itr][1], 'y', 0)+prev_randY);
+					ctx.stroke();
+				}			
 			}
 		}
 		//Trajectory mode 3 =====
@@ -824,24 +841,26 @@ $('document').ready(function(){
 					body[object].trace.pop();
 				}			
 			}
-			ctx.fillStyle = obCol;
-			ctx.strokeStyle = obCol;
-			if (body[object].trace[0]){
-				ctx.lineWidth = obj_rad*2*0.9;
-				ctx.beginPath();
-				ctx.moveTo(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0));
-				ctx.lineTo(crd(body[object].trace[0][0], 'x', 0), crd(body[object].trace[0][1], 'y', 0));
-				ctx.stroke();				
-			}
-			for (let i in body[object].trace){
-				itr = i-1;
-				itr = itr < 0?0:itr;
+			if (traj_ref){
+				ctx.fillStyle = obCol;
+				ctx.strokeStyle = obCol;
+				if (body[object].trace[0]){
+					ctx.lineWidth = obj_rad*2*0.9;
+					ctx.beginPath();
+					ctx.moveTo(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0));
+					ctx.lineTo(crd(body[object].trace[0][0], 'x', 0), crd(body[object].trace[0][1], 'y', 0));
+					ctx.stroke();				
+				}
+				for (let i in body[object].trace){
+					itr = i-1;
+					itr = itr < 0?0:itr;
 
-				ctx.lineWidth = Math.abs(obj_rad*1.9 - (obj_rad*2)/32*i*2*0.8);
-				ctx.beginPath();
-				ctx.moveTo(crd(body[object].trace[i][0], 'x', 0), crd(body[object].trace[i][1], 'y', 0));
-				ctx.lineTo(crd(body[object].trace[itr][0], 'x', 0), crd(body[object].trace[itr][1], 'y', 0));
-				ctx.stroke();
+					ctx.lineWidth = Math.abs(obj_rad*1.9 - (obj_rad*2)/32*i*2*0.8);
+					ctx.beginPath();
+					ctx.moveTo(crd(body[object].trace[i][0], 'x', 0), crd(body[object].trace[i][1], 'y', 0));
+					ctx.lineTo(crd(body[object].trace[itr][0], 'x', 0), crd(body[object].trace[itr][1], 'y', 0));
+					ctx.stroke();
+				}			
 			}
 		}
 		if (!isEmptyObject(body[object].trace) && switcher.traj_mode != 2 && switcher.traj_mode != 3) {body[object].trace = []; console.log('a')};
@@ -897,29 +916,29 @@ $('document').ready(function(){
 	}
 
 	function visual_trajectory(){
-		//clear('#000');
+		mcx = mouse_coords[2] ? mouse_coords[2] - (mouse_coords[2] - mouse_coords[0])/10 : mouse_coords[0];
+		mcy = mouse_coords[3] ? mouse_coords[3] - (mouse_coords[3] - mouse_coords[1])/10 : mouse_coords[1];
+
 		if (!(Math.abs(mouse[0]-mouse_coords[0]) <= 5 && Math.abs(mouse[1]-mouse_coords[1]) <= 5)){
 			//clear('#000000');
 			swch.vis_traj = true;
 			$('.power').css({left: mouse_coords[0]-10, top: mouse_coords[1]-30, display: 'block', color: obj_color});
-			$('.power').html(Math.round(rad(mouse[0], mouse[1], mouse_coords[0], mouse_coords[1])));
+			$('.power').html(Math.round(rad(mouse[0], mouse[1], mouse_coords[0], mouse_coords[1]) * switcher.launch_pwr * 100)/100);
 		}
 		D = Math.sqrt(obj_radius)*zm*2 < 0.5 ? 0.5 : Math.sqrt(obj_radius)*zm*2;
 		ctx2.strokeStyle = obj_color;
 		ctx2.lineWidth = D;
 		ctx2.beginPath();
 		ctx2.moveTo(mouse[0], mouse[1]);
-		ctx2.lineTo(mouse_coords[0], mouse_coords[1]);
+		ctx2.lineTo(mcx, mcy);
 		ctx2.stroke();
 
 		ctx2.strokeStyle = '#000a';
 		ctx2.lineWidth = D;
 		ctx2.beginPath();
 		ctx2.moveTo(mouse[0], mouse[1]);
-		ctx2.lineTo(mouse_coords[0], mouse_coords[1]);
+		ctx2.lineTo(mcx, mcy);
 		ctx2.stroke();
-		switcher.lost_x = mouse_coords[0];
-		switcher.lost_y = mouse_coords[1];
 
 		ctx2.beginPath();
 		ctx2.fillStyle = obj_color;
@@ -1068,8 +1087,10 @@ $('document').ready(function(){
 		if (spawn){
 			num ++;
 			if (!point_x && !point_y){
-				svx = ((mouse[0]-mouse[2])/30)*t;
-				svy = ((mouse[1]-mouse[3])/30)*t;				
+				let mcx = mouse_coords[2] ? mouse_coords[2] - (mouse_coords[2] - mouse[2])/10 : mouse[2];
+				let mcy = mouse_coords[3] ? mouse_coords[3] - (mouse_coords[3] - mouse[3])/10 : mouse[3];
+				svx = ((mouse[0]-mcx)/30)*t * switcher.launch_pwr;
+				svy = ((mouse[1]-mcy)/30)*t * switcher.launch_pwr;				
 			}
 			px = mouse[0]; py = mouse[1];
 			if (((Math.abs(mouse[0]-mouse[2]) <= 5 && Math.abs(mouse[1]-mouse[3]) <= 5 && obj_cirle_orbit) || (point_x && point_y))&&body[swch.orb_obj]) {
@@ -1571,7 +1592,7 @@ $('document').ready(function(){
 		}
 		if (cbut == 'save_file'){
 			switcher.pause = true;
-			my_data = {body: body, switcher: switcher, t_wrap: t_wrap, num: num};
+			my_data = {body: body, switcher: switcher, t_wrap: t_wrap, num: num, times: times};
 			my_data = JSON.stringify(my_data);
 			writeFile("No Name.txt", my_data);
 			//saveFile(name, forat, value, event);
@@ -1726,8 +1747,12 @@ $('document').ready(function(){
 			  	body = file_data.body;
 			  	switcher.interact = file_data.switcher.interact;
 			  	switcher.gravit_mode = file_data.switcher.gravit_mode;
+			  	tsw = times == file_data.times ? false : true;
+			  	times = file_data.times;
+			  	pretime = times;
 			  	num = file_data.num;
 			  	sel_and_rest();
+			  	clear('#000');
 			} catch(err) {
 				alert('Несовместимый файл!');
 			}
@@ -1765,38 +1790,3 @@ $('document').ready(function(){
 	}
 
 });
-
-//$('document').ready(function(){
-//	$('#hover_img').hover(function(){
-//		$(this).attr({'src': 'img/Без имени-1-2.png'});
-//	});
-//	$('#hover_img').mouseout(function(){
-//		$(this).attr({'src': '=====Картинка_без_наведення_мишкою====='});
-//	});
-//});
-
-//$('document').ready(function(){
-//	switcher = {div: false};
-//	$('#my_div').click(function(){
-//		if (switcher.div){
-//			switcher.div = false;
-//			$(this).css({display: 'block'});
-//		} else {
-//			switcher.div = true;
-//			$(this).css({display: 'none'});
-//		}
-//	});
-//});
-//var ObjAuthentication = new function() {
-// 
-//  this.objectShowHide = function() {
-//    $(document).click(function(){
-//      $('#photo-bag-2,#photo2').slideUp("slow");
-//      $('.Development').click(function(event){
-//        $('#photo-bag-1' ).slideDown("slow");
-//        event.stopPropagation();
-//      });
-//    });
-//  };
-// 
-//};
