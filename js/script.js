@@ -87,7 +87,7 @@ $('document').ready(function(){
 
 	switcher = {create: true, delete: false, del_radio: 0, 
 		del_pulse: 10, del_pulse_state: false, pause: false, pause2: false, trajectory_ref: false, music: false,
-		obj_count: obj_count, help: false, f_speed: 0, device: 'desktop',
+		obj_count: obj_count, help: false, device: 'desktop',
 		settings: false, gravit_mode: 1, r_gm: 1, interact: 0, ref_interact: 0,
 		camera: false, edit: false, traj: false, traj_mode: 1, traj_prev_on: true,
 		zoomToMouse: true, vis_distance: false, sel_orb_obj: false, launch_pwr: 1};
@@ -202,12 +202,12 @@ $('document').ready(function(){
 	wind_width = window.innerWidth;
 	wind_height = window.innerHeight;
 	window.onresize = function(){
-		if (!(wind_width == window.innerWidth) && !(wind_height == window.innerHeight)){
+		if (!(wind_width == window.innerWidth) || !(wind_height == window.innerHeight)){
 			if (confirm('Для корректного отображения, нужно перезагрузить страницу.')){
 				location.href = location;
 			}					
 		}
-	}
+	}	
 
 	$('.canvas').mousedown(function(event){
 		if (event.which == 1){
@@ -222,8 +222,6 @@ $('document').ready(function(){
 				if (obj_rand_color){
 					obj_color = randColor();
 				};
-				switcher.f_speed = f_orbital_speed(mouse[0], mouse[1], 'sun');
-				$('.power_need').html("*Для круговой орбиты, нужно примерно: "+ Math.round(Math.sqrt(switcher.f_speed[0]*switcher.f_speed[0] + switcher.f_speed[1]*switcher.f_speed[1])*30)+"*");
 			};
 			//Перемещение ближайшео объекта
 			if (mbut == 'move'){
@@ -320,7 +318,6 @@ $('document').ready(function(){
 			mousedown = false;
 			mouse[2] = event.clientX; mouse[3] = event.clientY;
 			$('.power').css({display: 'none'});
-			$('.power_need').css({display: 'none'});
 			if (switcher.device == 'mobile'){
 				close_all_menus();
 			}
@@ -335,9 +332,7 @@ $('document').ready(function(){
 
 				del_obj(delete_obj);
 
-				//console.log('Удален!');
-				$('.deleted').animate({right: 50});
-				timeout = setTimeout(function(){$('.deleted').animate({right: -300});}, 2000);
+				deleted();
 			}
 			if (mbut == 'move' && body[mov_obj]){
 				body[mov_obj].vx = mpos[4];
@@ -1340,8 +1335,7 @@ $('document').ready(function(){
 					ctx.arc(body[delete_obj].x, body[delete_obj].y, Math.sqrt(body[delete_obj].m)+1, 0, 7);
 					ctx.fill();
 					del_obj(delete_obj);
-					$('.deleted').animate({right: 50});
-					timeout = setTimeout(function(){$('.deleted').animate({right: -300});}, 2000);
+					deleted();
 				}
 			}
 			//create
@@ -1603,6 +1597,23 @@ $('document').ready(function(){
 
 	});
 
+	no_del_anim = false;
+	var mytimeout;
+	function deleted(){
+		if (!no_del_anim){
+			$('.deleted').css({display: 'block'});
+			$('.deleted').animate({right: 10}, 500);
+			clearTimeout(mytimeout);				
+		}
+		mytimeout = setTimeout(function(){
+			no_del_anim = true;
+			$('.deleted').animate({right: -300}, 500, function(){
+				$('.deleted').css({display: 'none'});
+				no_del_anim = false;
+			});
+		}, 2000);
+	}
+
 	function close_all_menus(e){
 		$('#'+mbut).css({background: '#fff2'});
 		$('.menu_options').css('display', 'none'); switcher.create = false;
@@ -1706,8 +1717,10 @@ $('document').ready(function(){
 		} else {
 			$('.time_speed').css({right: 10, top: 130});
 			$('.menu_pos').css({top: $('.menu').outerHeight() , left: 0});
+			$('body').css({fontSize: '2vmax'});
 		}
-	  } else {
+		$('.input_num').css({width: '20vmin'});
+	} else {
 	  	$('.time_speed').css({right: 10, top: 130});
 	  	$('.menu_pos').css({top: $('.menu').outerHeight() , left: 0});
 	}

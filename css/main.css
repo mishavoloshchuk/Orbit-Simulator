@@ -11,6 +11,7 @@ body {
 	height: 100%;
 	position: absolute;
 	text-shadow: 2px 2px 2px black, -1px -1px 2px black;
+	font-size: 1vmax;
 }
 
 html {
@@ -46,13 +47,14 @@ span {
 }
 
 .input_num {
-	width: 100px;
+	width: 10vmin;
 	margin-left: 10px;
 	background-color: #fff2;
 	border: 2px solid #fff3;
 	border-radius: 3px;
 	padding: 5px;
 	color: white;
+	font-size: inherit;
 }
 
 #canvas {
@@ -155,9 +157,7 @@ span {
 	border: 2px solid #aaa2;
 	display: none;
 	min-height: 100px;
-	transition: 0.1s;
 	padding: 0 5px;
-	transition: 0.5s;
 	z-index: 2;
 	overflow: auto;
 	border-bottom-right-radius: 1em;
@@ -237,7 +237,7 @@ span {
 }
 
 .deleted {
-	display: inline-block;
+	display: none;
 	position: absolute;
 	right: -300px;
 	top: 200px;
@@ -258,21 +258,6 @@ span {
 	display: none;
 	font-size: 20px;
 	font-style: bold;
-}
-
-.power_need {
-	-moz-user-select: none; /* Mozilla Firefox */
-	-ms-user-select: none; /* Internet Explorer (не поддерживается) */
-	-o-user-select: none; /* Opera Presto (не поддерживается) */
-	-webkit-user-select: none; /* Google Chrome, Opera Next, Safari */
-	position: absolute;
-	left: 0;
-	right: 0;
-	bottom: 10px;
-	display: none;
-	font-size: 20px;
-	font-style: bold;
-	color: silver;
 }
 
 .menu_max_s {
