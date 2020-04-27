@@ -7,15 +7,19 @@ $('document').ready(function(){
 	canv.height = window.innerHeight;
 	canv2.width = window.innerWidth;
 	canv2.height = window.innerHeight;
-	mouse_coords = [];
 	layers_id = ['canvas', 'canvas2']
+	//Mouse
+	mouse_coords = [];
 	mouse = [];
+	mpos = [];
 	mbut = 'create';
+	//Buttons
 	cbut = '';
 	chck = '';
 	pfb = mbut;
 	swt = false;
 	traj = true;
+	
 	mov_obj = '';
 	new_obj_param = [0,0,0,0];
 	paus = false;
@@ -23,6 +27,12 @@ $('document').ready(function(){
 	bodyEmpty = false;
 	traj_ref = true;
 	dis_zone = 5;
+	visual_sel_ref = false;
+	spawn = false;
+	num = 0;
+	del = false;
+	body_prev = {};
+	G = 0.05;
 
 	//Camera
 	cam_x = 0;
@@ -174,18 +184,13 @@ $('document').ready(function(){
 	//speed = 16;
 	//let simulation_refresh = setInterval(frame, speed);
 	window.requestAnimationFrame(frame);	
-
-	G = 0.05;
-	mousedown = false;
+	//Mouse and touches
+	leftMouseDown = false;
+	rightMouseDown = false;
 	middleMouseDown = false;
 	mouseMove = false;
 	multiTouch = 0;
 	mscam = true;
-	spawn = false;
-	num = 0;
-	mpos = [];
-	del = false;
-	body_prev = {};
 
 	function clear(col = '#00000004'){
 		if (switcher.traj_mode == 0){col = '#000';}
@@ -221,7 +226,7 @@ $('document').ready(function(){
 			}					
 		}
 	}
-	//Touch events ==========
+	//Touch events =================================================
 	$('.canvas').on('touchstart', function(event){
 		event.preventDefault();
 		$('#canvas2').trigger('mousedown', event);
@@ -237,7 +242,7 @@ $('document').ready(function(){
 		event.clientX = event.targetTouches[0].clientX;
 		event.clientY = event.targetTouches[0].clientY;
 		switcher.move = false;
-		if (mousedown && mbut == 'move' && mov_obj){
+		if (leftMouseDown && mbut == 'move' && mov_obj){
 			if (body[mov_obj]){
 				ctx.strokeStyle = body[mov_obj].color;
 				ctx.lineWidth = Math.sqrt(body[mov_obj].m)*2*zm < 0.5 ? 0.5 : Math.sqrt(body[mov_obj].m)*2*zm;
@@ -254,7 +259,7 @@ $('document').ready(function(){
 		if (event.targetTouches[1]){
 			multiX = event.targetTouches[0].clientX + (event.targetTouches[1].clientX - event.targetTouches[0].clientX);
 			multiY = event.targetTouches[0].clientY + (event.targetTouches[1].clientY - event.targetTouches[0].clientY);
-			mousedown = false;
+			leftMouseDown = false;
 			$('.power').css({display: 'none'});
 			mscam = false;
 			mov[0] = event.clientX - mpos[0] + mov[2];
@@ -264,9 +269,11 @@ $('document').ready(function(){
 		mouse_coords[0] = event.clientX;
 		mouse_coords[1] = event.clientY;
 	})
-	//Mouse events ===================
+	//Mouse events =========================================================
 	$('.canvas').mousedown(function(event, touch){
+		usr_multi_touch = false;
 		if (touch){
+			usr_touch = touch.targetTouches[1] ? true : false;
 			mouse_coords[0] = touch.targetTouches[0].clientX;
 			mouse_coords[1] = touch.targetTouches[0].clientY;
 			multiTouch ++;
@@ -283,7 +290,7 @@ $('document').ready(function(){
 		mpos[0] = event.clientX; mpos[1] = event.clientY;
 		mouse[0] = event.clientX; mouse[1] = event.clientY;
 		if (event.which == 1 || touch){
-			mousedown = true;
+			leftMouseDown = true;
 
 			if (mbut == 'create'){
 				if (obj_rand_color){
@@ -312,7 +319,7 @@ $('document').ready(function(){
 				delete edit_radius;
 			}		
 		}
-		if (event.which == 2 || touch.targetTouches[1]){
+		if (event.which == 2 || usr_multi_touch){
 			middleMouseDown = true;
 			mpos[0] = event.clientX - cam_x*zm; mpos[1] = event.clientY - cam_y*zm;
 
@@ -320,6 +327,13 @@ $('document').ready(function(){
 
 			swch.t_object = false;
 			swch.prev_t_obj = false;
+		}
+		if (event.which == 3){
+			rightMouseDown = true;
+			if (mbut == 'create' && leftMouseDown){
+				clear2();
+				$('.power').css({display: 'none'});				
+			}
 		}
 	});
 
@@ -330,7 +344,7 @@ $('document').ready(function(){
 			event.clientY = mouse_coords[1];
 		}
 		if (event.which == 1 || touch){
-			mousedown = false;
+			leftMouseDown = false;
 			mouse[2] = event.clientX; mouse[3] = event.clientY;
 			$('.power').css({display: 'none'});
 
@@ -353,7 +367,7 @@ $('document').ready(function(){
 			}
 
 
-			if (mbut == 'create' && mscam){
+			if (mbut == 'create' && mscam && !rightMouseDown){
 				spawn = true;
 				swch.vis_traj = false;
 				switcher.trajectory_ref = false;
@@ -396,12 +410,19 @@ $('document').ready(function(){
 			multiTouch --;
 			mscam = multiTouch != 0 ? false : true;
 		}
+		if (e.which == 3){
+			rightMouseDown = false;
+			if (leftMouseDown){
+				$('.power').css({display: 'block'});
+				$('.power').html('0');
+			}
+		}
 	});	
 
 	document.onmousemove = function(e){
 		switcher.move = false;
 		mouseMove = true;
-		if (mousedown && mbut == 'move' && mov_obj){
+		if (leftMouseDown && mbut == 'move' && mov_obj){
 			//switcher.move = true;
 			if (body[mov_obj]){
 				ctx.strokeStyle = body[mov_obj].color;
@@ -432,6 +453,9 @@ $('document').ready(function(){
 			mouse_coords[2] = mouse_coords [3] = false;
 		}
 	};
+	$('*').bind('contextmenu', function(e) {
+		return false;
+	});
 	//End mouse events ============
 	$('input').on('change', function(e){
 		//alert($(this).attr('id'));
@@ -513,23 +537,29 @@ $('document').ready(function(){
 		mcamX = -window.innerWidth/2 * (zm-1);
 		mcamY = -window.innerHeight/2 * (zm-1);
 
-		if (mousedown){
+		if (leftMouseDown){
 			if (mouseMove){
 				clear2();
 			}
 		} else {
 			clear2();
 		};
+		if (visual_sel_ref){
+			clear2();
+			visual_sel_ref = false;
+		}
 		if (switcher.move || switcher.traj_mode == 2 || switcher.traj_mode == 3){clear('#000');}else{if(!switcher.trajectory_ref && !switcher.pause2){clear();};};
 
 		if (middleMouseDown || mbut=='move'){canv.style.cursor = "move";}else{canv.style.cursor = "default";};
 
-		if (mbut == 'create' && mousedown){
+		if (mbut == 'create' && leftMouseDown && !rightMouseDown){
 			if (!switcher.pause){
 				switcher.pause = true;
 				switcher.traj_pause = true;				
 			}
-			visual_trajectory();
+			if (mouseMove){
+				visual_trajectory();
+			}
 
 			mcx = mouse_coords[2] ? mouse_coords[2] - (mouse_coords[2] - mouse_coords[0])/10 : mouse_coords[0];
 			mcy = mouse_coords[3] ? mouse_coords[3] - (mouse_coords[3] - mouse_coords[1])/10 : mouse_coords[1];
@@ -542,7 +572,7 @@ $('document').ready(function(){
 			};
 		}
 
-		if (mbut == 'create' && !mousedown){
+		if (mbut == 'create' && !leftMouseDown){
 			if (switcher.traj_pause){
 				switcher.pause = false;
 				delete switcher.traj_pause;
@@ -643,7 +673,7 @@ $('document').ready(function(){
 								vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx', obj2.m);
 								vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy', obj2.m);
 
-								if(!obj.lck && !switcher.pause2 && !(mbut == 'move' && mousedown && object == mov_obj)){
+								if(!obj.lck && !switcher.pause2 && !(mbut == 'move' && leftMouseDown && object == mov_obj)){
 									cam_vx += vx;
 									cam_vy += vy;
 								}
@@ -662,7 +692,7 @@ $('document').ready(function(){
 						vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx', obj2.m);
 						vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy', obj2.m);
 
-						if(!obj.lck && !switcher.pause2 && !(mbut == 'move' && mousedown && object == mov_obj)){
+						if(!obj.lck && !switcher.pause2 && !(mbut == 'move' && leftMouseDown && object == mov_obj)){
 							cam_vx += vx;
 							cam_vy += vy;
 						}
@@ -745,7 +775,7 @@ $('document').ready(function(){
 			ctx.lineTo(wind_width/2 - 5, wind_height/2 + 5);
 			ctx.stroke();			
 		}
-		if ((mbut == 'create' || mbut == 'trajectory') && (!mousedown || (multiTouch > 0 && mbut != 'create')) && switcher.vis_distance){
+		if ((mbut == 'create' || mbut == 'trajectory') && (!leftMouseDown || (multiTouch > 0 && mbut != 'create')) && switcher.vis_distance){
 			vis_distance([mouse_coords[0], mouse_coords[1]], '#888888');
 		}
 		if (mbut == 'sel_orb_obj' && switcher.sel_orb_obj){
@@ -770,7 +800,7 @@ $('document').ready(function(){
 				sin = (obj2.y - obj.y)/R;
 				cos = (obj2.x - obj.x)/R;
 
-				if(!obj.lck && !(mbut == 'move' && mousedown && object == mov_obj)){
+				if(!obj.lck && !(mbut == 'move' && leftMouseDown && object == mov_obj)){
 					body[object].vx += gravity_func(sin, cos, R, switcher.r_gm, 'vx', obj2.m);
 					body[object].vy += gravity_func(sin, cos, R, switcher.r_gm, 'vy', obj2.m);
 				}
@@ -805,7 +835,7 @@ $('document').ready(function(){
 				sin = (obj2.y - obj.y)/R;
 				cos = (obj2.x - obj.x)/R;
 
-				if(!obj.lck && !(mbut == 'move' && mousedown && object == mov_obj)){
+				if(!obj.lck && !(mbut == 'move' && leftMouseDown && object == mov_obj)){
 					body[object].vx += gravity_func(sin, cos, R, switcher.r_gm, 'vx', obj2.m);
 					body[object].vy += gravity_func(sin, cos, R, switcher.r_gm, 'vy', obj2.m);
 				}
@@ -1107,7 +1137,7 @@ $('document').ready(function(){
 				$('.power').css({left: mouse_coords[0]-10, top: mouse_coords[1]-30, display: 'block', color: col});
 				$('.power').html((Math.round(size/zm*1000)/1000));
 			} else {
-				if (!mousedown){
+				if (!leftMouseDown){
 					$('.power').css({display: 'none'});			
 				}
 			}		
@@ -1118,6 +1148,7 @@ $('document').ready(function(){
 	//Визуальное выдиление объекта
 	function visual_select(mode, color, object = '') {
 		if (!bodyEmpty){
+			visual_sel_ref = true;
 			del_radius = [Infinity, '', 0];
 			if (!body[object]){
 				del_radius[1] = select_object(mode);			
@@ -1265,7 +1296,7 @@ $('document').ready(function(){
 							vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx', obj2.m);
 							vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy', obj2.m);
 
-							if(!obj1.lck && !(mbut == 'move' && mousedown && object == mov_obj) && body_traj[object]){
+							if(!obj1.lck && !(mbut == 'move' && leftMouseDown && object == mov_obj) && body_traj[object]){
 								body_traj[object].vx += vx;
 								body_traj[object].vy += vy;
 							}
@@ -1303,14 +1334,14 @@ $('document').ready(function(){
 							vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx', obj2.m);
 							vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy', obj2.m);
 
-							if(!obj1.lck && !(mbut == 'move' && mousedown && object == mov_obj) && body_traj[object]){
+							if(!obj1.lck && !(mbut == 'move' && leftMouseDown && object == mov_obj) && body_traj[object]){
 								body_traj[object].vx += vx;
 								body_traj[object].vy += vy;
 							}
 
 						}
 
-						if(!obj1.lck && !switcher.pause2 && !(mbut == 'move' && mousedown && object == mov_obj)){
+						if(!obj1.lck && !switcher.pause2 && !(mbut == 'move' && leftMouseDown && object == mov_obj)){
 							body_traj[object].vx += vx;
 							body_traj[object].vy += vy;
 						}
@@ -1781,10 +1812,12 @@ $('document').ready(function(){
 	//=====================================================
 
 	var audio = new Audio(); // Создаём новый элемент Audio
-	audio.src = '/music/music1.mp3'; // Указываем путь к звуку "клика"
+	audio_src = ['music1.mp3', 'music2.mp3'];
 	audio.loop = true;
 
 	function soundPlay() {
+		rand_audio = Math.round(getRandomArbitrary(0, audio_src.length - 1));
+		audio.src = '/music/'+audio_src[rand_audio]; // Указываем путь к звуку "клика"
 		audio.play();
 	}
 	function soundStop() {
@@ -1814,6 +1847,7 @@ $('document').ready(function(){
 		}
 		$('.input_num').css({width: '20vmin'});
 		$('.power').css({fontSize: '5vmin'})
+	  	$('.menu_close').css({padding: '3vmin'});
 	} else {
 	  	$('.time_speed').css({right: 10, top: 130});
 	  	$('.menu_pos').css({top: $('.menu').outerHeight() , left: 0});
@@ -1855,7 +1889,7 @@ $('document').ready(function(){
 			  	switcher.interact = file_data.switcher.interact;
 			  	switcher.gravit_mode = file_data.switcher.gravit_mode;
 			  	tsw = times == file_data.times ? false : true;
-			  	times = file_data.times;
+			  	times = file_data.times ? file_data.times : 1;
 			  	pretime = times;
 			  	num = file_data.num;
 			  	sel_and_rest();
