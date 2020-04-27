@@ -43,7 +43,6 @@ span {
 	justify-content: space-between;
 	align-items: center;
 	margin-bottom: 10px;
-	margin-left: 20px;
 }
 
 .input_num {
@@ -162,10 +161,6 @@ span {
 	overflow: auto;
 	border-bottom-right-radius: 1em;
 	border-bottom-left-radius: 1em;
-}
-
-.menu_options {
-	display: block;
 }
 
 .option_item {

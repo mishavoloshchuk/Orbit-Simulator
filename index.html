@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<title>Orbit Simulator</title>
+	<meta name = "description" content = "Orbit Simulator. Развлекайся, наблюдая за тем, как ведет себя твой собственный мир со своими законами и правилами!">
+	<title>Orbit Simulator - Создай свой мир!</title>
 	<link rel="stylesheet" type="text/css" href="css/main.css">
 	<link rel="shortcut icon" href="ico/favicon.png" type="image/icon">
 	<script type="text/javascript" src="lib/jquery.js"></script>
@@ -129,8 +130,24 @@
 			<span>Множитель<br> скорости запуска: </span>
 			<input type="number" class='input_num' id='launch_power' value="1">	
 		</div>
+		
+		<div class='option_item title_option_item'>
+			<span>Параметры прощета траекторий:</span>
+		</div>
+		<div class='option_item'>
+			<span>Прощет траекторий: </span>
+			<input type="checkbox" class='checkbox' id="traj_prev_check">	
+		</div>
+		<div class='option_item'>
+			<span>Дальность прощета траектории <br>(влияет на быстродействие): </span>
+			<input type="number" class='input_num' id="traj_calc_samples">	
+		</div>
+		<div class='option_item'>
+			<span>Показывать рассояние: </span>
+			<input type="checkbox" class='checkbox' id="vis_distance_check">	
+		</div>
 
-		<div class='option_item menu_close e0' style="border-bottom: none;">
+		<div class='option_item menu_close close_btn' style="border-bottom: none;">
 			<div>Закрыть</div>
 		</div>
 
@@ -158,7 +175,7 @@
 			
 		</div>
 
-		<div class='option_item menu_close e1' style="border-bottom: none;">
+		<div class='option_item menu_close close_btn' style="border-bottom: none;">
 			<div>Закрыть</div>
 		</div>
 
@@ -203,7 +220,7 @@
 			</div>	
 		</div>
 
-		<div class='option_item menu_close e0' style="border-bottom: none;">
+		<div class='option_item menu_close close_btn' style="border-bottom: none;">
 			<div>Закрыть</div>
 		</div>
 
@@ -237,17 +254,17 @@
 			<span>orbitsimulator1@gmail.com</span>
 		</div>
 
-		<div class='option_item menu_close e0' style="border-bottom: none;">
+		<div class='option_item menu_close close_btn' style="border-bottom: none;">
 			<div>Закрыть</div>
 		</div>
 
 	</div>
 	<!--Simulation Settings-->
-	<div class="settings menu_pos_size menu_pos menu_max_s" id="settings">
+	<div class="settings menu_pos_size menu_pos menu_max_s" id="settings_menu">
 		<div class='option_item title_option_item'>
 			<span>Режимы силы притяжения:</span>
 		</div>
-		<div class='option_item' style="border: none;">
+		<div class='option_item' style="border: none; padding-bottom: 0;">
 			<form id="gravit_mode_radio_buttons" onchange="switcher.gravit_mode = +this.gravit_mode.value; sessionStorage['gravit_mode'] = +this.gravit_mode.value;" style="width: 100%;">
 				<div class="radio_button_menu">
 					<span>Обратно-пропорционально кубу расстояния: </span>
@@ -270,6 +287,10 @@
 					<input id="gravit_mode_radio_4" class="checkbox" type="radio" name="gravit_mode" value=4>
 				</div>
 			</form>			
+		</div>
+		<div class='option_item' style="padding-top: 0">
+			<span>Сила притяжения: </span>
+			<input type="number" class='input_num' id='G_value' min="0" onchange="obj_radius = +this.value; sessionStorage['obj_radius'] = +this.value;">	
 		</div>
 
 		<div class='option_item title_option_item'>
@@ -316,7 +337,7 @@
 			</div>		
 		</div>
 
-		<div class='option_item menu_close e1' style="border-bottom: none;">
+		<div class='option_item menu_close close_btn' style="border-bottom: none;">
 			<div>Закрыть</div>
 		</div>		
 	</div>
@@ -348,7 +369,7 @@
 			</div>		
 		</div>
 
-		<div class='option_item menu_close e0' style="border-bottom: none;">
+		<div class='option_item menu_close close_btn' style="border-bottom: none;">
 			<div>Закрыть</div>
 		</div>
 
@@ -379,24 +400,7 @@
 				</div>
 			</form>
 		</div>
-		
-		<div class='option_item title_option_item'>
-			<span>Параметры прощета траекторий:</span>
-		</div>
-		<div class='option_item'>
-			<span>Прощет траекторий: </span>
-			<input type="checkbox" class='checkbox' id="traj_prev_check">	
-		</div>
-		<div class='option_item'>
-			<span>Дальность прощета траектории <br>(влияет на быстродействие): </span>
-			<input type="number" class='input_num' id="traj_calc_samples">	
-		</div>
-		<div class='option_item'>
-			<span>Показывать рассояние: </span>
-			<input type="checkbox" class='checkbox' id="vis_distance_check">	
-		</div>
-
-		<div class='option_item menu_close e0' style="border-bottom: none;">
+		<div class='option_item menu_close close_btn' style="border-bottom: none;">
 			<div>Закрыть</div>
 		</div>
 
@@ -409,7 +413,7 @@
 		<h1 style="color: #dd0;">Удален!</h1>
 	</div>
 
-	<div class="power">
+	<div class="power canvas">
 		0
 	</div>
 

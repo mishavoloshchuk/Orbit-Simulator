@@ -9,10 +9,15 @@ $('document').ready(function(){
 	canv2.height = window.innerHeight;
 	layers_id = ['canvas', 'canvas2']
 	//Mouse
-	mouse_coords = [];
+	mouse_coords = [canv.width/2, canv.height/2];
 	mouse = [];
 	mpos = [];
 	mbut = 'create';
+	menu_state = true;
+	if (sessionStorage['mbut'] && sessionStorage['menu_state']){
+		mbut = sessionStorage['mbut'];
+		menu_state = sessionStorage['menu_state'] == 'true' ? true : false;
+	}
 	//Buttons
 	cbut = '';
 	chck = '';
@@ -32,7 +37,7 @@ $('document').ready(function(){
 	num = 0;
 	del = false;
 	body_prev = {};
-	G = 0.05;
+	G = 1;
 
 	//Camera
 	cam_x = 0;
@@ -85,7 +90,6 @@ $('document').ready(function(){
 		//'ast': {x:window.innerWidth/2 - 100, y: window.innerHeight/2, vx: 0, vy: 10, m: 10, color: randColor(), lck: false, trace: [], main_obj: 'sun'},
 		//'sun2': {'x':0, 'y': window.innerHeight/2, 'vx': 1, 'vy': 3, m: 100, 'color': '#ffff00', 'lck': false, trace: [], main_obj: 'sun'},
 	};
-
 	//View=================
 	//ctx.scale(cam_scale, cam_scale);
 	//ctx.translate(mov[0], mov[1]);
@@ -105,15 +109,18 @@ $('document').ready(function(){
 		}
 	}
 
-	switcher = {create: true, delete: false, del_radio: 0, 
-		del_pulse: 10, del_pulse_state: false, pause: false, pause2: false, trajectory_ref: false, music: false,
-		obj_count: obj_count, help: false, device: 'desktop',
-		settings: false, gravit_mode: 1, r_gm: 1, interact: 0, ref_interact: 0,
-		camera: false, edit: false, traj: false, traj_mode: 1, traj_prev_on: true,
+	switcher = {del_radio: 0, del_pulse: 10, del_pulse_state: false, pause: false,
+		pause2: false, trajectory_ref: false, music: false,
+		obj_count: obj_count, device: 'desktop',
+		gravit_mode: 1, r_gm: 1, interact: 0, ref_interact: 0,
+		traj_mode: 1, traj_prev_on: true,
 		zoomToMouse: true, vis_distance: false, sel_orb_obj: false, launch_pwr: 1};
 
 	swch = {s_track: false, t_object: false, prev_t_obj: false, vis_traj: false,
 		s_edit: false, edit_obj: false, orb_obj: 'sun', equilib_orb: false};
+
+	names = {create: 'menu_options', delete: 'del_menu_options', edit: 'edit_menu',
+		help: 'help_menu', settings: 'settings_menu', camera: 'camera_menu', trajectory: 'traj_menu'}
 
 	choise_restore('gravit_mode', 'gravit_mode', 'radio');
 	choise_restore('interact', 'interact', 'radio');
@@ -136,6 +143,7 @@ $('document').ready(function(){
 	$('#create_mass').attr('value', obj_radius);
 	$('#traj_calc_samples').attr('value', traj_calc_smpls);
 	$('#launch_power').attr('value', switcher.launch_pwr);
+	$('#G_value').attr('value', G);
 	if (obj_reverse){$('.direction_reverse_select').attr('checked', 'on');};
 	if (obj_cirle_orbit){$('.orbit_select').attr('checked', 'on');};
 	if (obj_rand_color){$('.rand_col_select').attr('checked', 'on');};
@@ -172,6 +180,12 @@ $('document').ready(function(){
 			}			
 		}
 	}
+	function menu_open_restore(){
+		if (menu_state){
+			$('#'+names[mbut]).css({display: 'block'});
+		}
+	}
+	menu_open_restore();
 	//====time====
 	times = 1;
 	t = times;
@@ -512,6 +526,10 @@ $('document').ready(function(){
 		if (chck == 'launch_power'){
 			switcher.launch_pwr = sessionStorage['launch_pwr'] = +this.value;
 		}
+		if (chck == 'G_value'){
+			e.preventDefault();
+			G = +this.value;
+		}
 	});
 
 	function rad(x1, y1, x2, y2){
@@ -550,7 +568,7 @@ $('document').ready(function(){
 		}
 		if (switcher.move || switcher.traj_mode == 2 || switcher.traj_mode == 3){clear('#000');}else{if(!switcher.trajectory_ref && !switcher.pause2){clear();};};
 
-		if (middleMouseDown || mbut=='move'){canv.style.cursor = "move";}else{canv.style.cursor = "default";};
+		if (middleMouseDown || mbut == 'move'){canv2.style.cursor = "move";}else{canv2.style.cursor = "default";};
 
 		if (mbut == 'create' && leftMouseDown && !rightMouseDown){
 			if (!switcher.pause){
@@ -897,9 +915,41 @@ $('document').ready(function(){
 			}
 		}
 
-
 		//Trajectory mode 2 =====
 		if (switcher.traj_mode == 2 && !obj.lck){
+			res = 20;
+			rand_kf = 0.5;
+			if (traj_smpls[2] && !switcher.pause2){
+				body[object].trace.unshift([obj.x, obj.y]);
+				if (body[object].trace.length > res){
+					body[object].trace.pop();
+				}			
+			}
+			if (traj_ref){
+				ctx.fillStyle = obCol;
+				ctx.strokeStyle = obCol;
+				if (body[object].trace[0]){
+					ctx.lineWidth = obj_rad*2*0.9;
+					ctx.beginPath();
+					ctx.moveTo(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0));
+					ctx.lineTo(crd(body[object].trace[0][0], 'x', 0), crd(body[object].trace[0][1], 'y', 0));
+					ctx.stroke();				
+				}
+				for (let i in body[object].trace){
+					itr = i-1;
+					itr = itr < 0?0:itr;
+
+					ctx.lineWidth = Math.abs(obj_rad*1.9 - (obj_rad*2)/32*i*2*0.8);
+					ctx.beginPath();
+					ctx.moveTo(crd(body[object].trace[i][0], 'x', 0), crd(body[object].trace[i][1], 'y', 0));
+					ctx.lineTo(crd(body[object].trace[itr][0], 'x', 0), crd(body[object].trace[itr][1], 'y', 0));
+					ctx.stroke();
+				}			
+			}
+		}
+
+		//Trajectory mode 3 =====
+		if (switcher.traj_mode == 3 && !obj.lck){
 			res = 20;
 			rand_kf = 0.5;
 			if (traj_smpls[2] && !switcher.pause2){
@@ -941,38 +991,6 @@ $('document').ready(function(){
 				}			
 			}
 		}
-		//Trajectory mode 3 =====
-		if (switcher.traj_mode == 3 && !obj.lck){
-			res = 20;
-			rand_kf = 0.5;
-			if (traj_smpls[2] && !switcher.pause2){
-				body[object].trace.unshift([obj.x, obj.y]);
-				if (body[object].trace.length > res){
-					body[object].trace.pop();
-				}			
-			}
-			if (traj_ref){
-				ctx.fillStyle = obCol;
-				ctx.strokeStyle = obCol;
-				if (body[object].trace[0]){
-					ctx.lineWidth = obj_rad*2*0.9;
-					ctx.beginPath();
-					ctx.moveTo(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0));
-					ctx.lineTo(crd(body[object].trace[0][0], 'x', 0), crd(body[object].trace[0][1], 'y', 0));
-					ctx.stroke();				
-				}
-				for (let i in body[object].trace){
-					itr = i-1;
-					itr = itr < 0?0:itr;
-
-					ctx.lineWidth = Math.abs(obj_rad*1.9 - (obj_rad*2)/32*i*2*0.8);
-					ctx.beginPath();
-					ctx.moveTo(crd(body[object].trace[i][0], 'x', 0), crd(body[object].trace[i][1], 'y', 0));
-					ctx.lineTo(crd(body[object].trace[itr][0], 'x', 0), crd(body[object].trace[itr][1], 'y', 0));
-					ctx.stroke();
-				}			
-			}
-		}
 		if (!isEmptyObject(body[object].trace) && switcher.traj_mode != 2 && switcher.traj_mode != 3) {body[object].trace = []; console.log('a')};
 
 		//console.log(R);
@@ -983,31 +1001,31 @@ $('document').ready(function(){
 	function gravity_func(sin, cos, R, func_num, dir, mass, user_func){
 		//Обратно-пропорционально квадрату расстояния
 		if (func_num == 1){
-			kff = mass*10*t*t;
+			kff = G*mass*10*t*t;
 			vx = kff*(cos/(R*R));//(obj2.x-obj.x)/10000;//~1;
 			vy = kff*(sin/(R*R));//(obj2.y-obj.y)/10000;//~-0.522;
 		}
 		//Обранто-пропорционально кубу расстояния
 		if (func_num == 0){
-			kff = mass*1000*t*t;
+			kff = G*mass*1000*t*t;
 			vx = kff*(cos/(R*R*R));
 			vy = kff*(sin/(R*R*R));
 		}
 		//Обранто-пропорционально расстоянию
 		if (func_num == 2){
-			kff = mass*0.1*t*t;
+			kff = G*mass*0.1*t*t;
 			vx = kff*(cos/R);
 			vy = kff*(sin/R);
 		}
 		//Постоянное притяжение
 		if (func_num == 3){
-			kff = mass*0.001*t*t;
+			kff = G*mass*0.001*t*t;
 			vx = kff*(cos);
 			vy = kff*(sin);
 		}
 		//Пропорционально расстоянию
 		if (func_num == 4){
-			kff = mass*0.00001*t*t;
+			kff = G*mass*0.00001*t*t;
 			vx = kff*(cos*R);
 			vy = kff*(sin*R);
 		}
@@ -1065,13 +1083,13 @@ $('document').ready(function(){
 	function f_orbital_speed(px, py, obj){
 		if (body[obj]){
 			R = rad(px, py, body[obj].x*zm, body[obj].y*zm);
-			V = Math.sqrt((body[obj].m/zm*10*t*t)*(R));
+			V = Math.sqrt((body[obj].m/zm*10*t*t)*(R)/G);
 			a = body[obj].x*zm - px;
 			b = body[obj].y*zm - py;
 			sin = b/R; cos = a/R;
 			svx = -(sin/V)*body[obj].m*10*t*t;
 			svy = (cos/V)*body[obj].m*10*t*t;
-			return [svx/t, svy/t];		
+			return [svx, svy];		
 		} else {
 			return [0, 0];
 		}
@@ -1212,13 +1230,9 @@ $('document').ready(function(){
 			px = mouse[0]; py = mouse[1];
 			if (((Math.abs(mouse[0]-mouse[2]) <= dis_zone && Math.abs(mouse[1]-mouse[3]) <= dis_zone && obj_cirle_orbit) || (point_x && point_y))&&body[swch.orb_obj]) {
 				if (point_x && point_y){px = point_x; py = point_y;};
-				R = rad(crd(px, 'x', 1), crd(py, 'y', 1), body[swch.orb_obj].x, body[swch.orb_obj].y);
-				V = Math.sqrt((body[swch.orb_obj].m*10*t*t)*(R));
-				a = body[swch.orb_obj].x - crd(px, 'x', 1);
-				b = body[swch.orb_obj].y - crd(py, 'y', 1);
-				sin = b/R; cos = a/R;
-				svx = -(sin/V)*body[swch.orb_obj].m*10*t*t;
-				svy = (cos/V)*body[swch.orb_obj].m*10*t*t;
+				vel = f_orbital_speed(crd(px, 'x', 1), crd(py, 'y', 1), swch.orb_obj);
+				svx = vel[0];
+				svy = vel[1];
 				if (obj_reverse){
 					svx = -svx;
 					svy = -svy;
@@ -1257,17 +1271,17 @@ $('document').ready(function(){
 	//Прощет траэктории
 	function traj_prev(obj, count = 100, col, full_object = false){
 		body_traj = JSON.parse(JSON.stringify(body));
-		sp_obj = [0,1];
+		//sp_obj = [0,1];
 		virt_obj = 'virtual';
 		if (full_object){
 			virtual = JSON.parse(JSON.stringify(obj));
 			body_traj['virtual'] = JSON.parse(JSON.stringify(virtual));
 		}
 
-		if (sp_obj[0]<sp_obj[1]){
-			new_obj_param = [crd(body_traj.virtual.x, 'x', 0), crd(body_traj.virtual.y, 'y', 0), body_traj.virtual.vx, body_traj.virtual.vy];
-			sp_obj[0] == 10;
-		}
+		//if (sp_obj[0]<sp_obj[1]){
+		//	new_obj_param = [crd(body_traj.virtual.x, 'x', 0), crd(body_traj.virtual.y, 'y', 0), body_traj.virtual.vx, body_traj.virtual.vy];
+		//	sp_obj[0] == 10;
+		//}
 		nlock = body_traj.virtual.lck ? false : true;
 		refMov = [0, 0];
 		distance = [Infinity, {}, 0];
@@ -1515,70 +1529,68 @@ $('document').ready(function(){
 		//Ctrl+Z
 		if (e.keyCode == 90){ if(e.ctrlKey){del_obj(select_object(2));} }
 	});
-
+	noMenuBtns = ['clear', 'timedown', 'play', 'pause', 'timeup', 'refresh', 'music'];
 	$('.btn').mousedown(function(){
 		//alert($(this).attr('id'));
 		pfb = mbut;
 		mbut = $(this).attr('id');
+		btn_id = mbut;
 		if (mbut == 'clear'){
 			clear('#000');
 			for (let i in body){
 				body[i].trace = [];
 			}
-			mbut = pfb;
 		} else
 		if (mbut == 'create'){
-			if (switcher.create){
+			if (menu_state && btn_id == pfb){
 				$('.menu_options').css('display', 'none');
-				switcher.create = false;
+				menu_state = false;
 			}else{
 				close_all_menus();
-				switcher.create = true;
+				menu_state = true;
 				$('.menu_options').fadeIn(0);
 			}
 			change_state('create');
-		} else
+		}
 		if (mbut == 'edit'){
-			if (switcher.edit){
+			if (menu_state && btn_id == pfb){
 				$('.edit_menu').css('display', 'none');
-				switcher.edit = false;
+				menu_state = false;
 			}else{
 				close_all_menus();
-				switcher.edit = true;
+				menu_state = true;
 				$('.edit_menu').fadeIn(0);
 			}
 			change_state('edit');
-		} else
+		}
 		if (mbut == 'trajectory'){
-			if (switcher.traj){
+			if (menu_state && btn_id == pfb){
 				$('.traj_menu').css('display', 'none');
-				switcher.traj = false;
+				menu_state = false;
 			}else{
 				close_all_menus();
-				switcher.traj = true;	
+				menu_state = true;	
 				$('.traj_menu').fadeIn(0);
 			}
 			change_state('trajectory');
-		} else
+		}
 		if (mbut == 'camera'){
-			if (switcher.camera){
+			if (menu_state && btn_id == pfb){
 				$('.camera_menu').css('display', 'none');
-				switcher.camera = false;
+				menu_state = false;
 			}else{
 				close_all_menus();
-				switcher.camera = true;
+				menu_state = true;
 				$('.camera_menu').fadeIn(0);
 			}
 			change_state('camera');
-		} else
+		}
 		if (mbut == 'timedown'){
-			mbut = pfb;
 			pretime = times;
 			times /= 2;
 			tsw = true;
 		} else
 		if (mbut == 'pause'){
-			mbut = pfb;
 			pretime = times;
 			tsw = true;
 			switcher.pause = true;
@@ -1589,7 +1601,6 @@ $('document').ready(function(){
 			try{clearTimeout(change_state_play)}catch{};
 		} else
 		if (mbut == 'play'){
-			mbut = pfb;
 			pretime = times;
 			if (!switcher.pause){times = 1;}
 			switcher.pause = false;
@@ -1600,7 +1611,6 @@ $('document').ready(function(){
 			change_state_play = setTimeout(function(){change_state(pfb);}, 1000);
 		} else
 		if (mbut == 'timeup'){
-			mbut = pfb;
 			pretime = times;
 			times *= 2;
 			tsw = true;
@@ -1608,68 +1618,75 @@ $('document').ready(function(){
 		if (mbut == 'delete'){
 			change_state('delete');
 			
-			if (switcher.delete){
+			if (menu_state && btn_id == pfb){
 				$('.del_menu_options').css('display', 'none');
-				switcher.delete = false;
+				menu_state = false;
 			}else{
 				close_all_menus();
 				$('.del_menu_options').fadeIn(0); 				
-				switcher.delete = true;
+				menu_state = true;
 			}
-		}else
+		}
 		if (mbut == 'move'){
 			close_all_menus();
 			change_state('move');
 		}else
 		if (mbut == 'refresh'){
-			mbut = pfb;
 			if (confirm("Это действие приведёт к обновлению страницы. Вы уверены?")){
 				location.href = location;
 			}
 		}else
 		if (mbut == 'music'){
-			mbut = pfb;
-			if (switcher.music){
+			if (menu_state && btn_id == pfb){
 				soundStop();
-				switcher.music = false;
+				menu_state = false;
 			} else {
 				soundPlay();
-				switcher.music = true;
+				menu_state = true;
 			}
 		}else
 		if (mbut == 'help'){
-			if (switcher.help){
+			if (menu_state && btn_id == pfb){
 				$('.help_menu').css('display', 'none');
-				switcher.help = false;
+				menu_state = false;
 			}else{
 				close_all_menus();
-				switcher.help = true;
+				menu_state = true;
 				$('.help_menu').fadeIn(0);
 			}
 			change_state('help');
-		}else
+		}
 		if (mbut == 'settings'){
-			if (switcher.settings){
+			if (menu_state && btn_id == pfb){
 				$('.settings').css('display', 'none');
-				switcher.settings = false;			
+				menu_state = false;	
 			} else {
 				close_all_menus();
-				switcher.settings = true;
 				$('.settings').fadeIn(0);
+				menu_state = true;
 			}
 			change_state('settings');
+		}
+		if (noMenuBtns.includes(mbut)){
+			mbut = pfb;
 		}
 
 		//if (pfb == 'move' || pfb == 'delete' || pfb == 'camera'){clear('#000');};
 		$('#'+pfb).css({background: 'none'});
 		$('#'+mbut).css({background: '#fff2'});
-		if (switcher[mbut]){$('#'+mbut).css({background: '#fff8'});}
+		if (menu_state){$('#'+mbut).css({background: '#fff8'});}
+		sessionStorage['mbut'] = mbut;
+		sessionStorage['menu_state'] = menu_state;
 	});
-	$('#'+mbut).css({background: '#fff8'});
+	if (menu_state){
+		$('#'+mbut).css({background: '#fff8'});
+	} else {
+		$('#'+mbut).css({background: '#fff2'});
+	}
 
 	$('.button').mouseup(function(){
-		//alert($(this).attr('id'));
 		cbut = $(this).attr('id');
+		//alert(cbut);
 		if (cbut == 'select_track'){
 			if (swch.s_track){
 				swch.s_track = false;
@@ -1709,7 +1726,7 @@ $('document').ready(function(){
 		if (cbut == 'save_file'){
 			switcher.pause = true;
 			change_state('pause');
-			my_data = {body: body, switcher: switcher, t_wrap: t_wrap, num: num, times: times};
+			my_data = {body: body, switcher: switcher, t_wrap: t_wrap, num: num, times: times, G: G};
 			my_data = JSON.stringify(my_data);
 			writeFile("No Name.txt", my_data);
 			//saveFile(name, forat, value, event);
@@ -1719,7 +1736,11 @@ $('document').ready(function(){
 		}
 
 	});
-
+	$('.close_btn').mouseup(function(){
+		close_all_menus();
+		sessionStorage['mbut'] = mbut;
+		sessionStorage['menu_state'] = menu_state;
+	});
 	no_del_anim = false;
 	var mytimeout;
 	function deleted(){
@@ -1738,22 +1759,19 @@ $('document').ready(function(){
 	}
 
 	function close_all_menus(e){
+		menu_state = false;
 		$('#'+mbut).css({background: '#fff2'});
-		$('.menu_options').css('display', 'none'); switcher.create = false;
-		$('.del_menu_options').css('display', 'none'); switcher.delete = false;
-		$('.help_menu').css('display', 'none'); switcher.help = false;
-		$('.settings').css('display', 'none'); switcher.settings = false;
-		$('.camera_menu').css('display', 'none'); switcher.camera = false;
-		$('.edit_menu').css('display', 'none'); switcher.edit = false;
-		$('.traj_menu').css('display', 'none'); switcher.traj = false;
-		if (e){switcher[e] = true};
+		$('.menu_options').css('display', 'none');
+		$('.del_menu_options').css('display', 'none');
+		$('.help_menu').css('display', 'none');
+		$('.settings').css('display', 'none');
+		$('.camera_menu').css('display', 'none');
+		$('.edit_menu').css('display', 'none');
+		$('.traj_menu').css('display', 'none');
 	}
 	function change_state(img, format='png', path = 'ico/'){
 		$('.state').html('<img src="'+path+img+'.'+format+'" alt="">');
 	}
-
-	$('.e0').click(function(){close_all_menus();});
-	$('.e1').click(function(){close_all_menus();});
 
 	//Cмешивение Цветов===================================
 	function toHexInt(i){
@@ -1890,6 +1908,7 @@ $('document').ready(function(){
 			  	switcher.gravit_mode = file_data.switcher.gravit_mode;
 			  	tsw = times == file_data.times ? false : true;
 			  	times = file_data.times ? file_data.times : 1;
+			  	G = file_data.G ? file_data.G : 1;
 			  	pretime = times;
 			  	num = file_data.num;
 			  	sel_and_rest();
