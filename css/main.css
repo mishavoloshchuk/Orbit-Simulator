@@ -11,7 +11,6 @@ body {
 	height: 100%;
 	position: absolute;
 	text-shadow: 2px 2px 2px black, -1px -1px 2px black;
-	font-size: 1vmax;
 }
 
 html {
@@ -60,7 +59,7 @@ span {
 	display: block;
 	position: absolute;
 	top: 0;
-	z-index: -3;
+	z-index: -4;
 	-moz-user-select: none; /* Mozilla Firefox */
 	-ms-user-select: none; /* Internet Explorer (не поддерживается) */
 	-o-user-select: none; /* Opera Presto (не поддерживается) */
@@ -109,6 +108,7 @@ span {
 	align-items: center;
 	justify-content: center;
 	border-radius: 25%;
+	background-color: none;
 }
 
 .btn img{
@@ -268,11 +268,10 @@ span {
 
 .button {
 	min-height: 10px;
-	min-width: 20px;
 	width: 100%;
 	background-color: #aaa2;
 	border-radius: 1em;
-	padding: 0.5em 1em;
+	padding: 0.5em 2em;
 	text-shadow: none;
 }
 
@@ -289,4 +288,11 @@ span {
 	position: absolute;
 	right: 10px;
 	bottom: 10px;
+}
+
+#timedown {
+	border-left: 3px solid #fff7;
+}
+#timeup {
+	border-right: 3px solid #fff7;
 }

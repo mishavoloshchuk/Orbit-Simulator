@@ -7,7 +7,7 @@ $('document').ready(function(){
 	canv.height = window.innerHeight;
 	canv2.width = window.innerWidth;
 	canv2.height = window.innerHeight;
-	layers_id = ['canvas', 'canvas2']
+	layers_id = ['canvas', 'canvas2'];
 	//Mouse
 	mouse_coords = [canv.width/2, canv.height/2];
 	mouse = [];
@@ -219,18 +219,6 @@ $('document').ready(function(){
 		ctx2.clearRect(0, 0, window.innerWidth, window.innerHeight);
 	}
 
-	function minusup(a, b){
-		if (a > b){
-			return a-b;
-		};
-		if (b > a){
-			return b-a;
-		};
-		if (b == a){
-			return 0;
-		};
-	};
-
 	wind_width = window.innerWidth;
 	wind_height = window.innerHeight;
 	window.onresize = function(){
@@ -240,7 +228,7 @@ $('document').ready(function(){
 			}					
 		}
 	}
-	//Touch events =================================================
+	//Touch events ======================================
 	$('.canvas').on('touchstart', function(event){
 		event.preventDefault();
 		$('#canvas2').trigger('mousedown', event);
@@ -1082,13 +1070,17 @@ $('document').ready(function(){
 	//Необходимая скорость для круговой орбиты
 	function f_orbital_speed(px, py, obj){
 		if (body[obj]){
-			R = rad(px, py, body[obj].x*zm, body[obj].y*zm);
-			V = Math.sqrt((body[obj].m/zm*10*t*t)*(R)/G);
-			a = body[obj].x*zm - px;
-			b = body[obj].y*zm - py;
+			R = rad(crd(px, 'x', 1), crd(py, 'y', 1), crd(body[obj].x, 'x', 1), crd(body[obj].y, 'y', 1))*zm;
+			V = Math.sqrt((body[obj].m*10*t*t)*(R)/G);
+			a = body[obj].x - px;
+			b = body[obj].y - py;
 			sin = b/R; cos = a/R;
 			svx = -(sin/V)*body[obj].m*10*t*t;
 			svy = (cos/V)*body[obj].m*10*t*t;
+			if (obj_reverse){
+				svx = -svx;
+				svy = -svy;
+			}
 			return [svx, svy];		
 		} else {
 			return [0, 0];
@@ -1214,6 +1206,7 @@ $('document').ready(function(){
 	}
 	//Создание нового объекта
 	function obj_sp(point_x,point_y,ob_col,vx,vy){
+		//Цвет объекта
 		if (obj_rand_color){
 			if (!ob_col){obj_color = randColor();}else{obj_color = ob_col;};
 			sessionStorage['obj_color'] = obj_color;
@@ -1221,48 +1214,27 @@ $('document').ready(function(){
 
 		if (spawn){
 			num ++;
+			svx = 0;
+			svy = 0;
+			px = mouse[0]; py = mouse[1];
 			if (!point_x && !point_y){
 				let mcx = mouse_coords[2] ? mouse_coords[2] - (mouse_coords[2] - mouse[2])/10 : mouse[2];
 				let mcy = mouse_coords[3] ? mouse_coords[3] - (mouse_coords[3] - mouse[3])/10 : mouse[3];
 				svx = ((mouse[0]-mcx)/30)*t * switcher.launch_pwr;
 				svy = ((mouse[1]-mcy)/30)*t * switcher.launch_pwr;				
-			}
-			px = mouse[0]; py = mouse[1];
-			if (((Math.abs(mouse[0]-mouse[2]) <= dis_zone && Math.abs(mouse[1]-mouse[3]) <= dis_zone && obj_cirle_orbit) || (point_x && point_y))&&body[swch.orb_obj]) {
-				if (point_x && point_y){px = point_x; py = point_y;};
+			} else {px = point_x; py = point_y;};
+
+			if (((Math.abs(mouse[0]-mouse[2]) <= dis_zone && Math.abs(mouse[1]-mouse[3]) <= dis_zone) || (point_x && point_y)) && body[swch.orb_obj] && obj_cirle_orbit) {
 				vel = f_orbital_speed(crd(px, 'x', 1), crd(py, 'y', 1), swch.orb_obj);
 				svx = vel[0];
 				svy = vel[1];
-				if (obj_reverse){
-					svx = -svx;
-					svy = -svy;
-				}
 				if (!body[swch.orb_obj].lck){
 					svx += body[swch.orb_obj].vx;
 					svy += body[swch.orb_obj].vy;
 				}
 			}
-			if (!body[swch.orb_obj] && (point_x && point_y)){
-				svx = 0; svy = 0;
-				px = mouse_coords[0]; py = mouse_coords[1];
-			}
-			let equilib = false;
-			let cff = 1.42;
-			if (swch.equilib_orb){
-				svx /= cff; svy /= cff;
-				vx /= cff; vy /= cff;
-				equilib = true;
-			}
-			if (vx&&vy){
-				body['obj_'+num] = {'x': crd(px, 'x', 1), 'y': crd(py, 'y', 1), 'vx': vx, 'vy': vy, m: obj_radius, 'lck': false, 'color': obj_color, lck: obj_lck, trace: [], main_obj: swch.orb_obj};
-			}else{
-				body['obj_'+num] = {'x': crd(px, 'x', 1), 'y': crd(py, 'y', 1), 'vx': svx, 'vy': svy, m: obj_radius, 'lck': false, 'color': obj_color, lck: obj_lck, trace: [], main_obj: swch.orb_obj};	
-			}
-			if (equilib && body[swch.orb_obj]){
-				vel2 = f_orbital_speed(crd(body[swch.orb_obj].x, 'x', 1), crd(body[swch.orb_obj].y, 'y', 1), ('ast'+num));
-				body[swch.orb_obj].vx = vel2[0]/cff; body[swch.orb_obj].vy = vel2[1]/cff;			
-				equilib = false;
-			}
+
+			body['obj_'+num] = {'x': crd(px, 'x', 1), 'y': crd(py, 'y', 1), 'vx': svx, 'vy': svy, m: obj_radius, 'lck': false, 'color': obj_color, lck: obj_lck, trace: [], main_obj: swch.orb_obj};
 			spawn = false;
 		}
 		new_obj_param = false;
@@ -1637,12 +1609,12 @@ $('document').ready(function(){
 			}
 		}else
 		if (mbut == 'music'){
-			if (menu_state && btn_id == pfb){
+			if (switcher.music){
 				soundStop();
-				menu_state = false;
+				switcher.music = false;
 			} else {
 				soundPlay();
-				menu_state = true;
+				switcher.music = true;
 			}
 		}else
 		if (mbut == 'help'){
@@ -1670,11 +1642,10 @@ $('document').ready(function(){
 		if (noMenuBtns.includes(mbut)){
 			mbut = pfb;
 		}
-
-		//if (pfb == 'move' || pfb == 'delete' || pfb == 'camera'){clear('#000');};
-		$('#'+pfb).css({background: 'none'});
-		$('#'+mbut).css({background: '#fff2'});
-		if (menu_state){$('#'+mbut).css({background: '#fff8'});}
+		
+		$('#'+pfb).css({'background': ''});
+		$('#'+mbut).css({'background-color': '#fff2'});
+		if (menu_state){$('#'+mbut).css({'background-color': '#fff8'});}
 		sessionStorage['mbut'] = mbut;
 		sessionStorage['menu_state'] = menu_state;
 	});
@@ -1835,7 +1806,7 @@ $('document').ready(function(){
 
 	function soundPlay() {
 		rand_audio = Math.round(getRandomArbitrary(0, audio_src.length - 1));
-		audio.src = '/music/'+audio_src[rand_audio]; // Указываем путь к звуку "клика"
+		audio.src = '/music/'+audio_src[rand_audio]; // Указываем путь к звуку
 		audio.play();
 	}
 	function soundStop() {
@@ -1866,6 +1837,7 @@ $('document').ready(function(){
 		$('.input_num').css({width: '20vmin'});
 		$('.power').css({fontSize: '5vmin'})
 	  	$('.menu_close').css({padding: '3vmin'});
+	  	$('body').css({fontSize: '2vmax'});
 	} else {
 	  	$('.time_speed').css({right: 10, top: 130});
 	  	$('.menu_pos').css({top: $('.menu').outerHeight() , left: 0});
