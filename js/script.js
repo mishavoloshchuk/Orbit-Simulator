@@ -27,8 +27,8 @@ $('document').ready(function(){
 	
 	mov_obj = '';
 	new_obj_param = [0,0,0,0];
+	trace_resolution = [0, 2, false];
 	paus = false;
-	traj_smpls = [0, 2, false];
 	bodyEmpty = false;
 	traj_ref = true;
 	dis_zone = 5;
@@ -56,12 +56,20 @@ $('document').ready(function(){
 	ref_sped = 1;
 	show_center = false;
 	usr_orb_obj = NaN;
-	show_fps = true;
+	show_fps = false;
 
 	fps_count = 0;
-	if (show_fps){setInterval(fps, 1000)};
+	fps_interval = 0;
+	if (show_fps){fps_interval = setInterval(fps, 1000)};
 	function fps(){
 		$('.fps').html('FPS: '+fps_count);
+		if (fps_count >= 45){
+			$('.fps').css({color: '#0f0'});
+		} else if (fps_count >= 20){
+			$('.fps').css({color: '#ff0'});
+		} else {
+			$('.fps').css({color: '#f04'});
+		}
 		fps_count = 0;
 	}
 
@@ -113,7 +121,7 @@ $('document').ready(function(){
 		pause2: false, trajectory_ref: false, music: false,
 		obj_count: obj_count, device: 'desktop',
 		gravit_mode: 1, r_gm: 1, interact: 0, ref_interact: 0,
-		traj_mode: 1, traj_prev_on: true,
+		traj_mode: 1, traj_mode2: 1, traj_prev_on: true,
 		zoomToMouse: true, vis_distance: false, sel_orb_obj: false, launch_pwr: 1};
 
 	swch = {s_track: false, t_object: false, prev_t_obj: false, vis_traj: false,
@@ -124,7 +132,7 @@ $('document').ready(function(){
 
 	choise_restore('gravit_mode', 'gravit_mode', 'radio');
 	choise_restore('interact', 'interact', 'radio');
-	choise_restore('traj_mode', 'traj_mode', 'radio');
+	choise_restore('traj_mode', 'traj_mode2', 'radio');
 	choise_restore('traj_prev_on', 'traj_prev_on', 'checkbox');
 	choise_restore('chck_zoomToMouse', 'zoomToMouse', 'checkbox');
 	choise_restore('vis_distance_check', 'vis_distance', 'checkbox');
@@ -148,7 +156,7 @@ $('document').ready(function(){
 	if (obj_cirle_orbit){$('.orbit_select').attr('checked', 'on');};
 	if (obj_rand_color){$('.rand_col_select').attr('checked', 'on');};
 
-	radio_select('traj_radio', switcher.traj_mode);
+	radio_select('traj_radio', switcher.traj_mode2);
 	check_select('traj_prev_check', switcher.traj_prev_on);
 	check_select('chck_zoomToMouse', switcher.zoomToMouse);
 	check_select('vis_distance_check', switcher.vis_distance);
@@ -462,6 +470,7 @@ $('document').ready(function(){
 	$('input').on('change', function(e){
 		//alert($(this).attr('id'));
 		chck = $(this).attr('id');
+		inp_name = $(this).attr('name');
 
 		if (chck == 'check_edit_lck' && body[swch.edit_obj]){
 			if (document.getElementById(chck).checked){
@@ -479,17 +488,16 @@ $('document').ready(function(){
 		if (chck == 'col_edit' && body[swch.edit_obj]){
 			body[swch.edit_obj].color = document.getElementById(chck).value;
 		}
-		if (chck == 'traj_radio_0'){
-			switcher.traj_mode = sessionStorage['traj_mode'] = 0;
-		}
-		if (chck == 'traj_radio_1'){
-			switcher.traj_mode = sessionStorage['traj_mode'] = 1;
-		}
-		if (chck == 'traj_radio_2'){
-			switcher.traj_mode = sessionStorage['traj_mode'] = 2;
-		}
-		if (chck == 'traj_radio_3'){
-			switcher.traj_mode = sessionStorage['traj_mode'] = 3;
+		if (inp_name == 'traj'){
+			switcher.traj_mode2 = sessionStorage['traj_mode'] = +$(this).attr('value');
+			for (let object in body){
+				res = 20;
+				trace_length = body[object].trace.length;
+				while (trace_length > res){
+					body[object].trace.pop();
+					trace_length --;
+				}							
+			}
 		}
 		if (chck == 'traj_calc_samples'){
 			traj_calc_smpls = +this.value;
@@ -554,7 +562,7 @@ $('document').ready(function(){
 			clear2();
 			visual_sel_ref = false;
 		}
-		if (switcher.move || switcher.traj_mode == 2 || switcher.traj_mode == 3){clear('#000');}else{if(!switcher.trajectory_ref && !switcher.pause2){clear();};};
+		if (switcher.move || (switcher.traj_mode != 1)){clear('#000');}else{if(!switcher.trajectory_ref && !switcher.pause2){clear();};};
 
 		if (middleMouseDown || mbut == 'move'){canv2.style.cursor = "move";}else{canv2.style.cursor = "default";};
 
@@ -711,13 +719,6 @@ $('document').ready(function(){
 				cam_x = 0 + anim_cam[0];
 				cam_y = 0 + anim_cam[1];
 			}
-			if(traj_smpls[0] >= traj_smpls[1]){
-				traj_smpls[2] = true;
-				traj_smpls[0] = 0;
-			} else {
-				traj_smpls[0] ++;
-				traj_smpls[2] = false;
-			}
 			body_prev = JSON.parse(JSON.stringify(body));
 			if (!bodyEmpty){
 				for (let obj in body){	
@@ -729,8 +730,15 @@ $('document').ready(function(){
 				movAnim[4] = true;
 			}
 			traj_ref = false;		
+			if (trace_resolution[0] >= trace_resolution[1]){
+				trace_resolution[2] = true;
+				trace_resolution[0] = 0;
+			} else {trace_resolution[0] ++; trace_resolution[2] = false;}
 		}
 		traj_ref = true;
+		if (switcher.traj_mode2 != switcher.traj_mode){
+			switcher.traj_mode = switcher.traj_mode2;
+		}
 		if (t_wrap){
 			$('.time_speed h2').html('T - X'+t);
 			for (let i in body){
@@ -781,13 +789,13 @@ $('document').ready(function(){
 			ctx.lineTo(wind_width/2 - 5, wind_height/2 + 5);
 			ctx.stroke();			
 		}
-		if ((mbut == 'create' || mbut == 'trajectory') && (!leftMouseDown || (multiTouch > 0 && mbut != 'create')) && switcher.vis_distance){
+		if ((mbut == 'create') && (!leftMouseDown || (multiTouch > 0 && mbut != 'create')) && switcher.vis_distance){
 			vis_distance([mouse_coords[0], mouse_coords[1]], '#888888');
 		}
 		if (mbut == 'sel_orb_obj' && switcher.sel_orb_obj){
 			visual_select(0, '#bf06', mov_obj);
 		}
-		if (mbut != 'create' && mbut != 'trajectory'){
+		if (mbut != 'create'){
 			$('.power').css({display: 'none'});
 		}
 
@@ -796,6 +804,7 @@ $('document').ready(function(){
 
 	function refresh(object){
 		obj = body_prev[object];
+		t_mod = switcher.traj_mode; //Trajectory mode
 		if(switcher.ref_interact == 0 && !switcher.pause2 && !bodyEmpty){
 			for (let i in body){
 				if (i == object){continue;};
@@ -822,10 +831,7 @@ $('document').ready(function(){
 						if (!obj.lck){
 							body[object].vx = (obj.m*obj.vx+obj2.m*obj2.vx)/(obj.m+obj2.m);//Формула абсолютно-неупругого столкновения
 							body[object].vy = (obj.m*obj.vy+obj2.m*obj2.vy)/(obj.m+obj2.m);//Формула абсолютно-неупругого столкновения
-							//((body[object].m * body[object].vx)+(obj2.m * obj2.vx))/(obj2.m+body[object].m);
-							//((body[object].m * body[object].vy)+(obj2.m * obj2.vy))/(obj2.m+body[object].m);
 						}
-
 						del_obj(i);
 						continue;
 					}else{continue;}
@@ -849,14 +855,7 @@ $('document').ready(function(){
 				//Эллипс	
 				//ctx.beginPath();
 				//ctx.lineWidth = Math.sqrt(body[object].m);
-				//if (!obj.color){obj.color = 'gray';};
 				//ctx.strokeStyle = obj.color;
-				//ell_sin = body[object].vx / body[object].vy;
-				//ell_cos = body[object].vy / body[object].vx;
-				//V = gipot(body[object].vx, body[object].vy);
-				//Mu = 100000;
-				//M = (Math.pow(V, 2) / 2) - (Mu / R);//Mechanical Energy
-				//ell_a = 1 / ( 2/R - (V*V) / M );
 				//ctx.ellipse(body.sun.x + cam_x, body.sun.y + cam_y, Math.abs(ell_a), 250, 0, 0, 7);
 				//ctx.stroke();
 			};
@@ -888,7 +887,7 @@ $('document').ready(function(){
 			ctx.fill();
 		}
 
-		if (!switcher.pause2 && movAnim[4] && switcher.traj_mode == 1){
+		if (!switcher.pause2 && movAnim[4] && t_mod == 1){
 			if (swch.prev_t_obj != object){
 				//ctx.beginPath();
 				//ctx.fillStyle = obCol;
@@ -902,17 +901,20 @@ $('document').ready(function(){
 				ctx.stroke();			
 			}
 		}
-
-		//Trajectory mode 2 =====
-		if (switcher.traj_mode == 2 && !obj.lck){
-			res = 20;
-			rand_kf = 0.5;
-			if (traj_smpls[2] && !switcher.pause2){
+		res = false;
+		if ((t_mod == 2 || t_mod == 3 || t_mod == 4) && !obj.lck && trace_resolution[2]){
+			res = t_mod == 4?75:20;
+			if (!switcher.pause2){
 				body[object].trace.unshift([obj.x, obj.y]);
-				if (body[object].trace.length > res){
+				trace_length = body[object].trace.length;
+				while (trace_length > res){
 					body[object].trace.pop();
-				}			
-			}
+					trace_length --;
+				}				
+			}			
+		}
+		//Trajectory mode 2 =====
+		if (t_mod == 2 && !obj.lck && res <= 20){
 			if (traj_ref){
 				ctx.fillStyle = obCol;
 				ctx.strokeStyle = obCol;
@@ -937,15 +939,9 @@ $('document').ready(function(){
 		}
 
 		//Trajectory mode 3 =====
-		if (switcher.traj_mode == 3 && !obj.lck){
-			res = 20;
+		if (t_mod == 3 && !obj.lck && res <= 20){
 			rand_kf = 0.5;
-			if (traj_smpls[2] && !switcher.pause2){
-				body[object].trace.unshift([obj.x, obj.y]);
-				if (body[object].trace.length > res){
-					body[object].trace.pop();
-				}			
-			}
+
 			if (traj_ref){
 				prev_randX = 0;
 				prev_randY = 0;
@@ -979,7 +975,27 @@ $('document').ready(function(){
 				}			
 			}
 		}
-		if (!isEmptyObject(body[object].trace) && switcher.traj_mode != 2 && switcher.traj_mode != 3) {body[object].trace = []; console.log('a')};
+
+		//Trajectory mode 4 =====
+		if (t_mod == 4 && !obj.lck){
+			if (traj_ref){
+				ctx.fillStyle = obCol;
+				ctx.strokeStyle = obCol;
+				ctx.lineWidth = 1;
+				if (body[object].trace[0]){
+					ctx.beginPath();
+					ctx.moveTo(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0));			
+				}
+				for (let i in body[object].trace){
+					itr = i-1;
+					itr = itr < 0?0:itr;
+
+					ctx.lineTo(crd(body[object].trace[itr][0], 'x', 0), crd(body[object].trace[itr][1], 'y', 0));
+				}			
+				ctx.stroke();
+			}
+		}
+		if (!isEmptyObject(body[object].trace) && switcher.traj_mode != 2 && switcher.traj_mode != 3 && switcher.traj_mode != 4) {body[object].trace = [];};
 
 		//console.log(R);
 		//arr = Object.keys(body);
@@ -1495,7 +1511,19 @@ $('document').ready(function(){
 				//ctx.translate(canv.width/2, canv.height/2);
 				zm *= 0.5;
 				clear('#000');
-			}	
+			}
+			if (e.keyCode == 120){
+				if (!show_fps){
+					show_fps = true;
+					$('.fps').css({display: 'block'});
+					fps_interval = setInterval(fps, 1000)
+				} else {
+					show_fps = false;
+					fps_count = 0;
+					$('.fps').css({display: 'none'});
+					clearInterval(fps_interval);
+				}
+			}
 		}
 		//Ctrl keys
 		//Ctrl+Z
@@ -1697,9 +1725,14 @@ $('document').ready(function(){
 		if (cbut == 'save_file'){
 			switcher.pause = true;
 			change_state('pause');
-			my_data = {body: body, switcher: switcher, t_wrap: t_wrap, num: num, times: times, G: G};
+			body_write = JSON.parse(JSON.stringify(body));
+			for(let i in body_write){
+				body_write[i].trace = [];
+			}
+			my_data = {body: body_write, switcher: switcher, t_wrap: t_wrap, num: num, times: times, G: G};
 			my_data = JSON.stringify(my_data);
 			writeFile("No Name.txt", my_data);
+			delete body_write;
 			//saveFile(name, forat, value, event);
 		}
 		if (cbut == 'sel_file_but'){
