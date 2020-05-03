@@ -295,11 +295,16 @@ $('document').ready(function(){
 				zm_cff = touchZoom;
 			}
 
-			if (!switcher.zoomToScreenCenter){ // If no zoom to center
-				mov[0] = avTouchPoint.x - avTouchPoint.xd + mov[2];
-				mov[1] = avTouchPoint.y - avTouchPoint.yd + mov[3];
-			}
 			zm = zm_prev / Math.pow(zm_cff / touchZoom, 2); // Zoom
+			if (!switcher.zoomToScreenCenter){ // If no zoom to center
+				mov[0] = avTouchPoint.x - avTouchPoint.xd + mov[2]*Math.pow(touchZoom/zm_cff, 2);
+				mov[1] = avTouchPoint.y - avTouchPoint.yd + mov[3]*Math.pow(touchZoom/zm_cff, 2);
+				// + ((wind_width/2 - avTouchPoint.x)*Math.pow(touchZoom/zm_cff, 2) - (wind_width/2 - avTouchPoint.x))
+ 				// + ((wind_height/2 - avTouchPoint.y)*Math.pow(touchZoom/zm_cff, 2) - (wind_height/2 - avTouchPoint.y))
+
+				//mov[0] = mov[0] / (touchZoom/zm_cff) - (avTouchPoint.x - wind_width/2) / ((zm_cff/touchZoom)/((touchZoom/zm_cff)-1));
+				//mov[1] = mov[1] / (touchZoom/zm_cff) - (avTouchPoint.y - wind_height/2) / ((zm_cff/touchZoom)/((touchZoom/zm_cff)-1));
+			}
 			swch.t_object = false; // Track object disable
 			swch.prev_t_obj = false; // Track object disable
 			clear('#000000');
