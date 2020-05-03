@@ -28,6 +28,7 @@ $('document').ready(function(){
 	mov_obj = '';
 	new_obj_param = [0,0,0,0];
 	trace_resolution = [0, 2, false];
+	multiTouches = [];
 	paus = false;
 	bodyEmpty = false;
 	traj_ref = true;
@@ -49,6 +50,8 @@ $('document').ready(function(){
 	mov = [0, 0, 0, 0];
 	movAnim = [0, 0, 0, 0, true];
 	anim_cam = [0, 0, true];
+	zm_prev = 1;
+	zm_cff = NaN;
 	zm = 1/1;
 	glob_scale = 1;
 
@@ -122,7 +125,7 @@ $('document').ready(function(){
 		obj_count: obj_count, device: 'desktop',
 		gravit_mode: 1, r_gm: 1, interact: 0, ref_interact: 0,
 		traj_mode: 1, traj_mode2: 1, traj_prev_on: true,
-		zoomToMouse: true, vis_distance: false, sel_orb_obj: false, launch_pwr: 1};
+		zoomToScreenCenter: false, vis_distance: false, sel_orb_obj: false, launch_pwr: 1};
 
 	swch = {s_track: false, t_object: false, prev_t_obj: false, vis_traj: false,
 		s_edit: false, edit_obj: false, orb_obj: 'sun', equilib_orb: false};
@@ -134,7 +137,7 @@ $('document').ready(function(){
 	choise_restore('interact', 'interact', 'radio');
 	choise_restore('traj_mode', 'traj_mode2', 'radio');
 	choise_restore('traj_prev_on', 'traj_prev_on', 'checkbox');
-	choise_restore('chck_zoomToMouse', 'zoomToMouse', 'checkbox');
+	choise_restore('chck_zoomToScreenCenter', 'zoomToScreenCenter', 'checkbox');
 	choise_restore('vis_distance_check', 'vis_distance', 'checkbox');
 
 	obj_color = sessionStorage['obj_color'] ? sessionStorage['obj_color'] : '#FFFFFF';
@@ -158,7 +161,7 @@ $('document').ready(function(){
 
 	radio_select('traj_radio', switcher.traj_mode2);
 	check_select('traj_prev_check', switcher.traj_prev_on);
-	check_select('chck_zoomToMouse', switcher.zoomToMouse);
+	check_select('chck_zoomToScreenCenter', switcher.zoomToScreenCenter);
 	check_select('vis_distance_check', switcher.vis_distance);
 
 	sel_and_rest();
@@ -212,6 +215,7 @@ $('document').ready(function(){
 	middleMouseDown = false;
 	mouseMove = false;
 	multiTouch = 0;
+	avTouchPoint = {x: NaN, y: NaN, xd: NaN, yd: NaN};
 	mscam = true;
 
 	function clear(col = '#00000004'){
@@ -244,36 +248,60 @@ $('document').ready(function(){
 
 	$('.canvas').on('touchend', function(event){
 		$('#canvas2').trigger('mouseup', event);
+		zm_prev = zm;
 	});
 
 	$('.canvas').on('touchmove', function(event){
 		event.preventDefault();
 		mouseMove = true;
-		event.clientX = event.targetTouches[0].clientX;
-		event.clientY = event.targetTouches[0].clientY;
+		event.clientX = event.targetTouches[0].clientX;// Touch X
+		event.clientY = event.targetTouches[0].clientY;// Touch Y
 		switcher.move = false;
-		if (leftMouseDown && mbut == 'move' && mov_obj){
+		av_touch_x = [];// Averrage point of touchs
+		av_touch_y = [];// Averrage point of touchs
+		if (leftMouseDown && mbut == 'move' && mov_obj){ // Moving object
 			if (body[mov_obj]){
 				ctx.strokeStyle = body[mov_obj].color;
+				ctx.fillStyle = body[mov_obj].color;
 				ctx.lineWidth = Math.sqrt(body[mov_obj].m)*2*zm < 0.5 ? 0.5 : Math.sqrt(body[mov_obj].m)*2*zm;
+				ctx.beginPath();
+				ctx.arc(crd(body[mov_obj].x, 'x', 0), crd(body[mov_obj].y, 'y', 0), Math.sqrt(body[mov_obj].m)*zm, 0, 7);
+				ctx.fill();
 				ctx.beginPath();
 				ctx.moveTo(crd(body[mov_obj].x, 'x', 0), crd(body[mov_obj].y, 'y', 0));
 
-				body[mov_obj].x = (event.clientX - mpos[0])/zm + mpos[2];
-				body[mov_obj].y = (event.clientY - mpos[1])/zm + mpos[3];
+				body[mov_obj].x = (event.clientX - mpos[0])/zm + mpos[2]; // New position X
+				body[mov_obj].y = (event.clientY - mpos[1])/zm + mpos[3]; // New position Y
 
 				ctx.lineTo(crd(body[mov_obj].x, 'x', 0), crd(body[mov_obj].y, 'y', 0));
 				ctx.stroke();
 			}
 		}
-		if (event.targetTouches[1]){
-			multiX = event.targetTouches[0].clientX + (event.targetTouches[1].clientX - event.targetTouches[0].clientX);
-			multiY = event.targetTouches[0].clientY + (event.targetTouches[1].clientY - event.targetTouches[0].clientY);
-			leftMouseDown = false;
-			$('.power').css({display: 'none'});
+		if (event.changedTouches.length == 2){
+			for (let i = 0; i < event.changedTouches.length; i++){ //All touch points array
+				av_touch_x.push(event.changedTouches[i].clientX);
+				av_touch_y.push(event.changedTouches[i].clientY);
+			}
+			avTouchPoint.x = sumArray(av_touch_x)/av_touch_x.length; // Averrage point of touchs
+			avTouchPoint.y = sumArray(av_touch_y)/av_touch_x.length; // Averrage point of touchs
+			touchZoom = rad(event.changedTouches[0].clientX, event.changedTouches[0].clientY, event.changedTouches[1].clientX, event.changedTouches[1].clientY); // Distance between touchs
+			$('.power').css({display: 'none'}); // Clear power number
+			leftMouseDown = false; 
 			mscam = false;
-			mov[0] = event.clientX - mpos[0] + mov[2];
-			mov[1] = event.clientY - mpos[1] + mov[3];
+
+			if (!avTouchPoint.xd){ // Mouse down
+				avTouchPoint.xd = avTouchPoint.x - cam_x*zm;
+				avTouchPoint.yd = avTouchPoint.y - cam_y*zm;
+				zm_cff = touchZoom;
+			}
+
+			if (!switcher.zoomToScreenCenter){ // If no zoom to center
+				mov[0] = avTouchPoint.x - avTouchPoint.xd + mov[2];
+				mov[1] = avTouchPoint.y - avTouchPoint.yd + mov[3];
+			}
+			zm = zm_prev / Math.pow(zm_cff / touchZoom, 2); // Zoom
+			swch.t_object = false; // Track object disable
+			swch.prev_t_obj = false; // Track object disable
 			clear('#000000');
 		}
 		mouse_coords[0] = event.clientX;
@@ -353,6 +381,7 @@ $('document').ready(function(){
 			event.clientX = mouse_coords[0];
 			event.clientY = mouse_coords[1];
 		}
+		avTouchPoint.xd = avTouchPoint.yd = NaN;
 		if (event.which == 1 || touch){
 			leftMouseDown = false;
 			mouse[2] = event.clientX; mouse[3] = event.clientY;
@@ -436,12 +465,16 @@ $('document').ready(function(){
 			//switcher.move = true;
 			if (body[mov_obj]){
 				ctx.strokeStyle = body[mov_obj].color;
+				ctx.fillStyle = body[mov_obj].color;
 				ctx.lineWidth = Math.sqrt(body[mov_obj].m)*2*zm < 0.5 ? 0.5 : Math.sqrt(body[mov_obj].m)*2*zm;
+				ctx.beginPath();
+				ctx.arc(crd(body[mov_obj].x, 'x', 0), crd(body[mov_obj].y, 'y', 0), Math.sqrt(body[mov_obj].m)*zm, 0, 7);
+				ctx.fill();
 				ctx.beginPath();
 				ctx.moveTo(crd(body[mov_obj].x, 'x', 0), crd(body[mov_obj].y, 'y', 0));
 
-				body[mov_obj].x = (event.clientX - mpos[0])/zm + mpos[2];
-				body[mov_obj].y = (event.clientY - mpos[1])/zm + mpos[3];
+				body[mov_obj].x = (event.clientX - mpos[0])/zm + mpos[2]; // New position X
+				body[mov_obj].y = (event.clientY - mpos[1])/zm + mpos[3]; // New position Y
 
 				ctx.lineTo(crd(body[mov_obj].x, 'x', 0), crd(body[mov_obj].y, 'y', 0));
 				ctx.stroke();
@@ -506,8 +539,8 @@ $('document').ready(function(){
 		if (chck == 'traj_prev_check'){
 			sessionStorage['traj_prev_on'] = switcher.traj_prev_on = (this.checked == false) ? false : true;
 		}
-		if (chck == 'chck_zoomToMouse'){
-			sessionStorage['chck_zoomToMouse'] = switcher.zoomToMouse = (this.checked == false) ? false : true;
+		if (chck == 'chck_zoomToScreenCenter'){
+			sessionStorage['chck_zoomToScreenCenter'] = switcher.zoomToScreenCenter = (this.checked == false) ? false : true;
 		}
 		if (chck == 'vis_distance_check'){
 			sessionStorage['vis_distance_check'] = switcher.vis_distance = (this.checked == false) ? false : true;
@@ -1411,7 +1444,7 @@ $('document').ready(function(){
 			ms = [e.clientX, e.clientY];
 			if (!middleMouseDown){
 				vl = 1.25;
-				if (!swch.prev_t_obj && switcher.zoomToMouse){
+				if (!swch.prev_t_obj && !switcher.zoomToScreenCenter){
 					if (e.deltaY > 0){
 						zm /= vl;
 						mov[0] = mov[0] / vl - (wind_width/2 - ms[0]) / (vl/(vl-1));
@@ -1593,21 +1626,28 @@ $('document').ready(function(){
 		if (mbut == 'pause'){
 			pretime = times;
 			tsw = true;
-			switcher.pause = true;
-			//clearInterval(simulation_refresh);
-			//simulation_refresh = false;
+			if (switcher.pause){
+				switcher.pause = false;
+				img_name = 'pause';
+				change_state('play');
+				change_state_play = setTimeout(function(){change_state(pfb);}, 1000);			
+			} else {
+				switcher.pause = true;
+				img_name = 'play';
+				change_state('pause');	
+				try{clearTimeout(change_state_play)}catch{};
+			}
+			$('img',this).attr('src', 'ico/'+img_name+'.png');
 			//$('.time_speed h2').html('T - X0');
-			change_state('pause');
-			try{clearTimeout(change_state_play)}catch{};
 		} else
 		if (mbut == 'play'){
 			pretime = times;
-			if (!switcher.pause){times = 1;}
+			times = 1;
 			switcher.pause = false;
 			tsw = true;
-			//clearInterval(simulation_refresh);
-			//simulation_refresh = setInterval(frame, speed);
-			change_state('play');
+			$('#pause img').attr('src', 'ico/pause.png');
+			change_state('restore');
+			try{clearTimeout(change_state_play)}catch{};
 			change_state_play = setTimeout(function(){change_state(pfb);}, 1000);
 		} else
 		if (mbut == 'timeup'){
@@ -1829,6 +1869,12 @@ $('document').ready(function(){
 			' id=col_select onchange="obj_color = this.value; sessionStorage[\'obj_color\'] = this.value;"\
 			 style="padding: 0; border: none; width: 76px; height: 30px;" onmouseout="this.blur();">');
 		return color;
+	}
+
+	function sumArray(arr){
+		val = 0;
+		for (let i in arr){val += arr[i];}
+		return val;
 	}
 
 	//=====================================================
