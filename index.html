@@ -72,343 +72,340 @@
 		<div class="btn" id='help'>
 			<img src="ico/help.png" alt="Help" title="Помощь">
 		</div>
+
 	</div>
 	<div class="time_speed">
 		<h2></h2>
 	</div>
-	<div class="object_count">
+	<div class='menu_container menu_pos'>
+		<div class='close_button' id='close_button'></div>
+		<!--Create menu-->
+		<div class="menu_options menu_pos_size" id="menu_options">
+			<div class='option_item title_option_item'>
+				<span>Параметры нового обьекта:</span>
+			</div>
+
+			<div class='option_item'>
+				<span>Цвет: </span>
+				<div class="div_col_select">
+					<input type=color class=col_select value=#ffffff id=col_select onchange="obj_color = this.value; sessionStorage['obj_color'] = this.value;" style="padding: 0; border: none; width: 76px; height: 30px;" onmouseout="this.blur();">			
+				</div>
+			</div>
+
+			<div class='option_item'>
+				<span>Случайный цвет: </span>
+				<input type="checkbox" class='rand_col_select checkbox' onchange="obj_rand_color = this.checked; sessionStorage['obj_rand_color'] = this.checked;" onmouseout="this.blur();">			
+			</div>
+
+			<div class='option_item'>
+				<span>Масса: </span>
+				<input type="number" class='input_num' id='create_mass' min="0" onchange="obj_radius = +this.value; sessionStorage['obj_radius'] = +this.value;">	
+			</div>
+
+			<div class='option_item'>
+				<span>По часовой: </span>
+				<input type="checkbox" class="direction_reverse_select checkbox" onchange="obj_reverse = this.checked; sessionStorage['obj_reverse'] = this.checked;">		
+			</div>
+
+			<div class='option_item'>
+				<span>Клик - круговая орбита: </span>
+				<input type="checkbox" class="orbit_select checkbox" onchange="obj_cirle_orbit = this.checked; sessionStorage['obj_cirle_orbit'] = this.checked;" onmouseout="this.blur();">		
+			</div>
+
+			<div class='option_item'>
+				<span>Неподвижный: </span>
+				<input type="checkbox" class="checkbox" onchange="obj_lck = this.checked;" onmouseout="this.blur();">		
+			</div>
+
+			<div class='option_item'>
+				<span>Пауза при создании объекта: </span>
+				<input type="checkbox" class='checkbox' id="new_obj_pause">	
+			</div>
+						
+			<div class='option_item'>
+				<span>Главный обьект: </span>
+				<div class="button" id="select_main_obj">
+					<span>
+						Выбрать 
+					</span>
+				</div>
+			</div>
+
+			<div class='option_item'>
+				<span>Множитель<br> скорости запуска: </span>
+				<input type="number" class='input_num' id='launch_power' value="1">	
+			</div>
+			
+			<div class='option_item title_option_item'>
+				<span>Параметры прощета траекторий:</span>
+			</div>
+			<div class='option_item'>
+				<span>Прощет траекторий: </span>
+				<input type="checkbox" class='checkbox' id="traj_prev_check">	
+			</div>
+			<div class='option_item'>
+				<span>Дальность прощета траектории <br>(влияет на быстродействие): </span>
+				<input type="number" class='input_num' id="traj_calc_samples">	
+			</div>
+			<div class='option_item'>
+				<span>Точность прощета траектории % <br>(влияет на быстродействие): </span>
+				<input type="number" class='input_num' id="traj_calc_accuracity" max="100" min="1">	
+			</div>
+			<div class='option_item without_border'>
+				<span>Показывать рассояние: </span>
+				<input type="checkbox" class='checkbox' id="vis_distance_check">	
+			</div>
+
+		</div>
+		<!--Delete menu-->
+		<div class="del_menu_options menu_pos_size" id="del_menu_options">
+			<div class='option_item title_option_item'>
+				<span>Параметры удаления обьекта:</span>
+			</div>
+			<div class='option_item without_border'>
+				<form onchange="switcher.del_radio = +this.del_method.value;">
+					<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px">
+						<span>Удалить ближайший к курсору обьект: </span>
+						<input class="checkbox" type="radio" name="del_method" value=0 checked="">					
+					</div>
+					<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px">
+						<span>Удалить дальний от курсора обьект: </span>
+						<input class="checkbox" type="radio" name="del_method" value=1>
+					</div>
+					<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px">
+						<span>Удалить последний добавленный обьект (Ctrl+Z): </span>
+						<input class="checkbox" type="radio" name="del_method" value=2>
+					</div>
+				</form>		
+				
+			</div>
+
+		</div>
+		<!--Edit menu-->
+		<div class="edit_menu menu_pos_size" id="edit_menu">
+			<div class='option_item title_option_item'>
+				<span>Редактиование свойств обьекта:</span>
+			</div>
+
+			<div class='option_item'>
+				<div class="button" id="select_edit_obj">
+					<span>Выбрать объект</span>
+				</div>	
+			</div>
+
+			<div class='option_item'>
+				<span>Цвет: </span>
+				<div class="div_col_edit">
+					<input type="color" id="col_edit" value="#ffffff" style="padding: 0; border: none; width: 76px; height: 30px;" onmouseout="this.blur();">	
+				</div>
+			</div>
+
+			<div class='option_item'>
+				<span>Масса: </span>
+				<div class="edit_mass_div">
+					<input type="number" class='input_num' id='mass_edit' min="0">
+				</div>		
+			</div>
+
+			<div class='option_item'>
+				<span>Неподвижный: </span>
+				<div class="lck_edit_div">
+					<input type="checkbox" class='checkbox' id='check_edit_lck' onchange="" onmouseout="this.blur();">
+				</div>
+				
+			</div>
+
+			<div class='option_item without_border'>
+				<div class="button" id="reset_speed_btn">
+					<span>Обнулить скорость</span>
+				</div>	
+			</div>
+
+		</div>
+		<!--Help menu-->
+		<div class="help_menu menu_pos_size" id="help_menu">
+			<div class='option_item title_option_item'>
+				<span>Горячие клавиши:</span>
+			</div>
+			<div class='help_option_item'>
+				<div><span>• H - Меню помощи.</span><br></div>
+
+				<div><span>• С - Перейти в меню создания обьектов.</span><br></div>
+				<div><span>• D - Перейти в меню удаления обьектов.</span><br></div>
+				<div><span>• E - Перейти в меню редактирования объектов.</span><br></div>
+				<div><span>• "<" - Замедлить время.</span><br></div>
+				<div><span>• P - Пауза\Старт.</span><br></div>
+				<div><span>• "/" - Восстановить течение времени по умолчанию.</span><br></div>
+				<div><span>• ">" - Ускорить время.</span><br></div>
+				<div><span>• M - Переместить обьект.</span><br></div>
+				<div><span>• T - Перейти в меню вида траекторий.</span><br></div>
+				<div><span>• V - Перейти в меню камеры.</span><br></div>
+				<div><span>• S - Перейти в меню настроек.</span><br></div>
+				<div><span>• Space (Пробел) - Создать новый обьект с круговой орбитой на позиции курсора.</span><br></div>
+				<div><span>• Клик - Создать обьект.</span><br></div>
+				<div><span>• F9 - Вкл\Выкл счетчик FPS.</span><br></div>
+			</div>
+			<div class='option_item title_option_item'>
+				<span>Почта для советов или найденых багов:</span>
+			</div>
+			<div class='help_option_item'>
+				<span>orbitsimulator1@gmail.com</span>
+			</div>
+
+		</div>
+		<!--Simulation Settings-->
+		<div class="settings menu_pos_size menu_pos menu_max_s" id="settings_menu">
+			<div class='option_item title_option_item'>
+				<span>Режимы силы притяжения:</span>
+			</div>
+			<div class='option_item' style="border: none; padding-bottom: 0;">
+				<form id="gravit_mode_radio_buttons" onchange="switcher.gravit_mode = +this.gravit_mode.value; sessionStorage['gravit_mode'] = +this.gravit_mode.value;" style="width: 100%;">
+					<div class="radio_button_menu">
+						<span>Обратно-пропорционально кубу расстояния: </span>
+						<input id="gravit_mode_radio_0" class="checkbox" type="radio" name="gravit_mode" value=0>					
+					</div>
+					<div class="radio_button_menu">
+						<span>Обратно-пропорционально квадрату расстояния (обычно): </span>
+						<input id="gravit_mode_radio_1" class="checkbox" type="radio" name="gravit_mode" value=1>					
+					</div>
+					<div class="radio_button_menu">
+						<span>Обратно-пропорционально от расстояния: </span>
+						<input id="gravit_mode_radio_2" class="checkbox" type="radio" name="gravit_mode" value=2>
+					</div>
+					<div class="radio_button_menu">
+						<span>Постоянное притяжение: </span>
+						<input id="gravit_mode_radio_3" class="checkbox" type="radio" name="gravit_mode" value=3>
+					</div>
+					<div class="radio_button_menu">
+						<span>Пропорционально от расстояния: </span>
+						<input id="gravit_mode_radio_4" class="checkbox" type="radio" name="gravit_mode" value=4>
+					</div>
+				</form>			
+			</div>
+			<div class='option_item' style="padding-top: 0">
+				<span>Сила притяжения: </span>
+				<input type="number" class='input_num' id='G_value' min="0">	
+			</div>
+
+			<div class='option_item title_option_item'>
+				<span>Режимы взаемодействия:</span>
+			</div>
+			<div class='option_item without_border' style="padding-bottom: 0;">
+				<form id="interact_radio_buttons" onchange="switcher.interact = +this.interact.value; sessionStorage['interact'] = +this.interact.value;" style="width: 100%;">
+					<div class="radio_button_menu">
+						<span>Взаемодействие между всеми обьектами: </span>
+						<input id="interact_radio_0" class="checkbox" type="radio" name="interact" value=0>					
+					</div>
+					<div class="radio_button_menu">
+						<span>Взаемодействие только с главным обьектом: </span>
+						<input id="interact_radio_1" class="checkbox" type="radio" name="interact" value=1>
+					</div>
+					<div class="radio_button_menu">
+						<span>Без взаемодействий: </span>
+						<input id="interact_radio_2" class="checkbox" type="radio" name="interact" value=2>
+					</div>
+				</form>					
+			</div>
+			<div class='option_item without_border'>
+				<div class="button" id="wrap_time">
+					<span>
+						Развернуть время
+					</span>
+				</div>		
+			</div>
+
+			<div class='option_item title_option_item'>
+				<span>Загрузить/сохранить состояние обьектов:</span>
+			</div>
+			<div class='option_item without_border'>
+				<input class="button file_input" type="file" accept=".txt" id="select_file" style="display: none;">
+				<div class="button" id="sel_file_but" style="margin: 0 5px;">
+					<span>
+						Загрузить
+					</span>
+				</div>
+				<div class="button" id="save_file" style="margin: 0 5px;">
+					<span>
+						Сохранить
+					</span>
+				</div>		
+			</div>
+
+		</div>
+		<!--Camera menu-->
+		<div class="camera_menu menu_pos_size menu_pos menu_max_s" id="camera_menu">
+			<div class='option_item title_option_item'>
+				<span>Параметры камеры:</span>
+			</div>
+
+			<div class='option_item'>
+				<span>Следить за объектом: </span>
+				<div class="button" id="select_track">
+					<span>
+						Выбрать объект 
+					</span>
+				</div>		
+			</div>
+
+			<div class='option_item'>
+				<span>Масштабировать к центру экрана: </span>
+				<input type="checkbox" class="checkbox" id="chck_zoomToScreenCenter">		
+			</div>
+
+			<div class='option_item without_border'>
+				<div class="button" id="clear_camera_settings">
+					<span>
+						Сбросить настройки камеры
+					</span>
+				</div>		
+			</div>
+			<!--
+			<div class='option_item menu_close close_btn' style="border-bottom: none;">
+				<div>Закрыть</div>
+			</div>
+			-->
+
+		</div>
+
+		<!--Trajectory menu-->
+		<div class="traj_menu menu_pos_size menu_pos menu_max_s" id="traj_menu">
+			<div class='option_item title_option_item'>
+				<span>Параметры следа:</span>
+			</div>
+			<div class='option_item' style="border: none;">
+				<form id="traj_radio_buttons" style="width: 100%;">
+					<div class="radio_button_menu">
+						<span>Нет следов: </span>
+						<input id="traj_radio_0" class="checkbox" type="radio" name="traj" value=0>					
+					</div>
+					<div class="radio_button_menu">
+						<span>Режим следа - 1: </span>
+						<input id="traj_radio_1" class="checkbox" type="radio" name="traj" value=1>
+					</div>
+					<div class="radio_button_menu">
+						<span>Режим следа - 2: </span>
+						<input id="traj_radio_2" class="checkbox" type="radio" name="traj" value=2>
+					</div>
+					<div class="radio_button_menu">
+						<span>Режим следа - 3: </span>
+						<input id="traj_radio_3" class="checkbox" type="radio" name="traj" value=3>
+					</div>
+					<div class="radio_button_menu">
+						<span>Режим следа - 4: </span>
+						<input id="traj_radio_4" class="checkbox" type="radio" name="traj" value=4>
+					</div>
+				</form>
+			</div>
+
+		</div>
+	</div>
+
+	<div class="power canvas">
+		0
+	</div>
+
+	<div class="object_count canvas">
 		<h2>Количество обьектов: 1</h2>
-	</div>
-	<!--Create menu-->
-	<div class="menu_options menu_pos_size menu_pos menu_max_s" id="menu_options">
-		<div class='option_item title_option_item'>
-			<span>Параметры нового обьекта:</span>
-		</div>
-
-		<div class='option_item'>
-			<span>Цвет: </span>
-			<div class="div_col_select">
-				<input type=color class=col_select value=#ffffff id=col_select onchange="obj_color = this.value; sessionStorage['obj_color'] = this.value;" style="padding: 0; border: none; width: 76px; height: 30px;" onmouseout="this.blur();">			
-			</div>
-		</div>
-
-		<div class='option_item'>
-			<span>Случайный цвет: </span>
-			<input type="checkbox" class='rand_col_select checkbox' onchange="obj_rand_color = this.checked; sessionStorage['obj_rand_color'] = this.checked;" onmouseout="this.blur();">			
-		</div>
-
-		<div class='option_item'>
-			<span>Масса: </span>
-			<input type="number" class='input_num' id='create_mass' min="0" onchange="obj_radius = +this.value; sessionStorage['obj_radius'] = +this.value;">	
-		</div>
-
-		<div class='option_item'>
-			<span>По часовой: </span>
-			<input type="checkbox" class="direction_reverse_select checkbox" onchange="obj_reverse = this.checked; sessionStorage['obj_reverse'] = this.checked;">		
-		</div>
-
-		<div class='option_item'>
-			<span>Клик - круговая орбита: </span>
-			<input type="checkbox" class="orbit_select checkbox" onchange="obj_cirle_orbit = this.checked; sessionStorage['obj_cirle_orbit'] = this.checked;" onmouseout="this.blur();">		
-		</div>
-
-		<div class='option_item'>
-			<span>Неподвижный: </span>
-			<input type="checkbox" class="checkbox" onchange="obj_lck = this.checked;" onmouseout="this.blur();">		
-		</div>
-		
-		<div class='option_item'>
-			<span>Главный обьект: </span>
-			<div class="button" id="select_main_obj">
-				<span>
-					Выбрать 
-				</span>
-			</div>
-		</div>
-
-		<div class='option_item'>
-			<span>Множитель<br> скорости запуска: </span>
-			<input type="number" class='input_num' id='launch_power' value="1">	
-		</div>
-		
-		<div class='option_item title_option_item'>
-			<span>Параметры прощета траекторий:</span>
-		</div>
-		<div class='option_item'>
-			<span>Прощет траекторий: </span>
-			<input type="checkbox" class='checkbox' id="traj_prev_check">	
-		</div>
-		<div class='option_item'>
-			<span>Дальность прощета траектории <br>(влияет на быстродействие): </span>
-			<input type="number" class='input_num' id="traj_calc_samples">	
-		</div>
-		<div class='option_item'>
-			<span>Показывать рассояние: </span>
-			<input type="checkbox" class='checkbox' id="vis_distance_check">	
-		</div>
-
-		<div class='option_item menu_close close_btn' style="border-bottom: none;">
-			<div>Закрыть</div>
-		</div>
-
-	</div>
-	<!--Delete menu-->
-	<div class="del_menu_options menu_pos_size menu_pos menu_max_s" id="del_menu_options">
-		<div class='option_item title_option_item'>
-			<span>Параметры удаления обьекта:</span>
-		</div>
-		<div class='option_item'>
-			<form onchange="switcher.del_radio = +this.del_method.value;">
-				<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px">
-					<span>Удалить ближайший к курсору обьект: </span>
-					<input class="checkbox" type="radio" name="del_method" value=0 checked="">					
-				</div>
-				<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px">
-					<span>Удалить дальний от курсора обьект: </span>
-					<input class="checkbox" type="radio" name="del_method" value=1>
-				</div>
-				<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px">
-					<span>Удалить последний добавленный обьект (Ctrl+Z): </span>
-					<input class="checkbox" type="radio" name="del_method" value=2>
-				</div>
-			</form>		
-			
-		</div>
-
-		<div class='option_item menu_close close_btn' style="border-bottom: none;">
-			<div>Закрыть</div>
-		</div>
-
-	</div>
-	<!--Edit menu-->
-	<div class="edit_menu menu_pos_size menu_pos menu_max_s" id="edit_menu">
-		<div class='option_item title_option_item'>
-			<span>Редактиование свойств обьекта:</span>
-		</div>
-
-		<div class='option_item'>
-			<div class="button" id="select_edit_obj">
-				<span>Выбрать объект</span>
-			</div>	
-		</div>
-
-		<div class='option_item'>
-			<span>Цвет: </span>
-			<div class="div_col_edit">
-				<input type="color" id="col_edit" value="#ffffff" style="padding: 0; border: none; width: 76px; height: 30px;" onmouseout="this.blur();">	
-			</div>
-		</div>
-
-		<div class='option_item'>
-			<span>Масса: </span>
-			<div class="edit_mass_div">
-				<input type="number" class='input_num' id='mass_edit' min="0">
-			</div>		
-		</div>
-
-		<div class='option_item'>
-			<span>Неподвижный: </span>
-			<div class="lck_edit_div">
-				<input type="checkbox" class='checkbox' id='check_edit_lck' onchange="" onmouseout="this.blur();">
-			</div>
-			
-		</div>
-
-		<div class='option_item'>
-			<div class="button" id="reset_speed_btn">
-				<span>Обнулить скорость</span>
-			</div>	
-		</div>
-
-		<div class='option_item menu_close close_btn' style="border-bottom: none;">
-			<div>Закрыть</div>
-		</div>
-
-	</div>
-	<!--Help menu-->
-	<div class="help_menu menu_pos_size menu_pos menu_max_s" id="help_menu">
-		<div class='option_item title_option_item'>
-			<span>Горячие клавиши:</span>
-		</div>
-		<div class='help_option_item'>
-			<div><span>• H - Меню помощи.</span><br></div>
-
-			<div><span>• С - Перейти в меню создания обьектов.</span><br></div>
-			<div><span>• D - Перейти в меню удаления обьектов.</span><br></div>
-			<div><span>• E - Перейти в меню редактирования объектов.</span><br></div>
-			<div><span>• "<" - Замедлить время.</span><br></div>
-			<div><span>• P - Пауза.</span><br></div>
-			<div><span>• "/" - Запустить, восстановить нормальное течение времени.</span><br></div>
-			<div><span>• ">" - Ускорить время.</span><br></div>
-			<div><span>• M - Переместить обьект.</span><br></div>
-			<div><span>• T - Перейти в меню вида траекторий.</span><br></div>
-			<div><span>• V - Перейти в меню камеры.</span><br></div>
-			<div><span>• S - Перейти в меню настроек.</span><br></div>
-			<div><span>• Space (Пробел) - Создать новый обьект с круговой орбитой на позиции курсора.</span><br></div>
-			<div><span>• Клик - Создать обьект.</span><br></div>
-			<div><span>• F9 - Показать FPS.</span><br></div>
-		</div>
-		<div class='option_item title_option_item'>
-			<span>Почта для советов или найденых багов:</span>
-		</div>
-		<div class='help_option_item'>
-			<span>orbitsimulator1@gmail.com</span>
-		</div>
-
-		<div class='option_item menu_close close_btn' style="border-bottom: none;">
-			<div>Закрыть</div>
-		</div>
-
-	</div>
-	<!--Simulation Settings-->
-	<div class="settings menu_pos_size menu_pos menu_max_s" id="settings_menu">
-		<div class='option_item title_option_item'>
-			<span>Режимы силы притяжения:</span>
-		</div>
-		<div class='option_item' style="border: none; padding-bottom: 0;">
-			<form id="gravit_mode_radio_buttons" onchange="switcher.gravit_mode = +this.gravit_mode.value; sessionStorage['gravit_mode'] = +this.gravit_mode.value;" style="width: 100%;">
-				<div class="radio_button_menu">
-					<span>Обратно-пропорционально кубу расстояния: </span>
-					<input id="gravit_mode_radio_0" class="checkbox" type="radio" name="gravit_mode" value=0>					
-				</div>
-				<div class="radio_button_menu">
-					<span>Обратно-пропорционально квадрату расстояния (обычно): </span>
-					<input id="gravit_mode_radio_1" class="checkbox" type="radio" name="gravit_mode" value=1>					
-				</div>
-				<div class="radio_button_menu">
-					<span>Обратно-пропорционально от расстояния: </span>
-					<input id="gravit_mode_radio_2" class="checkbox" type="radio" name="gravit_mode" value=2>
-				</div>
-				<div class="radio_button_menu">
-					<span>Постоянное притяжение: </span>
-					<input id="gravit_mode_radio_3" class="checkbox" type="radio" name="gravit_mode" value=3>
-				</div>
-				<div class="radio_button_menu">
-					<span>Пропорционально от расстояния: </span>
-					<input id="gravit_mode_radio_4" class="checkbox" type="radio" name="gravit_mode" value=4>
-				</div>
-			</form>			
-		</div>
-		<div class='option_item' style="padding-top: 0">
-			<span>Сила притяжения: </span>
-			<input type="number" class='input_num' id='G_value' min="0">	
-		</div>
-
-		<div class='option_item title_option_item'>
-			<span>Режимы взаемодействия:</span>
-		</div>
-		<div class='option_item without_border' style="padding-bottom: 0;">
-			<form id="interact_radio_buttons" onchange="switcher.interact = +this.interact.value; sessionStorage['interact'] = +this.interact.value;" style="width: 100%;">
-				<div class="radio_button_menu">
-					<span>Взаемодействие между всеми обьектами: </span>
-					<input id="interact_radio_0" class="checkbox" type="radio" name="interact" value=0>					
-				</div>
-				<div class="radio_button_menu">
-					<span>Взаемодействие только с главным обьектом: </span>
-					<input id="interact_radio_1" class="checkbox" type="radio" name="interact" value=1>
-				</div>
-				<div class="radio_button_menu">
-					<span>Без взаемодействий: </span>
-					<input id="interact_radio_2" class="checkbox" type="radio" name="interact" value=2>
-				</div>
-			</form>					
-		</div>
-		<div class='option_item without_border'>
-			<div class="button" id="wrap_time">
-				<span>
-					Развернуть время
-				</span>
-			</div>		
-		</div>
-
-		<div class='option_item title_option_item'>
-			<span>Загрузить/сохранить состояние обьектов:</span>
-		</div>
-		<div class='option_item'>
-			<input class="button file_input" type="file" accept=".txt" id="select_file" style="display: none;">
-			<div class="button" id="sel_file_but" style="margin: 0 5px;">
-				<span>
-					Загрузить
-				</span>
-			</div>
-			<div class="button" id="save_file" style="margin: 0 5px;">
-				<span>
-					Сохранить
-				</span>
-			</div>		
-		</div>
-
-		<div class='option_item menu_close close_btn' style="border-bottom: none;">
-			<div>Закрыть</div>
-		</div>		
-	</div>
-	<!--Camera menu-->
-	<div class="camera_menu menu_pos_size menu_pos menu_max_s" id="camera_menu">
-		<div class='option_item title_option_item'>
-			<span>Параметры камеры:</span>
-		</div>
-
-		<div class='option_item'>
-			<span>Следить за объектом: </span>
-			<div class="button" id="select_track">
-				<span>
-					Выбрать объект 
-				</span>
-			</div>		
-		</div>
-
-		<div class='option_item'>
-			<span>Масштабировать к центру экрана: </span>
-			<input type="checkbox" class="checkbox" id="chck_zoomToScreenCenter">		
-		</div>
-
-		<div class='option_item'>
-			<div class="button" id="clear_camera_settings">
-				<span>
-					Сбросить настройки камеры
-				</span>
-			</div>		
-		</div>
-
-		<div class='option_item menu_close close_btn' style="border-bottom: none;">
-			<div>Закрыть</div>
-		</div>
-
-	</div>
-
-	<!--Trajectory menu-->
-	<div class="traj_menu menu_pos_size menu_pos menu_max_s" id="traj_menu">
-		<div class='option_item title_option_item'>
-			<span>Параметры следа:</span>
-		</div>
-		<div class='option_item' style="border: none;">
-			<form id="traj_radio_buttons" style="width: 100%;">
-				<div class="radio_button_menu">
-					<span>Нет следов: </span>
-					<input id="traj_radio_0" class="checkbox" type="radio" name="traj" value=0>					
-				</div>
-				<div class="radio_button_menu">
-					<span>Режим следа - 1: </span>
-					<input id="traj_radio_1" class="checkbox" type="radio" name="traj" value=1>
-				</div>
-				<div class="radio_button_menu">
-					<span>Режим следа - 2: </span>
-					<input id="traj_radio_2" class="checkbox" type="radio" name="traj" value=2>
-				</div>
-				<div class="radio_button_menu">
-					<span>Режим следа - 3: </span>
-					<input id="traj_radio_3" class="checkbox" type="radio" name="traj" value=3>
-				</div>
-				<div class="radio_button_menu">
-					<span>Режим следа - 4: </span>
-					<input id="traj_radio_4" class="checkbox" type="radio" name="traj" value=4>
-				</div>
-			</form>
-		</div>
-		<div class='option_item menu_close close_btn' style="border-bottom: none;">
-			<div>Закрыть</div>
-		</div>
-
 	</div>
 
 	<div class="state">
@@ -418,11 +415,7 @@
 		<h1 style="color: #dd0;">Удален!</h1>
 	</div>
 
-	<div class="power canvas">
-		0
-	</div>
-
-	<div class="fps">
+	<div class="fps canvas">
 		FPS: __
 	</div>
 </body>

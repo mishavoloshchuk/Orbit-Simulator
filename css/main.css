@@ -151,14 +151,14 @@ span {
 }
 
 .menu_pos_size {
-	position: absolute;
+	max-width: 100%;
+	max-height: 100%;
 	background-color: #3E3E3EAA;
 	border: 2px solid #aaa2;
 	display: none;
-	min-height: 100px;
 	padding: 0 5px;
-	z-index: 2;
 	overflow: auto;
+	z-index: 2;
 	border-bottom-right-radius: 1em;
 	border-bottom-left-radius: 1em;
 }
@@ -197,24 +197,6 @@ span {
 	background-color: #fff2;
 	border-top-right-radius: 0.5em;
 	border-top-left-radius: 0.5em;
-}
-
-.menu_close {
-	background-color: #fff1;
-	justify-content: center;
-	border-radius: 1em;
-	margin: 5px 0;
-	text-shadow: none;
-	padding: 10px;
-}
-
-.menu_close:hover {
-	background-color: #fff2;
-	cursor: pointer;
-}
-
-.del_menu_options {
-
 }
 
 .state {
@@ -256,17 +238,13 @@ span {
 	font-style: bold;
 }
 
-.menu_max_s {
-	max-height: 80%;
-	max-width: 75%;
-}
-
 .menu_pos {
 	top: 54px;
 	left: 0;
 }
 
 .button {
+	text-align: center;
 	min-height: 10px;
 	width: 100%;
 	background-color: #aaa2;
@@ -290,4 +268,46 @@ span {
 	bottom: 10px;
 	display: none;
 	font-family: arial;
+}
+
+.menu_container {
+	display: block;
+	height: 80%;
+	max-width: 70%;
+	position: absolute;
+	text-align: left;
+}
+
+.close_button {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	background-color: #3E3E3Eaa;
+	border-radius: 50%;
+	text-shadow: none;
+	border: 1px solid #fff5;
+	width: 3vh; height: 3vh;
+	right: -4vh; top: 6px;
+	font-size: 3vh;
+	padding: 0 0 0.7vh 0;
+	position: absolute;
+	transition: 0.1s;
+	z-index: 2;
+}
+.close_button:hover {
+	background-color: #fff2;
+	cursor: pointer;
+	transform: scale(1.1);
+}
+.close_button:before {
+	content: 'x';
+}
+.close_button:active {
+	background-color: #fff3;
+	transform: scale(1.05);
+}
+.inner_menu_pos {
+	overflow: auto;
+	position: relative;
+	max-height: 79vh;
 }
