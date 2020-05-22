@@ -685,6 +685,35 @@ $('document').ready(function(){
 				obj_sp(false, false, obj_color);
 			}		
 		}
+
+		if (mbut == 'delete'){
+			visual_select(switcher.del_radio, '#f006');
+		} else
+
+		if (mbut == 'camera' && cbut == 'select_track' && swch.s_track){
+			visual_select(0, '#0af6', select_object());
+		} else
+
+		if (mbut == 'move'){
+			visual_select(0, '#bbb6', mov_obj);
+		} else
+
+		if (mbut == 'edit' && swch.s_edit){
+			visual_select(0, '#11f6', mov_obj);
+		}
+		if (show_center){
+			drawCross(window.innerWidth/2, window.innerHeight/2);			
+		}
+		if ((mbut == 'create') && (!leftMouseDown || (multiTouch > 0 && mbut != 'create')) && switcher.vis_distance){
+			vis_distance([mouse_coords[0], mouse_coords[1]], '#888888');
+		}
+		if (mbut == 'sel_orb_obj' && switcher.sel_orb_obj){
+			visual_select(0, '#bf06', mov_obj);
+		}
+		if (mbut != 'create'){
+			$('.power').css({display: 'none'});
+		}
+		
 		for (let i = 0; i < ref_speed; i++){
 			body_prev = JSON.parse(JSON.stringify(body));
 			if (!bodyEmpty){
@@ -747,34 +776,6 @@ $('document').ready(function(){
 				body[i].vy *= c;
 			}
 			t_wrap = false;
-		}
-
-		if (mbut == 'delete'){
-			visual_select(switcher.del_radio, '#f006');
-		} else
-
-		if (mbut == 'camera' && cbut == 'select_track' && swch.s_track){
-			visual_select(0, '#0af6', select_object());
-		} else
-
-		if (mbut == 'move'){
-			visual_select(0, '#bbb6', mov_obj);
-		} else
-
-		if (mbut == 'edit' && swch.s_edit){
-			visual_select(0, '#11f6', mov_obj);
-		}
-		if (show_center){
-			drawCross(window.innerWidth/2, window.innerHeight/2);			
-		}
-		if ((mbut == 'create') && (!leftMouseDown || (multiTouch > 0 && mbut != 'create')) && switcher.vis_distance){
-			vis_distance([mouse_coords[0], mouse_coords[1]], '#888888');
-		}
-		if (mbut == 'sel_orb_obj' && switcher.sel_orb_obj){
-			visual_select(0, '#bf06', mov_obj);
-		}
-		if (mbut != 'create'){
-			$('.power').css({display: 'none'});
 		}
 
 		mouseMove = false;
