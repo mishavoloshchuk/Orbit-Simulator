@@ -25,21 +25,23 @@
 		<div class="btn" id='edit'>
 			<img src="ico/edit.png" alt="Edit" title="Редактировать обьект">
 		</div>
+		
+		<div class="time_panel">
+			<div class="btn" id='timedown'>
+				<img src="ico/speeddown.png" alt="Time speed down" title="Замедлить время">
+			</div>
 
-		<div class="btn" id='timedown'>
-			<img src="ico/speeddown.png" alt="Time speed down" title="Замедлить время">
-		</div>
+			<div class="btn" id='pause'>
+				<img src="ico/pause.png" alt="Pause/Play" title="Стоп/Старт">
+			</div>
 
-		<div class="btn" id='pause'>
-			<img src="ico/pause.png" alt="Pause/Play" title="Стоп/Старт">
-		</div>
+			<div class="btn" id='play'>
+				<img src="ico/restore.png" alt="Time default" title="Обычная скорость времени">
+			</div>
 
-		<div class="btn" id='play'>
-			<img src="ico/restore.png" alt="Time default" title="Обычная скорость времени">
-		</div>
-
-		<div class="btn" id='timeup'>
-			<img src="ico/speedup.png" alt="Time speed down" title="Ускорить время">
+			<div class="btn" id='timeup'>
+				<img src="ico/speedup.png" alt="Time speed down" title="Ускорить время">
+			</div>
 		</div>
 
 		<div class="btn" id='move'>
@@ -75,9 +77,7 @@
 		</div>
 
 	</div>
-	<div class="time_speed">
-		<h2></h2>
-	</div>
+
 	<div class='menu_container menu_pos'>
 		<div class='close_button' id='close_button'></div>
 		<!--Create menu-->
@@ -124,7 +124,7 @@
 			</div>
 						
 			<div class='option_item'>
-				<span>Главный обьект: </span>
+				<span>Родительский обьект: </span>
 				<div class="button" id="select_main_obj">
 					<span>
 						Выбрать 
@@ -294,11 +294,11 @@
 			<div class='option_item without_border' style="padding-bottom: 0;">
 				<form id="interact_radio_buttons" onchange="switcher.interact = +this.interact.value; sessionStorage['interact'] = +this.interact.value;" style="width: 100%;">
 					<div class="radio_button_menu">
-						<span>Взаемодействие между всеми обьектами: </span>
+						<span>Взаемодействие между всеми объектами: </span>
 						<input id="interact_radio_0" class="checkbox" type="radio" name="interact" value=0>					
 					</div>
 					<div class="radio_button_menu">
-						<span>Взаемодействие только с главным обьектом: </span>
+						<span>Взаемодействие только с родительским объектом: </span>
 						<input id="interact_radio_1" class="checkbox" type="radio" name="interact" value=1>
 					</div>
 					<div class="radio_button_menu">
@@ -316,10 +316,10 @@
 			</div>
 
 			<div class='option_item title_option_item'>
-				<span>Загрузить/сохранить состояние обьектов:</span>
+				<span>Загрузить/сохранить мир:</span>
 			</div>
 			<div class='option_item without_border'>
-				<input class="button file_input" type="file" accept=".txt" id="select_file" style="display: none;">
+				<input class="button file_input" type="file" accept=".txt, .osw" id="select_file" style="display: none;">
 				<div class="button" id="sel_file_but" style="margin: 0 5px;">
 					<span>
 						Загрузить
@@ -401,11 +401,15 @@
 		</div>
 	</div>
 
+	<div class="time_speed">
+		<h2></h2>
+	</div>
+
 	<div class="power canvas">
 		0
 	</div>
 
-	<div class="object_count canvas">
+	<div class="object_count canvas" style="z-index: -1;">
 		<h2>Количество обьектов: 1</h2>
 	</div>
 
@@ -416,7 +420,7 @@
 		<h1 style="color: #dd0;">Удален!</h1>
 	</div>
 
-	<div class="fps canvas">
+	<div class="canvas fps">
 		FPS: __
 	</div>
 </body>

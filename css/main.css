@@ -34,6 +34,7 @@ input {
 
 span {
 	text-align: left;
+	cursor: default;
 }
 
 .radio_button_menu {
@@ -148,11 +149,12 @@ span {
 	color: #fffa;
 	margin: 0;
 	font-family: arial;
+	cursor: default;
 }
 
 .menu_pos_size {
 	max-width: 100%;
-	max-height: 100%;
+	max-height: 80vh;
 	background-color: #3E3E3EAA;
 	border: 2px solid #aaa2;
 	display: none;
@@ -268,11 +270,12 @@ span {
 	bottom: 10px;
 	display: none;
 	font-family: arial;
+	cursor: default;
 }
 
 .menu_container {
 	display: block;
-	height: 80%;
+	max-height: 80%;
 	max-width: 70%;
 	position: absolute;
 	text-align: left;
@@ -286,7 +289,7 @@ span {
 	border-radius: 50%;
 	text-shadow: none;
 	border: 1px solid #fff5;
-	width: 3vh; height: 3vh;
+	width: 3vmin; height: 3vmin;
 	right: -4vh; top: 6px;
 	font-size: 3vh;
 	padding: 0 0 0.7vh 0;
@@ -310,4 +313,10 @@ span {
 	overflow: auto;
 	position: relative;
 	max-height: 79vh;
+}
+.time_panel {
+	display: flex;
+	flex-direction: inherit;
+	background-color: #fff1;
+	border-radius: 10px;
 }

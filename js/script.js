@@ -26,7 +26,6 @@ $('document').ready(function(){
 	traj = true;
 	
 	mov_obj = '';
-	new_obj_param = [0,0,0,0];
 	trace_resolution = [0, 2, false];
 	multiTouches = [];
 	paus = false;
@@ -38,7 +37,10 @@ $('document').ready(function(){
 	num = 0;
 	del = false;
 	body_prev = {};
+
+	//settings
 	G = 1;
+	collision_mode = 'merge'; //repulsion merge none
 
 	//Camera
 	cam_x = 0;
@@ -56,7 +58,7 @@ $('document').ready(function(){
 	glob_scale = 1;
 
 	//Debug
-	ref_sped = 1;
+	ref_speed = 1;
 	show_center = false;
 	usr_orb_obj = NaN;
 	show_fps = sessionStorage['show_fps'] == 'true' ? true : false;
@@ -79,30 +81,22 @@ $('document').ready(function(){
 		fps_count = 0;
 	}
 
-
 	function crd(coord, axis, mode){
-		if (mode == 0){
-			if (axis == 'x'){
-				return (coord + cam_x)*zm + mcamX + mov[0];
-			}
-			if (axis == 'y'){
-				return (coord + cam_y)*zm + mcamY + mov[1];
-			}		
+		if (mode == 0){ // Object mode
+			if (axis == 'x'){ return (coord + cam_x)*zm + mcamX + mov[0]; }
+			if (axis == 'y'){ return (coord + cam_y)*zm + mcamY + mov[1]; }		
 		}
-		if (mode == 1){
-			if (axis == 'x'){
-				return ((coord - mcamX - mov[0])/zm-cam_x);
-			}
-			if (axis == 'y'){
-				return ((coord - mcamY - mov[1])/zm-cam_y);
-			}			
+		if (mode == 1){ // Camera mode
+			if (axis == 'x'){ return ((coord - mcamX - mov[0])/zm-cam_x); }
+			if (axis == 'y'){ return ((coord - mcamY - mov[1])/zm-cam_y); }			
 		}
 	}
 
 	body = {
-		'sun': {x:window.innerWidth/2, y: window.innerHeight/2, vx: 0, vy: 0, m: 1000, color: '#ffff00', lck: true, trace: [], main_obj: false},
-		//'ast': {x:window.innerWidth/2 - 100, y: window.innerHeight/2, vx: 0, vy: 10, m: 10, color: randColor(), lck: false, trace: [], main_obj: 'sun'},
-		//'sun2': {'x':0, 'y': window.innerHeight/2, 'vx': 1, 'vy': 3, m: 100, 'color': '#ffff00', 'lck': false, trace: [], main_obj: 'sun'},
+		'sun': {x:window.innerWidth/2, y: window.innerHeight/2, vx: 0, vy: 0, m: 1000, color: '#ffff00', lck: true, trace: [], main_obj: false, F: {x:0,y:0}},
+		//'sun0': {x:window.innerWidth/4, y: window.innerHeight/2, vx: 2, vy: 0, m: 1000, color: '#ffaa00', lck: false, trace: [], main_obj: false, F: {x:0,y:0}},
+		//'ast': {x:window.innerWidth/2 - 100, y: window.innerHeight/2, vx: 0, vy: 10, m: 10, color: randColor(), lck: false, trace: [], main_obj: 'sun', F: {x:0,y:0}},
+		//'sun2': {'x':0, 'y': window.innerHeight/2, 'vx': 1, 'vy': 3, m: 100, 'color': '#ffff00', 'lck': false, trace: [], main_obj: 'sun', F: {x:0,y:0}},
 	};
 	//View=================
 	//ctx.scale(cam_scale, cam_scale);
@@ -124,7 +118,7 @@ $('document').ready(function(){
 	}
 
 	switcher = {del_radio: 0, del_pulse: 10, del_pulse_state: false, pause: false,
-		pause2: false, trajectory_ref: false, music: false,
+		pause2: false, music: false,
 		obj_count: obj_count, device: 'desktop',
 		gravit_mode: 1, r_gm: 1, interact: 0, ref_interact: 0,
 		traj_mode: 1, traj_mode2: 1, traj_prev_on: true,
@@ -132,9 +126,9 @@ $('document').ready(function(){
 		launch_pwr: 1, create_obj_pause: true, traj_accuracity: 1};
 
 	swch = {s_track: false, t_object: false, prev_t_obj: false, vis_traj: false,
-		s_edit: false, edit_obj: false, orb_obj: 'sun', equilib_orb: false};
+		s_edit: true, edit_obj: false, orb_obj: 'sun', equilib_orb: false};
 
-	names = {create: 'menu_options', delete: 'del_menu_options', edit: 'edit_menu',
+	menu_names = {create: 'menu_options', delete: 'del_menu_options', edit: 'edit_menu',
 		help: 'help_menu', settings: 'settings_menu', camera: 'camera_menu', trajectory: 'traj_menu'}
 
 	choise_restore('gravit_mode', 'gravit_mode', 'radio');
@@ -146,7 +140,7 @@ $('document').ready(function(){
 
 	obj_color = sessionStorage['obj_color'] ? sessionStorage['obj_color'] : '#FFFFFF';
 	obj_rand_color = sessionStorage['obj_rand_color'] ? (sessionStorage['obj_rand_color'] == 'true' ? true : false) : true;
-	obj_radius = sessionStorage['obj_radius'] ? +sessionStorage['obj_radius'] : Math.round(getRandomArbitrary(0.1, 10)*10)/10;
+	obj_radius = sessionStorage['obj_radius'] ? +sessionStorage['obj_radius'] : Math.round(getRandomArbitrary(0.5, 100)*10)/10;
 	obj_reverse = sessionStorage['obj_reverse'] ? (sessionStorage['obj_reverse'] == 'true' ? true : false) : false;
 	obj_cirle_orbit = sessionStorage['obj_cirle_orbit'] ? (sessionStorage['obj_cirle_orbit'] == 'true' ? true : false) : true;
 	switcher.create_obj_pause = sessionStorage['new_obj_pause'] == 'false' ? false : true;
@@ -201,8 +195,10 @@ $('document').ready(function(){
 	}
 	function menu_open_restore(){
 		if (menu_state){
-			$('#'+names[mbut]).css({display: 'inline-block'});
+			$('#'+menu_names[mbut]).css({display: 'inline-block'});
+			$('#close_button').css({display: 'flex'});
 		} else {
+			$('#close_button').css({display: 'none'});
 			$('#close_button').css({display: 'none'});
 		}
 	}
@@ -216,8 +212,6 @@ $('document').ready(function(){
 	$('.time_speed h2').html('T - X'+t);
 	//======
 
-	//speed = 16;
-	//let simulation_refresh = setInterval(frame, speed);
 	window.requestAnimationFrame(frame);	
 	//Mouse and touches
 	leftMouseDown = false;
@@ -232,23 +226,17 @@ $('document').ready(function(){
 		if (switcher.traj_mode == 0){col = '#000';}
 		ctx.fillStyle = col;
 		ctx.fillRect(0, 0, canv.width, canv.height);
-
-		//ctx.clearRect(0, 0, canvas.width, canvas.height);
 	}
 	function clear2(){
-		//myImageData = ctx2.createImageData(window.innerWidth, window.innerHeight, 0, 0);
-		//ctx2.putImageData(myImageData, 0, 0);
-		ctx2.clearRect(0, 0, window.innerWidth, window.innerHeight);
+		ctx2.clearRect(0, 0, canv.width, canv.height);
 	}
 
-	wind_width = window.innerWidth;
-	wind_height = window.innerHeight;
 	window.onresize = function(){
-		if (!(wind_width == window.innerWidth)){
-			if (confirm('Для корректного отображения, нужно перезагрузить страницу.')){
-				location.href = location;
-			}
-		}
+		canv.width = window.innerWidth;
+		canv.height = window.innerHeight;
+		canv2.width = window.innerWidth;
+		canv2.height = window.innerHeight;
+		adaptive();
 	}
 	//Touch events ======================================
 	$('.canvas').on('touchstart', function(event){
@@ -266,7 +254,6 @@ $('document').ready(function(){
 		mouseMove = true;
 		event.clientX = event.targetTouches[0].clientX;// Touch X
 		event.clientY = event.targetTouches[0].clientY;// Touch Y
-		switcher.move = false;
 		av_touch_x = [];// Averrage point of touchs
 		av_touch_y = [];// Averrage point of touchs
 		if (leftMouseDown && mbut == 'move' && mov_obj){ // Moving object
@@ -309,11 +296,11 @@ $('document').ready(function(){
 			if (!switcher.zoomToScreenCenter){ // If no zoom to center
 				mov[0] = avTouchPoint.x - avTouchPoint.xd + mov[2]*Math.pow(touchZoom/zm_cff, 2);
 				mov[1] = avTouchPoint.y - avTouchPoint.yd + mov[3]*Math.pow(touchZoom/zm_cff, 2);
-				// + ((wind_width/2 - avTouchPoint.x)*Math.pow(touchZoom/zm_cff, 2) - (wind_width/2 - avTouchPoint.x))
- 				// + ((wind_height/2 - avTouchPoint.y)*Math.pow(touchZoom/zm_cff, 2) - (wind_height/2 - avTouchPoint.y))
+				// + ((canv.width/2 - avTouchPoint.x)*Math.pow(touchZoom/zm_cff, 2) - (canv.width/2 - avTouchPoint.x))
+ 				// + ((canv.height/2 - avTouchPoint.y)*Math.pow(touchZoom/zm_cff, 2) - (canv.height/2 - avTouchPoint.y))
 
-				//mov[0] = mov[0] / (touchZoom/zm_cff) - (avTouchPoint.x - wind_width/2) / ((zm_cff/touchZoom)/((touchZoom/zm_cff)-1));
-				//mov[1] = mov[1] / (touchZoom/zm_cff) - (avTouchPoint.y - wind_height/2) / ((zm_cff/touchZoom)/((touchZoom/zm_cff)-1));
+				//mov[0] = mov[0] / (touchZoom/zm_cff) - (avTouchPoint.x - canv.width/2) / ((zm_cff/touchZoom)/((touchZoom/zm_cff)-1));
+				//mov[1] = mov[1] / (touchZoom/zm_cff) - (avTouchPoint.y - canv.height/2) / ((zm_cff/touchZoom)/((touchZoom/zm_cff)-1));
 			}
 			swch.t_object = false; // Track object disable
 			swch.prev_t_obj = false; // Track object disable
@@ -346,6 +333,7 @@ $('document').ready(function(){
 			leftMouseDown = true;
 
 			if (mbut == 'create'){
+				try{clearTimeout(mort)}catch{};
 				if (obj_rand_color){
 					obj_color = randColor();
 				};
@@ -411,7 +399,6 @@ $('document').ready(function(){
 				ctx.fill();
 
 				del_obj(delete_obj);
-
 				deleted();
 			}
 			if (mbut == 'move' && body[mov_obj]){
@@ -423,15 +410,16 @@ $('document').ready(function(){
 			if (mbut == 'create' && mscam && !rightMouseDown){
 				spawn = true;
 				swch.vis_traj = false;
-				switcher.trajectory_ref = false;
 				ctx.beginPath();
 				ctx.fillStyle = obj_color;
 				ctx.arc(mpos[0], mpos[1], Math.sqrt(obj_radius)*zm, 0, 7);
 				ctx.fill();
 				if (!paus){
-					obj_sp(new_obj_param[0], new_obj_param[1], obj_color, new_obj_param[2], new_obj_param[3]);
+					obj_sp(false, false, obj_color);
 				}
-				//obj_sp(false, false, obj_color);
+			}
+			if (mbut == 'create'){
+				mort = setTimeout(menu_open_restore, 200);
 			}
 			if (mbut == 'camera' && swch.s_track){
 				paus = switcher.pause ? true : false; //Пауза уже включена
@@ -456,6 +444,7 @@ $('document').ready(function(){
 		};
 		if (event.which == 2 || !mscam){
 			middleMouseDown = false;
+			menu_open_restore();
 			mov[2] = mov[0];
 			mov[3] = mov[1];
 		}
@@ -473,10 +462,8 @@ $('document').ready(function(){
 	});	
 
 	document.onmousemove = function(e){
-		switcher.move = false;
 		mouseMove = true;
 		if (leftMouseDown && mbut == 'move' && mov_obj){
-			//switcher.move = true;
 			if (body[mov_obj]){
 				ctx.strokeStyle = body[mov_obj].color;
 				ctx.fillStyle = body[mov_obj].color;
@@ -498,6 +485,8 @@ $('document').ready(function(){
 			mov[0] = event.clientX - mpos[0] + mov[2];
 			mov[1] = event.clientY - mpos[1] + mov[3];
 			clear('#000000');
+			mstate = menu_state;
+			close_all_menus(); menu_state = mstate;
 		}
 		mouse_coords[0] = event.clientX;
 		mouse_coords[1] = event.clientY;
@@ -530,7 +519,6 @@ $('document').ready(function(){
 			if (+document.getElementById(chck).value > 0 && +document.getElementById(chck).value){
 				body[swch.edit_obj].m = +document.getElementById(chck).value;
 			}
-			//clear('#000');
 		}
 		if (chck == 'col_edit' && body[swch.edit_obj]){
 			body[swch.edit_obj].color = document.getElementById(chck).value;
@@ -585,7 +573,6 @@ $('document').ready(function(){
 		if (chck == ''){
 			
 		}
-
 		*/
 	});
 
@@ -613,19 +600,19 @@ $('document').ready(function(){
 		mcamY = -window.innerHeight/2 * (zm-1);
 
 		if (leftMouseDown){
-			if (mouseMove){
+			if (mouseMove || !switcher.create_obj_pause){
 				clear2();
 			}
 		} else {
-			clear2();
+			clear2(); //Comment to leave trace
 		};
+		//if (!switcher.create_obj_pause){clear2()}; //Comment to leave trace
 		if (visual_sel_ref){
 			clear2();
 			visual_sel_ref = false;
 		}
-		if (!switcher.create_obj_pause){clear2()};
 
-		if (switcher.move || (switcher.traj_mode != 1)){clear('#000');}else{if(!switcher.trajectory_ref && !switcher.pause2){clear();};};
+		if (switcher.traj_mode != 1){clear('#000')}else{if(!switcher.pause2){clear();};};
 
 		if (middleMouseDown || mbut == 'move'){canv2.style.cursor = "move";}else{canv2.style.cursor = "default";};
 
@@ -635,8 +622,7 @@ $('document').ready(function(){
 		if (switcher.r_gm != switcher.gravit_mode){
 			switcher.r_gm = switcher.gravit_mode;
 		}
-
-		
+	
 		//Анимация перехода камеры
 		if (swch.t_object != swch.prev_t_obj && movAnim[4]){
 			switcher.pause = true; //Пауза
@@ -683,9 +669,8 @@ $('document').ready(function(){
 			prev_cam_y = 0;
 		}
 
-
 		if (tsw){
-			$('.time_speed h2').html('T - X'+t);
+			$('.time_speed h2').html('T - X'+t*ref_speed);
 			for (let i in body){
 				c = times/pretime;
 				body[i].vx *= c;
@@ -697,73 +682,29 @@ $('document').ready(function(){
 		switcher.pause2 = switcher.pause ? true:false;
 		if (!switcher.pause){
 			if (spawn){
-				obj_sp(new_obj_param[0], new_obj_param[1], obj_color, new_obj_param[2], new_obj_param[3]);
+				obj_sp(false, false, obj_color);
 			}		
 		}
-		for (let i = 0; i < ref_sped; i++){
-			if (swch.prev_t_obj && body[swch.prev_t_obj]){
-				cam_vx = !switcher.pause2 ? body[swch.prev_t_obj].vx : 0;
-				cam_vy = !switcher.pause2 ? body[swch.prev_t_obj].vy : 0;
-
-				if (swch.t_object && !switcher.pause){
-					body_prev = JSON.parse(JSON.stringify(body));
-					obj = body_prev[swch.t_object];
-
-					if (switcher.ref_interact == 0 && !switcher.pause2 && !bodyEmpty){
-						for(let i in body){
-							if (i != swch.t_object){
-								obj2 = body_prev[i];
-								R = rad(obj.x, obj.y, obj2.x, obj2.y);
-								a = obj2.x - obj.x;
-								b = obj2.y - obj.y;
-								sin = b/R; cos = a/R;
-
-								vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx', obj2.m);
-								vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy', obj2.m);
-
-								if(!obj.lck && !switcher.pause2 && !(mbut == 'move' && leftMouseDown && object == mov_obj)){
-									cam_vx += vx;
-									cam_vy += vy;
-								}
-							};
-						}
-					}
-					if (switcher.ref_interact == 1 && body_prev['sun'] && !switcher.pause2 && !bodyEmpty){
-						obj2 = body_prev['sun'];
-
-						R = rad(obj.x, obj.y, obj2.x, obj2.y);
-
-						a = obj2.x - obj.x;
-						b = obj2.y - obj.y;
-						sin = b/R; cos = a/R;
-
-						vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx', obj2.m);
-						vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy', obj2.m);
-
-						if(!obj.lck && !switcher.pause2 && !(mbut == 'move' && leftMouseDown && object == mov_obj)){
-							cam_vx += vx;
-							cam_vy += vy;
-						}
-					};					
-				}
-
-				cam_x = (window.innerWidth / 2) - (body[swch.prev_t_obj].x + cam_vx) + anim_cam[0];
-				cam_y = (window.innerHeight / 2) - (body[swch.prev_t_obj].y + cam_vy) + anim_cam[1];		
-			} else {
-				cam_x = 0 + anim_cam[0];
-				cam_y = 0 + anim_cam[1];
-			}
+		for (let i = 0; i < ref_speed; i++){
 			body_prev = JSON.parse(JSON.stringify(body));
 			if (!bodyEmpty){
-				for (let obj in body){	
-					//traj_prev(obj, 200, '#ffffff33');
-					refresh(obj);
-				}			
+				if (swch.prev_t_obj && body[swch.prev_t_obj]){
+					cam_x = (window.innerWidth / 2) - (body[swch.prev_t_obj].x) + anim_cam[0];
+					cam_y = (window.innerHeight / 2) - (body[swch.prev_t_obj].y) + anim_cam[1];		
+				} else {
+					cam_x = 0 + anim_cam[0];
+					cam_y = 0 + anim_cam[1];
+				}
+				for (let obj in body){
+					calculate(obj); // Trajectory calculations of all objects
+				}
+
+
 			}
 			if (!movAnim[4]){
 				movAnim[4] = true;
-			}
-			traj_ref = false;		
+			}	
+			traj_ref = false;
 			if (trace_resolution[0] >= trace_resolution[1]){
 				trace_resolution[2] = true;
 				trace_resolution[0] = 0;
@@ -787,18 +728,14 @@ $('document').ready(function(){
 			mcy = mouse_coords[3] ? mouse_coords[3] - (mouse_coords[3] - mouse_coords[1])/10 : mouse_coords[1];
 
 			if ((!(Math.abs(mouse[0]-mouse_coords[0]) < dis_zone && Math.abs(mouse[1]-mouse_coords[1]) < dis_zone))&&switcher.traj_prev_on&&(mouseMove || !switcher.create_obj_pause)){
-				obj_for_traj = {x: crd(mouse[0], 'x', 1), y: crd(mouse[1], 'y', 1), vx: ((mouse[0]-mcx)/30)*t*switcher.launch_pwr, vy: ((mouse[1]-mcy)/30)*t*switcher.launch_pwr, m: obj_radius, color: obj_color, lck: obj_lck};
+				obj_for_traj = {x: crd(mouse[0], 'x', 1), y: crd(mouse[1], 'y', 1), vx: ((mouse[0]-mcx)/30)*t*switcher.launch_pwr, vy: ((mouse[1]-mcy)/30)*t*switcher.launch_pwr, m: obj_radius, color: obj_color, lck: obj_lck, main_obj: swch.orb_obj, F:{x:0,y:0}};
 				traj_prev(obj_for_traj, traj_calc_smpls, ['#006BDE88', '#ffffff44'], true, switcher.traj_accuracity);
-			} else {
-				new_obj_param = [0, 0, 0, 0];
-			};
+			}
 		}
 		if (mbut == 'create' && !leftMouseDown){
 			if (switcher.traj_pause){
 				switcher.pause = false;
 				delete switcher.traj_pause;
-			} else {
-
 			}
 		}
 
@@ -814,43 +751,21 @@ $('document').ready(function(){
 
 		if (mbut == 'delete'){
 			visual_select(switcher.del_radio, '#f006');
-		}
+		} else
 
 		if (mbut == 'camera' && cbut == 'select_track' && swch.s_track){
 			visual_select(0, '#0af6', select_object());
-		}
+		} else
 
 		if (mbut == 'move'){
 			visual_select(0, '#bbb6', mov_obj);
-		}
+		} else
 
-		if (mbut == 'edit'){
-			if (swch.s_edit){
-				visual_select(0, '#11f6', mov_obj);
-			}
+		if (mbut == 'edit' && swch.s_edit){
+			visual_select(0, '#11f6', mov_obj);
 		}
 		if (show_center){
-			ctx.strokeStyle = '#000000';
-			ctx.lineWidth = 2;
-			ctx.beginPath();
-			ctx.moveTo(wind_width/2 - 5, wind_height/2 - 5);
-			ctx.lineTo(wind_width/2 + 5, wind_height/2 + 5);
-			ctx.stroke();
-			ctx.beginPath();
-			ctx.moveTo(wind_width/2 + 5, wind_height/2 - 5);
-			ctx.lineTo(wind_width/2 - 5, wind_height/2 + 5);
-			ctx.stroke();
-
-			ctx.strokeStyle = '#ff0000';
-			ctx.lineWidth = 1;
-			ctx.beginPath();
-			ctx.moveTo(wind_width/2 - 5, wind_height/2 - 5);
-			ctx.lineTo(wind_width/2 + 5, wind_height/2 + 5);
-			ctx.stroke();
-			ctx.beginPath();
-			ctx.moveTo(wind_width/2 + 5, wind_height/2 - 5);
-			ctx.lineTo(wind_width/2 - 5, wind_height/2 + 5);
-			ctx.stroke();			
+			drawCross(window.innerWidth/2, window.innerHeight/2);			
 		}
 		if ((mbut == 'create') && (!leftMouseDown || (multiTouch > 0 && mbut != 'create')) && switcher.vis_distance){
 			vis_distance([mouse_coords[0], mouse_coords[1]], '#888888');
@@ -865,78 +780,17 @@ $('document').ready(function(){
 		mouseMove = false;
 	}
 
-	function refresh(object){
-		obj = body_prev[object];
+	function calculate(object){
+		obj = obj1 = body_prev[object];
+		// Draw objects
 		t_mod = switcher.traj_mode; //Trajectory mode
-		if(switcher.ref_interact == 0 && !switcher.pause2 && !bodyEmpty){
-			for (let i in body){
-				if (i == object){continue;};
-				obj2 = body_prev[i];
-
-				R = rad(obj.x, obj.y, obj2.x, obj2.y);
-				
-				sin = (obj2.y - obj.y)/R;
-				cos = (obj2.x - obj.x)/R;
-
-				if(!obj.lck && !(mbut == 'move' && leftMouseDown && object == mov_obj)){
-					body[object].vx += gravity_func(sin, cos, R, switcher.r_gm, 'vx', obj2.m);
-					body[object].vy += gravity_func(sin, cos, R, switcher.r_gm, 'vy', obj2.m);
-				}
-
-				//A = R;
-				//B = rad(obj.x+vx, obj.y+vy, obj2.x, obj2.y);
-				//C = rad(obj.x+vx, obj.y+vy, obj.x, obj.y);
-
-				if (R - (Math.sqrt(obj.m) + Math.sqrt(obj2.m)/2) <= 0){
-					if (obj.m >= obj2.m){
-						body[object].color = mixColors(obj.color, obj2.color, obj.m, obj2.m);
-						body[object].m = obj.m + obj2.m;
-						if (!obj.lck){
-							body[object].vx = (obj.m*obj.vx+obj2.m*obj2.vx)/(obj.m+obj2.m);//Формула абсолютно-неупругого столкновения
-							body[object].vy = (obj.m*obj.vy+obj2.m*obj2.vy)/(obj.m+obj2.m);//Формула абсолютно-неупругого столкновения
-						}
-						del_obj(i);
-						continue;
-					}else{continue;}
-				}
-			}
-		}
-		if (switcher.ref_interact == 1 && body_prev[swch.orb_obj] && !switcher.pause2 && !bodyEmpty){
-			if (object != obj.main_obj && body[object] && body[obj.main_obj]){
-				obj2 = body_prev[obj.main_obj];
-
-				R = rad(obj.x, obj.y, obj2.x, obj2.y);
-
-				sin = (obj2.y - obj.y)/R;
-				cos = (obj2.x - obj.x)/R;
-
-				if(!obj.lck && !(mbut == 'move' && leftMouseDown && object == mov_obj)){
-					body[object].vx += gravity_func(sin, cos, R, switcher.r_gm, 'vx', obj2.m);
-					body[object].vy += gravity_func(sin, cos, R, switcher.r_gm, 'vy', obj2.m);
-				}
-
-				//Эллипс	
-				//ctx.beginPath();
-				//ctx.lineWidth = Math.sqrt(body[object].m);
-				//ctx.strokeStyle = obj.color;
-				//ctx.ellipse(body.sun.x + cam_x, body.sun.y + cam_y, Math.abs(ell_a), 250, 0, 0, 7);
-				//ctx.stroke();
-			};
-		}
-
-		prev_x = body[object].x + prev_cam_x + mov[0]/zm;
-		prev_y = body[object].y + prev_cam_y + mov[1]/zm;
-
-		if(!obj.lck && !switcher.pause2 && !t_wrap){
-			body[object].x += body[object].vx;
-			body[object].y += body[object].vy;
-		}
-
+		prev_x = (body[object].x - body[object].vx) + prev_cam_x + mov[0]/zm;
+		prev_y = (body[object].y - body[object].vy) + prev_cam_y + mov[1]/zm;
 		obj_rad = Math.sqrt(obj.m)*zm;
 		obj_rad = obj_rad < 0.5 ? 0.5 : obj_rad;
 		obCol = obj.color;
-
 		render = (prev_x != body[object].x + cam_x + mov[0]/zm && prev_y != body[object].y + cam_y + mov[1]/zm)?true:false;
+
 		if (traj_ref){		
 			if (!render){
 				ctx.beginPath();
@@ -948,21 +802,6 @@ $('document').ready(function(){
 			ctx.beginPath();
 			ctx.arc(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0), obj_rad, 0, 7);
 			ctx.fill();
-		}
-
-		if (!switcher.pause2 && movAnim[4] && t_mod == 1){
-			if (swch.prev_t_obj != object){
-				//ctx.beginPath();
-				//ctx.fillStyle = obCol;
-				//ctx.arc(prev_x*zm+mcamX, prev_y*zm+mcamY, obj_rad, 0, 7);
-				//ctx.fill();
-				ctx.strokeStyle = obCol;
-				ctx.lineWidth = obj_rad*2;
-				ctx.beginPath();
-				ctx.moveTo(prev_x*zm+mcamX, prev_y*zm+mcamY);
-				ctx.lineTo(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0));
-				ctx.stroke();			
-			}
 		}
 		res = false;
 		acc = 1000; // Точность следа
@@ -977,95 +816,176 @@ $('document').ready(function(){
 				}				
 			}			
 		}
+		//Trajectory mode 1 =====
+		if (!switcher.pause2 && movAnim[4] && t_mod == 1){
+			if (swch.prev_t_obj != object){
+				//ctx.beginPath();
+				//ctx.fillStyle = obCol;
+				//ctx.arc(prev_x*zm+mcamX, prev_y*zm+mcamY, obj_rad, 0, 7);
+				//ctx.fill();
+				ctx.strokeStyle = obCol;
+				ctx.lineWidth = obj_rad*2;
+				ctx.beginPath();
+				ctx.moveTo(prev_x*zm+mcamX, prev_y*zm+mcamY);
+				ctx.lineTo(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0));
+				ctx.stroke();			
+			}
+		} else
 		//Trajectory mode 2 =====
-		if (t_mod == 2 && !obj.lck && res <= 20){
-			if (traj_ref){
-				ctx.fillStyle = obCol;
-				ctx.strokeStyle = obCol;
-				if (body[object].trace[0]){
-					ctx.lineWidth = obj_rad*2*0.9;
-					ctx.beginPath();
-					ctx.moveTo(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0));
-					ctx.lineTo(crd(body[object].trace[0][0]/acc, 'x', 0), crd(body[object].trace[0][1]/acc, 'y', 0));
-					ctx.stroke();				
-				}
-				for (let i in body[object].trace){
-					itr = i-1;
-					itr = itr < 0?0:itr;
-
-					ctx.lineWidth = Math.abs(obj_rad*1.9 - (obj_rad*2)/32*i*2*0.8);
-					ctx.beginPath();
-					ctx.moveTo(crd(body[object].trace[i][0]/acc, 'x', 0), crd(body[object].trace[i][1]/acc, 'y', 0));
-					ctx.lineTo(crd(body[object].trace[itr][0]/acc, 'x', 0), crd(body[object].trace[itr][1]/acc, 'y', 0));
-					ctx.stroke();
-				}			
+		if (t_mod == 2 && !obj.lck && res <= 20 && traj_ref){
+			ctx.fillStyle = obCol;
+			ctx.strokeStyle = obCol;
+			if (body[object].trace[0]){
+				ctx.lineWidth = obj_rad*2*0.9;
+				ctx.beginPath();
+				ctx.moveTo(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0));
+				ctx.lineTo(crd(body[object].trace[0][0]/acc, 'x', 0), crd(body[object].trace[0][1]/acc, 'y', 0));
+				ctx.stroke();				
 			}
-		}
+			for (let i in body[object].trace){
+				itr = i-1;
+				itr = itr < 0?0:itr;
 
-		//Trajectory mode 3 =====
-		if (t_mod == 3 && !obj.lck && res <= 20){
-			rand_kf = 0.5;
-
-			if (traj_ref){
-				prev_randX = 0;
-				prev_randY = 0;
-				randX = 0;
-				randY = 0;
-
-				ctx.fillStyle = obCol;
-				ctx.strokeStyle = obCol;
-				if (body[object].trace[0]){
-					ctx.lineWidth = obj_rad*2;
-					ctx.beginPath();
-					ctx.moveTo(crd(body[object].x, 'x', 0)+randX, crd(body[object].y, 'y', 0)+randY);
-					ctx.lineTo(crd(body[object].trace[0][0]/acc, 'x', 0)+prev_randX, crd(body[object].trace[0][1]/acc, 'y', 0)+prev_randY);
-					ctx.stroke();				
-				}
-				for (let i in body[object].trace){
-					itr = i-1;
-					itr = itr < 0?0:itr;
-					prev_randX = randX; prev_randY = randY;
-					randX = getRandomArbitrary(-(Math.sqrt(obj.m)*zm*i/10), Math.sqrt(obj.m)*zm*i/10)*rand_kf;
-					randY = getRandomArbitrary(-(Math.sqrt(obj.m)*zm*i/10), Math.sqrt(obj.m)*zm*i/10)*rand_kf;
-
-					ctx.lineWidth = Math.abs(obj_rad*1.9 - (obj_rad*2)/32*i*2*0.8);
-					ctx.beginPath();
-					ctx.arc(Math.floor(crd(body[object].trace[itr][0]/acc, 'x', 0)+randX*2), Math.floor(crd(body[object].trace[itr][1]/acc, 'y', 0)+randY*2), Math.sqrt(obj.m)*zm - (Math.sqrt(obj.m)*zm)/res*i, 0, 7);
-					ctx.fill();
-					ctx.beginPath();
-					ctx.moveTo(crd(body[object].trace[i][0]/acc, 'x', 0)+randX, crd(body[object].trace[i][1]/acc, 'y', 0)+randY);
-					ctx.lineTo(crd(body[object].trace[itr][0]/acc, 'x', 0)+prev_randX, crd(body[object].trace[itr][1]/acc, 'y', 0)+prev_randY);
-					ctx.stroke();
-				}			
-			}
-		}
-
-		//Trajectory mode 4 =====
-		if (t_mod == 4 && !obj.lck){
-			if (traj_ref){
-				ctx.fillStyle = obCol;
-				ctx.strokeStyle = obCol;
-				ctx.lineWidth = 1;
-				if (body[object].trace[0]){
-					ctx.beginPath();
-					ctx.moveTo(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0));			
-				}
-				for (let i in body[object].trace){
-					itr = i-1;
-					itr = itr < 0?0:itr;
-					ctx.lineTo(crd(body[object].trace[itr][0]/acc, 'x', 0), crd(body[object].trace[itr][1]/acc, 'y', 0));
-				}			
+				ctx.lineWidth = Math.abs(obj_rad*1.9 - (obj_rad*2)/32*i*2*0.8);
+				ctx.beginPath();
+				ctx.moveTo(crd(body[object].trace[i][0]/acc, 'x', 0), crd(body[object].trace[i][1]/acc, 'y', 0));
+				ctx.lineTo(crd(body[object].trace[itr][0]/acc, 'x', 0), crd(body[object].trace[itr][1]/acc, 'y', 0));
 				ctx.stroke();
 			}
+		} else
+		//Trajectory mode 3 =====
+		if (t_mod == 3 && !obj.lck && res <= 20 && traj_ref){
+			rand_kf = 0.5;
+			prev_randX = 0;
+			prev_randY = 0;
+			randX = 0;
+			randY = 0;
+
+			ctx.fillStyle = obCol;
+			ctx.strokeStyle = obCol;
+			if (body[object].trace[0]){
+				ctx.lineWidth = obj_rad*2;
+				ctx.beginPath();
+				ctx.moveTo(crd(body[object].x, 'x', 0)+randX, crd(body[object].y, 'y', 0)+randY);
+				ctx.lineTo(crd(body[object].trace[0][0]/acc, 'x', 0)+prev_randX, crd(body[object].trace[0][1]/acc, 'y', 0)+prev_randY);
+				ctx.stroke();				
+			}
+			for (let i in body[object].trace){
+				itr = i-1;
+				itr = itr < 0?0:itr;
+				prev_randX = randX; prev_randY = randY;
+				randX = getRandomArbitrary(-(Math.sqrt(obj.m)*zm*i/10), Math.sqrt(obj.m)*zm*i/10)*rand_kf;
+				randY = getRandomArbitrary(-(Math.sqrt(obj.m)*zm*i/10), Math.sqrt(obj.m)*zm*i/10)*rand_kf;
+
+				ctx.lineWidth = Math.abs(obj_rad*1.9 - (obj_rad*2)/32*i*2*0.8);
+				ctx.beginPath();
+				ctx.arc(Math.floor(crd(body[object].trace[itr][0]/acc, 'x', 0)+randX*2), Math.floor(crd(body[object].trace[itr][1]/acc, 'y', 0)+randY*2), Math.sqrt(obj.m)*zm - (Math.sqrt(obj.m)*zm)/res*i, 0, 7);
+				ctx.fill();
+				ctx.beginPath();
+				ctx.moveTo(crd(body[object].trace[i][0]/acc, 'x', 0)+randX, crd(body[object].trace[i][1]/acc, 'y', 0)+randY);
+				ctx.lineTo(crd(body[object].trace[itr][0]/acc, 'x', 0)+prev_randX, crd(body[object].trace[itr][1]/acc, 'y', 0)+prev_randY);
+				ctx.stroke();
+			}
+		} else
+		//Trajectory mode 4 =====
+		if (t_mod == 4 && !obj.lck && traj_ref){
+			ctx.fillStyle = obCol;
+			ctx.strokeStyle = obCol;
+			ctx.lineWidth = 1;
+			if (body[object].trace[0]){
+				ctx.beginPath();
+				ctx.moveTo(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0));			
+			}
+			for (let i in body[object].trace){
+				itr = i-1;
+				itr = itr < 0?0:itr;
+				ctx.lineTo(crd(body[object].trace[itr][0]/acc, 'x', 0), crd(body[object].trace[itr][1]/acc, 'y', 0));
+			}			
+			ctx.stroke();
 		}
 		if (!isEmptyObject(body[object].trace) && switcher.traj_mode != 2 && switcher.traj_mode != 3 && switcher.traj_mode != 4) {body[object].trace = [];};
+		// End drawing objects ==================
 
-		//console.log(R);
-		//arr = Object.keys(body);
-		//ctx.beginPath();
+		if(switcher.ref_interact == 0 && !switcher.pause2 && !bodyEmpty){
+			for (let i in body){
+				if (i == object){continue;};
+				gMod = switcher.r_gm;
+				obj2 = body_prev[i];
+
+				R = rad(obj.x, obj.y, obj2.x, obj2.y);
+
+				coll = collision(obj, obj2, object, i, body, R, collision_mode);
+				if (coll === 'merge'){
+					continue;
+				} else
+				if (coll === 'none'){gMod = 3;}
+				
+				if(!obj.lck && !(mbut == 'move' && leftMouseDown && object == mov_obj)){
+					sin = (obj2.y - obj.y)/R;
+					cos = (obj2.x - obj.x)/R;
+					vector = gravity_func(sin, cos, R, gMod, 'all', obj2.m);
+					body[object].vx += vector[0];
+					body[object].vy += vector[1];
+					body[object].F.x = vector[0];
+					body[object].F.y = vector[1];
+				}
+
+				//A = R;
+				//B = rad(obj.x+vx, obj.y+vy, obj2.x, obj2.y);
+				//C = rad(obj.x+vx, obj.y+vy, obj.x, obj.y);
+			}
+		} else
+		if (switcher.ref_interact == 1 && body_prev[swch.orb_obj] && !switcher.pause2 && !bodyEmpty){
+			if (object != obj1.main_obj && body[object] && body[obj.main_obj]){
+				main_obj_name = obj1.main_obj;
+				obj2 = body_prev[main_obj_name];
+				gMod = switcher.r_gm;
+
+				R = rad(obj1.x, obj1.y, obj2.x, obj2.y);
+
+				if(!obj1.lck && !(mbut == 'move' && leftMouseDown && object == mov_obj)){
+					sin = (obj2.y - obj1.y)/R;
+					cos = (obj2.x - obj1.x)/R;
+					vector = gravity_func(sin, cos, R, gMod, 'all', obj2.m);
+					body[object].vx += vector[0] + obj2.F.x;
+					body[object].vy += vector[1] + obj2.F.y;
+					body[object].F.x = vector[0] + obj2.F.x;
+					body[object].F.y = vector[1] + obj2.F.y;
+				}
+				// Collision
+				coll = collision(obj2, obj1, obj1.main_obj, object, body, R, collision_mode);
+				if (coll === 'none'){gMod = 3;}else
+				if (coll === 'merge'){
+					object = main_obj_name;
+				}
+				//Эллипс	
+				//ctx.beginPath();
+				//ctx.lineWidth = Math.sqrt(body[object].m);
+				//ctx.strokeStyle = obj1.color;
+				//ctx.ellipse(body.sun.x + cam_x, body.sun.y + cam_y, Math.abs(ell_a), 250, 0, 0, 7);
+				//ctx.stroke();
+			};
+		}
+
+		if(!obj.lck && !switcher.pause2 && !t_wrap){
+			body[object].x += body[object].vx;
+			body[object].y += body[object].vy;
+		}
+
+		if ((switcher.traj_mode == 2 || switcher.traj_mode == 3 || switcher.traj_mode == 4) && !obj.lck && trace_resolution[2]){
+			res = t_mod == 4?75:20;
+			if (!switcher.pause2){
+				body[object].trace.unshift([Math.round(obj.x*acc), Math.round(obj.y*acc)]);
+				trace_length = body[object].trace.length;
+				while (trace_length > res){
+					body[object].trace.pop();
+					trace_length --;
+				}				
+			}			
+		}
 	};
 	//Функции притяжения
-	function gravity_func(sin, cos, R, func_num, dir, mass, ts = t){
+	function gravity_func(sin, cos, R, func_num, dir = 'all', mass, ts = t){
 		//Обратно-пропорционально квадрату расстояния
 		ts *= ts;
 		if (func_num == 1){
@@ -1097,18 +1017,69 @@ $('document').ready(function(){
 			vx = kff*(cos*R);
 			vy = kff*(sin*R);
 		}
-		//Функция пользователя
-		//if (user_func){
-		//	//
-		//}
-		//Отправить вектор x
+
+		//Отправить вектор
+		if (dir == 'all'){
+			return [vx, vy];
+		} else
+		//Отправить только вектор x
 		if (dir == 'vx'){
 			return vx;
-		}
-		//Отправить вектор y 
+		} else
+		//Отправить только вектор y 
 		if (dir == 'vy'){
 			return vy;
 		}
+	}
+
+	function collision(obj, obj2, obj_name, obj2_name, ob_arr, R, type='merge'){
+		if (R - (Math.sqrt(obj.m) + Math.sqrt(obj2.m)) <= 0){
+			if (obj.m >= obj2.m && type == 'merge'){
+				ob_arr[obj_name].color = mixColors(obj.color, obj2.color, obj.m, obj2.m);
+				ob_arr[obj_name].m = obj.m + obj2.m;
+				if (!obj.lck){
+					ob_arr[obj_name].vx = (obj.m*obj.vx+obj2.m*obj2.vx)/(obj.m+obj2.m);// Формула абсолютно-неупругого столкновения
+					ob_arr[obj_name].vy = (obj.m*obj.vy+obj2.m*obj2.vy)/(obj.m+obj2.m);// Формула абсолютно-неупругого столкновения
+				}
+				del_obj(obj2_name, ob_arr);
+				return 'merge';
+			} else
+			if (type == 'repulsion'){
+				obj1 = obj;
+				v1 = gipot(obj1.vx, obj1.vy);
+				v2 = gipot(obj2.vx, obj2.vy);
+				vcos1 = v1 == 0?0:obj1.vx/v1;// cos vx 1
+				vsin1 = v1 == 0?0:obj1.vy/v1;// sin vy 1
+				vcos2 = v2 == 0?0:obj2.vx/v2;// cos vx 2
+				vsin2 = v2 == 0?0:obj2.vy/v2;// sin vy 2
+				ag1 = Math.atan2(vcos1, vsin1);
+				ag2 = Math.atan2(vcos2, vsin2);
+
+				cos = (obj2.x - obj.x)/R;
+				sin = (obj2.y - obj.y)/R;
+				agf = Math.atan2(cos, sin);
+
+				x1 = rad(0, 0, obj1.x, obj1.y);
+				x2 = rad(0, 0, obj2.x, obj2.y);
+
+				m1 = obj1.m;
+				m2 = obj2.m;
+				if (!obj.lck){
+					ob_arr[obj_name].vx = (( v1*Math.cos(ag1 - agf)*(obj1.m-obj2.m) + 2*obj2.m*v2*Math.cos(ag2 - agf) ) / (obj1.m+obj2.m))*Math.cos(agf) + v1*Math.sin(ag1 - agf)*Math.cos(agf+Math.PI/2);//(((obj.m-obj2.m)*obj.vx + 2*obj2.m*obj2.vx)/(obj.m+obj2.m));// Формула абсолютно-упругого столкновения
+					ob_arr[obj_name].vy = (( v1*Math.cos(ag1 - agf)*(obj1.m-obj2.m) + 2*obj2.m*v2*Math.cos(ag2 - agf) ) / (obj1.m+obj2.m))*Math.sin(agf) + v1*Math.sin(ag1 - agf)*Math.sin(agf+Math.PI/2);//(((obj.m-obj2.m)*obj.vy + 2*obj2.m*obj2.vy)/(obj.m+obj2.m));// Формула абсолютно-упругого столкновения
+					//v1 - ((2*m2)/(m1+m2))*((v1 - v2)*(x1-x2))/Math.pow(Math.abs(x1-x2),2)*(x1-x2);
+					//v1 - ((2*m2)/(m1+m2))*((v2 - v1)*(x2-x1))/Math.pow(Math.abs(x2-x1),2)*(x2-x1);
+				} else {
+					//ob_arr[obj2_name].vx = ((obj.m-obj2.m)*obj.vx + 2*obj2.m*obj2.vx)/(obj.m+obj2.m) + ((obj2.m-obj.m)*obj2.vx + 2*obj.m*obj.vx)/(obj2.m+obj.m);// Формула абсолютно-упругого столкновения
+					//ob_arr[obj2_name].vy = ((obj.m-obj2.m)*obj.vy + 2*obj2.m*obj2.vy)/(obj.m+obj2.m) + ((obj2.m-obj.m)*obj2.vy + 2*obj.m*obj.vy)/(obj2.m+obj.m);// Формула абсолютно-упругого столкновения
+				}
+				return 'repulsion';
+			} else
+			if (type == 'none'){
+				return 'none';
+			}
+			return true;
+		}	
 	}
 
 	function visual_trajectory(){
@@ -1116,27 +1087,19 @@ $('document').ready(function(){
 		mcy = mouse_coords[3] ? mouse_coords[3] - (mouse_coords[3] - mouse_coords[1])/10 : mouse_coords[1];
 
 		if (!(Math.abs(mouse[0]-mouse_coords[0]) <= dis_zone && Math.abs(mouse[1]-mouse_coords[1]) <= dis_zone)){
-			//clear('#000000');
+			mstate = menu_state;
+			close_all_menus();
+			menu_state = mstate;
 			swch.vis_traj = true;
 			offsX = -10;
 			offsY = -30;
-			if (switcher.device == 'mobile'){
-				offsX = -25;
-				offsY = -140;
-			}
+			if (switcher.device == 'mobile'){ offsX = -25; offsY = -140; }
 			$('.power').css({left: mouse_coords[0]+offsX, top: mouse_coords[1]+offsY, display: 'block', color: obj_color});
 			$('.power').html(Math.round(rad(mouse[0], mouse[1], mouse_coords[0], mouse_coords[1]) * switcher.launch_pwr * 100)/100);
 		}
-		D = Math.sqrt(obj_radius)*zm*2 < 0.5 ? 0.5 : Math.sqrt(obj_radius)*zm*2;
-		ctx2.strokeStyle = obj_color;
-		ctx2.lineWidth = D;
-		ctx2.beginPath();
-		ctx2.moveTo(mouse[0], mouse[1]);
-		ctx2.lineTo(mcx, mcy);
-		ctx2.stroke();
-
-		ctx2.strokeStyle = '#000a';
-		ctx2.lineWidth = D;
+		D = Math.sqrt(obj_radius)*zm*2;
+		ctx2.strokeStyle = obj_color + '88';
+		ctx2.lineWidth = D < 0.5 ? 0.5 : Math.sqrt(obj_radius)*zm*2;
 		ctx2.beginPath();
 		ctx2.moveTo(mouse[0], mouse[1]);
 		ctx2.lineTo(mcx, mcy);
@@ -1206,17 +1169,17 @@ $('document').ready(function(){
 			if (size > Math.sqrt(body[targ_obj].m)*zm){
 				ctx2.strokeStyle = col;
 				ctx2.lineWidth = 2;
+				// Line
 				ctx2.beginPath();
 				ctx2.moveTo(obj_cord[0], obj_cord[1]);
 				ctx2.lineTo(crd(body[targ_obj].x, 'x', 0), crd(body[targ_obj].y, 'y', 0));
 				ctx2.stroke();
-
+				// Circle
 				ctx2.lineWidth = 0.5;
 				ctx2.beginPath();
 				ctx2.arc(crd(body[targ_obj].x, 'x', 0), crd(body[targ_obj].y, 'y', 0), size, 0, 7);
-				//ctx2.ellipse(crd(body[targ_obj].x, 'x', 0), crd(body[targ_obj].y, 'y', 0), size, size, 0, 0, 7);
 				ctx2.stroke();
-
+				// Points
 				ctx2.beginPath();
 				ctx2.fillStyle = col;
 				ctx2.arc(crd(body[targ_obj].x, 'x', 0), crd(body[targ_obj].y, 'y', 0), 3, 0, 7);
@@ -1263,7 +1226,6 @@ $('document').ready(function(){
 			ctx2.fillStyle = color;
 			ctx2.arc((crd(body[del_radius[1]].x, 'x', 0)), (crd(body[del_radius[1]].y, 'y', 0)), Math.sqrt(body[del_radius[1]].m)*zm+switcher.del_pulse, 0, 7);
 			ctx2.fill();
-			ctx2.beginPath();
 
 			col = '#fff';
 			if (color.length == 4){col = color;}
@@ -1275,13 +1237,17 @@ $('document').ready(function(){
 			ctx2.strokeStyle = col;
 			ctx2.lineWidth = 0.7;
 			ctx2.arc((crd(body[del_radius[1]].x, 'x', 0)), (crd(body[del_radius[1]].y, 'y', 0)), Math.sqrt(body[del_radius[1]].m)*zm+switcher.del_pulse, 0, 7);
-			ctx2.stroke();
-			ctx2.beginPath();		
+			ctx2.stroke();	
 		}
 	}
 	//Удаление объекта
-	function del_obj(obj_name_id){
-		delete body[obj_name_id];
+	function del_obj(obj_name_id, ob_arr = body){
+		for (let i in ob_arr){
+			if (ob_arr[i].main_obj == obj_name_id){
+				ob_arr[i].main_obj = ob_arr[obj_name_id].main_obj;
+			}
+		}
+		delete ob_arr[obj_name_id];
 		show_obj_count();
 	}
 	//Создание нового объекта
@@ -1314,10 +1280,9 @@ $('document').ready(function(){
 				}
 			}
 
-			body['obj_'+num] = {'x': crd(px, 'x', 1), 'y': crd(py, 'y', 1), 'vx': svx, 'vy': svy, m: obj_radius, 'lck': false, 'color': obj_color, lck: obj_lck, trace: [], main_obj: swch.orb_obj};
+			body['obj_'+num] = {'x': crd(px, 'x', 1), 'y': crd(py, 'y', 1), 'vx': svx, 'vy': svy, m: obj_radius, 'lck': false, 'color': obj_color, lck: obj_lck, trace: [], main_obj: swch.orb_obj, F:{x:0,y:0}};
 			spawn = false;
 		}
-		new_obj_param = false;
 		show_obj_count();
 	}
 	//Прощет траэктории
@@ -1331,16 +1296,9 @@ $('document').ready(function(){
 			body_traj['virtual'] = JSON.parse(JSON.stringify(virtual));
 		}
 
-		//if (sp_obj[0]<sp_obj[1]){
-		//	new_obj_param = [crd(body_traj.virtual.x, 'x', 0), crd(body_traj.virtual.y, 'y', 0), body_traj.virtual.vx, body_traj.virtual.vy];
-		//	sp_obj[0] == 10;
-		//}
 		for (let i in body_traj){
-			//c = accr;
-			body_traj[i].vx *= accr;
-			body_traj[i].vy *= accr;
-			body_traj[i].px = body_traj[i].x;
-			body_traj[i].py = body_traj[i].y;
+			body_traj[i].vx *= accr; // Change accuracity
+			body_traj[i].vy *= accr; // Change accuracity
 		}
 		tsw = false;
 		nlock = body_traj.virtual.lck ? false : true;
@@ -1349,7 +1307,7 @@ $('document').ready(function(){
 		for (let i = 0; i < count && nlock; i++){
 			body_traj_prev = JSON.parse(JSON.stringify(body_traj));
 			for (let object in body_traj){
-				//Refresh_func===============
+				//Calculate_func===============
 				obj1 = body_traj_prev[object];
 				radius = rad(body_traj_prev[virt_obj].x, body_traj_prev[virt_obj].y, body_traj_prev[object].x, body_traj_prev[object].y);
 				if (object != virt_obj && radius < distance[0]){
@@ -1360,119 +1318,100 @@ $('document').ready(function(){
 				if (switcher.interact == 0){
 					for (let i in body_traj){
 						if (i == object){continue;};
+						gMod = switcher.r_gm;
 						obj2 = body_traj_prev[i];
+
 						R = rad(obj1.x, obj1.y, obj2.x, obj2.y);
+						// Collision
+						coll = collision(obj1, obj2, object, i, body_traj, R, collision_mode);
+						if (coll === 'merge'){
+							body_traj[object].trash = true;
+							if (i == virt_obj){
+								virt_obj = object;
+								nlock = obj1.lck ? false : true;
+							}							
+							continue;
+						} else 
+						if (coll === 'none'){gMod = 3;}
 						
-						a = obj2.x - obj1.x;
-						b = obj2.y - obj1.y;
-						sin = b/R; cos = a/R;
+						if(!obj1.lck && !(mbut == 'move' && leftMouseDown && object == mov_obj) && body_traj[object]){
+							sin = (obj2.y - obj1.y)/R;
+							cos = (obj2.x - obj1.x)/R;
+							vector = gravity_func(sin, cos, R, gMod, 'all', obj2.m, times*accr);
+							body_traj[object].vx += vector[0];
+							body_traj[object].vy += vector[1];
+							body_traj[object].F.x = vector[0];
+							body_traj[object].F.y = vector[1];
+						}				
+					}			
+				} else
+				if (switcher.interact == 1){
+					if (body_traj[obj1.main_obj]){
+						main_obj_name = obj1.main_obj;
+						obj2 = body_traj_prev[main_obj_name];
+						gMod = switcher.r_gm;
 
-						if (body_traj[object]){
-							vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx', obj2.m, times*accr);
-							vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy', obj2.m, times*accr);
+						R = rad(obj1.x, obj1.y, obj2.x, obj2.y);
 
-							if(!obj1.lck && !(mbut == 'move' && leftMouseDown && object == mov_obj) && body_traj[object]){
-								body_traj[object].vx += vx;
-								body_traj[object].vy += vy;
+						if(!obj1.lck){
+							sin = (obj2.y - obj1.y)/R;
+							cos = (obj2.x - obj1.x)/R;
+							vector = gravity_func(sin, cos, R, gMod, 'all', obj2.m, times*accr);
+							body_traj[object].vx += vector[0] + obj2.F.x;
+							body_traj[object].vy += vector[1] + obj2.F.y;
+							body_traj[object].F.x = vector[0] + obj2.F.x;
+							body_traj[object].F.y = vector[1] + obj2.F.y;						
+						}
+						// Collision
+						coll = collision(obj2, obj1, obj1.main_obj, object, body_traj, R, collision_mode);
+						if (coll === 'none'){gMod = 3;}else
+						if (coll === 'merge'){
+							body_traj[main_obj_name].trash = true;
+							if (virt_obj == object){
+								virt_obj = object = main_obj_name;		
+								nlock = obj2.lck ? false : true;
 							}
 						}					
-						if (R - (Math.sqrt(obj1.m) + Math.sqrt(obj2.m)/2) <= 0){
-							if (obj1.m >= obj2.m){
-								body_traj[object].color = mixColors(obj1.color, obj2.color, obj1.m, obj2.m);
-								body_traj[object].m = obj1.m + obj2.m;
-								if (!obj1.lck){
-									body_traj[object].vx = (obj1.m*obj1.vx+obj2.m*obj2.vx)/(obj1.m+obj2.m);//Формула абсолютно-неупругого столкновения
-									body_traj[object].vy = (obj1.m*obj1.vy+obj2.m*obj2.vy)/(obj1.m+obj2.m);//Формула абсолютно-неупругого столкновения
-								}
-								delete body_traj[i];
-								body_traj[object].trash = true;
-								if (i == virt_obj){
-									virt_obj = object;
-									nlock = obj1.lck ? false : true;
-								}
-								continue;
-							}else{continue;}
-						}
-					}			
-				}
-				if (switcher.interact == 1 && body_traj_prev[swch.orb_obj]){
-					if (object != swch.orb_obj && body_traj[object]){
-						obj2 = body_traj_prev[swch.orb_obj];
-
-						R = rad(obj1.x, obj1.y, obj2.x, obj2.y);
-
-						a = obj2.x - obj1.x;
-						b = obj2.y - obj1.y;
-						sin = b/R; cos = a/R;
-
-						if (body_traj[object]){
-							vx = gravity_func(sin, cos, R, switcher.r_gm, 'vx', obj2.m, (times*times)*accr);
-							vy = gravity_func(sin, cos, R, switcher.r_gm, 'vy', obj2.m, (times*times)*accr);
-
-							if(!obj1.lck && !(mbut == 'move' && leftMouseDown && object == mov_obj) && body_traj[object]){
-								body_traj[object].vx += vx;
-								body_traj[object].vy += vy;
-							}
-
-						}
-
-						if(!obj1.lck && !switcher.pause2 && !(mbut == 'move' && leftMouseDown && object == mov_obj)){
-							body_traj[object].vx += vx;
-							body_traj[object].vy += vy;
-						}
 					}
 				}
-				//End refresh_func========
+				//End calculate func========
 
-				prev_x = obj1.x;
-				prev_y = obj1.y;
 				if(!obj1.lck && body_traj[object]){
-					body_traj[object].px = Math.round(body_traj[object].x);
-					body_traj[object].py = Math.round(body_traj[object].y);
 					body_traj[object].x += body_traj[object].vx;
 					body_traj[object].y += body_traj[object].vy;
 				}
 			}
 
 			if (body_traj[virt_obj]){
-				//ctx2.strokeStyle = col;
-				//ctx2.lineWidth = 2;
-				//ctx2.beginPath();
-				//ctx2.moveTo(prev_x, prev_y);
-				//ctx2.lineTo(body_traj[virt_obj].x + cam_x, body_traj[virt_obj].y + cam_y);
-				//ctx2.stroke();
 				if (swch.t_object == swch.orb_obj && body_traj[swch.orb_obj]){
 					refMov[0] += body_traj[swch.orb_obj].vx;
 					refMov[1] += body_traj[swch.orb_obj].vy;					
 				}
 				for (let ob in body_traj){
-					R_size = ob == virt_obj ? 1.5 : 0.8;
-					clr = ob == virt_obj ? col[1]:body_traj[ob].color+'88';
-					if (body_traj[ob].trash){
-						clr = '#ff666666';
-						R_size = 2;
-					}
-					ctx2.beginPath();
-					ctx2.strokeStyle = clr;
-					ctx2.lineWidth = R_size/2;
-					ctx2.moveTo(crd(body_traj[ob].px-refMov[0], 'x', 0), crd(body_traj[ob].py-refMov[1], 'y', 0));
-					ctx2.lineTo(crd(body_traj[ob].x-refMov[0], 'x', 0), crd(body_traj[ob].y-refMov[1], 'y', 0));
-					ctx2.stroke();
+					if (!body_traj[ob].lck){
+						R_size = ob == virt_obj ? 1.5 : 0.8;
+						clr = ob == virt_obj ? col[1]:body_traj[ob].color+'88';
+						if (body_traj[ob].trash){
+							clr = '#ff666666';
+							R_size = 2;
+						}
+						ctx2.beginPath();
+						ctx2.strokeStyle = clr;
+						ctx2.lineWidth = R_size/2;
+						ctx2.moveTo(crd((body_traj[ob].x-body_traj[ob].vx)-refMov[0], 'x', 0), crd((body_traj[ob].y-body_traj[ob].vy)-refMov[1], 'y', 0));
+						ctx2.lineTo(crd(body_traj[ob].x-refMov[0], 'x', 0), crd(body_traj[ob].y-refMov[1], 'y', 0));
+						ctx2.stroke();
 
-					ctx2.beginPath();
-					ctx2.fillStyle = clr;
-					ctx2.arc(crd(body_traj[ob].x-refMov[0], 'x', 0), crd(body_traj[ob].y-refMov[1], 'y', 0), R_size, 0, 7);
-					ctx2.fill();
-					ctx2.beginPath();
-				}
-			//ctx2.beginPath();
-			//ctx2.fillStyle = col;
-			//ctx2.arc(crd(body_traj[virt_obj].x, 'x', 0), crd(body_traj[virt_obj].y, 'y', 0), 1.5, 0, 7);
-			//ctx2.fill();
-			//ctx2.beginPath();				
+						ctx2.beginPath();
+						ctx2.fillStyle = clr;
+						ctx2.arc(crd(body_traj[ob].x-refMov[0], 'x', 0), crd(body_traj[ob].y-refMov[1], 'y', 0), R_size, 0, 7);
+						ctx2.fill();
+						ctx2.beginPath();						
+					}
+				}		
 			}	
 		}
-		if (distance[2] <= count){
+		if (distance[2] <= count){ // Отображение точек сближения
 			ctx2.beginPath();
 			ctx2.fillStyle = body[distance[1].obj_name].color+'88';
 			mass = Math.sqrt(body[distance[1].obj_name].m) < 2 ? 2 : Math.sqrt(body[distance[1].obj_name].m);
@@ -1489,20 +1428,20 @@ $('document').ready(function(){
 	//Scene scale
 	document.addEventListener('wheel', function(e){
 		e_elem = e.target;
-		if (layers_id.includes(e_elem.id)){
+		if (layers_id.includes(e_elem.id) && !e.ctrlKey){
 			ms = [e.clientX, e.clientY];
 			if (!middleMouseDown){
 				vl = 1.25;
 				if (!swch.prev_t_obj && !switcher.zoomToScreenCenter){
 					if (e.deltaY > 0){
 						zm /= vl;
-						mov[0] = mov[0] / vl - (wind_width/2 - ms[0]) / (vl/(vl-1));
-						mov[1] = mov[1] / vl - (wind_height/2 - ms[1]) / (vl/(vl-1));
+						mov[0] = mov[0] / vl - (canv.width/2 - ms[0]) / (vl/(vl-1));
+						mov[1] = mov[1] / vl - (canv.height/2 - ms[1]) / (vl/(vl-1));
 						mov[2] = mov[0]; mov[3] = mov[1];
 					} else {
 						zm *= vl
-						mov[0] = mov[0] * vl + (wind_width/2 - ms[0]) / (1/(vl-1));
-						mov[1] = mov[1] * vl + (wind_height/2 - ms[1]) / (1/(vl-1));
+						mov[0] = mov[0] * vl + (canv.width/2 - ms[0]) / (1/(vl-1));
+						mov[1] = mov[1] * vl + (canv.height/2 - ms[1]) / (1/(vl-1));
 						mov[2] = mov[0]; mov[3] = mov[1];
 					}
 				} else {
@@ -1570,27 +1509,23 @@ $('document').ready(function(){
 			if (e.keyCode == 86){ $('#camera').mousedown(); }
 			//T+
 			if (e.keyCode == 187){
-				ref_sped *= 2;
-				console.log(ref_sped);
+				ref_speed *= 2;
+				console.log(ref_speed);
+				$('.time_speed h2').html('T - X'+t*ref_speed);
 			}
 			//T-
 			if (e.keyCode == 189){
-				if (ref_sped > 1){ref_sped /= 2;}
-				console.log(ref_sped);
+				if (ref_speed > 1){ref_speed /= 2;}
+				console.log(ref_speed);
+				$('.time_speed h2').html('T - X'+t*ref_speed);
 			}
 			//zoom in
 			if (e.keyCode == 107){
-				//ctx.scale(2, 2);
-				//glob_scale *= 2;
-				//ctx.translate(-canv.width/4, -canv.height/4);
 				zm *= 2;
 				clear('#000');
 			}
 			//zoom out
 			if (e.keyCode == 109){
-				//ctx.scale(0.5, 0.5);
-				//glob_scale *= 0.5;
-				//ctx.translate(canv.width/2, canv.height/2);
 				zm *= 0.5;
 				clear('#000');
 			}
@@ -1695,6 +1630,7 @@ $('document').ready(function(){
 		if (mbut == 'play'){
 			pretime = times;
 			times = 1;
+			ref_speed = 1;
 			switcher.pause = false;
 			tsw = true;
 			$('#pause img').attr('src', 'ico/pause.png');
@@ -1828,7 +1764,7 @@ $('document').ready(function(){
 			}
 			my_data = {body: body_write, switcher: switcher, t_wrap: t_wrap, num: num, times: times, G: G};
 			my_data = JSON.stringify(my_data);
-			writeFile("No Name.txt", my_data);
+			writeFile("Orbit Simulator - Мой мир.osw", my_data);
 			delete body_write;
 			//saveFile(name, forat, value, event);
 		}
@@ -1861,15 +1797,12 @@ $('document').ready(function(){
 	}
 
 	function close_all_menus(e){
-		menu_state = false;
+		for (let name in menu_names){
+			$('#'+menu_names[name]).css('display', 'none');
+		}
 		$('#'+mbut).css({background: '#fff2'});
-		$('.menu_options').css('display', 'none');
-		$('.del_menu_options').css('display', 'none');
-		$('.help_menu').css('display', 'none');
-		$('.settings').css('display', 'none');
-		$('.camera_menu').css('display', 'none');
-		$('.edit_menu').css('display', 'none');
-		$('.traj_menu').css('display', 'none');
+		$('#close_button').css({display: 'none'});
+		menu_state = false;
 	}
 	function change_state(img, format='png', path = 'ico/'){
 		$('.state').html('<img src="'+path+img+'.'+format+'" alt="">');
@@ -1935,6 +1868,21 @@ $('document').ready(function(){
 		return val;
 	}
 
+	function drawCross(x, y, color = '#ff0000', width = 1, canvObj = ctx){
+		canvObj.strokeStyle = '#000000';
+		canvObj.lineWidth = 2;
+		for (let i = 0; i < 2; i++){
+			canvObj.beginPath();
+			canvObj.moveTo(x - 5, y - 5);
+			canvObj.lineTo(x + 5, y + 5);
+			canvObj.moveTo(x + 5, y - 5);
+			canvObj.lineTo(x - 5, y + 5);
+			canvObj.stroke();
+			canvObj.strokeStyle = color;
+			canvObj.lineWidth = width;
+		}
+	}
+
 	//=====================================================
 
 	var audio = new Audio(); // Создаём новый элемент Audio
@@ -1950,42 +1898,57 @@ $('document').ready(function(){
 		audio.pause();
 	}
 
-	if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-		//$('.').css({width: , height: });
-		switcher.device = 'mobile';
-		dis_zone = 20;
-		if (window.innerHeight > window.innerWidth){
-			$('body').css({'font-size': 40});
-			$('.btn').css({'height': 100, 'width': 130});
-			$('.btn img').css({'max-width': 65, 'max-height': 65});
-			$('.menu_pos').css({top: 0, left: 139});
-			$('.menu').css({'flex-direction': 'column'});
-			$('.time_speed').css({left: 10, bottom: 80});
-			$('.state').css({top: 10});
-			$('.checkbox').css({width: 75, height: 75});
-			$('.radius_select').css({'font-size': 50, width: 200, 'border-radius': 10});
-			$('.col_select').css({width: 200, height: 60, 'border-radius': 10});
-			//$('.close_button').css({right: '0.5vh'});
-			//$('.menu_pos_size').css({'border-bottom-right-radius': 50});
-			$('#timedown').css({'border-top': '6px solid #fff7'});
-			$('#timeup').css({'border-bottom': '6px solid #fff7'});
+	adaptive();
+	function adaptive(){
+		if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+			switcher.device = 'mobile';
+			dis_zone = 20;
+			if (window.innerHeight > window.innerWidth){
+				$('.time_panel').css({border: 'none', borderTop: '6px solid #fff7', borderBottom: '6px solid #fff7', borderRadius: '20px'});
+				$('body').css({'font-size': 40});
+				$('.btn').css({'height': 100, 'width': 130});
+				$('.btn img').css({'max-width': 65, 'max-height': 65});
+				$('.menu_pos').css({top: 0, left: 139});
+				$('.menu').css({'flex-direction': 'column'});
+				$('.time_speed').css({left: 10, bottom: 80, right: 'initial', top: 'initial'});
+				$('.checkbox').css({width: 75, height: 75});
+				$('.radius_select').css({'font-size': 50, width: 200, 'border-radius': 10});
+				$('.col_select').css({width: 200, height: 60, 'border-radius': 10});
+				$('.menu_pos_size').css({maxHeight: '80vh'});
+			} else {
+				$('.time_panel').css({border: 'none', borderLeft: '3px solid #fff7', borderRight: '3px solid #fff7', borderRadius: '10px'});
+				$('body').css({fontSize: '2vmax'});
+				$('.btn').css({'height': 50, 'width': 50});
+				$('.btn img').css({'max-width': '65%', 'max-height': '65%'});
+				$('.menu_pos').css({top: 54 , left: 0});
+				$('.menu').css({'flex-direction': 'row'});
+				$('.time_speed').css({right: 10, top: 130, left: 'initial', bottom: 'initial'});
+				$('.checkbox').css({width: 20, height: 20});
+				$('.radius_select').css({'font-size': 50, width: 200, 'border-radius': 10});
+				$('.col_select').css({width: '20vmin', height: '7vmin', 'border-radius': 10});
+				$('.menu_pos_size').css({maxHeight: '70vh'});
+			}
+			$('.input_num').css({width: '20vmin'});
+			$('.power').css({fontSize: '5vmin'})
+			$('.close_button').css({width: '5vmin', height: '5vmin', padding: '0 0 0.5vh 0', fontSize: '5vmin'});
 		} else {
+			switcher.device = 'desktop';
+			if (window.innerHeight > window.innerWidth){
+				$('.menu').css({'flex-direction': 'column'});
+				$('.menu_pos').css({top: 0, left: $('.menu').outerWidth()});
+				$('.time_panel').css({border: 'none', borderTop: '3px solid #fff7', borderBottom: '3px solid #fff7'});
+			} else {
+				$('.time_panel').css({border: 'none', borderLeft: '3px solid #fff7', borderRight: '3px solid #fff7'});
+				$('.menu_pos').css({top: $('.menu').outerHeight() , left: 0});
+				$('.menu').css({'flex-direction': 'row'});
+			}
+			$('.menu_pos_size').css({maxHeight: '80vh'});
+			$('.input_num').css({width: '10vmin'});
+			$('.power').css({fontSize: '20px'})
+			$('body').css({fontSize: 'inherit'});
+			$('.close_button').css({width: '30px', height: '30px', padding: '0 0 7px 0', fontSize: '30px', right: '-37px'});
 			$('.time_speed').css({right: 10, top: 130});
-			$('.menu_pos').css({top: $('.menu').outerHeight() , left: 0});
-			$('body').css({fontSize: '2vmax'});
-			$('#timedown').css({'border-left': '3px solid #fff7'});
-			$('#timeup').css({'border-right': '3px solid #fff7'});
-		}
-		$('.input_num').css({width: '20vmin'});
-		$('.power').css({fontSize: '5vmin'})
-	  	$('.menu_close').css({padding: '3vmin'});
-	  	$('body').css({fontSize: '2vmax'});
-	  	$('.close_button').css({width: '5vh', height: '5vh', padding: '0 0 0.4vh 0'});
-	} else {
-		$('#timedown').css({'border-left': '3px solid #fff7'});
-		$('#timeup').css({'border-right': '3px solid #fff7'});
-	  	$('.time_speed').css({right: 10, top: 130});
-	  	$('.menu_pos').css({top: $('.menu').outerHeight() , left: 0});
+		}	
 	}
 	//Запись файла
 	function writeFile(name, value) {
@@ -2002,25 +1965,21 @@ $('document').ready(function(){
 		document.getElementById("download").click();
 		document.body.removeChild(download);
 	}
-
-//function saveFile(name, forat, value, event){
-//	var csvData = 'data:application/txt;charset=utf-8,' + encodeURIComponent(value);
-//	event.href = csvData;
-//	event.target = '_blank';
-//	event.download = name+'.'+format;		
-//}
-
+	// Read file
 	function readFile(input) {
 		let file = input.files[0];
-
 		let reader = new FileReader();
-
 		reader.readAsText(file);
 
 		reader.onload = function() {
 			try {
 			  	file_data = JSON.parse(reader.result);
 			  	body = file_data.body;
+			  	for (let i in body){
+			  		if (!body[i].F){
+			  			body[i].F = {x: 0, y: 0};
+			  		} else {break;}
+			  	}
 			  	switcher.interact = file_data.switcher.interact;
 			  	switcher.gravit_mode = file_data.switcher.gravit_mode;
 			  	tsw = times == file_data.times ? false : true;
@@ -2042,46 +2001,10 @@ $('document').ready(function(){
 	}
 
 	function isEmptyObject(obj) {
-	    for (var i in obj) {
-	        //if (obj.hasOwnProperty(i)) {
-	        return false;
-	        //}
-	    }
-	    return true;
-	}
-
-	function intin(n, a, b){
-		if (a-b>0){
-			if (n<a&&n>b){
-				return true;
-			}else{
-				return false;
-			}		
-		} else {
-			if (n>a&&n<b){
-				return true;
-			}else{
-				return false;
-			}
+		for (var i in obj) {
+			return false;
 		}
+		return true;
 	}
 
-	//initWebGL(canv);
-	function initWebGL(canvas) {
-	  gl = null;
-	  
-	  try {
-	    // Попытаться получить стандартный контекст. Если не получится, попробовать получить экспериментальный.
-	    gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
-	  }
-	  catch(e) {}
-	  
-	  // Если мы не получили контекст GL, завершить работу
-	  if (!gl) {
-	    alert("Unable to initialize WebGL. Your browser may not support it.");
-	    gl = null;
-	  }
-	  
-	  return gl;
-	}
 });
