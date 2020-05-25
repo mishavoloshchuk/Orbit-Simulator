@@ -222,10 +222,12 @@ $('document').ready(function(){
 	avTouchPoint = {x: NaN, y: NaN, xd: NaN, yd: NaN};
 	mscam = true;
 
-	function clear(col = '#00000004'){
+	function clear(col){
 		if (switcher.traj_mode == 0){col = '#000';}
+		if (!col){ctx.globalAlpha = 0.02; col = '#000000'};
 		ctx.fillStyle = col;
 		ctx.fillRect(0, 0, canv.width, canv.height);
+		ctx.globalAlpha = 1;
 	}
 	function clear2(){
 		ctx2.clearRect(0, 0, canv.width, canv.height);
@@ -687,19 +689,19 @@ $('document').ready(function(){
 		}
 
 		if (mbut == 'delete'){
-			visual_select(switcher.del_radio, '#f006');
+			visual_select(switcher.del_radio, '#f00');
 		} else
 
 		if (mbut == 'camera' && cbut == 'select_track' && swch.s_track){
-			visual_select(0, '#0af6', select_object());
+			visual_select(0, '#0af', select_object());
 		} else
 
 		if (mbut == 'move'){
-			visual_select(0, '#bbb6', mov_obj);
+			visual_select(0, '#bbb', mov_obj);
 		} else
 
 		if (mbut == 'edit' && swch.s_edit){
-			visual_select(0, '#11f6', mov_obj);
+			visual_select(0, '#11f', mov_obj);
 		}
 		if (show_center){
 			drawCross(window.innerWidth/2, window.innerHeight/2);			
@@ -708,7 +710,7 @@ $('document').ready(function(){
 			vis_distance([mouse_coords[0], mouse_coords[1]], '#888888');
 		}
 		if (mbut == 'sel_orb_obj' && switcher.sel_orb_obj){
-			visual_select(0, '#bf06', mov_obj);
+			visual_select(0, '#bf0', mov_obj);
 		}
 		if (mbut != 'create'){
 			$('.power').css({display: 'none'});
@@ -758,7 +760,7 @@ $('document').ready(function(){
 
 			if ((!(Math.abs(mouse[0]-mouse_coords[0]) < dis_zone && Math.abs(mouse[1]-mouse_coords[1]) < dis_zone))&&switcher.traj_prev_on&&(mouseMove || !switcher.create_obj_pause)){
 				obj_for_traj = {x: crd(mouse[0], 'x', 1), y: crd(mouse[1], 'y', 1), vx: ((mouse[0]-mcx)/30)*t*switcher.launch_pwr, vy: ((mouse[1]-mcy)/30)*t*switcher.launch_pwr, m: obj_radius, color: obj_color, lck: obj_lck, main_obj: swch.orb_obj, F:{x:0,y:0}};
-				traj_prev(obj_for_traj, traj_calc_smpls, ['#006BDE88', '#ffffff44'], true, switcher.traj_accuracity);
+				traj_prev(obj_for_traj, traj_calc_smpls, ['#006BDE', '#ffffff'], true, switcher.traj_accuracity);
 			}
 		}
 		if (mbut == 'create' && !leftMouseDown){
@@ -1099,12 +1101,14 @@ $('document').ready(function(){
 			$('.power').html(Math.round(rad(mouse[0], mouse[1], mouse_coords[0], mouse_coords[1]) * switcher.launch_pwr * 100)/100);
 		}
 		D = Math.sqrt(obj_radius)*zm*2;
-		ctx2.strokeStyle = obj_color + '88';
+		ctx2.globalAlpha = 0.5;
+		ctx2.strokeStyle = obj_color;
 		ctx2.lineWidth = D < 0.5 ? 0.5 : Math.sqrt(obj_radius)*zm*2;
 		ctx2.beginPath();
 		ctx2.moveTo(mouse[0], mouse[1]);
 		ctx2.lineTo(mcx, mcy);
 		ctx2.stroke();
+		ctx2.globalAlpha = 1;
 
 		ctx2.beginPath();
 		ctx2.fillStyle = obj_color;
@@ -1200,7 +1204,7 @@ $('document').ready(function(){
 		}
 	}
 	//Визуальное выдиление объекта
-	function visual_select(mode, color, object = '') {
+	function visual_select(mode, color, object = '', alpha = 0.3) {
 		if (!bodyEmpty){
 			visual_sel_ref = true;
 			del_radius = [Infinity, '', 0];
@@ -1224,18 +1228,14 @@ $('document').ready(function(){
 			}
 
 			ctx2.beginPath();
+			ctx2.globalAlpha = alpha;
 			ctx2.fillStyle = color;
 			ctx2.arc((crd(body[del_radius[1]].x, 'x', 0)), (crd(body[del_radius[1]].y, 'y', 0)), Math.sqrt(body[del_radius[1]].m)*zm+switcher.del_pulse, 0, 7);
 			ctx2.fill();
 
-			col = '#fff';
-			if (color.length == 4){col = color;}
-			if (color.length == 5){col = color.slice(0, 4);}
-			if (color.length == 7){col = color;}
-			if (color.length == 9){col = color.slice(0, 8);}
-
 			ctx2.beginPath();
-			ctx2.strokeStyle = col;
+			ctx2.globalAlpha = 1;
+			ctx2.strokeStyle = color;
 			ctx2.lineWidth = 0.7;
 			ctx2.arc((crd(body[del_radius[1]].x, 'x', 0)), (crd(body[del_radius[1]].y, 'y', 0)), Math.sqrt(body[del_radius[1]].m)*zm+switcher.del_pulse, 0, 7);
 			ctx2.stroke();	
@@ -1391,9 +1391,14 @@ $('document').ready(function(){
 				for (let ob in body_traj){
 					if (!body_traj[ob].lck){
 						R_size = ob == virt_obj ? 1.5 : 0.8;
-						clr = ob == virt_obj ? col[1]:body_traj[ob].color+'88';
+						ctx2.globalAlpha = 0.4;
+						clr = ob == virt_obj ? col[1]:body_traj[ob].color;
+						if (ob == virt_obj){
+							ctx2.globalAlpha = 0.2;
+						}
 						if (body_traj[ob].trash){
-							clr = '#ff666666';
+							ctx2.globalAlpha = 0.6;
+							clr = '#ff6666';
 							R_size = 2;
 						}
 						ctx2.beginPath();
@@ -1409,21 +1414,25 @@ $('document').ready(function(){
 						ctx2.fill();
 						ctx2.beginPath();						
 					}
-				}		
+				}
+				ctx2.globalAlpha = 1;		
 			}	
 		}
 		if (distance[2] <= count){ // Отображение точек сближения
 			ctx2.beginPath();
-			ctx2.fillStyle = body[distance[1].obj_name].color+'88';
+			ctx2.globalAlpha = 0.5;
+			ctx2.fillStyle = body[distance[1].obj_name].color;
 			mass = Math.sqrt(body[distance[1].obj_name].m) < 2 ? 2 : Math.sqrt(body[distance[1].obj_name].m);
 			ctx2.arc(crd(distance[1].x-refMov[0], 'x', 0), crd(distance[1].y-refMov[1], 'y', 0), mass*zm, 0, 7);
 			ctx2.fill();
 			ctx2.beginPath();
-			ctx2.fillStyle = obj_color+'aa';
+			ctx2.globalAlpha = 0.6;
+			ctx2.fillStyle = obj_color;
 			mass = Math.sqrt(obj_radius)*zm < 2 ? 2 : Math.sqrt(obj_radius)*zm;
 			ctx2.arc(crd(distance[1].x2-refMov[0], 'x', 0), crd(distance[1].y2-refMov[1], 'y', 0), mass, 0, 7);
 			ctx2.fill();
 			ctx2.beginPath();
+			ctx2.globalAlpha = 1;
 		}
 	}
 	//Scene scale
@@ -1937,9 +1946,9 @@ $('document').ready(function(){
 			if (window.innerHeight > window.innerWidth){
 				$('.menu').css({'flex-direction': 'column'});
 				$('.menu_pos').css({top: 0, left: $('.menu').outerWidth()});
-				$('.time_panel').css({border: 'none', borderTop: '3px solid #fff7', borderBottom: '3px solid #fff7'});
+				$('.time_panel').css({border: 'none', borderTop: '3px solid rgba(255,255,255,0.5)', borderBottom: '3px solid rgba(255,255,255,0.5)'});
 			} else {
-				$('.time_panel').css({border: 'none', borderLeft: '3px solid #fff7', borderRight: '3px solid #fff7'});
+				$('.time_panel').css({border: 'none', borderLeft: '3px solid rgba(255,255,255,0.5)', borderRight: '3px solid rgba(255,255,255,0.5)'});
 				$('.menu_pos').css({top: $('.menu').outerHeight() , left: 0});
 				$('.menu').css({'flex-direction': 'row'});
 			}

@@ -48,11 +48,12 @@ span {
 .input_num {
 	width: 10vmin;
 	margin-left: 10px;
-	background-color: #fff2;
-	border: 2px solid #fff3;
+	background-color: rgba(255,255,255,0.16);
+	border: 2px solid rgba(255,255,255,0.16);
 	border-radius: 3px;
 	padding: 5px;
-	color: white;
+	color: #ddd;
+	text-shadow: 1px 1px 1px black;
 	font-size: inherit;
 }
 
@@ -84,8 +85,8 @@ span {
 	max-height: 85%;
 	max-width: 80%;
 	overflow: auto;
-	background-color: #3E3E3EAA;
-	border: 1px solid #aaa2;
+	background-color: rgba(62,62,62,0.68);
+	border: 1px solid rgba(192,192,192,0.1);
 	border-bottom-right-radius: 1em;
 	display: inline-block;
 	z-index: 2;
@@ -118,13 +119,13 @@ span {
 }
 
 .btn:hover {
-	background-color: #fff2;
+	background-color: rgba(192,192,192,0.1);
 	cursor: pointer;
 }
 
 .btn:active {
 	transition: 0s;
-	background-color: #fff8;
+	background-color: rgba(192,192,192,0.4);
 }
 
 .time_speed {
@@ -133,7 +134,7 @@ span {
 }
 
 .time_speed h2{
-	color: #fffa;
+	color: rgba(255,255,255,0.6);
 	margin: 0;
 	font-family: arial;
 }
@@ -146,7 +147,7 @@ span {
 }
 
 .object_count h2{
-	color: #fffa;
+	color: rgba(255,255,255,0.6);
 	margin: 0;
 	font-family: arial;
 	cursor: default;
@@ -155,7 +156,7 @@ span {
 .menu_pos_size {
 	max-width: 100%;
 	max-height: 80vh;
-	background-color: #3E3E3EAA;
+	background-color: rgba(62,62,62,0.68);
 	border: 2px solid #aaa2;
 	display: none;
 	padding: 0 5px;
@@ -167,7 +168,7 @@ span {
 
 .option_item {
 	padding: 10px;
-	border-bottom: 1px solid #fff5;
+	border-bottom: 1px solid rgba(255,255,255,0.3);
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -182,7 +183,7 @@ span {
 }
 
 .help_option_item {
-	border-bottom: 1px solid #fff5;
+	border-bottom: 1px solid rgba(255,255,255,0.3);
 	padding: 10px;
 	padding-left: 25px;
 	text-align: left;
@@ -191,12 +192,12 @@ span {
 
 .help_option_item div {
 	padding: 10px 0;
-	border-bottom: 2px solid #fff3;
+	border-bottom: 2px solid rgba(255,255,255,0.15);
 }
 
 .title_option_item {
 	margin-top: 5px;
-	background-color: #fff2;
+	background-color: rgba(255,255,255,0.12);
 	border-top-right-radius: 0.5em;
 	border-top-left-radius: 0.5em;
 }
@@ -249,19 +250,19 @@ span {
 	text-align: center;
 	min-height: 10px;
 	width: 100%;
-	background-color: #aaa2;
+	background-color: rgba(255,255,255,0.08);
 	border-radius: 1em;
 	padding: 0.5em 2em;
 	text-shadow: none;
 }
 
 .button:hover {
-	background-color: #aaa4;
+	background-color: rgba(192,192,192,0.2);
 	cursor: pointer;
 }
 
 .button:active {
-	background-color: #aaa8;
+	background-color: rgba(192,192,192,0.4);
 }
 
 .fps {
@@ -285,10 +286,10 @@ span {
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	background-color: #3E3E3Eaa;
+	background-color: rgba(62,62,62,0.7);
 	border-radius: 50%;
 	text-shadow: none;
-	border: 1px solid #fff5;
+	border: 1px solid rgba(255,255,255,0.4);
 	width: 3vmin; height: 3vmin;
 	right: -4vh; top: 6px;
 	font-size: 3vh;
@@ -298,7 +299,7 @@ span {
 	z-index: 2;
 }
 .close_button:hover {
-	background-color: #fff2;
+	background-color: rgba(192,192,192,0.15);
 	cursor: pointer;
 	transform: scale(1.1);
 }
@@ -306,7 +307,7 @@ span {
 	content: 'x';
 }
 .close_button:active {
-	background-color: #fff3;
+	background-color: rgba(192,192,192,0.3);
 	transform: scale(1.05);
 }
 .inner_menu_pos {
@@ -317,6 +318,6 @@ span {
 .time_panel {
 	display: flex;
 	flex-direction: inherit;
-	background-color: #fff1;
+	background-color: rgba(255,255,255,0.07);
 	border-radius: 10px;
 }
