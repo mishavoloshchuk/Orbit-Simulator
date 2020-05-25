@@ -333,7 +333,7 @@ $('document').ready(function(){
 			leftMouseDown = true;
 
 			if (mbut == 'create'){
-				try{clearTimeout(mort)}catch{};
+				try{clearTimeout(mort)}catch(err){};
 				if (obj_rand_color){
 					obj_color = randColor();
 				};
@@ -378,7 +378,7 @@ $('document').ready(function(){
 		}
 	});
 
-	$('.canvas').mouseup(function(e, touch){
+	$('.canvas').mouseup(function(event, touch){
 		if (touch){
 			console.log('touchend');
 			event.clientX = mouse_coords[0];
@@ -452,7 +452,7 @@ $('document').ready(function(){
 			multiTouch --;
 			mscam = multiTouch != 0 ? false : true;
 		}
-		if (e.which == 3){
+		if (event.which == 3){
 			rightMouseDown = false;
 			if (leftMouseDown){
 				$('.power').css({display: 'block'});
@@ -461,7 +461,7 @@ $('document').ready(function(){
 		}
 	});	
 
-	document.onmousemove = function(e){
+	document.onmousemove = function(event){
 		mouseMove = true;
 		if (leftMouseDown && mbut == 'move' && mov_obj){
 			if (body[mov_obj]){
@@ -490,7 +490,7 @@ $('document').ready(function(){
 		}
 		mouse_coords[0] = event.clientX;
 		mouse_coords[1] = event.clientY;
-		if (e.ctrlKey){
+		if (event.ctrlKey){
 			if (!mouse_coords[2]){
 				mouse_coords[2] = mouse_coords[0];
 				mouse_coords[3] = mouse_coords[1];			
@@ -1623,7 +1623,7 @@ $('document').ready(function(){
 				switcher.pause = true;
 				img_name = 'play';
 				change_state('pause');	
-				try{clearTimeout(change_state_play)}catch{};
+				try{clearTimeout(change_state_play)}catch(err){};
 			}
 			$('img',this).attr('src', 'ico/'+img_name+'.png');
 			//$('.time_speed h2').html('T - X0');
@@ -1636,7 +1636,7 @@ $('document').ready(function(){
 			tsw = true;
 			$('#pause img').attr('src', 'ico/pause.png');
 			change_state('restore');
-			try{clearTimeout(change_state_play)}catch{};
+			try{clearTimeout(change_state_play)}catch(err){};
 			change_state_play = setTimeout(function(){change_state(pfb);}, 1000);
 		} else
 		if (mbut == 'timeup'){
@@ -1990,7 +1990,7 @@ $('document').ready(function(){
 			  	num = file_data.num;
 			  	sel_and_rest();
 			  	clear('#000');
-			} catch(err) {
+			} catch(err){
 				alert('Несовместимый файл!');
 			}
 			document.getElementById('select_file').value = '';
