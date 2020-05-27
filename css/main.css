@@ -38,7 +38,7 @@ span {
 }
 
 .radio_button_menu {
-	border-bottom: 1px solid #fff2;
+	border-bottom: 1px solid rgba(255,255,255,0.16);
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -157,7 +157,7 @@ span {
 	max-width: 100%;
 	max-height: 80vh;
 	background-color: rgba(62,62,62,0.68);
-	border: 2px solid #aaa2;
+	border: 2px solid rgba(192,192,192,0.1);
 	display: none;
 	padding: 0 5px;
 	overflow: auto;
