@@ -3,6 +3,8 @@ body {
 	padding: 0;
 	z-index: -10;
 	background-color: black;
+	background-image: none;
+	background-size: cover;
 	text-align: center;
 	color: #fff;
 	font-family: calibri, arial;
@@ -320,4 +322,12 @@ span {
 	flex-direction: inherit;
 	background-color: rgba(255,255,255,0.07);
 	border-radius: 10px;
+}
+
+.dimmer {
+	position: absolute;
+	top: 0; bottom: 0; left: 0; right: 0;
+	background-color: #000000;
+	z-index: -9;
+	opacity: 0.5;
 }

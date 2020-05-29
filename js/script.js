@@ -102,7 +102,6 @@ $('document').ready(function(){
 	//ctx.translate(mov[0], mov[1]);
 	//myImageData = ctx.createImageData(0, 0, window.innerWidth, window.innerHeight);
 	//ctx.putImageData(myImageData, 0, 0);
-
 	obj_count = 0;
 	function show_obj_count(){
 		obj_count = 0;
@@ -212,7 +211,14 @@ $('document').ready(function(){
 	pretime = 1;
 	$('.time_speed h2').html('T - X'+t);
 	//======
-
+	function background(){
+		if (switcher.traj_mode2 == 1){
+			$('body').css({backgroundImage: 'none'});
+		} else {
+			$('body').css({backgroundImage: 'url(\'https://images.wallpaperscraft.ru/image/zvezdy_mlechnyj_put_prostranstvo_kosmos_116893_1920x1080.jpg\')'});
+		}		
+	}
+	//background();
 	window.requestAnimationFrame(frame);	
 	//Mouse and touches
 	leftMouseDown = false;
@@ -224,11 +230,23 @@ $('document').ready(function(){
 	mscam = true;
 
 	function clear(col){
-		if (switcher.traj_mode == 0){col = '#000';}
-		if (!col){ctx.globalAlpha = 0.02; col = '#000000'};
-		ctx.fillStyle = col;
-		ctx.fillRect(0, 0, canv.width, canv.height);
-		ctx.globalAlpha = 1;
+		//if (switcher.traj_mode == 0){col = '#000';}
+		if (!col){
+			ctx.globalAlpha = 0.02;
+			col = '#000000';
+			ctx.fillStyle = col;
+			ctx.fillRect(0, 0, canv.width, canv.height);
+
+			//var idata =  ctx.getImageData(0,0,canv.width,canv.height);
+			//ctx.clearRect(0, 0, canv.width, canv.height);
+			//for (var i = 0; i < idata.data.length; i+=4){
+			//	idata.data[i+3] = idata.data[i+3] > 50 ? idata.data[i+3]-1:50;
+			//}
+			//ctx.putImageData(idata,0,0);
+			ctx.globalAlpha = 1;
+		} else {
+			ctx.clearRect(0, 0, canv.width, canv.height);
+		};
 	}
 	function clear2(){
 		ctx2.clearRect(0, 0, canv.width, canv.height);
@@ -528,6 +546,7 @@ $('document').ready(function(){
 		} else
 		if (inp_name == 'traj'){
 			switcher.traj_mode2 = sessionStorage['traj_mode'] = +$(this).attr('value');
+			//background();
 			for (let object in body){
 				res = 20;
 				trace_length = body[object].trace.length;
@@ -1346,6 +1365,7 @@ $('document').ready(function(){
 			for (let object in body_traj){
 				//Calculate_func===============
 				obj1 = body_traj_prev[object];
+				//console.log(virt_obj);
 				radius = rad(body_traj_prev[virt_obj].x, body_traj_prev[virt_obj].y, body_traj_prev[object].x, body_traj_prev[object].y);
 				if (object != virt_obj && radius < distance[0]){
 					distance[0] = radius;
@@ -1360,12 +1380,14 @@ $('document').ready(function(){
 
 						R = rad(obj1.x, obj1.y, obj2.x, obj2.y);
 						// Collision
-						coll = collision(obj1, obj2, object, i, body_traj, R, switcher.collision_mode);
+						coll = collision(obj2, obj1, i, object, body_traj, R, switcher.collision_mode);
 						if (coll === 'merge'){
-							coll_objcts[i] = JSON.parse(JSON.stringify(body_traj_prev[i])); // Сохранение свойств взаемдействующего объекта
-							body_traj[object].trash = true;
-							if (i == virt_obj){
-								virt_obj = object;
+							//console.log(object + ' :: '+i+' :: '+virt_obj);
+							//object = i;
+							coll_objcts[object] = JSON.parse(JSON.stringify(body_traj_prev[object])); // Сохранение свойств взаемдействующего объекта
+							body_traj[i].trash = true;
+							if (object == virt_obj){
+								virt_obj = i;
 								nlock = obj1.lck ? false : true;
 							}							
 							continue;
@@ -1525,11 +1547,11 @@ $('document').ready(function(){
 		for (let i in coll_objcts){
 			var size = Math.sqrt(coll_objcts[i].m)*0.7 < 5? 5 : Math.sqrt(coll_objcts[i].m)*0.7;
 			if (switcher.collision_mode == 0){
-				drawCross(coll_objcts[i].x, coll_objcts[i].y, '#ff0000', 3, size , ctx2);
+				drawCross(crd(coll_objcts[i].x, 'x', 0), crd(coll_objcts[i].y, 'y', 0), '#ff0000', 3, size , ctx2);
 			} else if (switcher.collision_mode == 1){
 				ctx2.beginPath();
 				ctx2.fillStyle = '#0044ff';
-				ctx2.arc(coll_objcts[i].x, coll_objcts[i].y, gipot(coll_objcts[i].vx, coll_objcts[i].vy)/2/t, 0, 7);
+				ctx2.arc(crd(coll_objcts[i].x, 'x', 0), crd(coll_objcts[i].y, 'y', 0), gipot(coll_objcts[i].vx, coll_objcts[i].vy)/2/t, 0, 7);
 				ctx2.fill();
 				ctx2.globalAlpha = 1;
 			}
@@ -1618,13 +1640,13 @@ $('document').ready(function(){
 			//camera
 			if (e.keyCode == 86){ $('#camera').mousedown(); }
 			//T+
-			if (e.keyCode == 187){
+			if (e.keyCode == 187 || e.keyCode == 61){
 				ref_speed *= 2;
 				console.log(ref_speed);
 				$('.time_speed h2').html('T - X'+t*ref_speed);
 			}
 			//T-
-			if (e.keyCode == 189){
+			if (e.keyCode == 189 || e.keyCode == 173){
 				if (ref_speed > 1){ref_speed /= 2;}
 				console.log(ref_speed);
 				$('.time_speed h2').html('T - X'+t*ref_speed);
