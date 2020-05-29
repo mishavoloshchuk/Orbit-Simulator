@@ -921,8 +921,9 @@ $('document').ready(function(){
 
 				R = rad(obj.x, obj.y, obj2.x, obj2.y);
 
-				coll = collision(obj2, obj, i, object, body, R, switcher.collision_mode);
+				coll = collision(obj2, obj1, i, object, body, R, switcher.collision_mode);
 				if (coll === 'merge'){
+					object = i;
 					continue;
 				} else
 				if (coll === 'none'){gMod = 3;}
@@ -1339,6 +1340,7 @@ $('document').ready(function(){
 		nlock = body_traj.virtual.lck ? false : true;
 		refMov = [0, 0];
 		distance = [Infinity, {}, 0];
+		coll_objcts = {};
 		for (let i = 0; i < count && nlock; i++){
 			body_traj_prev = JSON.parse(JSON.stringify(body_traj));
 			for (let object in body_traj){
@@ -1358,8 +1360,9 @@ $('document').ready(function(){
 
 						R = rad(obj1.x, obj1.y, obj2.x, obj2.y);
 						// Collision
-						coll = collision(obj2, obj1, i, object, body_traj, R, switcher.collision_mode);
+						coll = collision(obj1, obj2, object, i, body_traj, R, switcher.collision_mode);
 						if (coll === 'merge'){
+							coll_objcts[i] = JSON.parse(JSON.stringify(body_traj_prev[i])); // Сохранение свойств взаемдействующего объекта
 							body_traj[object].trash = true;
 							if (i == virt_obj){
 								virt_obj = object;
@@ -1367,7 +1370,13 @@ $('document').ready(function(){
 							}							
 							continue;
 						} else 
-						if (coll === 'none'){gMod = 3;}
+						if (coll === 'none'){gMod = 3;} else if (coll === 'repulsion') {
+							var n = 0;
+							for (let el in coll_objcts){ if (el == i || el == i+n){n++} } // Расчет количества взаемодействий одного объекта
+							if (i == virt_obj){
+								coll_objcts[i+n] = JSON.parse(JSON.stringify(body_traj_prev[i])); // Сохранение свойств взаемдействующего объекта
+							}
+						}
 						
 						if(!obj1.lck && !(mbut == 'move' && leftMouseDown && object == mov_obj) && body_traj[object]&&coll==false){
 							sin = (obj2.y - obj1.y)/R;
@@ -1392,12 +1401,19 @@ $('document').ready(function(){
 						coll = collision(body_traj[main_obj_name], body_traj[object], obj1.main_obj, object, body_traj, R, switcher.collision_mode);
 						if (coll === 'none'){gMod = 3;}else
 						if (coll === 'merge'){
+							coll_objcts[i] = JSON.parse(JSON.stringify(body_traj_prev[object])); // Сохранение свойств взаемдействующего объекта
 							body_traj[main_obj_name].trash = true;
 							if (virt_obj == object){
 								virt_obj = object = main_obj_name;		
 								nlock = obj2.lck ? false : true;
 							}
-						}			
+						} else if (coll == 'repulsion') {
+							var n = 0;
+							for (let el in coll_objcts){ if (el == object || el == object+n){n++} } // Расчет количества взаемодействий одного объекта
+							if (object == virt_obj){
+								coll_objcts[object+n] = JSON.parse(JSON.stringify(body_traj_prev[object])); // Сохранение свойств взаемдействующего объекта	
+							}
+						}		
 						if(!obj1.lck&&coll==false){
 							sin = (obj2.y - obj1.y)/R;
 							cos = (obj2.x - obj1.x)/R;
@@ -1422,10 +1438,17 @@ $('document').ready(function(){
 						
 						if (coll === 'none'){gMod = 3;}else
 						if (coll === 'merge'){
+							coll_objcts[i] = JSON.parse(JSON.stringify(body_traj_prev[object])); // Сохранение свойств взаемдействующего объекта
 							body_traj[main_obj_name].trash = true;
 							if (virt_obj == object){
 								virt_obj = object = main_obj_name;		
 								nlock = obj2.lck ? false : true;
+							}
+						} else if (coll == 'repulsion') {
+							var n = 0;
+							for (let el in coll_objcts){ if (el == object || el == object+n){n++} } // Расчет количества взаемодействий одного объекта
+							if (object == virt_obj){
+								coll_objcts[object+n] = JSON.parse(JSON.stringify(body_traj_prev[object])); // Сохранение свойств взаемдействующего объекта
 							}
 						}
 						if(!obj1.lck&&coll==false){
@@ -1483,22 +1506,34 @@ $('document').ready(function(){
 				ctx2.globalAlpha = 1;		
 			}	
 		}
-		//if (distance[2] <= count){ // Отображение точек сближения
-		//	ctx2.beginPath();
-		//	ctx2.globalAlpha = 0.5;
-		//	ctx2.fillStyle = body[distance[1].obj_name].color;
-		//	mass = Math.sqrt(body[distance[1].obj_name].m) < 2 ? 2 : Math.sqrt(body[distance[1].obj_name].m);
-		//	ctx2.arc(crd(distance[1].x-refMov[0], 'x', 0), crd(distance[1].y-refMov[1], 'y', 0), mass*zm, 0, 7);
-		//	ctx2.fill();
-		//	ctx2.beginPath();
-		//	ctx2.globalAlpha = 0.6;
-		//	ctx2.fillStyle = obj_color;
-		//	mass = Math.sqrt(obj_radius)*zm < 2 ? 2 : Math.sqrt(obj_radius)*zm;
-		//	ctx2.arc(crd(distance[1].x2-refMov[0], 'x', 0), crd(distance[1].y2-refMov[1], 'y', 0), mass, 0, 7);
-		//	ctx2.fill();
-		//	ctx2.beginPath();
-		//	ctx2.globalAlpha = 1;
-		//}
+		if (distance[2] <= count){ // Отображение точек сближения
+			ctx2.beginPath();
+			ctx2.globalAlpha = 0.5;
+			ctx2.fillStyle = body[distance[1].obj_name].color;
+			mass = Math.sqrt(body[distance[1].obj_name].m) < 2 ? 2 : Math.sqrt(body[distance[1].obj_name].m);
+			ctx2.arc(crd(distance[1].x-refMov[0], 'x', 0), crd(distance[1].y-refMov[1], 'y', 0), mass*zm, 0, 7);
+			ctx2.fill();
+			ctx2.beginPath();
+			ctx2.globalAlpha = 0.6;
+			ctx2.fillStyle = obj_color;
+			mass = Math.sqrt(obj_radius)*zm < 2 ? 2 : Math.sqrt(obj_radius)*zm;
+			ctx2.arc(crd(distance[1].x2-refMov[0], 'x', 0), crd(distance[1].y2-refMov[1], 'y', 0), mass, 0, 7);
+			ctx2.fill();
+			ctx2.beginPath();
+			ctx2.globalAlpha = 1;
+		}
+		for (let i in coll_objcts){
+			var size = Math.sqrt(coll_objcts[i].m)*0.7 < 5? 5 : Math.sqrt(coll_objcts[i].m)*0.7;
+			if (switcher.collision_mode == 0){
+				drawCross(coll_objcts[i].x, coll_objcts[i].y, '#ff0000', 3, size , ctx2);
+			} else if (switcher.collision_mode == 1){
+				ctx2.beginPath();
+				ctx2.fillStyle = '#0044ff';
+				ctx2.arc(coll_objcts[i].x, coll_objcts[i].y, gipot(coll_objcts[i].vx, coll_objcts[i].vy)/2/t, 0, 7);
+				ctx2.fill();
+				ctx2.globalAlpha = 1;
+			}
+		}
 	}
 	//Scene scale
 	document.addEventListener('wheel', function(e){
@@ -1943,15 +1978,15 @@ $('document').ready(function(){
 		return val;
 	}
 
-	function drawCross(x, y, color = '#ff0000', width = 1, canvObj = ctx){
+	function drawCross(x, y, color = '#ff0000', width = 1, size = 5, canvObj = ctx){
 		canvObj.strokeStyle = '#000000';
 		canvObj.lineWidth = 2;
 		for (let i = 0; i < 2; i++){
 			canvObj.beginPath();
-			canvObj.moveTo(x - 5, y - 5);
-			canvObj.lineTo(x + 5, y + 5);
-			canvObj.moveTo(x + 5, y - 5);
-			canvObj.lineTo(x - 5, y + 5);
+			canvObj.moveTo(x - size, y - size);
+			canvObj.lineTo(x + size, y + size);
+			canvObj.moveTo(x + size, y - size);
+			canvObj.lineTo(x - size, y + size);
 			canvObj.stroke();
 			canvObj.strokeStyle = color;
 			canvObj.lineWidth = width;
