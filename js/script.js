@@ -546,7 +546,7 @@ $('document').ready(function(){
 		} else
 		if (inp_name == 'traj'){
 			switcher.traj_mode2 = sessionStorage['traj_mode'] = +$(this).attr('value');
-			//background();
+			// background();
 			for (let object in body){
 				res = 20;
 				trace_length = body[object].trace.length;
@@ -1280,18 +1280,23 @@ $('document').ready(function(){
 			}else{
 				switcher.del_pulse -= 0.5;
 			}
+			mv = [0, 0];
+			if (body[swch.t_object]){
+				mv[0] = body[del_radius[1]].vx;
+				mv[1] = body[del_radius[1]].vy;
+			}
 
 			ctx2.beginPath();
 			ctx2.globalAlpha = alpha;
 			ctx2.fillStyle = color;
-			ctx2.arc((crd(body[del_radius[1]].x, 'x', 0)), (crd(body[del_radius[1]].y, 'y', 0)), Math.sqrt(body[del_radius[1]].m)*zm+switcher.del_pulse, 0, 7);
+			ctx2.arc((crd(body[del_radius[1]].x-mv[0], 'x', 0)), (crd(body[del_radius[1]].y-mv[1], 'y', 0)), Math.sqrt(body[del_radius[1]].m)*zm+switcher.del_pulse, 0, 7);
 			ctx2.fill();
 
 			ctx2.beginPath();
 			ctx2.globalAlpha = 1;
 			ctx2.strokeStyle = color;
 			ctx2.lineWidth = 0.7;
-			ctx2.arc((crd(body[del_radius[1]].x, 'x', 0)), (crd(body[del_radius[1]].y, 'y', 0)), Math.sqrt(body[del_radius[1]].m)*zm+switcher.del_pulse, 0, 7);
+			ctx2.arc((crd(body[del_radius[1]].x-mv[0], 'x', 0)), (crd(body[del_radius[1]].y-mv[1], 'y', 0)), Math.sqrt(body[del_radius[1]].m)*zm+switcher.del_pulse, 0, 7);
 			ctx2.stroke();	
 		}
 	}

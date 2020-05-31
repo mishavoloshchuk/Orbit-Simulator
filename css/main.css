@@ -97,6 +97,7 @@ span {
 	display: flex;
 	flex-shrink: 0;
 	flex-direction: row;
+	backdrop-filter: blur(3px);
 	-moz-user-select: none; /* Mozilla Firefox */
 	-ms-user-select: none; /* Internet Explorer (не поддерживается) */
 	-o-user-select: none; /* Opera Presto (не поддерживается) */
@@ -166,6 +167,7 @@ span {
 	z-index: 2;
 	border-bottom-right-radius: 1em;
 	border-bottom-left-radius: 1em;
+	backdrop-filter: blur(3px);
 }
 
 .option_item {
