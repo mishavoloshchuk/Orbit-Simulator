@@ -203,8 +203,10 @@ $('document').ready(function(){
 	function check_select(check_id, state){
 		if (state){
 			$('#'+check_id).attr('checked', '');
+			document.getElementById(check_id).checked = true;
 		} else {
 			$('#'+check_id).removeAttr('checked');
+			document.getElementById(check_id).checked = false;
 		}
 	}
 	function choise_restore(name_session, var_name, cr = 'c'){
@@ -871,11 +873,7 @@ $('document').ready(function(){
 
 		mouseMove = false;
 	}
-	asdf = Date.now();
-	for (var i = 1000000; i--;){
 
-	}
-	console.log(Date.now() - asdf);
 	function calculate(object){
 		obj = obj1 = body_prev[object];
 		// Draw objects
