@@ -10,42 +10,44 @@
 	<script type="text/javascript" src="js/script.js"></script>
 </head>
 <body>
+	<img src="#" class="bg_image" id="background_image">
 	<canvas id="canvas" class="canvas">No browser support!</canvas>
 	<canvas id="canvas2" class="canvas">No browser support!</canvas>
+	<canvas id="canvas3" class="canvas">No browser support!</canvas>
 	<div class="dimmer"></div>
 	<div class="menu">
 		<div class="btn" id='create'>
-			<img src="ico/create.png" alt="Create" title="Создать обьект">
+			<img src="ico/create.png" alt="Create" title="Создать обьект ( C )">
 		</div>
 
 		<div class="btn" id='delete'>
-			<img src="ico/delete.png" alt="Delete" title="Удалить обьект">
+			<img src="ico/delete.png" alt="Delete" title="Удалить обьект ( D )">
 		</div>
 
 		<div class="btn" id='edit'>
-			<img src="ico/edit.png" alt="Edit" title="Редактировать обьект">
+			<img src="ico/edit.png" alt="Edit" title="Редактировать обьект ( E )">
 		</div>
 		
 		<div class="time_panel">
 			<div class="btn" id='timedown'>
-				<img src="ico/speeddown.png" alt="Time speed down" title="Замедлить время">
+				<img src="ico/speeddown.png" alt="Time speed down" title="Замедлить время ( , )">
 			</div>
 
 			<div class="btn" id='pause'>
-				<img src="ico/pause.png" alt="Pause/Play" title="Стоп/Старт">
+				<img src="ico/pause.png" alt="Pause/Play" title="Стоп/Старт ( P )">
 			</div>
 
 			<div class="btn" id='play'>
-				<img src="ico/restore.png" alt="Time default" title="Обычная скорость времени">
+				<img src="ico/restore.png" alt="Time default" title="Обычная скорость времени ( / )">
 			</div>
 
 			<div class="btn" id='timeup'>
-				<img src="ico/speedup.png" alt="Time speed down" title="Ускорить время">
+				<img src="ico/speedup.png" alt="Time speed down" title="Ускорить время ( . )">
 			</div>
 		</div>
 
 		<div class="btn" id='move'>
-			<img src="ico/move.png" alt="Move" title="Переместить">
+			<img src="ico/move.png" alt="Move" title="Переместить ( M )">
 		</div>
 
 		<div class="btn" id='clear'>
@@ -53,11 +55,11 @@
 		</div>
 
 		<div class="btn" id='trajectory'>
-			<img src="ico/trajectory.png" alt="Trajectory" title="Траектории">
+			<img src="ico/trajectory.png" alt="Trajectory" title="Траектории ( T )">
 		</div>
 
 		<div class="btn" id='camera'>
-			<img src="ico/camera.png" alt="Camera" title="Камера">
+			<img src="ico/camera.png" alt="Camera" title="Камера  ( V )">
 		</div>
 
 		<div class="btn" id='refresh'>
@@ -68,12 +70,16 @@
 			<img src="ico/music.png" alt="Music" title="Музыка">
 		</div>
 
+		<div class="btn" id='world_settings'>
+			<img src="ico/functionX.png" alt="Settings" title="Взаимодейстия ( F )">
+		</div>
+
 		<div class="btn" id='settings'>
-			<img src="ico/settings.png" alt="Settings" title="Настройки">
+			<img src="ico/settings.png" alt="Settings" title="Настройки ( S )">
 		</div>
 
 		<div class="btn" id='help'>
-			<img src="ico/help.png" alt="Help" title="Помощь">
+			<img src="ico/help.png" alt="Help" title="Помощь  ( H )">
 		</div>
 
 	</div>
@@ -242,6 +248,7 @@
 				<div><span>• T - Перейти в меню вида траекторий.</span><br></div>
 				<div><span>• V - Перейти в меню камеры.</span><br></div>
 				<div><span>• S - Перейти в меню настроек.</span><br></div>
+				<div><span>• F - Перейти в меню настроек взаемодействий.</span><br></div>
 				<div><span>• Space (Пробел) - Создать новый обьект с круговой орбитой на позиции курсора.</span><br></div>
 				<div><span>• Клик - Создать обьект.</span><br></div>
 				<div><span>• F9 - Вкл\Выкл счетчик FPS.</span><br></div>
@@ -254,8 +261,8 @@
 			</div>
 
 		</div>
-		<!--Simulation Settings-->
-		<div class="settings menu_pos_size menu_pos menu_max_s" id="settings_menu">
+		<!--World Settings-->
+		<div class="world_settings_menu menu_pos_size menu_pos menu_max_s" id="world_settings_men">
 			<div class='option_item title_option_item'>
 				<span>Режимы силы притяжения:</span>
 			</div>
@@ -335,6 +342,43 @@
 				</form>					
 			</div>
 
+		</div>
+
+		<!--Settings-->
+		<div class="settings menu_pos_size menu_pos menu_max_s" id="settings_menu">
+			<div class='option_item title_option_item'>
+				<span>Вид:</span>
+			</div>
+
+			<div class='option_item without_border'>
+				<span>Фоновое изображение: </span>	
+			</div>
+			<div class='option_item without_border' style="padding: 0 10px; color: #ff5555; display: none;" id="url_err_message">
+				<span>*Не найдено изображения по этому адресу </span>	
+			</div>
+			<div class='option_item' style="width: 100%">
+				<input type="text" class='input_text' id="img_url_inp" placeholder="URL Изображения (или GIF)" style="width: 100%">	
+			</div>
+			<div class='option_item' style="width: 100%">
+				<label for="cowbell">Интенсивность фона: </label>
+				<input type="range" id="bg_darkness" min="0" max="1" value="0.8" step="0.01" width="100%" oninput="background_image.style.opacity = this.value">
+			</div>
+
+			<div class='option_item'>
+				<span>Движение фона при движении мыши: </span>
+				<input type="checkbox" class='checkbox' id="mouse_move_bg">			
+			</div>
+
+			<div class='option_item title_option_item'>
+				<span>Разное:</span>
+			</div>
+			<div class='option_item' title="F9">
+				<span>Показывать FPS: </span>
+				<div class="lck_edit_div">
+					<input type="checkbox" class='checkbox' id='check_fps_swch' onmouseout="this.blur();">
+				</div>	
+			</div>
+
 			<div class='option_item title_option_item'>
 				<span>Загрузить/сохранить мир:</span>
 			</div>
@@ -351,8 +395,8 @@
 					</span>
 				</div>		
 			</div>
-
 		</div>
+
 		<!--Camera menu-->
 		<div class="camera_menu menu_pos_size menu_pos menu_max_s" id="camera_menu">
 			<div class='option_item title_option_item'>
@@ -416,6 +460,21 @@
 						<input id="traj_radio_4" class="checkbox" type="radio" name="traj" value=4>
 					</div>
 				</form>
+			</div>
+			
+			<div class="extra_traj_options" style="display: none;">
+				<div class='option_item title_option_item'>
+					<span>Дополнительные параметры:</span>
+				</div>
+
+				<div class='option_item'>
+					<label for="cowbell">Прозрачность: </label>
+					<input type="range" id="trace_opacity" min="0" max="1" value="0.8" step="0.01" width="100%" oninput="canvas3.style.opacity = this.value">
+				</div>
+				<div class='option_item without_border'>
+					<span>Размытие: </span>
+					<input type="number" class='input_num' id='trace_blur' min="0">
+				</div>
 			</div>
 
 		</div>

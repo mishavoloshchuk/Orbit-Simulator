@@ -59,6 +59,17 @@ span {
 	font-size: inherit;
 }
 
+.input_text {
+	width: 10vmin;
+	background-color: rgba(255,255,255,0.16);
+	border: 2px solid rgba(255,255,255,0.16);
+	border-radius: 3px;
+	padding: 5px;
+	color: #ddd;
+	text-shadow: 1px 1px 1px black;
+	font-size: inherit;
+}
+
 #canvas {
 	display: block;
 	position: absolute;
@@ -81,6 +92,21 @@ span {
 	-webkit-user-select: none; /* Google Chrome, Opera Next, Safari */
 }
 
+#canvas3 {
+	display: block;
+	position: absolute;
+	top: 0;
+	z-index: -2;
+	-moz-user-select: none; /* Mozilla Firefox */
+	-ms-user-select: none; /* Internet Explorer (не поддерживается) */
+	-o-user-select: none; /* Opera Presto (не поддерживается) */
+	-webkit-user-select: none; /* Google Chrome, Opera Next, Safari */
+	z-index: -6;
+	mix-blend-mode: screen;
+	filter: blur(3px);
+	opacity: 0.7;
+}
+
 .menu {
 	top: 0;
 	padding: 1px;
@@ -97,7 +123,7 @@ span {
 	display: flex;
 	flex-shrink: 0;
 	flex-direction: row;
-	backdrop-filter: blur(3px);
+	backdrop-filter: blur(5px);
 	-moz-user-select: none; /* Mozilla Firefox */
 	-ms-user-select: none; /* Internet Explorer (не поддерживается) */
 	-o-user-select: none; /* Opera Presto (не поддерживается) */
@@ -167,7 +193,7 @@ span {
 	z-index: 2;
 	border-bottom-right-radius: 1em;
 	border-bottom-left-radius: 1em;
-	backdrop-filter: blur(3px);
+	backdrop-filter: blur(5px);
 }
 
 .option_item {
@@ -293,11 +319,10 @@ span {
 	background-color: rgba(62,62,62,0.7);
 	border-radius: 50%;
 	text-shadow: none;
-	border: 1px solid rgba(255,255,255,0.4);
+	border: 2px solid rgba(255,255,255,0.4);
 	width: 3vmin; height: 3vmin;
 	right: -4vh; top: 6px;
 	font-size: 3vh;
-	padding: 0 0 0.7vh 0;
 	position: absolute;
 	transition: 0.1s;
 	z-index: 2;
@@ -332,4 +357,14 @@ span {
 	background-color: #000000;
 	z-index: -9;
 	opacity: 0.5;
+}
+
+.bg_image {
+	position: absolute;
+	left: 0;
+	top: 0;
+	min-width: 105%;
+	min-height: 105%;
+	z-index: -8;
+	opacity: 0.8;
 }
