@@ -56,6 +56,7 @@ $('document').ready(function(){
 	zm_cff = NaN;
 	zm = 1/1;
 	glob_scale = 1;
+	fram_rend = false;
 
 	//Debug
 	ref_speed = 1;
@@ -253,6 +254,7 @@ $('document').ready(function(){
 	leftMouseDown = false;
 	rightMouseDown = false;
 	middleMouseDown = false;
+	middleWheelSpin = false;
 	mouseMove = false;
 	multiTouch = 0;
 	avTouchPoint = {x: NaN, y: NaN, xd: NaN, yd: NaN};
@@ -281,6 +283,7 @@ $('document').ready(function(){
 		canv.width = canv2.width = canv3.width = window.innerWidth;
 		canv.height = canv2.height = canv3.height = window.innerHeight;
 		adaptive();
+		fram_rend = true;
 	}
 	//Touch events ======================================
 	$('.canvas').on('touchstart', function(event){
@@ -697,33 +700,11 @@ $('document').ready(function(){
 		//	clear2();
 		//	visual_sel_ref = false;
 		//}
-
-		if (switcher.clr_canv2){
-			clear2();
-			switcher.clr_canv2 = false;
-		}
-
-		if (switcher.visT && !leftMouseDown){ //Clear canv2 after calr trajectory
-			clear2();
-			switcher.visT = false;
-		}
-
-		if(!switcher.pause2 && switcher.traj_mode == 1){ clear() };
-
-		if (!switcher.pause || movAnim[5] || switcher.visT){ clear3() }
-
-		if (middleMouseDown || mbut == 'move'){canv2.style.cursor = "move";}else{canv2.style.cursor = "default";};
-
-		if (switcher.interact != switcher.ref_interact){
-			switcher.ref_interact = switcher.interact;
-		}
-		if (switcher.r_gm != switcher.gravit_mode){
-			switcher.r_gm = switcher.gravit_mode;
-		}
-	
+		if (swch.t_object != swch.prev_t_obj){
+			movAnim[5] = true;
+		}	
 		//Анимация перехода камеры
 		if (swch.t_object != swch.prev_t_obj && movAnim[4]){
-			movAnim[5] = true;
 			switcher.pause = true; //Пауза
 			crds = [0,0,0,0,0,0];//Координаты и расстояния
 			if (body[swch.t_object]){ //Если целевой объект существует
@@ -759,6 +740,34 @@ $('document').ready(function(){
 			clear('#000');
 		} else {
 			swch.prev_t_obj = swch.t_object;
+		}
+
+		if (movAnim[5] || (mouseMove && (middleMouseDown || leftMouseDown)) || middleWheelSpin || switcher.visT){
+			fram_rend = true;
+			movAnim[5] = false;
+		}
+		
+		if(!switcher.pause2 && switcher.traj_mode == 1){ clear() };
+
+		if (switcher.clr_canv2){
+			clear2();
+			switcher.clr_canv2 = false;
+		}
+
+		if (switcher.visT && !leftMouseDown){ //Clear canv2 after calc trajectory
+			clear2();
+			switcher.visT = false;
+		}
+
+		if (!switcher.pause || fram_rend){ clear3() }
+
+		if (middleMouseDown || mbut == 'move'){canv2.style.cursor = "move";}else{canv2.style.cursor = "default";};
+
+		if (switcher.interact != switcher.ref_interact){
+			switcher.ref_interact = switcher.interact;
+		}
+		if (switcher.r_gm != switcher.gravit_mode){
+			switcher.r_gm = switcher.gravit_mode;
 		}
 
 		if (tsw){
@@ -806,7 +815,8 @@ $('document').ready(function(){
 			$('.power').css({display: 'none'});
 		}
 	
-		for (let i = 0; i < ref_speed && (!switcher.pause || movAnim[5] || leftMouseDown); i++){
+		for (let i = 0; i < ref_speed && (!switcher.pause || fram_rend); i++){
+			console.log(1);
 			body_prev = JSON.parse(JSON.stringify(body));
 			if (!bodyEmpty){
 				if (!middleMouseDown){
@@ -881,6 +891,8 @@ $('document').ready(function(){
 			switcher.clr_trace = false;
 		}
 		mouseMove = false;
+		middleWheelSpin = false;
+		fram_rend = false;
 	}
 
 	function calculate(object){
@@ -1640,6 +1652,7 @@ $('document').ready(function(){
 	//Scene scale
 	document.addEventListener('wheel', function(e){
 		e_elem = e.target;
+		middleWheelSpin = true;
 		if (layers_id.includes(e_elem.id) && !e.ctrlKey){
 			ms = [e.clientX, e.clientY];
 			if (!middleMouseDown){
@@ -1719,6 +1732,12 @@ $('document').ready(function(){
 			if (e.keyCode == 83 && !e.ctrlKey){ $('#settings').mousedown(); }
 			//camera
 			if (e.keyCode == 86){ $('#camera').mousedown(); }
+			//frame
+			if (e.keyCode == 101){ 
+				for (let obj in body){
+					calculate(obj); // Trajectory calculations of all objects
+				}
+			}
 			//T+
 			if (e.keyCode == 187 || e.keyCode == 61){
 				ref_speed *= 2;
