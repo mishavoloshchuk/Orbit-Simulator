@@ -124,7 +124,7 @@ $('document').ready(function(){
 		zoomToScreenCenter: false, vis_distance: false, sel_orb_obj: false, 
 		launch_pwr: 1, create_obj_pause: true, traj_accuracity: 1, collision_mode: 0,
 		trace_opacity: 0.7, trace_blur: 0, mous_mov_bg: true, bg_img_url: 'background/background.jpg',
-		bg_darkness: 0.8}; // Collisions: repulsion merge none
+		bg_darkness: 0.8, clr_trace: false, clr_canv2: true, visT: false}; // Collisions: repulsion merge none
 
 	swch = {s_track: true, t_object: false, prev_t_obj: false, vis_traj: false,
 		s_edit: true, edit_obj: false, orb_obj: 'sun', equilib_orb: false};
@@ -265,13 +265,6 @@ $('document').ready(function(){
 			col = '#000000';
 			ctx3.fillStyle = col;
 			ctx3.fillRect(0, 0, canv.width, canv.height);
-
-			//var idata =  ctx.getImageData(0,0,canv.width,canv.height);
-			//ctx.clearRect(0, 0, canv.width, canv.height);
-			//for (var i = 0; i < idata.data.length; i+=4){
-			//	idata.data[i+3] = idata.data[i+3] > 50 ? idata.data[i+3]-1:50;
-			//}
-			//ctx.putImageData(idata,0,0);
 			ctx3.globalAlpha = 1;
 		} else {
 			ctx3.clearRect(0, 0, canv.width, canv.height);
@@ -578,6 +571,7 @@ $('document').ready(function(){
 			body[swch.edit_obj].color = document.getElementById(chck).value;
 		} else
 		if (inp_name == 'traj'){
+			switcher.clr_trace = true; // Стирание следа
 			switcher.traj_mode2 = sessionStorage['traj_mode'] = +$(this).attr('value');
 			for (let object in body){
 				res = 20;
@@ -691,21 +685,32 @@ $('document').ready(function(){
 		mcamX = -window.innerWidth/2 * (zm-1);
 		mcamY = -window.innerHeight/2 * (zm-1);
 
-		if (leftMouseDown){
-			if (mouseMove || !switcher.create_obj_pause){
-				clear2();
-			}
-		} else {
-			clear2(); //Comment to leave trace
-		};
-		if (!switcher.create_obj_pause){clear2()}; //Comment to leave trace
-		if (visual_sel_ref){
+		//if (leftMouseDown){
+		//	if (mouseMove || !switcher.create_obj_pause){
+		//		clear2();
+		//	}
+		//} else {
+		//	clear2(); //Comment to leave trace
+		//};
+		//if (!switcher.create_obj_pause){clear2()}; //Comment to leave trace
+		//if (visual_sel_ref){
+		//	clear2();
+		//	visual_sel_ref = false;
+		//}
+
+		if (switcher.clr_canv2){
 			clear2();
-			visual_sel_ref = false;
+			switcher.clr_canv2 = false;
 		}
 
-		if (switcher.traj_mode != 1){clear('#000')}else{if(!switcher.pause2){clear();};};
-		if (!switcher.pause || movAnim[4]){ clear3() }
+		if (switcher.visT && !leftMouseDown){ //Clear canv2 after calr trajectory
+			clear2();
+			switcher.visT = false;
+		}
+
+		if(!switcher.pause2 && switcher.traj_mode == 1){ clear() };
+
+		if (!switcher.pause || movAnim[5] || switcher.visT){ clear3() }
 
 		if (middleMouseDown || mbut == 'move'){canv2.style.cursor = "move";}else{canv2.style.cursor = "default";};
 
@@ -800,7 +805,7 @@ $('document').ready(function(){
 		if (mbut != 'create'){
 			$('.power').css({display: 'none'});
 		}
-		
+	
 		for (let i = 0; i < ref_speed && (!switcher.pause || movAnim[5] || leftMouseDown); i++){
 			body_prev = JSON.parse(JSON.stringify(body));
 			if (!bodyEmpty){
@@ -837,6 +842,13 @@ $('document').ready(function(){
 			switcher.traj_mode = switcher.traj_mode2;
 		}
 
+		if (mbut == 'create' && !leftMouseDown){
+			if (switcher.traj_pause){
+				switcher.pause = false;
+				delete switcher.traj_pause;
+			}
+		}
+
 		if (mbut == 'create' && leftMouseDown && !rightMouseDown){
 			if (!switcher.pause && switcher.create_obj_pause){
 				switcher.pause = true;
@@ -854,13 +866,6 @@ $('document').ready(function(){
 				traj_prev(obj_for_traj, traj_calc_smpls, ['#006BDE', '#ffffff'], true, switcher.traj_accuracity);
 			}
 		}
-		if (mbut == 'create' && !leftMouseDown){
-			if (switcher.traj_pause){
-				switcher.pause = false;
-				delete switcher.traj_pause;
-			}
-		}
-
 		if (t_wrap){
 			$('.time_speed h2').html('T - X'+t);
 			for (let i in body){
@@ -871,6 +876,10 @@ $('document').ready(function(){
 			t_wrap = false;
 		}
 
+		if (switcher.clr_trace){ // Стирание следа
+			clear(1);
+			switcher.clr_trace = false;
+		}
 		mouseMove = false;
 	}
 
@@ -885,22 +894,23 @@ $('document').ready(function(){
 		obCol = obj.color;
 		render = (prev_x != body[object].x + cam_x + mov[0]/zm && prev_y != body[object].y + cam_y + mov[1]/zm)?true:false;
 
-		if (traj_ref){		
-			if (!render){
+		if (traj_ref){
+			if (t_mod == 1){
+				if (!render){
+					ctx3.beginPath();
+					ctx3.fillStyle = '#000000';
+					ctx3.arc(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0), (obj_rad+0.125), 0, 7);
+					ctx3.fill();
+				}
+				ctx3.fillStyle = obCol;
 				ctx3.beginPath();
-				ctx3.fillStyle = '#000000';
-				ctx3.arc(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0), (obj_rad+0.125), 0, 7);
+				ctx3.arc(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0), obj_rad, 0, 7);
 				ctx3.fill();
-			}
-			ctx3.fillStyle = obCol;
-			ctx3.beginPath();
-			ctx3.arc(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0), obj_rad, 0, 7);
-			ctx3.fill();
-
+			}	
 			ctx.fillStyle = obCol;
 			ctx.beginPath();
 			ctx.arc(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0), obj_rad, 0, 7);
-			ctx.fill();
+			ctx.fill();			
 		}
 		res = false;
 		acc = 1000; // Точность следа
@@ -1201,6 +1211,8 @@ $('document').ready(function(){
 	}
 
 	function visual_trajectory(){
+		clear2();
+		switcher.visT = true;
 		mcx = mouse_coords[2] ? mouse_coords[2] - (mouse_coords[2] - mouse_coords[0])/10 : mouse_coords[0];
 		mcy = mouse_coords[3] ? mouse_coords[3] - (mouse_coords[3] - mouse_coords[1])/10 : mouse_coords[1];
 
@@ -1306,6 +1318,7 @@ $('document').ready(function(){
 				ctx2.arc(obj_cord[0], obj_cord[1], 3, 0, 7);
 				ctx2.fill();
 				ctx2.beginPath();
+				switcher.clr_canv2 = true;
 
 				$('.power').css({left: mouse_coords[0]-10, top: mouse_coords[1]-30, display: 'block', color: col});
 				$('.power').html((Math.round(size/zm*1000)/1000));
@@ -1358,7 +1371,8 @@ $('document').ready(function(){
 			ctx2.strokeStyle = color;
 			ctx2.lineWidth = 2;
 			ctx2.arc((crd(body[del_radius[1]].x-mv[0], 'x', 0)), (crd(body[del_radius[1]].y-mv[1], 'y', 0)), Math.sqrt(body[del_radius[1]].m)*zm+switcher.del_pulse, 0, 7);
-			ctx2.stroke();	
+			ctx2.stroke();
+			switcher.clr_canv2 = true;
 		}
 	}
 	//Удаление объекта
