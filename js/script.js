@@ -26,6 +26,7 @@ $('document').ready(function(){
 	swt = false;
 	traj = true;
 	
+	// === ...
 	mov_obj = '';
 	trace_resolution = [0, 2, false];
 	multiTouches = [];
@@ -38,6 +39,7 @@ $('document').ready(function(){
 	num = 0;
 	del = false;
 	body_prev = {};
+	frameTime = [0, Date.now()];
 
 	//settings
 	G = 1;
@@ -50,13 +52,17 @@ $('document').ready(function(){
 	prev_cam_x = 0;
 	prev_cam_y = 0;
 	mov = [0, 0, 0, 0];
+	pmov = [0, 0];
 	movAnim = [0, 0, 0, 0, true, false];
 	anim_cam = [0, 0, true];
 	zm_prev = 1;
 	zm_cff = NaN;
-	zm = 1/1;
+	pzm = 1;
+	zm = 1/1.3;
+	zspd = 1.25;
 	glob_scale = 1;
 	fram_rend = false;
+
 
 	//Debug
 	ref_speed = 1;
@@ -72,13 +78,9 @@ $('document').ready(function(){
 	}
 	function fps(){
 		$('.fps').html('FPS: '+fps_count);
-		if (fps_count >= 45){
-			$('.fps').css({color: '#0f0'});
-		} else if (fps_count >= 20){
-			$('.fps').css({color: '#ff0'});
-		} else {
-			$('.fps').css({color: '#f04'});
-		}
+		if (fps_count >= 45){ $('.fps').css({color: '#0f0'}) }
+		else if (fps_count >= 20){ $('.fps').css({color: '#ff0'}) } 
+		else { $('.fps').css({color: '#f04'}) }
 		fps_count = 0;
 	}
 
@@ -422,7 +424,8 @@ $('document').ready(function(){
 			middleMouseDown = true;
 			mpos[0] = event.clientX - cam_x*zm; mpos[1] = event.clientY - cam_y*zm;
 
-			mov[0] = cam_x*zm+mov[2]; mov[1] = cam_y*zm+mov[3];
+			pmov[0] = cam_x*zm+mov[2]; pmov[1] = cam_y*zm+mov[3];
+			if (swch.t_object){ mov[0] = pmov[0]; mov[1] = pmov[1]; }
 
 			swch.t_object = false;
 			swch.prev_t_obj = false;
@@ -503,8 +506,8 @@ $('document').ready(function(){
 		if (event.which == 2 || !mscam){
 			middleMouseDown = false;
 			menu_open_restore();
-			mov[2] = mov[0];
-			mov[3] = mov[1];
+			mov[2] = pmov[0];
+			mov[3] = pmov[1];
 		}
 		if (touch){
 			multiTouch --;
@@ -544,8 +547,8 @@ $('document').ready(function(){
 			}
 		}
 		if (middleMouseDown){
-			mov[0] = event.clientX - mpos[0] + mov[2];
-			mov[1] = event.clientY - mpos[1] + mov[3];
+			pmov[0] = event.clientX - mpos[0] + mov[2];
+			pmov[1] = event.clientY - mpos[1] + mov[3];
 			clear('#000000');
 			mstate = menu_state;
 			close_all_menus(); menu_state = mstate;
@@ -694,6 +697,12 @@ $('document').ready(function(){
 		window.requestAnimationFrame(frame);
 		t = times;
 		if (show_fps){fps_count ++;}
+		//FrameTime
+		frameTime[0] = Date.now() - frameTime[1];
+		frameTime[1] = Date.now();
+		//
+
+		zspd = 1.25*frameTime[0]/16;
 
 		bodyEmpty = isEmptyObject(body);
 
@@ -703,25 +712,32 @@ $('document').ready(function(){
 			swch.orb_obj = usr_orb_obj;
 		}
 
+		mzVals = [zm, mov[0], mov[1]];
+		if (!swch.prev_t_obj && !switcher.zoomToScreenCenter){
+			zm = (zm + pzm/(1/(zspd-1)))/zspd;
+			mov[0] = (mov[0] + pmov[0]/(1/(zspd-1)))/zspd;
+			mov[1] = (mov[1] + pmov[1]/(1/(zspd-1)))/zspd;
+		} else {
+			zm = (zm + pzm/(1/(zspd-1)))/zspd;
+			mov[0] = (mov[0] + pmov[0]/(1/(zspd-1)))/zspd;
+			mov[1] = (mov[1] + pmov[1]/(1/(zspd-1)))/zspd;
+		}
+		if (rnd(zm,2,'c') != rnd(mzVals[0],2,'c') || rnd(mov[0],2,'c') != rnd(mzVals[1],2,'c') || rnd(mov[1],2,'c') != rnd(mzVals[2],2,'c')){
+			clear(1);
+		}
+
 		mcamX = -window.innerWidth/2 * (zm-1);
 		mcamY = -window.innerHeight/2 * (zm-1);
-
-		//if (leftMouseDown){
-		//	if (mouseMove || !switcher.create_obj_pause){
-		//		clear2();
-		//	}
-		//} else {
-		//	clear2(); //Comment to leave trace
-		//};
-		//if (!switcher.create_obj_pause){clear2()}; //Comment to leave trace
-		//if (visual_sel_ref){
-		//	clear2();
-		//	visual_sel_ref = false;
-		//}
+		
+		//Анимация перехода камеры
 		if (swch.t_object != swch.prev_t_obj){
 			movAnim[5] = true;
-		}	
-		//Анимация перехода камеры
+			pmov[0] = pmov[1] = 0;
+			mov[0] = mov[1] = 0;
+			//if (swch.t_object){
+			//	pmov[0] = body[swch.t_object].x; pmov[1] = body[swch.t_object].y;
+			//}
+		}
 		if (swch.t_object != swch.prev_t_obj && movAnim[4]){
 			switcher.pause = true; //Пауза
 			crds = [0,0,0,0,0,0];//Координаты и расстояния
@@ -766,7 +782,6 @@ $('document').ready(function(){
 		}
 		
 		if(!switcher.pause2 && switcher.traj_mode == 1){ clear() };
-		if (!switcher.pause2 && switcher.traj_mode != 1) { clear(1) }
 
 		if (switcher.clr_canv2){
 			clear2();
@@ -851,6 +866,7 @@ $('document').ready(function(){
 					cam_x = 0 + anim_cam[0];
 					cam_y = 0 + anim_cam[1];
 				}
+				if (!switcher.pause2 && switcher.traj_mode != 1) { clear(1) }
 				for (let obj in body){
 					calculate(obj); // Trajectory calculations of all objects
 				}
@@ -1212,7 +1228,7 @@ $('document').ready(function(){
 	}
 
 	function collision(obj, obj2, obj_name, obj2_name, ob_arr, R, type='merge'){
-		if (R - (Math.sqrt(obj.m) + Math.sqrt(obj2.m)) <= 0){
+		if (R**2 - (obj.m + obj2.m) <= 0){
 			if (obj.m >= obj2.m && (type == 'merge' || type == 0)){
 				ob_arr[obj_name].color = mixColors(obj.color, obj2.color, obj.m, obj2.m);
 				ob_arr[obj_name].m = obj.m + obj2.m;
@@ -1695,27 +1711,29 @@ $('document').ready(function(){
 				vl = 1.25;
 				if (!swch.prev_t_obj && !switcher.zoomToScreenCenter){
 					if (e.deltaY > 0){
-						zm /= vl;
-						mov[0] = mov[0] / vl - (canv.width/2 - ms[0]) / (vl/(vl-1));
-						mov[1] = mov[1] / vl - (canv.height/2 - ms[1]) / (vl/(vl-1));
-						mov[2] = mov[0]; mov[3] = mov[1];
+						pzm /= vl;
+						pmov[0] = pmov[0] / vl - (canv.width/2 - ms[0]) / (vl/(vl-1));
+						pmov[1] = pmov[1] / vl - (canv.height/2 - ms[1]) / (vl/(vl-1));
+						mov[2] = pmov[0]; mov[3] = pmov[1];
 					} else {
-						zm *= vl
-						mov[0] = mov[0] * vl + (canv.width/2 - ms[0]) / (1/(vl-1));
-						mov[1] = mov[1] * vl + (canv.height/2 - ms[1]) / (1/(vl-1));
-						mov[2] = mov[0]; mov[3] = mov[1];
+						pzm *= vl
+						pmov[0] = pmov[0] * vl + (canv.width/2 - ms[0]) / (1/(vl-1));
+						pmov[1] = pmov[1] * vl + (canv.height/2 - ms[1]) / (1/(vl-1));
+						mov[2] = pmov[0]; mov[3] = pmov[1];
 					}
 				} else {
 					if (e.deltaY > 0){
-						zm /= vl;
-						mov[0] /= vl;
-						mov[1] /= vl;
-						mov[2] = mov[0]; mov[3] = mov[1];
+						pzm /= vl;
+						pmov[0] /= vl;
+						pmov[1] /= vl;
+						mov[2] /= vl;
+						mov[3] /= vl;
 					} else {
-						zm *= vl
-						mov[0] *= vl;
-						mov[1] *= vl;
-						mov[2] = mov[0]; mov[3] = mov[1];
+						pzm *= vl
+						pmov[0] *= vl;
+						pmov[1] *= vl;
+						mov[2] *= vl;
+						mov[3] *= vl;
 					}
 				}
 				clear('#000000');
@@ -2014,11 +2032,8 @@ $('document').ready(function(){
 		if (cbut == 'clear_camera_settings'){
 			clear('#000');
 			swch.t_object = false;
-			zm = 1;
-			mov[0] = 0;
-			mov[1] = 0;
-			mov[2] = 0;
-			mov[3] = 0;
+			pzm = 1;
+			mov[2] = mov[3] = pmov[0] = pmov[1] = 0;
 		}
 		if (cbut == 'select_edit_obj'){
 			if (swch.s_edit){
@@ -2301,4 +2316,15 @@ $('document').ready(function(){
 		return true;
 	}
 
+	function rnd(num, dot = 0, fc = false){
+		if (!fc){
+			return Math.round(num * 10**dot)/10**dot;
+		} else {
+			if (fc == 'f'){
+				return Math.floor(num * 10**dot)/10**dot;
+			} else if (fc == 'c'){
+				return Math.floor(num * 10**dot)/10**dot;
+			}
+		}
+	}
 });
