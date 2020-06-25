@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
+		<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@600&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet">
 		<style type="text/css">
 			body {
 				text-align: center;
-				background-image: url('background.jpg');
+				background: rgb(131,58,180);
+				background: linear-gradient(0deg, rgba(131,58,180,1) 0%, rgba(253,29,29,1) 50%, rgba(252,176,69,1) 100%);
 				background-position: center;
 				background-repeat: no-repeat;
 				background-size: cover;
@@ -12,17 +15,17 @@
 				padding: 0;
 				margin: 0;
 				text-shadow: 2px 2px 3px #000;
-				font-family: arial;
+				font-family: 'Comfortaa', 'arial';
 				height: 100vh;
 			}
 
 			progress {
-				background-color: #f3f3f3;
+				background: rgb(207,142,142);
+				background: linear-gradient(0deg, rgba(207,142,142,1) 17%, rgba(175,175,175,1) 85%);
 				border: 0;
 				height: 50px;
 				border-radius: 30px 150px;
 				width: 95%;
-				box-shadow: 0 0 50px #000;
 				transition: 0.2s;
 				transition-timing-function: ease-in;
 			}
@@ -33,11 +36,13 @@
 				border-radius: 30px 150px;
 			}
 			progress::-webkit-progress-value {
-				background-color: #ddd;
+				background: rgb(243,205,255);
+				background: linear-gradient(0deg, rgba(243,205,255,1) 0%, rgba(255,255,255,1) 100%);
 				border: 0;
 				height: 50px;
 				border-radius: 30px 150px;
 				transition: 0.5s;
+				box-shadow: 0 0 30px rgba(255,100,255,1);
 			}
 			progress::-moz-progress-bar {
 				background-color: #f3f3f3;
@@ -56,19 +61,30 @@
 
 			p {
 				text-shadow: 2px 2px 3px #000;
+				font-size: 2vmin;
 			}
 
 			h1 {
 				font-size: 100px;
 				margin: 0;
+				text-shadow: none;
 			}
 
 			h2 {
 				margin: 0;
+				opacity: 0.8;
+				font-size: 4vmin;
+			}
+
+			h3 {
+				font-size: 3vmin;
 			}
 
 			header {
 				z-index: 1;
+				background-color: rgba(200,200,200,0.4);
+				border-bottom: 1px solid rgba(255,255,255,0.5);
+				font-family: Lobster;
 			}
 
 			#percent {
@@ -139,23 +155,26 @@
 				}
 
 			}
+			font-family: 'Comfortaa', cursive;
+			font-family: 'Lobster', cursive;
 
 		</style>
+		<meta charset="utf-8">
 		<link rel="shortcut icon" href="img/time.png" type="image/icon">
 		<script type="text/javascript" src="script.js"></script>
-		<title>▼==СКОРО ДНЮХА==▼</title>
+		<title>▼==ДЕНЬ НАРОДЖЕННЯ==▼</title>
 	</head>
 	<body>
-		<header style="background-color: rgba(0,0,0,0.6);">
+		<header>
 			<br>
 			<h2>Зворотній відлік до дня народження!</h2>
 			<br>
-			<hr>
 		</header>
 		<div class="container">
 			<div class="timer">
 				<h3>Часу залишилось:)</h3>
-				<h1 id="timleft"></h1>
+				<hr style="width: 40%; color: white;">
+				<h1 id="timleft" style="font-family: arial">__:__:__._</h1>
 				<progress value="" max="100" id="progressbar"></progress>
 				<p>В секундах: <p id="time"></p></p>
 			</div>
