@@ -41,6 +41,11 @@ $('document').ready(function(){
 	body_prev = {};
 	frameTime = [0, Date.now()];
 
+	// Clear delay
+	clrDelay = false;
+	clrDTim = 300;
+	clrTmt = setTimeout(function(){clrDelay = false}, clrDTim);
+
 	//settings
 	G = 1;
 
@@ -547,6 +552,9 @@ $('document').ready(function(){
 			}
 		}
 		if (middleMouseDown){
+			clrDelay = true;
+			clearTimeout(clrTmt);
+			clrTmt = setTimeout(function(){clrDelay = false}, clrDTim);
 			pmov[0] = event.clientX - mpos[0] + mov[2];
 			pmov[1] = event.clientY - mpos[1] + mov[3];
 			clear('#000000');
@@ -722,9 +730,8 @@ $('document').ready(function(){
 			mov[0] = (mov[0] + pmov[0]/(1/(zspd-1)))/zspd;
 			mov[1] = (mov[1] + pmov[1]/(1/(zspd-1)))/zspd;
 		}
-		if (rnd(zm,2,'c') != rnd(mzVals[0],2,'c') || rnd(mov[0],2,'c') != rnd(mzVals[1],2,'c') || rnd(mov[1],2,'c') != rnd(mzVals[2],2,'c')){
-			clear(1);
-		}
+		// Clear delay
+		if (clrDelay){ clear(1) }
 
 		mcamX = -window.innerWidth/2 * (zm-1);
 		mcamY = -window.innerHeight/2 * (zm-1);
@@ -848,7 +855,6 @@ $('document').ready(function(){
 		if (mbut != 'create'){
 			$('.power').css({display: 'none'});
 		}
-	
 		for (let i = 0; i < ref_speed && (!switcher.pause || fram_rend); i++){
 			body_prev = JSON.parse(JSON.stringify(body));
 			if (!bodyEmpty){
@@ -1705,6 +1711,9 @@ $('document').ready(function(){
 	document.addEventListener('wheel', function(e){
 		e_elem = e.target;
 		middleWheelSpin = true;
+		clrDelay = true;
+		clearTimeout(clrTmt);
+		clrTmt = setTimeout(function(){clrDelay = false}, clrDTim);
 		if (layers_id.includes(e_elem.id) && !e.ctrlKey){
 			ms = [e.clientX, e.clientY];
 			if (!middleMouseDown){
@@ -1805,12 +1814,22 @@ $('document').ready(function(){
 			}
 			//zoom in
 			if (e.keyCode == 107){
-				zm *= 2;
+				vl = 1.25;
+				pzm *= vl
+				pmov[0] *= vl;
+				pmov[1] *= vl;
+				mov[2] *= vl;
+				mov[3] *= vl;
 				clear('#000');
 			}
 			//zoom out
 			if (e.keyCode == 109){
-				zm *= 0.5;
+				vl = 1.25;
+				pzm /= vl;
+				pmov[0] /= vl;
+				pmov[1] /= vl;
+				mov[2] /= vl;
+				mov[3] /= vl;
 				clear('#000');
 			}
 			//fps
@@ -2030,6 +2049,9 @@ $('document').ready(function(){
 			}		
 		}
 		if (cbut == 'clear_camera_settings'){
+			clrDelay = true;
+			clearTimeout(clrTmt);
+			clrTmt = setTimeout(function(){clrDelay = false}, clrDTim);
 			clear('#000');
 			swch.t_object = false;
 			pzm = 1;

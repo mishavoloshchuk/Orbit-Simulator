@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Щастя, здоров'я)</title>
+	<link rel="shortcut icon" href="img/box.png" type="image/icon">
+	<script type="text/javascript">
+		window.onload = function(){
+			button.onmouseup = function(){
+				vid_container.innerHTML = '<iframe class="video-item" frameborder="" allowfullscreen="allowfullscreen" src="https://www.youtube.com/embed/ajELnyVar9A?autoplay=0"></iframe><h2>:)😄</h2>';
+			}
+		}
+
+		function roundPlus( x, n ) { //x - число, n - количество знаков 
+			if(isNaN(x) || isNaN(n)) {return false;
+			} else { 
+				var m = Math.pow(10,n);
+				return Math.round(x*m)/m; 
+			}
+		}
+
+		t1 = 1571173200;
+		t2 = Date.now();
+		sec = roundPlus((t1 - t2/1000), 1);
+
+		if ( sec > 0 ) { document.location.href = "/"; };
+
+	</script>
+
+	<style type="text/css">
+		body {
+			margin: 0;
+			background-color: #690B95;
+			background-position: center;
+			background-repeat: no-repeat;
+			background-size: cover;
+			height: 100vh;
+			overflow: hidden;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+		}
+
+		h2 {
+			color: white;
+			font-size: 100px;
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		.video {
+			display: inline-block;
+			text-align: center;
+			width: 100%;
+		}
+
+		.video-item {
+			margin: 15vh auto 0 0;
+			width: 80vh;
+			max-width: 95%;
+			height: 45vh;
+			transition: 0.2s;
+			border: 10px solid #B413FF;
+			border-radius: 10px;
+			box-shadow: 3px 3px 50px black;
+		}
+
+
+		#button {
+			height: 30vh;
+			transition: 0.5s;
+			animation-duration: 2s;
+			animation-name: slidein;
+			animation-fill-mode: backwards;
+
+			-webkit-filter: drop-shadow(0px 0px 10px #222);
+			filter: drop-shadow(0px 0px 10px #222); 
+		}
+
+		#button:hover {
+			-webkit-filter: drop-shadow(0px 0px 40px #fff);
+			filter: drop-shadow(0px 0px 40px #fff);
+			cursor: pointer;
+
+		}
+
+		.rot {
+			display: inline-block;
+			transition: 0.5s;
+			animation-duration: .5s;
+			animation-name: rotation;
+			animation-delay: 1.3s;
+			animation-iteration-count: infinite;
+			animation-direction: alternate;
+		}
+
+		.happy {
+			color: #fff;
+			text-transform: uppercase;
+			font-family: arial;
+			font-size: 50px;
+			margin: 10px 0;
+			text-shadow: 3px 3px 8px rgba(0,0,0,1);
+			animation-duration: 2s;
+			animation-name: txt;
+			animation-fill-mode: forwards;
+			display: inline-block;
+		}
+		
+		.name {
+			color: #fff;
+			font-family: arial;
+			font-weight: 700;
+			font-size: 30px;
+			text-shadow: 3px 3px 8px rgba(0,0,0,1), 1px 1px 3px rgba(255,0,0,0.5);
+			animation-delay: 0.8 s;
+			transform: translateY(1000%);
+			animation-duration: 0.5s;
+			animation-name: slide;
+			animation-fill-mode: forwards;
+			display: inline-block;
+		}
+
+		.darken {
+			background-color: rgba(0,0,0,1);
+			width: 100%;
+			height: 100vh;
+			position: absolute;
+			top: 0;
+			z-index: -1;
+			animation-duration: 1s;
+			animation-name: dark;
+			animation-fill-mode: forwards;
+
+		}
+
+		@keyframes txt {
+		  0% {
+			opacity: 0;
+			transform: scale(1.5);
+		  }
+
+		  100% {
+			opacity: 1;
+			transform: rotate(1);
+		  }
+
+		}
+
+		@keyframes dark {
+		  0% {
+			opacity: 0;
+		  }
+
+		  100% {
+			opacity: 0.3;
+		  }
+
+		}
+
+		@keyframes slidein {
+		  0% {
+		    transform: scale(0);
+			opacity: 0;
+		  }
+
+		  100% {
+		    transform: scale(1);
+			opacity: 1;
+		  }
+
+		}
+		@keyframes slide {
+		  0% {
+		    transform: translateY(1000%);
+		  }
+
+		  100% {
+		   	transform: translateY(0);
+		  }
+
+		}
+		@keyframes rotation {
+		  from {
+		    transform: scale(1);
+		  }
+
+		  to {
+		    transform: scale(0.8);
+		  }
+
+		}
+	</style>
+</head>
+<body style="background-image: url('img/background.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat; background-attachment: fixed;";>
+	<div class="video" id='vid_container'>
+		<div class="rot">
+			<img id='button' src="img/box.png">
+		</div> <br>
+
+		<h2 class="happy">З днем народження!</h2><br>
+		<h2 class="name">for<br><hr>Kseniya Ostafiychuk</h2>
+	</div>
+	
+	<div class="darken"></div>
+	
+</body>
+</html>

@@ -1,10 +1,9 @@
-jQuery("document").ready(function() {
+window.onload = function(){
 
 	function roundPlus(x, n) { //x - число, n - количество знаков 
 		if(isNaN(x) || isNaN(n)) {return false;
 		} else { 
-			var m = Math.pow(10,n);
-			return Math.round(x*m)/m; 
+			return Math.round(x*10**n)/10**n;
 		}
 	}
 
@@ -15,32 +14,20 @@ jQuery("document").ready(function() {
 
 	function zero(num, s = false) {
 		if (s==false){
-				if (num < 10) {
-					return '0' + num;
-				} else {
-					return num;
-				}
-
+			if (num < 10) { return '0' + num; } else { return num; }
+		} else {
+			if (num != Math.round(num)){
+				if (num < 10) { return '0' + num; 	} else { return num; }	
 			} else {
-				if (num != Math.round(num)){
-					if (num < 10) {
-						return '0' + num;
-					} else {
-						return num;
-					}	
-				} else {
-					if (num < 10) {
-						return '0' + num + '.0';
-					} else {
-						return num + '.0';
-					}						
-				}
+				if (num < 10) { return '0' + num + '.0'; } else { return num + '.0'; }						
 			}
 		}
+	}
 
 
 	function ref() {
-		t1 = 1571173200;
+		st  = 1591197330;
+		t1 = 1622678400;
 		t2 = Date.now()/1000;
 		sec = roundPlus((t1 - t2), 1);
 
@@ -51,11 +38,11 @@ jQuery("document").ready(function() {
 		}
 
 		remind = convertt(sec);
-		$("#progressbar").attr("value", 290356 - sec);
-		$("#timleft").html(remind);
-		$("#time").html(Math.round(sec));
+		progressbar.value = (1-sec/(t1-st))*100;
+		timleft.innerHTML = remind;
+		time.innerHTML = Math.floor(sec);
 	}
-		setInterval(ref, 1000 / 10);
+	setInterval(ref, 100);
 
 	function convertt(sec, symb=':') {
 		hour = Math.floor(sec / 60 / 60);
@@ -63,11 +50,4 @@ jQuery("document").ready(function() {
 		seconds = sec % 60 % 60;
 		return String(zero(hour)) + symb + String(zero(minutes)) + symb + String(zero(roundnumb(seconds, 2), true));
 	}
-
-	function convertti(sec, symb=':') {
-		hour = Math.floor(sec / 60 / 60);
-		minutes = Math.floor(sec / 60 - hour * 60);
-		seconds = sec % 60 % 60;
-		return String(zero(hour)) + symb + String(zero(minutes)) + symb + String(zero(roundnumb(seconds, 2), true));
-	}
-});	
+};	
