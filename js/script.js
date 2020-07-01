@@ -696,7 +696,7 @@ $('document').ready(function(){
 		*/
 	});
 
-	function rad(x1, y1, x2, y2){ return Math.sqrt((x1 - x2)**2 + (y1 - y2)**2) }
+	function rad(x1, y1, x2, y2){ return Math.sqrt(pw((x1 - x2), 2) + pw((y1 - y2), 2)) }
 	function gipot(a,b){return Math.sqrt(a*a + b*b) }
 
 	window.requestAnimationFrame(frame);
@@ -1234,7 +1234,7 @@ $('document').ready(function(){
 	}
 
 	function collision(obj, obj2, obj_name, obj2_name, ob_arr, R, type='merge'){
-		if (R**2 - (obj.m + obj2.m) <= 0){
+		if (pw(R, 2) - (obj.m + obj2.m) <= 0){
 			if (obj.m >= obj2.m && (type == 'merge' || type == 0)){
 				ob_arr[obj_name].color = mixColors(obj.color, obj2.color, obj.m, obj2.m);
 				ob_arr[obj_name].m = obj.m + obj2.m;
@@ -2331,6 +2331,7 @@ $('document').ready(function(){
 		};
 	}
 
+	function pw(a, b){return Math.pow(a, b)}
 	function isEmptyObject(obj) {
 		for (var i in obj) {
 			return false;
@@ -2340,12 +2341,12 @@ $('document').ready(function(){
 
 	function rnd(num, dot = 0, fc = false){
 		if (!fc){
-			return Math.round(num * 10**dot)/10**dot;
+			return Math.round(num * pw(10, dot))/pw(10, dot);
 		} else {
 			if (fc == 'f'){
-				return Math.floor(num * 10**dot)/10**dot;
+				return Math.floor(num * pw(10, dot))/pw(10, dot);
 			} else if (fc == 'c'){
-				return Math.floor(num * 10**dot)/10**dot;
+				return Math.floor(num * pw(10, dot))/pw(10, dot);
 			}
 		}
 	}
