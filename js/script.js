@@ -14,7 +14,7 @@ $('document').ready(function(){
 	mouse = [];
 	mpos = [];
 	mbut = 'create';
-	menu_state = true;
+	menu_state = true; // Menu state (Opened/Closed)
 	if (sessionStorage['mbut'] && sessionStorage['menu_state']){
 		mbut = sessionStorage['mbut'];
 		menu_state = sessionStorage['menu_state'] == 'true' ? true : false;
@@ -27,45 +27,43 @@ $('document').ready(function(){
 	traj = true;
 	
 	// === ...
-	mov_obj = '';
+	mov_obj = ''; // Moving object name
 	trace_resolution = [0, 2, false];
-	multiTouches = [];
+	multiTouches = []; // Touchs points count
 	paus = false;
 	bodyEmpty = false;
 	traj_ref = true;
 	dis_zone = 5;
-	visual_sel_ref = false;
 	spawn = false;
-	num = 0;
-	del = false;
+	num = 0; // Objects naming counter
 	body_prev = {};
-	frameTime = [0, Date.now()];
+	frameTime = [0, Date.now()]; // Frametime
+	pause_gAnim = false; // Camera animation in pause
 
-	// Clear delay
+	// Clear trace delay
 	clrDelay = false;
 	clrDTim = 300;
 	clrTmt = setTimeout(function(){clrDelay = false}, clrDTim);
 
 	//settings
-	G = 1;
+	G = 1; // Gravitation power
 
 	//Camera
-	cam_x = 0;
-	cam_y = 0;
-	mcamX = 0;
-	mcamY = 0;
+	cam_x = 0; // Track object camera offset
+	cam_y = 0; // Track object camera offset
+	mcamX = 0; // Center displey offset
+	mcamY = 0; // Center displey offset
 	prev_cam_x = 0;
 	prev_cam_y = 0;
-	mov = [0, 0, 0, 0];
+	mov = [0, 0, 0, 0]; // Camera offset relatively screen center
 	pmov = [0, 0];
 	movAnim = [0, 0, 0, 0, true, false];
 	anim_cam = [0, 0, true];
 	zm_prev = 1;
 	zm_cff = NaN;
 	pzm = 1;
-	zm = 1/1.3;
-	zspd = 1.25;
-	glob_scale = 1;
+	zm = 1; // Scene zoom
+	zspd = 1.25; // Camera swim animation speed
 	fram_rend = false;
 
 
@@ -73,7 +71,7 @@ $('document').ready(function(){
 	ref_speed = 1;
 	show_center = false;
 	usr_orb_obj = NaN;
-	show_fps = sessionStorage['show_fps'] == 'true' ? true : false;
+	show_fps = sessionStorage['show_fps'] == 'true' ? true : false; // Show FPS
 
 	fps_count = 0;
 	fps_interval = 0;
@@ -130,7 +128,7 @@ $('document').ready(function(){
 		gravit_mode: 1, r_gm: 1, interact: 0, ref_interact: 0,
 		traj_mode: 1, traj_mode2: 1, traj_prev_on: true,
 		zoomToScreenCenter: false, vis_distance: false, sel_orb_obj: false, 
-		launch_pwr: 1, create_obj_pause: true, traj_accuracity: 1, collision_mode: 0,
+		launch_powr: 1, create_obj_pause: true, traj_accuracity: 1, collision_mode: 0,
 		trace_opacity: 0.7, trace_blur: 0, mous_mov_bg: true, bg_img_url: 'background/background.jpg',
 		bg_darkness: 0.8, clr_trace: false, clr_canv2: true, visT: false}; // Collisions: repulsion merge none
 
@@ -156,10 +154,11 @@ $('document').ready(function(){
 	obj_cirle_orbit = sessionStorage['obj_cirle_orbit'] ? (sessionStorage['obj_cirle_orbit'] == 'true' ? true : false) : true;
 	switcher.create_obj_pause = sessionStorage['new_obj_pause'] == 'false' ? false : true;
 	switcher.mous_mov_bg = sessionStorage['mouse_move_bg'] == 'false' ? false : true;
+	body.sun.lck = sessionStorage['sun_lck'] == 'false' ? false : true;
 	obj_lck = false;
 
 	traj_calc_smpls = sessionStorage['traj_calc_samples'] ? +sessionStorage['traj_calc_samples'] : 128;
-	switcher.launch_pwr = sessionStorage['launch_pwr'] ? +sessionStorage['launch_pwr'] : 1;
+	switcher.launch_powr = sessionStorage['launch_powr'] ? +sessionStorage['launch_powr'] : 1;
 	switcher.traj_accuracity = sessionStorage['traj_accuracity'] ? +sessionStorage['traj_accuracity'] : 1;
 	switcher.trace_opacity = sessionStorage['trace_opacity'] ? +sessionStorage['trace_opacity'] : 0.7;
 	switcher.trace_blur = sessionStorage['trace_blur'] ? +sessionStorage['trace_blur'] : 0;
@@ -169,7 +168,7 @@ $('document').ready(function(){
 	$('.col_select').attr('value', obj_color);
 	$('#create_mass').attr('value', obj_radius);
 	$('#traj_calc_samples').attr('value', traj_calc_smpls);
-	$('#launch_power').attr('value', switcher.launch_pwr);
+	$('#launch_power').attr('value', switcher.launch_powr);
 	$('#traj_calc_accuracity').attr('value', 100/switcher.traj_accuracity);
 	$('#G_value').attr('value', G);
 	$('#trace_opacity').attr('value', switcher.trace_opacity);
@@ -327,7 +326,7 @@ $('document').ready(function(){
 				ctx.fillStyle = body[mov_obj].color;
 				ctx.lineWidth = Math.sqrt(body[mov_obj].m)*2*zm < 0.5 ? 0.5 : Math.sqrt(body[mov_obj].m)*2*zm;
 				ctx.beginPath();
-				ctx.arc(crd(body[mov_obj].x, 'x', 0), crd(body[mov_obj].y, 'y', 0), Math.sqrt(body[mov_obj].m)*zm, 0, 7);
+				ctx.arc(crd(body[mov_obj].x, 'x', 0), crd(body[mov_obj].y, 'y', 0), Math.sqrt(Math.abs(body[mov_obj].m))*zm, 0, 7);
 				ctx.fill();
 				ctx.beginPath();
 				ctx.moveTo(crd(body[mov_obj].x, 'x', 0), crd(body[mov_obj].y, 'y', 0));
@@ -357,10 +356,15 @@ $('document').ready(function(){
 				zm_cff = touchZoom;
 			}
 
-			zm = zm_prev / Math.pow(zm_cff / touchZoom, 2); // Zoom
+			clrDelay = true;
+			clearTimeout(clrTmt);
+			pause_gAnim = true;
+			clrTmt = setTimeout(function(){clrDelay = false; pause_gAnim = false;}, clrDTim);
+
+			pzm = zm_prev / Math.pow(zm_cff / touchZoom, 2); // Zoom
 			if (!switcher.zoomToScreenCenter){ // If no zoom to center
-				mov[0] = avTouchPoint.x - avTouchPoint.xd + mov[2]*Math.pow(touchZoom/zm_cff, 2);
-				mov[1] = avTouchPoint.y - avTouchPoint.yd + mov[3]*Math.pow(touchZoom/zm_cff, 2);
+				pmov[0] = avTouchPoint.x - avTouchPoint.xd + mov[2]*Math.pow(touchZoom/zm_cff, 2);
+				pmov[1] = avTouchPoint.y - avTouchPoint.yd + mov[3]*Math.pow(touchZoom/zm_cff, 2);
 				// + ((canv.width/2 - avTouchPoint.x)*Math.pow(touchZoom/zm_cff, 2) - (canv.width/2 - avTouchPoint.x))
  				// + ((canv.height/2 - avTouchPoint.y)*Math.pow(touchZoom/zm_cff, 2) - (canv.height/2 - avTouchPoint.y))
 
@@ -461,7 +465,7 @@ $('document').ready(function(){
 
 				ctx.beginPath();
 				ctx.fillStyle = '#000';
-				ctx.arc(body[delete_obj].x, body[delete_obj].y, Math.sqrt(body[delete_obj].m)+1, 0, 7);
+				ctx.arc(body[delete_obj].x, body[delete_obj].y, Math.sqrt(Math.abs(body[delete_obj].m))+1, 0, 7);
 				ctx.fill();
 
 				del_obj(delete_obj);
@@ -478,7 +482,7 @@ $('document').ready(function(){
 				swch.vis_traj = false;
 				ctx.beginPath();
 				ctx.fillStyle = obj_color;
-				ctx.arc(mpos[0], mpos[1], Math.sqrt(obj_radius)*zm, 0, 7);
+				ctx.arc(mpos[0], mpos[1], Math.sqrt(Math.abs(obj_radius))*zm, 0, 7);
 				ctx.fill();
 				if (!paus){
 					obj_sp(false, false, obj_color);
@@ -534,27 +538,29 @@ $('document').ready(function(){
 		}
 		if (leftMouseDown && mbut == 'move' && mov_obj){
 			if (body[mov_obj]){
-				ctx3.strokeStyle = body[mov_obj].color;
-				ctx3.fillStyle = body[mov_obj].color;
-				ctx3.lineWidth = Math.sqrt(body[mov_obj].m)*2*zm < 0.5 ? 0.5 : Math.sqrt(body[mov_obj].m)*2*zm;
-				ctx3.beginPath();
-				ctx3.arc(crd(body[mov_obj].x, 'x', 0), crd(body[mov_obj].y, 'y', 0), Math.sqrt(body[mov_obj].m)*zm, 0, 7);
-				ctx3.fill();
-				ctx3.beginPath();
-				ctx3.moveTo(crd(body[mov_obj].x, 'x', 0), crd(body[mov_obj].y, 'y', 0));
+				dCanv = switcher.bg_darkness != 0 ? ctx3 : ctx;
+				dCanv.strokeStyle = body[mov_obj].color;
+				dCanv.fillStyle = body[mov_obj].color;
+				dCanv.lineWidth = Math.sqrt(body[mov_obj].m)*2*zm < 0.5 ? 0.5 : Math.sqrt(body[mov_obj].m)*2*zm;
+				dCanv.beginPath();
+				dCanv.arc(crd(body[mov_obj].x, 'x', 0), crd(body[mov_obj].y, 'y', 0), Math.sqrt(Math.abs(body[mov_obj].m))*zm, 0, 7);
+				dCanv.fill();
+				dCanv.beginPath();
+				dCanv.moveTo(crd(body[mov_obj].x, 'x', 0), crd(body[mov_obj].y, 'y', 0));
 
 				body[mov_obj].x = (event.clientX - mpos[0])/zm + mpos[2]; // New position X
 				body[mov_obj].y = (event.clientY - mpos[1])/zm + mpos[3]; // New position Y
 
-				ctx3.lineTo(crd(body[mov_obj].x, 'x', 0), crd(body[mov_obj].y, 'y', 0));
-				ctx3.stroke();
-				clear(1);
+				dCanv.lineTo(crd(body[mov_obj].x, 'x', 0), crd(body[mov_obj].y, 'y', 0));
+				dCanv.stroke();
+				//clear(1);
 			}
 		}
 		if (middleMouseDown){
 			clrDelay = true;
+			pause_gAnim = true;
 			clearTimeout(clrTmt);
-			clrTmt = setTimeout(function(){clrDelay = false}, clrDTim);
+			clrTmt = setTimeout(function(){clrDelay = false; pause_gAnim = false;}, clrDTim);
 			pmov[0] = event.clientX - mpos[0] + mov[2];
 			pmov[1] = event.clientY - mpos[1] + mov[3];
 			clear('#000000');
@@ -587,11 +593,12 @@ $('document').ready(function(){
 			} else {
 				body[swch.edit_obj].lck = false;
 			}
+			if (swch.edit_obj == 'sun'){
+				sessionStorage['sun_lck'] = body[swch.edit_obj].lck;
+			}
 		} else
 		if (chck == 'mass_edit' && body[swch.edit_obj]){		
-			if (+document.getElementById(chck).value > 0 && +document.getElementById(chck).value){
-				body[swch.edit_obj].m = +document.getElementById(chck).value;
-			}
+			body[swch.edit_obj].m = +document.getElementById(chck).value;
 		} else
 		if (chck == 'col_edit' && body[swch.edit_obj]){
 			body[swch.edit_obj].color = document.getElementById(chck).value;
@@ -630,7 +637,7 @@ $('document').ready(function(){
 			}
 		} else
 		if (chck == 'launch_power'){
-			switcher.launch_pwr = sessionStorage['launch_pwr'] = +this.value;
+			switcher.launch_powr = sessionStorage['launch_powr'] = +this.value;
 		} else
 		if (chck == 'G_value'){
 			e.preventDefault();
@@ -696,7 +703,7 @@ $('document').ready(function(){
 		*/
 	});
 
-	function rad(x1, y1, x2, y2){ return Math.sqrt(pw((x1 - x2), 2) + pw((y1 - y2), 2)) }
+	function rad(x1, y1, x2, y2){ return Math.sqrt(pow((x1 - x2), 2) + pow((y1 - y2), 2)) }
 	function gipot(a,b){return Math.sqrt(a*a + b*b) }
 
 	window.requestAnimationFrame(frame);
@@ -721,15 +728,12 @@ $('document').ready(function(){
 		}
 
 		mzVals = [zm, mov[0], mov[1]];
-		if (!swch.prev_t_obj && !switcher.zoomToScreenCenter){
-			zm = (zm + pzm/(1/(zspd-1)))/zspd;
-			mov[0] = (mov[0] + pmov[0]/(1/(zspd-1)))/zspd;
-			mov[1] = (mov[1] + pmov[1]/(1/(zspd-1)))/zspd;
-		} else {
-			zm = (zm + pzm/(1/(zspd-1)))/zspd;
-			mov[0] = (mov[0] + pmov[0]/(1/(zspd-1)))/zspd;
-			mov[1] = (mov[1] + pmov[1]/(1/(zspd-1)))/zspd;
-		}
+
+		// Camera moving animation
+		zm = (zm + pzm/(1/(zspd-1)))/zspd;
+		mov[0] = (mov[0] + pmov[0]/(1/(zspd-1)))/zspd;
+		mov[1] = (mov[1] + pmov[1]/(1/(zspd-1)))/zspd;			
+		
 		// Clear delay
 		if (clrDelay){ clear(1) }
 
@@ -783,7 +787,7 @@ $('document').ready(function(){
 			swch.prev_t_obj = swch.t_object;
 		}
 
-		if (movAnim[5] || (mouseMove && (middleMouseDown || leftMouseDown)) || middleWheelSpin || switcher.visT){
+		if (movAnim[5] || (mouseMove && (middleMouseDown || leftMouseDown)) || middleWheelSpin || switcher.visT || pause_gAnim){
 			fram_rend = true;
 			movAnim[5] = false;
 		}
@@ -795,8 +799,8 @@ $('document').ready(function(){
 			switcher.clr_canv2 = false;
 		}
 
-		if (switcher.visT && !leftMouseDown){ //Clear canv2 after calc trajectory
-			clear2();
+		if (switcher.visT && !leftMouseDown){
+			clear2(); //   ==== Comment this line to leave calc trajectory ====
 			switcher.visT = false;
 		}
 
@@ -912,7 +916,7 @@ $('document').ready(function(){
 			mcy = mouse_coords[3] ? mouse_coords[3] - (mouse_coords[3] - mouse_coords[1])/10 : mouse_coords[1];
 
 			if ((!(Math.abs(mouse[0]-mouse_coords[0]) < dis_zone && Math.abs(mouse[1]-mouse_coords[1]) < dis_zone))&&switcher.traj_prev_on&&(mouseMove || !switcher.create_obj_pause)&&!obj_lck){
-				obj_for_traj = {x: crd(mouse[0], 'x', 1), y: crd(mouse[1], 'y', 1), vx: ((mouse[0]-mcx)/30)*t*switcher.launch_pwr, vy: ((mouse[1]-mcy)/30)*t*switcher.launch_pwr, m: obj_radius, color: obj_color, lck: obj_lck, main_obj: swch.orb_obj, F:{x:0,y:0}};
+				obj_for_traj = {x: crd(mouse[0], 'x', 1), y: crd(mouse[1], 'y', 1), vx: ((mouse[0]-mcx)/30)*t*switcher.launch_powr, vy: ((mouse[1]-mcy)/30)*t*switcher.launch_powr, m: obj_radius, color: obj_color, lck: obj_lck, main_obj: swch.orb_obj, F:{x:0,y:0}};
 				traj_prev(obj_for_traj, traj_calc_smpls, ['#006BDE', '#ffffff'], true, switcher.traj_accuracity);
 			}
 		}
@@ -941,37 +945,45 @@ $('document').ready(function(){
 		t_mod = switcher.traj_mode; //Trajectory mode
 		prev_x = (body[object].x - body[object].vx) + prev_cam_x + mov[0]/zm;
 		prev_y = (body[object].y - body[object].vy) + prev_cam_y + mov[1]/zm;
-		obj_rad = Math.sqrt(obj.m)*zm;
+		obj_rad = Math.sqrt(Math.abs(obj.m))*zm;
+		//console.log(obj_rad);
+		coll = false;
 		obj_rad = obj_rad < 0.5 ? 0.5 : obj_rad;
 		obCol = obj.color;
-		render = (prev_x != body[object].x + cam_x + mov[0]/zm && prev_y != body[object].y + cam_y + mov[1]/zm)?true:false;
 
+		if (obj.m < 0){ body[object].color = obCol = randColor(true) }
+
+		render = (prev_x != body[object].x + cam_x + mov[0]/zm && prev_y != body[object].y + cam_y + mov[1]/zm)?true:false;
+		dcanv = switcher.bg_darkness != 0 ? ctx3 : ctx;
 		if (traj_ref){
 			if (t_mod == 1){
+				cam_vec = body[swch.t_object] ? [body[swch.t_object].vx, body[swch.t_object].vy] : [0, 0]; // Target object vector
 				if (switcher.bg_darkness != 0){
-					if (!render){
+					if (swch.t_object != object){
+						if (!render && object != mov_obj){
+							ctx3.beginPath();
+							ctx3.fillStyle = '#000000';
+							ctx3.arc(crd(obj.x-obj.vx+cam_vec[0], 'x', 0), crd(obj.y-obj.vy+cam_vec[1], 'y', 0), (obj_rad+0.125), 0, 7);
+							ctx3.fill();
+						}
+						ctx3.fillStyle = obCol;
 						ctx3.beginPath();
-						ctx3.fillStyle = '#000000';
-						ctx3.arc(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0), (obj_rad+0.125), 0, 7);
+						ctx3.arc(crd(obj.x-obj.vx+cam_vec[0], 'x', 0), crd(obj.y-obj.vy+cam_vec[1], 'y', 0), obj_rad, 0, 7);
 						ctx3.fill();
 					}
-					ctx3.fillStyle = obCol;
-					ctx3.beginPath();
-					ctx3.arc(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0), obj_rad, 0, 7);
-					ctx3.fill();				
 				} else {
-					if (!render){
+					if (!render && object != mov_obj){
 						ctx.beginPath();
 						ctx.fillStyle = '#000000';
-						ctx.arc(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0), (obj_rad+0.125), 0, 7);
+						ctx.arc(crd(obj.x-obj.vx+cam_vec[0], 'x', 0), crd(obj.y-obj.vy+cam_vec[1], 'y', 0), (obj_rad+0.125), 0, 7);
 						ctx.fill();
 					}
 				}
 			}
 			ctx.fillStyle = obCol;
 			ctx.beginPath();
-			ctx.arc(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0), obj_rad, 0, 7);
-			ctx.fill();			
+			ctx.arc(crd(obj.x, 'x', 0), crd(obj.y, 'y', 0), obj_rad, 0, 7);
+			ctx.fill();
 		}
 		res = false;
 		acc = 1000; // Точность следа
@@ -989,25 +1001,12 @@ $('document').ready(function(){
 		//Trajectory mode 1 =====
 		if (!switcher.pause2 && movAnim[4] && t_mod == 1){
 			if (swch.prev_t_obj != object){
-				//ctx.beginPath();
-				//ctx.fillStyle = obCol;
-				//ctx.arc(prev_x*zm+mcamX, prev_y*zm+mcamY, obj_rad, 0, 7);
-				//ctx.fill();
-				if (switcher.bg_darkness != 0){
-					ctx3.strokeStyle = obCol;
-					ctx3.lineWidth = obj_rad*2;
-					ctx3.beginPath();
-					ctx3.moveTo(prev_x*zm+mcamX, prev_y*zm+mcamY);
-					ctx3.lineTo(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0));
-					ctx3.stroke();
-				} else {
-					ctx.strokeStyle = obCol;
-					ctx.lineWidth = obj_rad*2;
-					ctx.beginPath();
-					ctx.moveTo(prev_x*zm+mcamX, prev_y*zm+mcamY);
-					ctx.lineTo(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0));
-					ctx.stroke();					
-				}
+				dcanv.strokeStyle = obCol;
+				dcanv.lineWidth = obj_rad*2;
+				dcanv.beginPath();
+				dcanv.moveTo(prev_x*zm+mcamX, prev_y*zm+mcamY);
+				dcanv.lineTo(crd(body[object].x, 'x', 0), crd(body[object].y, 'y', 0));
+				dcanv.stroke();
 			}
 		} else
 		//Trajectory mode 2 =====
@@ -1053,12 +1052,12 @@ $('document').ready(function(){
 				itr = i-1;
 				itr = itr < 0?0:itr;
 				prev_randX = randX; prev_randY = randY;
-				randX = getRandomArbitrary(-(Math.sqrt(obj.m)*zm*i/10), Math.sqrt(obj.m)*zm*i/10)*rand_kf;
-				randY = getRandomArbitrary(-(Math.sqrt(obj.m)*zm*i/10), Math.sqrt(obj.m)*zm*i/10)*rand_kf;
+				randX = getRandomArbitrary(-(Math.sqrt(Math.abs(obj.m))*zm*i/10), Math.sqrt(Math.abs(obj.m))*zm*i/10)*rand_kf;
+				randY = getRandomArbitrary(-(Math.sqrt(Math.abs(obj.m))*zm*i/10), Math.sqrt(Math.abs(obj.m))*zm*i/10)*rand_kf;
 
 				ctx.lineWidth = Math.abs(obj_rad*1.9 - (obj_rad*2)/32*i*2*0.8);
 				ctx.beginPath();
-				ctx.arc(Math.floor(crd(body[object].trace[itr][0]/acc, 'x', 0)+randX*2), Math.floor(crd(body[object].trace[itr][1]/acc, 'y', 0)+randY*2), Math.sqrt(obj.m)*zm - (Math.sqrt(obj.m)*zm)/res*i, 0, 7);
+				ctx.arc(Math.floor(crd(body[object].trace[itr][0]/acc, 'x', 0)+randX*2), Math.floor(crd(body[object].trace[itr][1]/acc, 'y', 0)+randY*2), Math.sqrt(Math.abs(obj.m))*zm - (Math.sqrt(Math.abs(obj.m))*zm)/res*i, 0, 7);
 				ctx.fill();
 				ctx.beginPath();
 				ctx.moveTo(crd(body[object].trace[i][0]/acc, 'x', 0)+randX, crd(body[object].trace[i][1]/acc, 'y', 0)+randY);
@@ -1098,7 +1097,8 @@ $('document').ready(function(){
 					object = i;
 					continue;
 				} else
-				if (coll === 'none'){gMod = 3;}
+				if (coll === 'none'){gMod = 3;} else 
+				if (coll == 'anigilate'){continue;}
 				
 				if(!obj.lck && !(mbut == 'move' && leftMouseDown && object == mov_obj)&&coll==false){
 					sin = (obj2.y - obj.y)/R;
@@ -1141,7 +1141,7 @@ $('document').ready(function(){
 				}
 				//Эллипс	
 				//ctx.beginPath();
-				//ctx.lineWidth = Math.sqrt(body[object].m);
+				//ctx.lineWidth = Math.sqrt(Math.abs(body[object].m));
 				//ctx.strokeStyle = obj1.color;
 				//ctx.ellipse(body.sun.x + cam_x, body.sun.y + cam_y, Math.abs(ell_a), 250, 0, 0, 7);
 				//ctx.stroke();
@@ -1176,13 +1176,15 @@ $('document').ready(function(){
 		//if (crd(body[object].y, 'y', 0) < 0 || crd(body[object].y, 'y', 0) > canv.height){
 		//	body[object].vy = -body[object].vy;
 		//}
-		if (obj.lck){
-			body[object].vx = 0;
-			body[object].vy = 0;
-		} else 
-		if(!switcher.pause2 && !t_wrap){
-			body[object].x += body[object].vx;
-			body[object].y += body[object].vy;
+		if (coll != 'anigilate'){
+			if (obj.lck){
+				body[object].vx = 0;
+				body[object].vy = 0;
+			} else 
+			if(!switcher.pause2 && !t_wrap){
+				body[object].x += body[object].vx;
+				body[object].y += body[object].vy;
+			}			
 		}
 	};
 	//Функции притяжения
@@ -1234,16 +1236,25 @@ $('document').ready(function(){
 	}
 
 	function collision(obj, obj2, obj_name, obj2_name, ob_arr, R, type='merge'){
-		if (pw(R, 2) - (obj.m + obj2.m) <= 0){
+		if (R - (Math.sqrt(Math.abs(obj.m)) + Math.sqrt(Math.abs(obj2.m))) <= 0){
 			if (obj.m >= obj2.m && (type == 'merge' || type == 0)){
-				ob_arr[obj_name].color = mixColors(obj.color, obj2.color, obj.m, obj2.m);
+				if (obj2.m > 0){
+					ob_arr[obj_name].color = mixColors(obj.color, obj2.color, obj.m, obj2.m);	
+				} else {
+					if (obj2.m + obj.m == 0){
+						del_obj(obj_name, ob_arr);
+						del_obj(obj2_name, ob_arr);
+						return 'anigilate';
+					}
+				}
+
 				ob_arr[obj_name].m = obj.m + obj2.m;
 				if (!obj.lck){
 					ob_arr[obj_name].vx = (obj.m*obj.vx+obj2.m*obj2.vx)/(obj.m+obj2.m);// Формула абсолютно-неупругого столкновения
 					ob_arr[obj_name].vy = (obj.m*obj.vy+obj2.m*obj2.vy)/(obj.m+obj2.m);// Формула абсолютно-неупругого столкновения
 				}
 				del_obj(obj2_name, ob_arr);
-				return 'merge';
+				return 'merge';		
 			} else
 			if ((type == 'repulsion' || type == 1)){
 				var v1 = gipot(obj.vx, obj.vy); // Scallar velocity
@@ -1295,12 +1306,12 @@ $('document').ready(function(){
 			offsY = -30;
 			if (switcher.device == 'mobile'){ offsX = -25; offsY = -140; }
 			$('.power').css({left: mouse_coords[0]+offsX, top: mouse_coords[1]+offsY, display: 'block', color: obj_color});
-			$('.power').html(Math.round(rad(mouse[0], mouse[1], mouse_coords[0], mouse_coords[1]) * switcher.launch_pwr * 100)/100);
+			$('.power').html(Math.round(rad(mouse[0], mouse[1], mouse_coords[0], mouse_coords[1]) * switcher.launch_powr * 100)/100);
 		}
-		D = Math.sqrt(obj_radius)*zm*2;
+		D = Math.sqrt(Math.abs(obj_radius))*zm*2;
 		ctx2.globalAlpha = 0.5;
 		ctx2.strokeStyle = obj_color;
-		ctx2.lineWidth = D < 0.5 ? 0.5 : Math.sqrt(obj_radius)*zm*2;
+		ctx2.lineWidth = D < 0.5 ? 0.5 : Math.sqrt(Math.abs(obj_radius))*zm*2;
 		ctx2.beginPath();
 		ctx2.moveTo(mouse[0], mouse[1]);
 		ctx2.lineTo(mcx, mcy);
@@ -1367,24 +1378,25 @@ $('document').ready(function(){
 	//Визуальная дистанция до главного объекта
 	function vis_distance(obj_cord, col = '#888888', targ_obj = swch.orb_obj){
 		if (body[targ_obj]){
-			size = rad(obj_cord[0], obj_cord[1], crd(body[targ_obj].x, 'x', 0), crd(body[targ_obj].y, 'y', 0));
-			if (size > Math.sqrt(body[targ_obj].m)*zm){
+			obCoords = body[swch.t_object] ? [body[targ_obj].x - body[targ_obj].vx, body[targ_obj].y - body[targ_obj].vy] : [body[targ_obj].x, body[targ_obj].y];
+			size = rad(obj_cord[0], obj_cord[1], crd(obCoords[0], 'x', 0), crd(obCoords[1], 'y', 0));
+			if (size > Math.sqrt(Math.abs(body[targ_obj].m))*zm){
 				ctx2.strokeStyle = col;
 				ctx2.lineWidth = 2;
 				// Line
 				ctx2.beginPath();
 				ctx2.moveTo(obj_cord[0], obj_cord[1]);
-				ctx2.lineTo(crd(body[targ_obj].x, 'x', 0), crd(body[targ_obj].y, 'y', 0));
+				ctx2.lineTo(crd(obCoords[0], 'x', 0), crd(obCoords[1], 'y', 0));
 				ctx2.stroke();
 				// Circle
 				ctx2.lineWidth = 0.5;
 				ctx2.beginPath();
-				ctx2.arc(crd(body[targ_obj].x, 'x', 0), crd(body[targ_obj].y, 'y', 0), size, 0, 7);
+				ctx2.arc(crd(obCoords[0], 'x', 0), crd(obCoords[1], 'y', 0), size, 0, 7);
 				ctx2.stroke();
 				// Points
 				ctx2.beginPath();
 				ctx2.fillStyle = col;
-				ctx2.arc(crd(body[targ_obj].x, 'x', 0), crd(body[targ_obj].y, 'y', 0), 3, 0, 7);
+				ctx2.arc(crd(obCoords[0], 'x', 0), crd(obCoords[1], 'y', 0), 3, 0, 7);
 				ctx2.arc(obj_cord[0], obj_cord[1], 3, 0, 7);
 				ctx2.fill();
 				ctx2.beginPath();
@@ -1404,7 +1416,6 @@ $('document').ready(function(){
 	//Визуальное выдиление объекта
 	function visual_select(mode, color, object = '', alpha = 0.3) {
 		if (!bodyEmpty){
-			visual_sel_ref = true;
 			del_radius = [Infinity, '', 0];
 			if (!body[object]){
 				del_radius[1] = select_object(mode);			
@@ -1433,14 +1444,14 @@ $('document').ready(function(){
 			ctx2.beginPath();
 			ctx2.globalAlpha = alpha;
 			ctx2.fillStyle = color;
-			ctx2.arc((crd(body[del_radius[1]].x-mv[0], 'x', 0)), (crd(body[del_radius[1]].y-mv[1], 'y', 0)), Math.sqrt(body[del_radius[1]].m)*zm+switcher.del_pulse, 0, 7);
+			ctx2.arc((crd(body[del_radius[1]].x-mv[0], 'x', 0)), (crd(body[del_radius[1]].y-mv[1], 'y', 0)), Math.sqrt(Math.abs(body[del_radius[1]].m))*zm+switcher.del_pulse, 0, 7);
 			ctx2.fill();
 
 			ctx2.beginPath();
 			ctx2.globalAlpha = 1;
 			ctx2.strokeStyle = color;
 			ctx2.lineWidth = 2;
-			ctx2.arc((crd(body[del_radius[1]].x-mv[0], 'x', 0)), (crd(body[del_radius[1]].y-mv[1], 'y', 0)), Math.sqrt(body[del_radius[1]].m)*zm+switcher.del_pulse, 0, 7);
+			ctx2.arc((crd(body[del_radius[1]].x-mv[0], 'x', 0)), (crd(body[del_radius[1]].y-mv[1], 'y', 0)), Math.sqrt(Math.abs(body[del_radius[1]].m))*zm+switcher.del_pulse, 0, 7);
 			ctx2.stroke();
 			switcher.clr_canv2 = true;
 		}
@@ -1471,8 +1482,8 @@ $('document').ready(function(){
 			if (!point_x && !point_y){
 				let mcx = mouse_coords[2] ? mouse_coords[2] - (mouse_coords[2] - mouse[2])/10 : mouse[2];
 				let mcy = mouse_coords[3] ? mouse_coords[3] - (mouse_coords[3] - mouse[3])/10 : mouse[3];
-				svx = ((mouse[0]-mcx)/30)*t * switcher.launch_pwr;
-				svy = ((mouse[1]-mcy)/30)*t * switcher.launch_pwr;				
+				svx = ((mouse[0]-mcx)/30)*t * switcher.launch_powr;
+				svy = ((mouse[1]-mcy)/30)*t * switcher.launch_powr;				
 			} else {px = point_x; py = point_y;};
 
 			if (((Math.abs(mouse[0]-mouse[2]) <= dis_zone && Math.abs(mouse[1]-mouse[3]) <= dis_zone) || (point_x && point_y)) && body[swch.orb_obj] && obj_cirle_orbit) {
@@ -1548,6 +1559,12 @@ $('document').ready(function(){
 							if (i == virt_obj){
 								coll_objcts[i+n] = JSON.parse(JSON.stringify(body_traj_prev[i])); // Сохранение свойств взаемдействующего объекта
 							}
+						} else 
+						if (coll == 'anigilate'){
+							nlock = false; 
+							coll_objcts[object] = JSON.parse(JSON.stringify(body_traj_prev[object])); // Сохранение свойств взаемдействующего объекта
+							coll_objcts[i] = JSON.parse(JSON.stringify(body_traj_prev[i])); // Сохранение свойств взаемдействующего объекта
+							continue;
 						}
 						
 						if(!obj1.lck && !(mbut == 'move' && leftMouseDown) && body_traj[object]&&coll==false){
@@ -1682,20 +1699,20 @@ $('document').ready(function(){
 			ctx2.beginPath();
 			ctx2.globalAlpha = 0.5;
 			ctx2.fillStyle = body[distance[1].obj_name].color;
-			mass = Math.sqrt(body[distance[1].obj_name].m) < 2 ? 2 : Math.sqrt(body[distance[1].obj_name].m);
+			mass = Math.sqrt(Math.abs(body[distance[1].obj_name].m)) < 2 ? 2 : Math.sqrt(Math.abs(body[distance[1].obj_name].m));
 			ctx2.arc(crd(distance[1].x-refMov[0], 'x', 0), crd(distance[1].y-refMov[1], 'y', 0), mass*zm, 0, 7);
 			ctx2.fill();
 			ctx2.beginPath();
 			ctx2.globalAlpha = 0.6;
 			ctx2.fillStyle = obj_color;
-			mass = Math.sqrt(obj_radius)*zm < 2 ? 2 : Math.sqrt(obj_radius)*zm;
+			mass = Math.sqrt(Math.abs(obj_radius))*zm < 2 ? 2 : Math.sqrt(Math.abs(obj_radius))*zm;
 			ctx2.arc(crd(distance[1].x2-refMov[0], 'x', 0), crd(distance[1].y2-refMov[1], 'y', 0), mass, 0, 7);
 			ctx2.fill();
 			ctx2.beginPath();
 			ctx2.globalAlpha = 1;
 		}
 		for (let i in coll_objcts){
-			var size = Math.sqrt(coll_objcts[i].m)*0.7 < 5? 5 : Math.sqrt(coll_objcts[i].m)*0.7;
+			var size = Math.sqrt(Math.abs(coll_objcts[i].m))*0.7 < 5? 5 : Math.sqrt(Math.abs(coll_objcts[i].m))*0.7;
 			if (switcher.collision_mode == 0){
 				drawCross(crd(coll_objcts[i].x, 'x', 0), crd(coll_objcts[i].y, 'y', 0), '#ff0000', 3, size , ctx2);
 			} else if (switcher.collision_mode == 1){
@@ -1711,10 +1728,11 @@ $('document').ready(function(){
 	document.addEventListener('wheel', function(e){
 		e_elem = e.target;
 		middleWheelSpin = true;
-		clrDelay = true;
-		clearTimeout(clrTmt);
-		clrTmt = setTimeout(function(){clrDelay = false}, clrDTim);
 		if (layers_id.includes(e_elem.id) && !e.ctrlKey){
+			clrDelay = true;
+			clearTimeout(clrTmt);
+			pause_gAnim = true;
+			clrTmt = setTimeout(function(){clrDelay = false; pause_gAnim = false;}, clrDTim);
 			ms = [e.clientX, e.clientY];
 			if (!middleMouseDown){
 				vl = 1.25;
@@ -1757,7 +1775,11 @@ $('document').ready(function(){
 			if (e.keyCode == 32){
 				if (mbut == 'create' && mouse_coords[0]){
 					spawn = true;
-					obj_sp(mouse_coords[0], mouse_coords[1]);			
+					obj_sp(mouse_coords[0], mouse_coords[1]);
+					ctx.beginPath();
+					ctx.fillStyle = obj_color;
+					ctx.arc(mouse_coords[0], mouse_coords[1], Math.sqrt(Math.abs(obj_radius))*zm, 0, 7);
+					ctx.fill();		
 				}
 				if (mbut == 'delete' && !bodyEmpty){
 					//$('.canvas').mousedown();
@@ -1765,7 +1787,7 @@ $('document').ready(function(){
 					delete_obj = select_object(switcher.del_radio);
 					ctx.beginPath();
 					ctx.fillStyle = '#000';
-					ctx.arc(body[delete_obj].x, body[delete_obj].y, Math.sqrt(body[delete_obj].m)+1, 0, 7);
+					ctx.arc(body[delete_obj].x, body[delete_obj].y, Math.sqrt(Math.abs(body[delete_obj].m))+1, 0, 7);
 					ctx.fill();
 					del_obj(delete_obj);
 					deleted();
@@ -1814,6 +1836,9 @@ $('document').ready(function(){
 			}
 			//zoom in
 			if (e.keyCode == 107){
+				clrDelay = true;
+				clearTimeout(clrTmt);
+				clrTmt = setTimeout(function(){clrDelay = false}, clrDTim);
 				vl = 1.25;
 				pzm *= vl
 				pmov[0] *= vl;
@@ -1824,6 +1849,9 @@ $('document').ready(function(){
 			}
 			//zoom out
 			if (e.keyCode == 109){
+				clrDelay = true;
+				clearTimeout(clrTmt);
+				clrTmt = setTimeout(function(){clrDelay = false}, clrDTim);
 				vl = 1.25;
 				pzm /= vl;
 				pmov[0] /= vl;
@@ -2175,7 +2203,7 @@ $('document').ready(function(){
 		this.value = obj_color;
 	});
 
-	function randColor() {
+	function randColor(rco) {
 		var r = Math.floor(getRandomArbitrary(40, 255)),
 			g = Math.floor(getRandomArbitrary(40, 255)),
 			b = Math.floor(getRandomArbitrary(40, 255));
@@ -2187,9 +2215,11 @@ $('document').ready(function(){
 		b = b.length < 2 ? '0'+b.toString(16) : b.toString(16);
 		color = '#' + r + g + b;
 		//$('#col_select').attr({'value': color});
-		$('.div_col_select').html('<input type=color class=col_select value='+color+
-			' id=col_select onchange="obj_color = this.value; sessionStorage[\'obj_color\'] = this.value;"\
-			 style="padding: 0; border: none; width: 76px; height: 30px;" onmouseout="this.blur();">');
+		if (!rco){
+			$('.div_col_select').html('<input type=color class=col_select value='+color+
+				' id=col_select onchange="obj_color = this.value; sessionStorage[\'obj_color\'] = this.value;"\
+				 style="padding: 0; border: none; width: 76px; height: 30px;" onmouseout="this.blur();">');
+		}
 		return color;
 	}
 
@@ -2331,7 +2361,7 @@ $('document').ready(function(){
 		};
 	}
 
-	function pw(a, b){return Math.pow(a, b)}
+	function pow(a, b){return Math.pow(a, b)}
 	function isEmptyObject(obj) {
 		for (var i in obj) {
 			return false;
@@ -2341,12 +2371,12 @@ $('document').ready(function(){
 
 	function rnd(num, dot = 0, fc = false){
 		if (!fc){
-			return Math.round(num * pw(10, dot))/pw(10, dot);
+			return Math.round(num * pow(10, dot))/pow(10, dot);
 		} else {
 			if (fc == 'f'){
-				return Math.floor(num * pw(10, dot))/pw(10, dot);
+				return Math.floor(num * pow(10, dot))/pow(10, dot);
 			} else if (fc == 'c'){
-				return Math.floor(num * pw(10, dot))/pw(10, dot);
+				return Math.floor(num * pow(10, dot))/pow(10, dot);
 			}
 		}
 	}

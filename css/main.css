@@ -116,7 +116,7 @@ span {
 	background-color: rgba(62,62,62,0.68);
 	border: 1px solid rgba(192,192,192,0.1);
 	border-bottom-right-radius: 1em;
-	display: inline-block;
+	display: flex;
 	z-index: 2;
 	color: white;
 	position: absolute;
