@@ -951,7 +951,7 @@ $('document').ready(function(){
 		obj_rad = obj_rad < 0.5 ? 0.5 : obj_rad;
 		obCol = obj.color;
 
-		if (obj.m < 0){ body[object].color = obCol = randColor(true) }
+		if (obj.m < 0 && !switcher.pause){ body[object].color = obCol = randColor(true) }
 
 		render = (prev_x != body[object].x + cam_x + mov[0]/zm && prev_y != body[object].y + cam_y + mov[1]/zm)?true:false;
 		dcanv = switcher.bg_darkness != 0 ? ctx3 : ctx;
