@@ -106,7 +106,7 @@
 
 			<div class='option_item'>
 				<span>Масса: </span>
-				<input type="number" class='input_num' id='create_mass' min="0" onchange="obj_radius = +this.value; sessionStorage['obj_radius'] = +this.value;">	
+				<input type="number" class='input_num' id='create_mass' onchange="obj_radius = +this.value; sessionStorage['obj_radius'] = +this.value;">	
 			</div>
 
 			<div class='option_item'>
@@ -139,8 +139,8 @@
 			</div>
 
 			<div class='option_item'>
-				<span>Множитель<br> скорости запуска: </span>
-				<input type="number" class='input_num' id='launch_power' value="1">	
+				<span>Скорость запуска: </span><span id='lnch_pwr_span'></span>
+				<input type="range" id="launch_power" min="0" max="2" value="1" step="0.01" width="100%">
 			</div>
 			
 			<div class='option_item title_option_item'>
@@ -150,13 +150,13 @@
 				<span>Прощет траекторий: </span>
 				<input type="checkbox" class='checkbox' id="traj_prev_check">	
 			</div>
-			<div class='option_item'>
-				<span>Дальность прощета траектории <br>(влияет на быстродействие): </span>
+			<div class='option_item' title="Влияет на быстродействие.">
+				<span>Дальность прощета траектории: </span>
 				<input type="number" class='input_num' id="traj_calc_samples">	
 			</div>
-			<div class='option_item'>
-				<span>Точность прощета траектории % <br>(влияет на быстродействие): </span>
-				<input type="number" class='input_num' id="traj_calc_accuracity" max="100" min="1">	
+			<div class='option_item' title="Влияет на быстродействие.">
+				<span>Точность прощета траектории: </span>
+				<input type="range" id="traj_calc_accuracity" min="0" max="100" value="100" step="10" width="100%">
 			</div>
 			<div class='option_item without_border'>
 				<span>Показывать рассояние: </span>
@@ -357,9 +357,9 @@
 				<span>*Не найдено изображения по этому адресу </span>	
 			</div>
 			<div class='option_item' style="width: 100%">
-				<input type="text" class='input_text' id="img_url_inp" placeholder="URL Изображения (или GIF)" style="width: 100%">	
+				<input type="text" class='input_text' id="img_url_inp" placeholder="URL Изображения" style="width: 100%">	
 			</div>
-			<div class='option_item' style="width: 100%">
+			<div class='option_item' style="width: 100%" title="Нулевое значение даного параметра повышает производительность.">
 				<label for="cowbell">Интенсивность фона: </label>
 				<input type="range" id="bg_darkness" min="0" max="1" value="0.8" step="0.01" width="100%" oninput="background_image.style.opacity = this.value">
 			</div>

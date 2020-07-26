@@ -40,11 +40,6 @@ $('document').ready(function(){
 	frameTime = [0, Date.now()]; // Frametime
 	pause_gAnim = false; // Camera animation in pause
 
-	// Clear trace delay
-	clrDelay = false;
-	clrDTim = 300;
-	clrTmt = setTimeout(function(){clrDelay = false}, clrDTim);
-
 	//settings
 	G = 1; // Gravitation power
 
@@ -63,9 +58,13 @@ $('document').ready(function(){
 	zm_cff = NaN;
 	pzm = 1;
 	zm = 1; // Scene zoom
-	zspd = 1.25; // Camera swim animation speed
+	zspd = 1 + 1/4; // Camera swim animation speed
 	fram_rend = false;
 
+	// Clear trace delay
+	clrDelay = false;
+	clrDTim = 75/(zspd-1); // Time to clear, after camera move animation
+	clrTmt = setTimeout(function(){clrDelay = false}, clrDTim);
 
 	//Debug
 	ref_speed = 1;
@@ -169,6 +168,7 @@ $('document').ready(function(){
 	$('#create_mass').attr('value', obj_radius);
 	$('#traj_calc_samples').attr('value', traj_calc_smpls);
 	$('#launch_power').attr('value', switcher.launch_powr);
+	lnch_pwr_span.innerHTML = powerFunc(switcher.launch_powr);
 	$('#traj_calc_accuracity').attr('value', 100/switcher.traj_accuracity);
 	$('#G_value').attr('value', G);
 	$('#trace_opacity').attr('value', switcher.trace_opacity);
@@ -183,6 +183,7 @@ $('document').ready(function(){
 	if (obj_reverse){$('.direction_reverse_select').attr('checked', 'on');};
 	if (obj_cirle_orbit){$('.orbit_select').attr('checked', 'on');};
 	if (obj_rand_color){$('.rand_col_select').attr('checked', 'on');};
+	if (switcher.bg_darkness == 0){canv3.style.display = 'none'}
 
 	$('#canvas3').css({opacity: switcher.trace_opacity, filter: 'blur('+switcher.trace_blur+'px)'});
 
@@ -533,7 +534,7 @@ $('document').ready(function(){
 
 	document.onmousemove = function(event){
 		mouseMove = true;
-		if (switcher.mous_mov_bg){
+		if (switcher.mous_mov_bg && switcher.bg_darkness){
 			$('.bg_image').css({top: -event.clientY/25, left: -event.clientX/25})	
 		}
 		if (leftMouseDown && mbut == 'move' && mov_obj){
@@ -582,7 +583,7 @@ $('document').ready(function(){
 		return false;
 	});
 	//End mouse events ============
-	$('input').on('change', function(e){
+	$('input').on('input', function(e){
 		//alert($(this).attr('id'));
 		chck = $(this).attr('id');
 		inp_name = $(this).attr('name');
@@ -637,7 +638,8 @@ $('document').ready(function(){
 			}
 		} else
 		if (chck == 'launch_power'){
-			switcher.launch_powr = sessionStorage['launch_powr'] = +this.value;
+			sessionStorage['launch_powr'] = switcher.launch_powr = +this.value;
+			lnch_pwr_span.innerHTML = powerFunc(+this.value);
 		} else
 		if (chck == 'G_value'){
 			e.preventDefault();
@@ -686,11 +688,15 @@ $('document').ready(function(){
 			if (switcher.bg_darkness == 0) {
 				ctx3.putImageData(ctx.getImageData(0,0,canv.width,canv.height),0,0);
 				ctx.clearRect(0,0,canv.width,canv.height);
+				canv3.style.display = 'block';
+				background_image.style.display = 'initial';
 			}
 			sessionStorage['bg_darkness'] = switcher.bg_darkness = +this.value;
-			if (+this.value == 0) {
+			if (switcher.bg_darkness == 0) {
 				ctx.putImageData(ctx3.getImageData(0,0,canv.width,canv.height),0,0);
 				ctx3.clearRect(0,0,canv.width,canv.height);
+				canv3.style.display = 'none';
+				background_image.style.display = 'none';
 			}
 
 		}
@@ -717,7 +723,7 @@ $('document').ready(function(){
 		frameTime[1] = Date.now();
 		//
 
-		zspd = 1.25*frameTime[0]/16;
+		azspd = zspd*frameTime[0]/16;
 
 		bodyEmpty = isEmptyObject(body);
 
@@ -730,9 +736,9 @@ $('document').ready(function(){
 		mzVals = [zm, mov[0], mov[1]];
 
 		// Camera moving animation
-		zm = (zm + pzm/(1/(zspd-1)))/zspd;
-		mov[0] = (mov[0] + pmov[0]/(1/(zspd-1)))/zspd;
-		mov[1] = (mov[1] + pmov[1]/(1/(zspd-1)))/zspd;			
+		zm = (zm + pzm/(1/(azspd-1)))/azspd;
+		mov[0] = (mov[0] + pmov[0]/(1/(azspd-1)))/azspd;
+		mov[1] = (mov[1] + pmov[1]/(1/(azspd-1)))/azspd;			
 		
 		// Clear delay
 		if (clrDelay){ clear(1) }
@@ -916,7 +922,7 @@ $('document').ready(function(){
 			mcy = mouse_coords[3] ? mouse_coords[3] - (mouse_coords[3] - mouse_coords[1])/10 : mouse_coords[1];
 
 			if ((!(Math.abs(mouse[0]-mouse_coords[0]) < dis_zone && Math.abs(mouse[1]-mouse_coords[1]) < dis_zone))&&switcher.traj_prev_on&&(mouseMove || !switcher.create_obj_pause)&&!obj_lck){
-				obj_for_traj = {x: crd(mouse[0], 'x', 1), y: crd(mouse[1], 'y', 1), vx: ((mouse[0]-mcx)/30)*t*switcher.launch_powr, vy: ((mouse[1]-mcy)/30)*t*switcher.launch_powr, m: obj_radius, color: obj_color, lck: obj_lck, main_obj: swch.orb_obj, F:{x:0,y:0}};
+				obj_for_traj = {x: crd(mouse[0], 'x', 1), y: crd(mouse[1], 'y', 1), vx: ((mouse[0]-mcx)/30)*t*powerFunc(switcher.launch_powr), vy: ((mouse[1]-mcy)/30)*t*powerFunc(switcher.launch_powr), m: obj_radius, color: obj_color, lck: obj_lck, main_obj: swch.orb_obj, F:{x:0,y:0}};
 				traj_prev(obj_for_traj, traj_calc_smpls, ['#006BDE', '#ffffff'], true, switcher.traj_accuracity);
 			}
 		}
@@ -1306,7 +1312,7 @@ $('document').ready(function(){
 			offsY = -30;
 			if (switcher.device == 'mobile'){ offsX = -25; offsY = -140; }
 			$('.power').css({left: mouse_coords[0]+offsX, top: mouse_coords[1]+offsY, display: 'block', color: obj_color});
-			$('.power').html(Math.round(rad(mouse[0], mouse[1], mouse_coords[0], mouse_coords[1]) * switcher.launch_powr * 100)/100);
+			$('.power').html(Math.round(rad(mouse[0], mouse[1], mouse_coords[0], mouse_coords[1]) * powerFunc(switcher.launch_powr) * 100)/100);
 		}
 		D = Math.sqrt(Math.abs(obj_radius))*zm*2;
 		ctx2.globalAlpha = 0.5;
@@ -1482,8 +1488,8 @@ $('document').ready(function(){
 			if (!point_x && !point_y){
 				let mcx = mouse_coords[2] ? mouse_coords[2] - (mouse_coords[2] - mouse[2])/10 : mouse[2];
 				let mcy = mouse_coords[3] ? mouse_coords[3] - (mouse_coords[3] - mouse[3])/10 : mouse[3];
-				svx = ((mouse[0]-mcx)/30)*t * switcher.launch_powr;
-				svy = ((mouse[1]-mcy)/30)*t * switcher.launch_powr;				
+				svx = ((mouse[0]-mcx)/30)*t * powerFunc(switcher.launch_powr);
+				svy = ((mouse[1]-mcy)/30)*t * powerFunc(switcher.launch_powr);				
 			} else {px = point_x; py = point_y;};
 
 			if (((Math.abs(mouse[0]-mouse[2]) <= dis_zone && Math.abs(mouse[1]-mouse[3]) <= dis_zone) || (point_x && point_y)) && body[swch.orb_obj] && obj_cirle_orbit) {
@@ -2362,6 +2368,10 @@ $('document').ready(function(){
 	}
 
 	function pow(a, b){return Math.pow(a, b)}
+
+	function powerFunc(F){
+		if (F > 1){ return Math.round(Math.pow(F, Math.pow(F, 3))*100)/100 } else { return F }
+	}
 	function isEmptyObject(obj) {
 		for (var i in obj) {
 			return false;
