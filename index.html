@@ -456,25 +456,78 @@
 						<span>Режим следа - 3: </span>
 						<input id="traj_radio_3" class="checkbox" type="radio" name="traj" value=3>
 					</div>
-					<div class="radio_button_menu">
-						<span>Режим следа - 4: </span>
-						<input id="traj_radio_4" class="checkbox" type="radio" name="traj" value=4>
-					</div>
 				</form>
 			</div>
-			
-			<div class="extra_traj_options" style="display: none;">
+			<!--Extra options 1-->
+			<div class="extra_traj_1_options" style="display: none;">
 				<div class='option_item title_option_item'>
 					<span>Дополнительные параметры:</span>
 				</div>
 
 				<div class='option_item'>
 					<label for="cowbell">Прозрачность: </label>
-					<input type="range" id="trace_opacity" min="0" max="1" value="0.8" step="0.01" width="100%" oninput="canvas3.style.opacity = this.value">
+					<input type="range" id="trace_opacity" min="0" max="1" value="0.8" step="0.01" width="100%">
 				</div>
 				<div class='option_item without_border'>
 					<span>Размытие: </span>
 					<input type="number" class='input_num' id='trace_blur' min="0">
+				</div>
+			</div>
+			<!--Extra options 2-->
+			<div class="extra_traj_2_options" style="display: none;">
+				<div class='option_item title_option_item'>
+					<span>Дополнительные параметры:</span>
+				</div>
+				
+				<div class='option_item'>
+					<label for="cowbell">Частицы: </label>
+					<input type="checkbox" id="trc2PrtclsChck" class='checkbox'>
+				</div>
+
+				<div class='option_item'>
+					<label for="cowbell">Дрожание: </label>
+					<input type="checkbox" id="trc2TrembChck" class='checkbox'>
+				</div>
+
+				<div class='option_item without_border'>
+					<label for="cowbell">Длинна следа: </label>	
+				</div>
+				<div class='option_item without_border' style="border-top: none; padding-top: 0;">
+					<input type="range" style="width: 80%;" id="trace3Lnth" min="0.8" max="3" value="1.6" step="any">
+					<label id="t3LnthSp" for="trace3Lnth">20</label>
+				</div>
+
+			</div>
+			<!--Extra options 3-->
+			<div class="extra_traj_3_options" style="display: none;">
+				<div class='option_item title_option_item'>
+					<span>Дополнительные параметры:</span>
+				</div>
+				
+				<div class='option_item'>
+					<label for="cowbell">Толщина следа: </label>
+					<input type="range" id="trace4WdInp" list="T4WdInpDL" min="0.8" max="2" value="1.1" step="any" width="100%">
+					<datalist id='T4WdInpDL'><option value="1.1"></datalist>
+				</div>
+
+				<div class='option_item'>
+					<label for="cowbell">Качество следа: </label>
+					<input type="range" id="trace4Qu" list="T4QuInpDL" min="0" max="1" value="0.75" step="0.125" width="100%">
+					<datalist id='T4QuInpDL'>
+						<option value="0">
+						<option value="0.25">
+						<option value="0.5">
+						<option value="0.75">
+						<option value="1">
+					</datalist>
+				</div>
+
+				<div class='option_item without_border'>
+					<label for="cowbell">Длинна следа: </label>	
+				</div>
+				<div class='option_item without_border' style="border-top: none; padding-top: 0;">
+					<input type="range" style="width: 80%;" id="trace4Lnth" min="0.8" max="3" value="1.6" step="any">
+					<label id="t4LnthSp" for="trace4Lnth"></label>
 				</div>
 			</div>
 
