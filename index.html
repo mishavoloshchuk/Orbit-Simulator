@@ -204,7 +204,7 @@
 			<div class='option_item'>
 				<span>Цвет: </span>
 				<div class="div_col_edit">
-					<input type="color" id="col_edit" value="#ffffff" style="padding: 0; border: none; width: 76px; height: 30px;" onmouseout="this.blur();">	
+					<input type="color" id="col_edit" value="#ffffff" style="padding: 0; border: none; width: 76px; height: 30px;">	
 				</div>
 			</div>
 
@@ -268,26 +268,26 @@
 				<span>Режимы силы притяжения:</span>
 			</div>
 			<div class='option_item' style="border: none; padding-bottom: 0;">
-				<form id="gravit_mode_radio_buttons" onchange="switcher.gravit_mode = +this.gravit_mode.value; sessionStorage['gravit_mode'] = +this.gravit_mode.value;" style="width: 100%;">
+				<form id="gravit_mode_radio_buttons" style="width: 100%;">
 					<div class="radio_button_menu">
 						<span>Обратно-пропорционально кубу расстояния: </span>
-						<input id="gravit_mode_radio_0" class="checkbox" type="radio" name="gravit_mode" value=0>					
+						<input id="Gravit_mode_radio_0" class="checkbox" type="radio" name="gravit_mode" value=0>					
 					</div>
 					<div class="radio_button_menu">
 						<span>Обратно-пропорционально квадрату расстояния (обычно): </span>
-						<input id="gravit_mode_radio_1" class="checkbox" type="radio" name="gravit_mode" value=1>					
+						<input id="Gravit_mode_radio_1" class="checkbox" type="radio" name="gravit_mode" value=1>					
 					</div>
 					<div class="radio_button_menu">
 						<span>Обратно-пропорционально от расстояния: </span>
-						<input id="gravit_mode_radio_2" class="checkbox" type="radio" name="gravit_mode" value=2>
+						<input id="Gravit_mode_radio_2" class="checkbox" type="radio" name="gravit_mode" value=2>
 					</div>
 					<div class="radio_button_menu">
 						<span>Постоянное притяжение: </span>
-						<input id="gravit_mode_radio_3" class="checkbox" type="radio" name="gravit_mode" value=3>
+						<input id="Gravit_mode_radio_3" class="checkbox" type="radio" name="gravit_mode" value=3>
 					</div>
 					<div class="radio_button_menu">
 						<span>Пропорционально от расстояния: </span>
-						<input id="gravit_mode_radio_4" class="checkbox" type="radio" name="gravit_mode" value=4>
+						<input id="Gravit_mode_radio_4" class="checkbox" type="radio" name="gravit_mode" value=4>
 					</div>
 				</form>			
 			</div>
@@ -300,18 +300,18 @@
 				<span>Режимы взаемодействия:</span>
 			</div>
 			<div class='option_item without_border' style="padding-bottom: 0;">
-				<form id="interact_radio_buttons" onchange="switcher.interact = +this.interact.value; sessionStorage['interact'] = +this.interact.value;" style="width: 100%;">
+				<form id="interact_radio_buttons" style="width: 100%;">
 					<div class="radio_button_menu">
 						<span>Между всеми объектами: </span>
-						<input id="interact_radio_0" class="checkbox" type="radio" name="interact" value=0>					
+						<input id="Interact_radio_0" class="checkbox" type="radio" name="interact" value=0>					
 					</div>
 					<div class="radio_button_menu">
 						<span>Только с родительским объектом: </span>
-						<input id="interact_radio_1" class="checkbox" type="radio" name="interact" value=1>
+						<input id="Interact_radio_1" class="checkbox" type="radio" name="interact" value=1>
 					</div>
 					<div class="radio_button_menu">
 						<span>Без взаемодействий: </span>
-						<input id="interact_radio_2" class="checkbox" type="radio" name="interact" value=2>
+						<input id="Interact_radio_2" class="checkbox" type="radio" name="interact" value=2>
 					</div>
 				</form>					
 			</div>

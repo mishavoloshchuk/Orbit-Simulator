@@ -126,7 +126,7 @@ $('document').ready(function(){
 	switcher = {del_radio: 0, del_pulse: 10, del_pulse_state: false, pause: false,
 		pause2: false, music: false,
 		obj_count: obj_count, device: 'desktop',
-		gravit_mode: 1, r_gm: 1, interact: 0, ref_interact: 0,
+		Gravit_mode: 1, r_gm: 1, Interact: 0, ref_Interact: 0,
 		traj_mode: 1, traj_mode2: 1, traj_prev_on: true,
 		zoomToScreenCenter: false, vis_distance: false, sel_orb_obj: false, 
 		launch_powr: 1, create_obj_pause: true, traj_accuracity: 1, collision_mode: 0,
@@ -140,8 +140,8 @@ $('document').ready(function(){
 		help: 'help_menu', settings: 'settings_menu', camera: 'camera_menu', trajectory: 'traj_menu',
 		world_settings: 'world_settings_men'}
 
-	choise_restore('gravit_mode', 'gravit_mode', 'radio');
-	choise_restore('interact', 'interact', 'radio');
+	choise_restore('Gravit_mode', 'Gravit_mode', 'radio');
+	choise_restore('Interact', 'Interact', 'radio');
 	choise_restore('traj_mode', 'traj_mode2', 'radio');
 	choise_restore('collision_mode', 'collision_mode', 'radio');
 	choise_restore('traj_prev_on', 'traj_prev_on', 'checkbox');
@@ -166,7 +166,7 @@ $('document').ready(function(){
 	switcher.bg_img_url = sessionStorage['bg_img_url'] ? sessionStorage['bg_img_url'] : 'background/background.jpg';
 	switcher.bg_darkness = sessionStorage['bg_darkness'] ? +sessionStorage['bg_darkness'] : 0.7;
 	trace_distance = sessionStorage['trace_distance'] ? Math.round(pow(32, +sessionStorage['trace_distance'])) : 256;
-	trace_resolution[1] = sessionStorage['trace4Res'] ? Math.round(100**(1-sessionStorage['trace4Res'])) : 3;
+	trace_resolution[1] = sessionStorage['trace4Res'] ? Math.round(pow(100, (1-sessionStorage['trace4Res']))) : 3;
 	T4Wdth = sessionStorage['T4Wdth'] ? +sessionStorage['T4Wdth'] : 1.1;
 
 	$('.col_select').attr('value', obj_color);
@@ -211,8 +211,8 @@ $('document').ready(function(){
 
 	sel_and_rest();
 	function sel_and_rest(){
-		radio_select('gravit_mode_radio', switcher.gravit_mode);
-		radio_select('interact_radio', switcher.interact);
+		radio_select('Gravit_mode_radio', switcher.Gravit_mode);
+		radio_select('Interact_radio', switcher.Interact);
 		show_obj_count();
 	}
 
@@ -235,7 +235,7 @@ $('document').ready(function(){
 			document.getElementById(check_id).checked = false;
 		}
 	}
-	function choise_restore(name_session, var_name, cr = 'c'){
+	function choise_restore(name_session, var_name, cr){
 		if (sessionStorage[name_session]){
 			if (cr == 'checkbox'){
 				switcher[var_name] = sessionStorage[name_session] != 'true' ? false : true;	
@@ -257,17 +257,17 @@ $('document').ready(function(){
 	function menu_option_restore(name, value){
 		if (name == 'traj_radio_buttons'){
 			if (value == 1){
-				$('.extra_traj_1_options').css({display: 'unset'});
+				$('.extra_traj_1_options').css({display: 'inline'});
 			} else {
 				$('.extra_traj_1_options').css({display: 'none'});
 			}
 			if (value == 2){
-				$('.extra_traj_2_options').css({display: 'unset'});
+				$('.extra_traj_2_options').css({display: 'inline'});
 			} else {
 				$('.extra_traj_2_options').css({display: 'none'});
 			}
 			if (value == 3){
-				$('.extra_traj_3_options').css({display: 'unset'});
+				$('.extra_traj_3_options').css({display: 'inline'});
 			} else {
 				$('.extra_traj_3_options').css({display: 'none'});
 			}
@@ -305,7 +305,7 @@ $('document').ready(function(){
 				ctx3.globalAlpha = 1;
 			} else {
 				ctx3.clearRect(0, 0, canv.width, canv.height);
-			}		
+			}
 		} else {
 			if (!col){
 				ctx.globalAlpha = 0.01;
@@ -617,6 +617,8 @@ $('document').ready(function(){
 		//alert($(this).attr('id'));
 		chck = $(this).attr('id');
 		inp_name = $(this).attr('name');
+		eti = e.type == 'input'; // If input type = Input
+		etch = e.type == 'change'; // If input type = Change
 		fram_rend = true;
 
 		if (chck == 'check_edit_lck' && body[swch.edit_obj]){
@@ -683,10 +685,16 @@ $('document').ready(function(){
 			sessionStorage['traj_accuracity'] = switcher.traj_accuracity = +this.value <= 100 ? 100/+this.value : 1;
 			if (+this.value > 100){this.value = 100}
 		} else
+		if (inp_name == 'interact'){
+			switcher.Interact = sessionStorage['Interact'] = $(this).attr('value');
+		} else
+		if (inp_name == 'gravit_mode'){
+			switcher.Gravit_mode = sessionStorage['Gravit_mode'] = $(this).attr('value');
+		} else
 		if (inp_name == 'collision_radio'){
 			switcher.collision_mode = sessionStorage['collision_mode'] = +$(this).attr('value');
 		} else
-		if (chck == 'check_fps_swch'){
+		if (chck == 'check_fps_swch' && etch){
 			sessionStorage['show_fps'] = show_fps = (this.checked == false) ? false : true;
 			if (show_fps){
 				$('.fps').css({display: 'block'});
@@ -872,11 +880,11 @@ $('document').ready(function(){
 
 		if (middleMouseDown || mbut == 'move'){canv2.style.cursor = "move";}else{canv2.style.cursor = "default";};
 
-		if (switcher.interact != switcher.ref_interact){
-			switcher.ref_interact = switcher.interact;
+		if (switcher.Interact != switcher.ref_Interact){
+			switcher.ref_Interact = switcher.Interact;
 		}
-		if (switcher.r_gm != switcher.gravit_mode){
-			switcher.r_gm = switcher.gravit_mode;
+		if (switcher.r_gm != switcher.Gravit_mode){
+			switcher.r_gm = switcher.Gravit_mode;
 		}
 
 		if (tsw){
@@ -1139,7 +1147,7 @@ $('document').ready(function(){
 		}
 		// End drawing objects ==================
 
-		if(switcher.ref_interact == 0 && !switcher.pause2 && !bodyEmpty){
+		if(switcher.ref_Interact == 0 && !switcher.pause2 && !bodyEmpty){
 			for (let i in body){
 				if (i == object){continue;};
 				gMod = switcher.r_gm;
@@ -1170,7 +1178,7 @@ $('document').ready(function(){
 				//C = rad(obj.x+vx, obj.y+vy, obj.x, obj.y);
 			}
 		} else
-		if (switcher.ref_interact == 1 && body_prev[swch.orb_obj] && !switcher.pause2 && !bodyEmpty){
+		if (switcher.ref_Interact == 1 && body_prev[swch.orb_obj] && !switcher.pause2 && !bodyEmpty){
 			if (object != obj1.main_obj && body[object] && body[obj.main_obj]){
 				main_obj_name = obj1.main_obj;
 				obj2 = body_prev[main_obj_name];
@@ -1202,7 +1210,7 @@ $('document').ready(function(){
 				//ctx.stroke();
 			};
 		} else
-		if (switcher.ref_interact == 2 && body_prev[swch.orb_obj] && !switcher.pause2 && !bodyEmpty){
+		if (switcher.ref_Interact == 2 && body_prev[swch.orb_obj] && !switcher.pause2 && !bodyEmpty){
 			if (object != obj1.main_obj && body[object] && body[obj.main_obj]){
 				main_obj_name = obj1.main_obj;
 				obj2 = body_prev[main_obj_name];
@@ -1243,7 +1251,9 @@ $('document').ready(function(){
 		}
 	};
 	//Функции притяжения
-	function gravity_func(sin, cos, R, func_num, dir = 'all', mass, ts = t){
+	function gravity_func(sin, cos, R, func_num, dir, mass, ts){
+		ts = ts == undefined ? t : ts;
+		dir = dir == undefined ? 'all' : dir;
 		//Обратно-пропорционально квадрату расстояния
 		ts *= ts;
 		if (func_num == 1){
@@ -1290,7 +1300,7 @@ $('document').ready(function(){
 		}
 	}
 
-	function collision(obj, obj2, obj_name, obj2_name, ob_arr, R, type='merge'){
+	function collision(obj, obj2, obj_name, obj2_name, ob_arr, R, type){ type = type == undefined ? 'merge' : type;
 		if (R - (Math.sqrt(Math.abs(obj.m)) + Math.sqrt(Math.abs(obj2.m))) <= 0){
 			if (obj.m >= obj2.m && (type == 'merge' || type == 0)){
 				if (obj2.m > 0){
@@ -1328,7 +1338,7 @@ $('document').ready(function(){
 				var m1 = obj.m;
 				var m2 = obj2.m;
 
-				if (!obj.lck && switcher.interact != 1){
+				if (!obj.lck && switcher.Interact != 1){
 					if (!obj2.lck){
 						ob_arr[obj2_name].vx = (( v2*Math.cos(ag2 - fi)*(m2-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1+m2) ) * Math.cos(fi) + v2*Math.sin(ag2 - fi)*Math.cos(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
 						ob_arr[obj2_name].vy = (( v2*Math.cos(ag2 - fi)*(m2-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1+m2) ) * Math.sin(fi) + v2*Math.sin(ag2 - fi)*Math.sin(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
@@ -1398,7 +1408,7 @@ $('document').ready(function(){
 		}
 	}
 	//Выбор объекта по функции
-	function select_object(mode = 0){
+	function select_object(mode){mode = mode==undefined?0:mode;
 		sel = [Infinity, '', 0];
 		if (mode == 2){
 			elem = '';
@@ -1431,7 +1441,9 @@ $('document').ready(function(){
 		return 	sel[1];
 	}
 	//Визуальная дистанция до главного объекта
-	function vis_distance(obj_cord, col = '#888888', targ_obj = swch.orb_obj){
+	function vis_distance(obj_cord, col, targ_obj){
+		col = col==undefined?'#888888':col;
+		targ_obj = targ_obj==undefined?swch.orb_obj:targ_obj;
 		if (body[targ_obj]){
 			obCoords = body[swch.t_object] ? [body[targ_obj].x - body[targ_obj].vx, body[targ_obj].y - body[targ_obj].vy] : [body[targ_obj].x, body[targ_obj].y];
 			size = rad(obj_cord[0], obj_cord[1], crd(obCoords[0], 'x', 0), crd(obCoords[1], 'y', 0));
@@ -1469,7 +1481,9 @@ $('document').ready(function(){
 		}
 	}
 	//Визуальное выдиление объекта
-	function visual_select(mode, color, object = '', alpha = 0.3) {
+	function visual_select(mode, color, object, alpha) {
+		object = object==undefined?'':object; // Standart value
+		alpha = alpha==undefined?0.3:alpha; // Standart value
 		if (!bodyEmpty){
 			del_radius = [Infinity, '', 0];
 			if (!body[object]){
@@ -1512,7 +1526,8 @@ $('document').ready(function(){
 		}
 	}
 	//Удаление объекта
-	function del_obj(obj_name_id, ob_arr = body){
+	function del_obj(obj_name_id, ob_arr){
+		ob_arr = ob_arr==undefined?body:ob_arr; // Standart value
 		for (let i in ob_arr){
 			if (ob_arr[i].main_obj == obj_name_id){
 				ob_arr[i].main_obj = ob_arr[obj_name_id].main_obj;
@@ -1557,7 +1572,12 @@ $('document').ready(function(){
 		show_obj_count();
 	}
 	//Прощет траэктории
-	function traj_prev(obj, count = 100, col, full_object = false, accr = 1){
+	function traj_prev(obj, count, col, full_object, accr){
+		// Standart values ==
+		count = count==undefined?100:count;
+		full_object = full_object==undefined?false:full_object;
+		accr = accr==undefined?1:accr;
+
 		body_traj = JSON.parse(JSON.stringify(body));
 		count /= accr;
 		//sp_obj = [0,1];
@@ -1588,7 +1608,7 @@ $('document').ready(function(){
 					distance[1] = {x: body_traj_prev[object].x, y: body_traj_prev[object].y, x2: body_traj_prev[virt_obj].x, y2: body_traj_prev[virt_obj].y, obj_name: object};
 					distance[2] = i;
 				}
-				if (switcher.interact == 0){
+				if (switcher.Interact == 0){
 					for (let i in body_traj){
 						if (i == object){continue;};
 						gMod = switcher.r_gm;
@@ -1633,7 +1653,7 @@ $('document').ready(function(){
 						}				
 					}			
 				} else
-				if (switcher.interact == 1){
+				if (switcher.Interact == 1){
 					if (body_traj[obj1.main_obj]){
 						main_obj_name = obj1.main_obj;
 						obj2 = body_traj_prev[main_obj_name];
@@ -1669,7 +1689,7 @@ $('document').ready(function(){
 						}
 					}
 				} else
-				if (switcher.interact == 2){
+				if (switcher.Interact == 2){
 					if (body_traj[obj1.main_obj]){
 						main_obj_name = obj1.main_obj;
 						obj2 = body_traj_prev[main_obj_name];
@@ -1779,11 +1799,18 @@ $('document').ready(function(){
 			}
 		}
 	}
+	function incl(a, b){
+		for (let n in a){
+			if (b == a[n]){
+				return true;
+			}
+		}
+	}
 	//Scene scale
 	document.addEventListener('wheel', function(e){
 		e_elem = e.target;
 		middleWheelSpin = true;
-		if (layers_id.includes(e_elem.id) && !e.ctrlKey){
+		if (incl(layers_id, e_elem.id) && !e.ctrlKey){
 			clrDelay = true;
 			clearTimeout(clrTmt);
 			pause_gAnim = true;
@@ -1930,7 +1957,7 @@ $('document').ready(function(){
 					check_select('check_fps_swch', show_fps);
 				}
 			}
-			//interaction settings
+			//Interaction settings
 			if (e.keyCode == 70){ $('#world_settings').mousedown(); }
 		}
 		//Debug
@@ -2111,14 +2138,14 @@ $('document').ready(function(){
 			}
 			change_state('functionX');
 		}
-		if (noMenuBtns.includes(mbut)){
+		if (incl(noMenuBtns, mbut)){
 			mbut = pfb;
 		}
 		
 		$('#'+pfb).css({'background': ''});
-		$('#'+mbut).css({'background-color': '#fff2'});
+		$('#'+mbut).css({'background-color': 'rgba(255,255,255,0.15)'});
 		if (menu_state){
-			$('#'+mbut).css({'background-color': '#fff8'});
+			$('#'+mbut).css({'background-color': 'rgba(255,255,255,0.35)'});
 			$('#close_button').css({display: 'flex'});
 		} else {
 			$('#close_button').css({display: 'none'});
@@ -2127,9 +2154,9 @@ $('document').ready(function(){
 		sessionStorage['menu_state'] = menu_state;
 	});
 	if (menu_state){
-		$('#'+mbut).css({background: '#fff8'});
+		$('#'+mbut).css({background: 'rgba(255,255,255,0.35)'});
 	} else {
-		$('#'+mbut).css({background: '#fff2'});
+		$('#'+mbut).css({background: 'rgba(255,255,255,0.15)'});
 	}
 
 	background_image.onerror = function(){
@@ -2234,7 +2261,9 @@ $('document').ready(function(){
 		$('#close_button').css({display: 'none'});
 		menu_state = false;
 	}
-	function change_state(img, format='png', path = 'ico/'){
+	function change_state(img, format, path){
+		format = format==undefined?'png':format;
+		path = path==undefined?'ico/':path;
 		if (img == 'world_settings'){ img = 'functionX'; }
 		$('.state').html('<img src="'+path+img+'.'+format+'" alt="">');
 	}
@@ -2260,7 +2289,8 @@ $('document').ready(function(){
 	    return color;
 	}
 
-	function mixColors(color1, color2, m1 = 50, m2 = 50){
+	function mixColors(color1, color2, m1, m2){
+		m1=m1==undefined?50:m1;m2=m2==undefined?50:m2;
 		var c1 = color1[0] === "#" ? color1.slice(1) : color1;
 		var c2 = color2[0] === "#" ? color2.slice(1) : color2;
 
@@ -2301,7 +2331,12 @@ $('document').ready(function(){
 		return val;
 	}
 
-	function drawCross(x, y, color = '#ff0000', width = 1, size = 5, canvObj = ctx){
+	function drawCross(x, y, color, width, size, canvObj){
+		// Standart values
+		color=color==undefined?'#ff0000':color;
+		width=width==undefined?1:width;
+		size=size==undefined?5:size;
+		canvObj=canvObj==undefined?ctx:canvObj;
 		canvObj.strokeStyle = '#000000';
 		canvObj.lineWidth = 2;
 		for (let i = 0; i < 2; i++){
@@ -2413,8 +2448,8 @@ $('document').ready(function(){
 			  			body[i].F = {x: 0, y: 0};
 			  		} else {break;}
 			  	}
-			  	switcher.interact = file_data.switcher.interact;
-			  	switcher.gravit_mode = file_data.switcher.gravit_mode;
+			  	switcher.Interact = file_data.switcher.Interact;
+			  	switcher.Gravit_mode = file_data.switcher.Gravit_mode;
 			  	tsw = times == file_data.times ? false : true;
 			  	times = file_data.times ? file_data.times : 1;
 			  	G = file_data.G ? file_data.G : 1;
@@ -2445,7 +2480,9 @@ $('document').ready(function(){
 		return true;
 	}
 
-	function rnd(num, dot = 0, fc = false){
+	function rnd(num, dot, fc){
+		dot = dot==undefined?0:dot;
+		fc = fc==undefined?false:fc;
 		if (!fc){
 			return Math.round(num * pow(10, dot))/pow(10, dot);
 		} else {
