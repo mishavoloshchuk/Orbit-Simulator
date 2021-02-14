@@ -1,31 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ua">
 <head>
 	<meta charset="UTF-8">
 	<title>Щастя, здоров'я)</title>
 	<link rel="shortcut icon" href="img/box.png" type="image/icon">
-	<script type="text/javascript">
-		window.onload = function(){
-			button.onmouseup = function(){
-				vid_container.innerHTML = '<iframe width="1004" height="753" src="https://www.youtube.com/embed/opbR4xnsT6Q" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe><h2>:)😄</h2>';
-			}
-		}
-
-		function roundPlus( x, n ) { //x - число, n - количество знаков 
-			if(isNaN(x) || isNaN(n)) {return false;
-			} else { 
-				var m = Math.pow(10,n);
-				return Math.round(x*m)/m; 
-			}
-		}
-
-		t1 = 1571173200;
-		t2 = Date.now();
-		sec = roundPlus((t1 - t2/1000), 1);
-
-		if ( sec > 0 ) { document.location.href = "/"; };
-
-	</script>
 
 	<style type="text/css">
 		body {
@@ -44,6 +22,7 @@
 		h2 {
 			color: white;
 			font-size: 100px;
+			margin: 0;
 		}
 
 		* {
@@ -67,6 +46,10 @@
 			box-shadow: 3px 3px 50px black;
 		}
 
+		#yt_video {
+			border-radius: 2%;
+			box-shadow: 10px 10px 50px #000;
+		}
 
 		#button {
 			height: 30vh;
@@ -118,6 +101,7 @@
 			animation-delay: 0.8 s;
 			transform: translateY(1000%);
 			animation-duration: 0.5s;
+			animation-delay: 1s;
 			animation-name: slide;
 			animation-fill-mode: forwards;
 			display: inline-block;
@@ -141,23 +125,19 @@
 			opacity: 0;
 			transform: scale(1.5);
 		  }
-
 		  100% {
 			opacity: 1;
 			transform: rotate(1);
 		  }
-
 		}
 
 		@keyframes dark {
 		  0% {
 			opacity: 0;
 		  }
-
 		  100% {
 			opacity: 0.3;
 		  }
-
 		}
 
 		@keyframes slidein {
@@ -165,46 +145,78 @@
 		    transform: scale(0);
 			opacity: 0;
 		  }
-
 		  100% {
 		    transform: scale(1);
 			opacity: 1;
 		  }
-
 		}
 		@keyframes slide {
 		  0% {
 		    transform: translateY(1000%);
 		  }
-
 		  100% {
 		   	transform: translateY(0);
 		  }
-
 		}
 		@keyframes rotation {
 		  from {
 		    transform: scale(1);
 		  }
-
 		  to {
 		    transform: scale(0.8);
 		  }
-
 		}
 	</style>
+	<script type="text/javascript">
+		t1 = 1622667600;
+		t2 = Date.now();
+		sec = roundPlus((t1 - t2/1000), 1);
+		if ( sec > 0 ) { document.location.href = "/happy_day"; };
+
+		window.onload = function(){
+			button.onmouseup = function(){
+				var wd = window.innerWidth;
+				var hg = window.innerHeight;
+				var w,h;
+				if (hg>wd){
+					w = wd; h = wd/4*3;
+				} else {
+					w = hg/3*4/2; h = hg/2;
+				}
+				vid_container.innerHTML = '<iframe id="yt_video" width="'+w+'" height="'+h+'" src="https://www.youtube.com/embed/0izuXHNBgxM" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe><h2>:)😄</h2>';
+			}
+
+			window.onresize = function(){
+				var wd = window.innerWidth;
+				var hg = window.innerHeight;
+				var w,h;
+				if (hg>wd){
+					w = wd; h = wd/4*3;
+				} else {
+					w = hg/3*4/1.5; h = hg/1.5;
+				}
+				yt_video.width = w; yt_video.height = h;
+			}
+
+			function roundPlus( x, n ) { //x - число, n - количество знаков 
+				if(isNaN(x) || isNaN(n)) {return false;
+				} else { 
+					var m = Math.pow(10,n);
+					return Math.round(x*m)/m; 
+				}
+			}
+		}
+
+	</script>
 </head>
 <body style="background-image: url('img/background.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat; background-attachment: fixed;";>
 	<div class="video" id='vid_container'>
 		<div class="rot">
 			<img id='button' src="img/box.png">
 		</div> <br>
-
 		<h2 class="happy">З днем народження!</h2><br>
-		<h2 class="name">for<br><hr>Kseniya Ostafiychuk</h2>
+		<h2 class="name">for<br><hr>Ksenya Ostafiychuk</h2>
 	</div>
-	
 	<div class="darken"></div>
-	
 </body>
 </html>
