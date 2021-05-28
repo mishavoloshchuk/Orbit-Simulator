@@ -44,6 +44,11 @@ $('document').ready(function(){
 	//settings
 	G = 1; // Gravitation power
 
+	// Worker
+	var myWorker = new Worker('worker.js');
+	myWorker.postMessage('Worker is enabled!');
+
+
 	//Camera
 	cam_x = 0; // Track object camera offset
 	cam_y = 0; // Track object camera offset
