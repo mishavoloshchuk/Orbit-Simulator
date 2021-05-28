@@ -45,7 +45,7 @@ $('document').ready(function(){
 	G = 1; // Gravitation power
 
 	// Worker
-	var myWorker = new Worker('worker.js');
+	var myWorker = new Worker('js/worker.js');
 	myWorker.postMessage('Worker is enabled!');
 
 
