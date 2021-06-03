@@ -8,15 +8,21 @@
 	<style type="text/css">
 		body {
 			margin: 0;
-			background-color: #690B95;
+			background-color: #2D2D2D;
 			background-position: center;
 			background-repeat: no-repeat;
 			background-size: cover;
-			height: 100vh;
+			min-height: 100vh;
 			overflow: hidden;
 			display: flex;
 			justify-content: center;
 			align-items: center;
+		}
+
+		*::selection{
+			background: rgba(173,3,37,0.7);
+			color:  #FFFFFF;
+			box-sizing: border-box;
 		}
 
 		h2 {
@@ -25,14 +31,22 @@
 			margin: 0;
 		}
 
+		h3 {
+			color: white;
+			font-size: 40px;
+			margin: 0;
+			font-family: 'Arial Black';
+		}
+
 		* {
-			box-sizing: border-box;
+			
 		}
 
 		.video {
 			display: inline-block;
 			text-align: center;
 			width: 100%;
+			margin-bottom: 10vh;
 		}
 
 		.video-item {
@@ -53,31 +67,32 @@
 
 		#button {
 			height: 30vh;
-			transition: 0.5s;
+			transition: 0.3s;
 			animation-duration: 2s;
 			animation-name: slidein;
 			animation-fill-mode: backwards;
-
 			-webkit-filter: drop-shadow(0px 0px 10px #222);
-			filter: drop-shadow(0px 0px 10px #222); 
-		}
+			filter: drop-shadow(0px 0px 10px #222);
+			transform: scale(0.8);
+			}
 
 		#button:hover {
-			-webkit-filter: drop-shadow(0px 0px 40px #fff);
-			filter: drop-shadow(0px 0px 40px #fff);
-			cursor: pointer;
-
+			cursor: pointer; 
+			-webkit-filter: drop-shadow(0px 0px 10px #fff);
+			filter: drop-shadow(0px 0px 10px #fff);
 		}
 
 		.rot {
 			display: inline-block;
 			transition: 0.5s;
-			animation-duration: .5s;
+			animation-duration: 2s;
 			animation-name: rotation;
 			animation-delay: 1.3s;
 			animation-iteration-count: infinite;
-			animation-direction: alternate;
+			animation-timing-function: ease-in-out;
+			overflow: hidden;
 		}
+
 
 		.happy {
 			color: #fff;
@@ -120,10 +135,123 @@
 
 		}
 
+		.ballons {
+			position: absolute;
+			top:  0; bottom:  0;
+			left:  0; right: 0;
+			height: 100vh;
+			z-index: -1;
+			overflow: hidden;
+		}
+
+		.ballon {
+			opacity: 0.9;
+			position: absolute;
+			min-width: 20%;
+			animation-duration: 3s;
+			animation-name: ballon, ballonRot;
+			animation-timing-function: ease-in-out;
+			animation-iteration-count: infinite;
+			animation-direction: alternate-reverse;
+		}
+
+		.ballon:after {
+			animation-name: ballon;
+		}
+
+		.notButton {
+			position: absolute;
+			bottom: 10vmin;
+			right: 10vmin;
+			transition: 0.1s;
+			opacity: 0.8;
+			text-align: right;
+			text-shadow: 1px 1px 5px #000000;
+		}
+
+		.notButton img {
+			animation-name: noButt;
+			animation-duration: 0.5s;
+			animation-iteration-count: infinite;
+			animation-timing-function: ease-in-out;
+			animation-direction: alternate;
+		}
+
+		.notButton img:active {
+			transition: 0.15s;
+			opacity: 1;
+			transform: scale(0.97);
+		}
+
+		.notButton img {
+			width: 10vmax;
+		}
+
+		.unselectable {
+			-webkit-touch-callout: none; /* iOS Safari */
+			-webkit-user-select: none;   /* Chrome/Safari/Opera */
+			-khtml-user-select: none;    /* Konqueror */
+			-moz-user-select: none;      /* Firefox */
+			-ms-user-select: none;       /* Internet Explorer/Edge */
+			user-select: none;           /* Non-prefixed version, currently
+			                                not supported by any browser */
+		}
+
+		.meme {
+			border-radius: 2%;
+		}
+
+		.note {
+			position: absolute;
+			bottom: 0;
+			left: 0;
+			text-align: center;
+			color: #ffffff;
+			font-size: 4vmin;
+			font-family: arial;
+		}
+
+		@media (orientation: portrait) {
+			.happy {
+				font-size: 70px;
+			}
+			.name {
+				font-size: 50px;
+			}
+		}
+
+
+		@keyframes ballon {
+			from {
+
+			}
+			to {
+				transform: translateY(100px);
+			}
+		}
+
+		@keyframes noButt {
+			from {
+
+			}
+			to {
+				transform: scale(1.15);
+			}
+		}
+
+		@keyframes ballonRot {
+			from {
+
+			}
+			to {
+				transform: rotate(10deg);
+			}
+		}
+
 		@keyframes txt {
 		  0% {
 			opacity: 0;
-			transform: scale(1.5);
+			transform: scale(1.15);
 		  }
 		  100% {
 			opacity: 1;
@@ -146,7 +274,7 @@
 			opacity: 0;
 		  }
 		  100% {
-		    transform: scale(1);
+		    transform: scale(0.8);
 			opacity: 1;
 		  }
 		}
@@ -159,21 +287,40 @@
 		  }
 		}
 		@keyframes rotation {
-		  from {
-		    transform: scale(1);
-		  }
-		  to {
-		    transform: scale(0.8);
-		  }
+			0% {   
+			}
+			20% {
+				transform: rotate(10deg);
+			}
+			30% {
+				transform: rotate(-8deg);
+			}
+			38% {
+				transform: rotate(6deg);
+			}
+			50% {
+				transform: rotate(-4deg);
+				
+			}
+			60% {
+				transform: rotate(2deg);
+			}
+			70% {
+				transform: rotate(0);
+			}
+			100% {
+
+			}
 		}
 	</style>
 	<script type="text/javascript">
 		t1 = 1622667600;
 		t2 = Date.now();
-		sec = roundPlus((t1 - t2/1000), 1);
+		sec = Math.round((t1 - t2/1000)*10)/10;
 		if ( sec > 0 ) { document.location.href = "/happy_day"; };
 
 		window.onload = function(){
+			var meme = false;
 			button.onmouseup = function(){
 				var wd = window.innerWidth;
 				var hg = window.innerHeight;
@@ -183,7 +330,12 @@
 				} else {
 					w = hg/3*4/2; h = hg/2;
 				}
-				vid_container.innerHTML = '<iframe id="yt_video" width="'+w+'" height="'+h+'" src="https://www.youtube.com/embed/0izuXHNBgxM" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe><h2>:)😄</h2>';
+				if (meme){
+					vid_container.innerHTML = '<video src="vid/Meme.mp4" controls="" class="meme" autoplay></video><h2>😁😎</h2><span class="note">*це просто жарт😉*</span>'
+				} else {
+					vid_container.innerHTML = '<iframe id="yt_video" width="'+w+'" height="'+h+'" src="https://www.youtube.com/embed/0izuXHNBgxM" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe><h2>😅🤗</h2>';
+				}
+				document.querySelector('.notButton').style.display = 'none';
 			}
 
 			window.onresize = function(){
@@ -197,19 +349,47 @@
 				}
 				yt_video.width = w; yt_video.height = h;
 			}
-
-			function roundPlus( x, n ) { //x - число, n - количество знаков 
-				if(isNaN(x) || isNaN(n)) {return false;
-				} else { 
-					var m = Math.pow(10,n);
-					return Math.round(x*m)/m; 
+			var phrases = [
+				'Я ж казав, не натискай!🤨',
+				'Ти знову це зробила?😐',
+				'Навіщо?😑',
+				'Зупинись!',
+				'Неочікувала?🙃',
+				'Ти, все ж, хочеш дізнатись, що робить ця кнопка🤔?...',
+				'Ти ж нажимала на подарунок, перед тим, як продовжити натискати кнопку🤔?...',
+				'Ну добре, жми останній раз😌',
+				'',
+				]
+			var buttonPresses = 0;
+			document.querySelector('.notButton img').addEventListener('click', (event) => {
+				event.preventDefault();
+				document.querySelector('.notButton img').style.animationName = 'initial';
+				let text = document.querySelector('.notButton h3');
+				text.innerHTML = phrases[buttonPresses];
+				if (buttonPresses+1 <= phrases.length){
+					if (buttonPresses == 4){
+						document.querySelector('.notButton').style.left = '10vmin';
+						document.querySelector('.notButton').style.textAlign = 'left';
+						document.querySelector('.notButton').style.right = 'initial';
+					}
+					if (buttonPresses == 5){
+						document.querySelector('.notButton').style.left = 'initial';
+						document.querySelector('.notButton').style.textAlign = 'right';
+						document.querySelector('.notButton').style.right = '10vmin';
+					}
+					if (buttonPresses == 8){
+						document.querySelector('.notButton').style.display = 'none';
+						meme = true;
+						button.src = 'img/TrollBox.png';
+					}
+					buttonPresses++;
 				}
-			}
+			});
 		}
 
 	</script>
 </head>
-<body style="background-image: url('img/background.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat; background-attachment: fixed;";>
+<body style="background-image: url('https://i.pinimg.com/originals/11/40/c6/1140c6c3fbc738352af83ab1fe0ffdf4.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat; background-attachment: fixed;";>
 	<div class="video" id='vid_container'>
 		<div class="rot">
 			<img id='button' src="img/box.png">
@@ -217,6 +397,25 @@
 		<h2 class="happy">З днем народження!</h2><br>
 		<h2 class="name">for<br><hr>Ksenya Ostafiychuk</h2>
 	</div>
+	<div class="notButton unselectable" id='noPressButton'>
+		<img src="img/button.png">
+		<h3>Не натискати!❌</h3>
+	</div>
 	<div class="darken"></div>
+	<div class="ballons">
+		<img src="img/RB.png" class="ballon" style="top: ; left: ;">
+		<img src="img/OB.png" class="ballon" style="top: 18%; left: 20%; animation-duration: 2s;">
+		<img src="img/WB.png" class="ballon" style="top: 50%; left: 65%; animation-duration: 3.2s;">
+		<img src="img/BB.png" class="ballon" style="top: 15%; left: 80%; animation-duration: 4s;">
+		<img src="img/WB.png" class="ballon" style="top: 80%; left: 0%; animation-duration: 1.5s;">
+		<img src="img/BB.png" class="ballon" style="top: 25%; left: 50%; animation-duration: 2.2s;">
+		<img src="img/OB.png" class="ballon" style="top: 0%; left: 65%; animation-duration: 2.5s;">
+		<img src="img/RB.png" class="ballon" style="top: 70vh; left: 40%; animation-duration: 2.4s;">
+		<img src="img/BB.png" class="ballon" style="top: 40%; left: 5%; animation-duration: 3.1s;">
+		<img src="img/RB.png" class="ballon" style="top: -15vh; left: 40%; animation-duration: 1.8s;">
+		<img src="img/WB.png" class="ballon" style="top: 0; left: 25%; animation-duration: 3.4s;">
+		<img src="img/OB.png" class="ballon" style="top: 68vh; left: 80%; animation-duration: 2.7s;">
+		<img src="img/OB.png" class="ballon" style="top: 60vh; left: 10%; animation-duration: 2.7s;">
+	</div>
 </body>
 </html>
