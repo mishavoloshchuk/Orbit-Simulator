@@ -211,6 +211,17 @@
 			font-family: arial;
 		}
 
+		.backButt {
+			background: rgb(255,82,82);
+			background: linear-gradient(0deg, rgba(255,82,82,1) 0%, rgba(255,114,112,1) 100%);
+			border-radius: 1000000px;
+			display: inline-block;
+			padding:  2vmin;
+			font-size: 2vmax;
+			color:  white;
+			font-family: impact;
+		}
+
 		@media (orientation: portrait) {
 			.happy {
 				font-size: 70px;
@@ -331,9 +342,9 @@
 					w = hg/3*4/2; h = hg/2;
 				}
 				if (meme){
-					vid_container.innerHTML = '<video src="vid/Meme.mp4" controls="" class="meme" autoplay></video><h2>😁😎</h2><span class="note">*це просто жарт😉*</span>'
+					vid_container.innerHTML = '<video src="vid/Meme.mp4" controls="" class="meme" autoplay></video><h2>😁😎</h2><div class="backButt" onclick="document.location.href = \'/happy_day\'">↩Повернутись</div><span class="note">*це просто жарт😉*</span>'
 				} else {
-					vid_container.innerHTML = '<iframe id="yt_video" width="'+w+'" height="'+h+'" src="https://www.youtube.com/embed/0izuXHNBgxM" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe><h2>😅🤗</h2>';
+					vid_container.innerHTML = '<iframe id="yt_video" width="'+w+'" height="'+h+'" src="https://www.youtube.com/embed/0izuXHNBgxM" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe><h2>😅🤗</h2><div class="backButt" onclick="document.location.href = \'/happy_day\'">↩Повернутись</div>';
 				}
 				document.querySelector('.notButton').style.display = 'none';
 			}
