@@ -1,0 +1,33 @@
+body {
+	-moz-user-select: none; /* Mozilla Firefox */
+	-ms-user-select: none; /* Internet Explorer (не поддерживается) */
+	-o-user-select: none; /* Opera Presto (не поддерживается) */
+	-webkit-user-select: none; /* Google Chrome, Opera Next, Safari */
+}
+
+div {
+	box-sizing: border-box;
+	color: #fff;
+	font-family: Arial;
+}
+
+.screen {
+	display: flex;
+	justify-content: center;
+	text-align: center;
+	align-items: center;
+	position: absolute;
+	top: 0; bottom: 0;
+	left: 0; right: 0;
+	background: #83F054;
+}
+
+.text {
+	display: inline-block;
+	background: none;
+}
+
+.h1 {
+	text-shadow: 1px 1px 2px #050;
+	font-size: 100px;
+}
