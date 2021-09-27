@@ -6,6 +6,7 @@ $('document').ready(function(){
 	var now = false;
 	var snd = false;
 	var soundplay = false;
+	var sound = false;
 
 	document.addEventListener('keydown', function(key){
 		console.log(key.keyCode);
@@ -14,6 +15,12 @@ $('document').ready(function(){
 			$('.screen').mouseup();		
 		}
 	})
+
+	//Touch events ======================================
+	$('.screen').on('touchstart', function(event){
+		event.preventDefault();
+		$('.screen').trigger('mousedown', event);
+	});
 
 	$('.screen').mousedown(function(e){
 		console.log(snd);
