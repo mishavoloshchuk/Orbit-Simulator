@@ -6,7 +6,7 @@ attpt = 1;
 document.querySelector('#maxNum').addEventListener('input', (e)=>{
     [min, attpt] = [1, 1];
     max = +e.target.value;
-    attempt.innerHTML = "Спроба №: " + attpt + '/' + (1+Math.floor(getBaseLog(2, +maxNum.value))); 
+    attempt.innerHTML = "Спроба №: " + attpt + '/' + getAttempts(); 
     showNumb()
 })
 
@@ -15,7 +15,7 @@ document.querySelector('.appInner').addEventListener('click', (e)=>{
     let elem = e.target.name;
     findMid()
     
-    if ((elem == 'smaller' || elem == 'bigger') && attpt != 1+Math.floor(getBaseLog(2, +maxNum.value)) ){
+    if ((elem == 'smaller' || elem == 'bigger') && attpt != getAttempts() ){
         switch (elem) {
             case 'smaller': {
                 max = mid - 1;
@@ -29,14 +29,14 @@ document.querySelector('.appInner').addEventListener('click', (e)=>{
 
         attpt ++;
 
-        attempt.innerHTML = "Спроба №: " + attpt + '/' + (1+Math.floor(getBaseLog(2, +maxNum.value))); 
+        attempt.innerHTML = "Спроба №: " + attpt + '/' + getAttempts(); 
     }
 
     switch (elem) {
         case 'restart': {
             [max, min, attpt] = [+maxNum.value, 1, 1];
             showNumb()
-            attempt.innerHTML = "Спроба №: " + attpt + '/' + (1+Math.floor(getBaseLog(2, +maxNum.value))); 
+            attempt.innerHTML = "Спроба №: " + attpt + '/' + getAttempts(); 
             break;}
     }
     
@@ -48,7 +48,12 @@ function showNumb(){
     askNum.innerHTML = mid+'?';
 }
 function findMid(){
-    mid = Math.floor((min + max)/2);
+    let max1 = max<2 ? 2 : max;
+    mid = Math.floor((min + max1)/2);
+}
+function getAttempts(){
+    let numb = maxNum.value ? +maxNum.value < 2 ? 2 : +maxNum.value : 2;
+    return 1+Math.floor(getBaseLog(2, numb));
 }
 function getBaseLog(x, y) {
     return Math.log(y) / Math.log(x);
