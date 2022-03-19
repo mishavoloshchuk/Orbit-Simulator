@@ -66,3 +66,11 @@ body {
     right: 0;
     z-index: -1;
 }
+.backImg {
+    position: absolute;
+    top: 0; bottom: 0; left: 0; right: 0;
+    background-image: url('https://www.stockvault.net/blog/wp-content/uploads/2015/02/black-leather.jpg');
+    opacity: 0.1;
+    z-index: -2;
+    background-size: cover;
+}
