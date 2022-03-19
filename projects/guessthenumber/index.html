@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="./styles/styles.css">
+</head>
+<body>
+    <div class="vinett"></div>
+    <div class="appOuter">
+        <div class="appInner">
+            <div class="block">
+                <label for="maxNum">Максимальне загадуване число:</label><br>
+                <input class="input" type="number" min="2" value="100" id="maxNum"><br>
+            </div>
+            <button class="button" name="smaller">Менше</button>
+            <h2 class="text" id="askNum" style="font-weight: bold;">50?</h2>
+            <button class="button" name="bigger">Більше</button><br>
+            <h2 class="text" id="attempt" style="font-weight: 100;">Спроба №: 1/7</h2><br>
+            <button class="button" name="restart">Вгадав! / Перезапуск</button>
+        </div>
+    </div>
+    <script src="./js/main.js"></script>
+</body>
+</html>
