@@ -59,7 +59,7 @@ function showNumb(){
 }
 // Find middle number
 function findMid(){
-    let max1 = max<2 ? 2n : max;
+    const max1 = max ? max < 2 ? 2n : max : 2n;
     mid = (min + max1)/2n;
 }
 // Calculate and send attempts throught max number
