@@ -59,15 +59,19 @@ function showNumb(){
 }
 // Find middle number
 function findMid(){
-    let max1 = max<2 ? 2 : max;
+    let max1 = max<2 ? 2n : max;
     mid = (min + max1)/2n;
 }
 // Calculate and send attempts throught max number
 function getAttempts(){
-    let numb = maxNum.value ? +maxNum.value < 2 ? 2 : +maxNum.value : 2;
-    return 1+Math.floor(getBaseLog(2, numb));
+    let numb = maxNum.value ? maxNum.value < 2 ? 2 : maxNum.value : 2;
+    return 1+Math.floor(baseBigIntLog(2, numb));
 }
-// Get Base Log
-function getBaseLog(x, y) {
-    return Math.log(y) / Math.log(x);
+// Get bigint Log
+function log10(bigint) {
+  if (bigint < 0) return NaN;
+  const s = bigint.toString(10);
+  return s.length + Math.log10("0." + s.substring(0, 15));
 }
+function bigIntLog(bigint) { return log10(bigint) * Math.log(10) }
+function baseBigIntLog(base, bigint) { return bigIntLog(bigint) / Math.log(base) }
