@@ -1,7 +1,7 @@
-let [min, attpt, max, mid] = [1, 1, 100, 50]; // Init vars
+let [min, attpt, max, mid] = [1n, 1, 100n, 50n]; // Init vars
 // Set max number listener
 document.querySelector('#maxNum').addEventListener('input', (e)=>{
-    [min, attpt, max] = [1, 1, +e.target.value];
+    [min, attpt, max] = [1n, 1, BigInt(maxNum.value)];
     attempt.innerHTML = "Спроба №: " + attpt + '/' + getAttempts(); 
     showNumb()
 })
@@ -12,7 +12,7 @@ document.querySelector('.appInner').addEventListener('click', (e)=>{
     // Buttons
     switch (elem) {
         case 'restart': {
-            [max, min, attpt] = [+maxNum.value, 1, 1];
+            [max, min, attpt] = [BigInt(maxNum.value), 1n, 1];
             showNumb()
             attempt.innerHTML = "Спроба №: " + attpt + '/' + getAttempts(); 
             break;}
@@ -39,11 +39,11 @@ function binarySearch(comp){
     if ((comp == 'smaller' || comp == 'bigger') && attpt != getAttempts() ){
         switch (comp) {
             case 'smaller': {
-                max = mid - 1;
+                max = mid - 1n;
                 findMid()
                 break;}  
             case 'bigger': {
-                min = mid + 1;
+                min = mid + 1n;
                 findMid()
                 break;}
         }
@@ -60,7 +60,7 @@ function showNumb(){
 // Find middle number
 function findMid(){
     let max1 = max<2 ? 2 : max;
-    mid = Math.floor((min + max1)/2);
+    mid = (min + max1)/2n;
 }
 // Calculate and send attempts throught max number
 function getAttempts(){
