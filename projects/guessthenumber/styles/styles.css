@@ -9,8 +9,8 @@ body {
     background-color: rgb(26, 26, 26);
 }
 .appOuter {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100%;
+    min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -64,18 +64,15 @@ body {
 }
 .vinett {
     background: radial-gradient(rgba(0,0,0,0) 30%, rgba(0,0,0,0.7));
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    position: fixed;
+    top: 0; bottom: 0; left: 0; right: 0;
     z-index: -1;
 }
 .backImg {
-    position: absolute;
+    position: fixed;
     top: 0; bottom: 0; left: 0; right: 0;
     background-image: url('https://www.stockvault.net/blog/wp-content/uploads/2015/02/black-leather.jpg');
-    opacity: 0.1;
+    opacity: 0.2;
     z-index: -2;
     background-size: cover;
 }
