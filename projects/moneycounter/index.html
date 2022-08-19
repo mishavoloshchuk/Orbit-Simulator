@@ -4,19 +4,31 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width,initial-scale=1.0">
 	<title>MoneyCounter</title>
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,200,0,0" />
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,200,0,0" />
 	<style>
-
 body{
 	margin: 0;
 	padding: 0;
-	background-color: black;
+	background-color: #111111;
 	color: white;
 	font-family: arial;
+	font-size: 5vmin;
+}
+h3{
+	font-weight: 100;
+	font-size: 1.5em;
+	color: #cccccc;
+	margin: 3vmin 0;
+
 }
 .mainInner{
-	padding: 0 20px;
+	padding: 0 4vmin;
 	display: flex;
 	flex-direction: column;
+}
+.subvaladd{
+	margin-bottom: 3vmin;
 }
 .innerSubvaladd{
 	display: flex;
@@ -24,19 +36,23 @@ body{
 	align-items: center;
 }
 .button{
-	padding: 20px;
-	border: 2px solid gray;
+	padding: 3vmin 1vmin;
+	/*border: 2px solid gray;*/
+	background-color: rgba(255,255,255,0.1);
 	display: inline-block;
-	border-radius: 10px;
+	border-radius: 100px;
 	text-align: center;
-	font-size: 1.3em;
+	font-size: 7vmin;
+	font-weight: 600;
+	transition: 100ms;
+	-webkit-tap-highlight-color: transparent;
 }
 .button:hover{
 	cursor: pointer;
 }
 .button:active{
-	cursor: pointer;
 	background-color: rgba(255,255,255,0.4);
+	border-radius: 4vmin;
 }
 .value{
 	width: 50%;
@@ -45,21 +61,21 @@ body{
 .innerKeyboard{
 	display: grid;
 	grid-template-columns: repeat(3, 1fr);
-	grid-column-gap: 15px;
-	grid-row-gap: 15px;
+	grid-column-gap: 3vmin;
+	grid-row-gap: 3vmin;
 
 }
 .input{
-	top: 0; bottom: 0; left: 0; right: 0;
-	padding: 20px;
+	top: 2em; bottom: 0; left: 0; right: 0;
+	padding: 5vmin;
 	position: absolute;
 	display: flex;
 	justify-content: center;
-	align-items: center;
+	align-items: flex-end;
 }
 .innerInput{
 	width: 100%;
-	margin-bottom: 20%;
+	max-height: 100%;
 }
 
 	</style>
@@ -73,12 +89,11 @@ body{
 			<div class="innerInput">
 				<div class="subvaladd">
 					<div class="innerSubvaladd">
-						<div id="keybtn_-" class="button" onclick="addsub('-')"> - </div>
-						<div id="keyinp_v" class="value"><h2>0</h2></div>
-						<div id="keybtn_+" class="button" onclick="addsub('+')"> + </div>
+						<div id="keybtn_-" class="button" onclick="addsub('-')" style="width: 100%; padding: 4vmin 0;">-</div>
+						<div id="keyinp_v" class="value" style="width: 100%; overflow-x: auto; margin: 0 2vmin;"><h2 style="margin: 0;">0</h2></div>
+						<div id="keybtn_+" class="button" onclick="addsub('+')" style="width: 100%; padding: 4vmin 0;">+</div>
 					</div>
 				</div>
-				<br><hr><br>
 				<div class="keyboard">
 					<div class="innerKeyboard">
 						<div class="button" id="keybtn_1">1</div>
@@ -93,8 +108,9 @@ body{
 						<div class="button" id="keybtn_8">8</div>
 						<div class="button" id="keybtn_9">9</div>
 
+						<div class="button material-symbols-outlined" id="keybtn_d" style="padding: 0; padding-top: 3.5vmin;">cancel</div>
 						<div class="button" id="keybtn_0">0</div>
-						<div class="button" id="keybtn_d" style="grid-column-start: 2; grid-column-end: 4;">Стерти</div>
+						<div class="button material-symbols-outlined" id="keybtn_b" style="padding: 0; font-size: 2em; padding-top: 1.9vmin;">backspace</div>
 					</div>
 					</div>
 				</div>
@@ -103,29 +119,37 @@ body{
 	</div>
 
 	<script type="text/javascript">
+		// Button click handler
 		document.querySelector('.innerKeyboard').onclick = function(e){
-			e.preventDefault();
-			if (keyinp_v.firstChild.innerHTML[0] == '0') keyinp_v.firstChild.innerHTML = '';
-			keyinp_v.firstChild.innerHTML += e.target.id[e.target.id.length-1];
-			if (e.target.id[e.target.id.length-1] == 'd') keyinp_v.firstChild.innerHTML = 0;
+			e.preventDefault(); // Prevent zooming on double touch
+			if (e.target.id.includes('keybtn')){
+				if (keyinp_v.firstChild.innerHTML[0] == '0') keyinp_v.firstChild.innerHTML = '';
+				keyinp_v.firstChild.innerHTML += e.target.id[e.target.id.length-1] <= 9 ? +e.target.id[e.target.id.length-1] : ''; // Number button or clear\backspace
+				switch (e.target.id[e.target.id.length-1]){
+					case 'd':
+						keyinp_v.firstChild.innerHTML = 0;
+						break;
+					case 'b':
+						keyinp_v.firstChild.innerHTML = keyinp_v.firstChild.innerHTML.slice(0, -1);
+						keyinp_v.firstChild.innerHTML = !keyinp_v.firstChild.innerHTML ? 0 : keyinp_v.firstChild.innerHTML; // Print zero
+						break;
+				}
+			}
 		}
-		var money = window.localStorage.getItem('cash') || 0;
-		setMoney(money);
-		function addsub(symb){
-			setMoney(symb == '+' ? money + +keyinp_v.firstChild.innerHTML : money - +keyinp_v.firstChild.innerHTML);
+		var money = window.localStorage.getItem('cash') || 0; // Init money variable
+		setMoney(money); // Init money counter
+
+		// Add or decrease
+		function addsub(operator){
+			setMoney(operator == '+' ? money + +keyinp_v.firstChild.innerHTML : money - +keyinp_v.firstChild.innerHTML);
 			keyinp_v.firstChild.innerHTML = 0;
 		}
+
+		// Set money value
 		function setMoney(value){
 			money = +value;
 			cash.innerHTML = `Рахунок: ${money} грн`;
 			window.localStorage.setItem('cash', money);
-		}
-
-		function getCookie(name) {
-		  let matches = document.cookie.match(new RegExp(
-		    "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
-		  ));
-		  return matches ? decodeURIComponent(matches[1]) : undefined;
 		}
 	</script>
 </body>
