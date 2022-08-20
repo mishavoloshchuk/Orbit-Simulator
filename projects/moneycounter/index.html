@@ -4,7 +4,6 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width,initial-scale=1.0">
 	<title>MoneyCounter</title>
-	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,700,1,0" />
 	<style>
 body{
 	margin: 0;
@@ -19,7 +18,7 @@ h1{
 	font-size: 15vmin;
 	color: #cccccc;
 	margin: 0;
-
+	transition: 300ms;
 }
 .mainInner{
 	padding: 0 4vmin;
@@ -37,21 +36,23 @@ h1{
 .button{
 	padding: 2vmin 1vmin;
 	/*border: 2px solid gray;*/
+	position: relative;
 	background-color: #292929;
 	display: inline-block;
-	border-radius: 100px;
+	border-radius: 10vmin;
 	text-align: center;
 	font-size: 8vmin;
 	font-weight: 600;
 	transition: 100ms;
 	-webkit-tap-highlight-color: transparent;
+	-webkit-user-select: none;
 }
 .button:hover{
 	cursor: pointer;
 }
 .button:active{
-	background-color: #707070;
-	border-radius: 4vmin;	
+	background: #707070;
+	border-radius: 4vmin;
 }
 .value{
 	text-align: center;
@@ -96,26 +97,37 @@ h1{
 			<div class="innerInput">
 				<div class="keyboard">
 					<div class="innerKeyboard">
+						<!-- Minus button -->
 						<div id="keybtn_-" class="button col1">-</div>
+						<!-- Lable -->
 						<div id="keyinp_v" class="value" style="width: 100%; overflow-x: auto; display: flex; align-items: center; justify-content: center;"><h2 style="margin: 0; font-size: 8vmin;">0</h2></div>
+						<!-- Plus button -->
 						<div id="keybtn_+" class="button col1">+</div>
-
-
+						<!-- Row 1 -->
 						<div class="button" id="keybtn_1">1</div>
 						<div class="button" id="keybtn_2">2</div>
 						<div class="button" id="keybtn_3">3</div>
-
+						<!-- Row 2 -->
 						<div class="button" id="keybtn_4">4</div>
 						<div class="button" id="keybtn_5">5</div>
 						<div class="button" id="keybtn_6">6</div>
-
+						<!-- Row 3 -->
 						<div class="button" id="keybtn_7">7</div>
 						<div class="button" id="keybtn_8">8</div>
 						<div class="button" id="keybtn_9">9</div>
 
-						<div class="button material-symbols-outlined col2" id="keybtn_d" style="padding: 0; padding-top: 2.7vmin;">cancel</div>
-						<div class="button" id="keybtn_0">0</div>
-						<div class="button material-symbols-outlined col2" id="keybtn_b" style="padding: 0; font-size: 2em; padding-top: 1.7vmin;">backspace</div>
+						<!-- Delete -->
+						<div class="button col2" id="keybtn_d" style="padding: 0; padding-top: 2.7vmin;">
+							<svg fill='#ffffff' xmlns="http://www.w3.org/2000/svg" width="8vmin" viewBox='0 0 48 48' id='kbtnico_d'><path d="m16.9 33.5 7.1-7.1 7.1 7.1 2.4-2.4-7.1-7.1 7.1-7.1-2.4-2.4-7.1 7.1-7.1-7.1-2.4 2.4 7.1 7.1-7.1 7.1ZM24 45.05q-4.35 0-8.2-1.625-3.85-1.625-6.725-4.5Q6.2 36.05 4.575 32.2 2.95 28.35 2.95 24t1.625-8.2q1.625-3.85 4.5-6.725Q11.95 6.2 15.8 4.55q3.85-1.65 8.15-1.65 4.4 0 8.25 1.65 3.85 1.65 6.725 4.525Q41.8 11.95 43.45 15.8q1.65 3.85 1.65 8.25 0 4.3-1.65 8.15-1.65 3.85-4.525 6.725-2.875 2.875-6.725 4.5-3.85 1.625-8.2 1.625Z"/></svg>
+						</div>
+
+						<!-- Zero -->
+						<div class="button" id="keybtn_0" ontouchstart="zeroHoldDown(this)" ontouchend="clearTimeout(dailyCashSetting)" onmousedown="zeroHoldDown();" onmouseup="clearTimeout(dailyCashSetting)">0</div>
+
+						<!-- Backscape -->
+						<div class="button col2" id="keybtn_b" style="padding: 0; font-size: 2em; padding-top: 1.7vmin;">
+							<svg fill='#ffffff' xmlns="http://www.w3.org/2000/svg" width="8vmin" viewBox='5 2 45 45' id='kbtnico_b'><path d="m22.55 32.1 5.5-5.45 5.45 5.45 2.65-2.65-5.5-5.45 5.4-5.45-2.65-2.7-5.35 5.5-5.5-5.5-2.7 2.7L25.4 24l-5.55 5.45ZM4.85 24l8.75-12.4q.85-1.25 2.1-2t2.8-.75h20.15q1.85 0 3.225 1.375t1.375 3.225v21.1q0 1.85-1.375 3.2T38.65 39.1H18.5q-1.55 0-2.8-.725-1.25-.725-2.1-1.975Z"/></svg>
+						</div>
 					</div>
 					</div>
 				</div>
@@ -124,6 +136,8 @@ h1{
 	</div>
 
 	<script type="text/javascript">
+		var dailyAddValue = +window.localStorage.getItem('dailyCash') || 400; // Daily add value
+
 		// Button click handler
 		document.querySelector('.innerKeyboard').onclick = function(e){
 			e.preventDefault(); // Prevent zooming on double touch
@@ -148,6 +162,26 @@ h1{
 		var money = window.localStorage.getItem('cash') || 0; // Init money variable
 		setMoney(money); // Init money counter
 
+		dailyAdd(); // Add daily on start
+		setInterval(dailyAdd, 2500); // Check day changing to daily add
+
+		// Add daily cash
+		function dailyAdd(){
+			let timeZone = -(new Date).getTimezoneOffset()/60; // GMT value
+			let date = Math.floor((Date.now()+timeZone*3600000)/86400000); // Days from UNIX
+			let dayCashAdd = dailyAddValue * ( date - window.localStorage.getItem('date') );
+			setMoney(money+dayCashAdd);
+			// Change money value color
+			if (dayCashAdd){
+				cash.innerHTML = (dayCashAdd > 0 ? '+' : '') + dayCashAdd + (dayCashAdd > 0 ? ' >> ' : ' << ') + (money - dayCashAdd); // Daily add print
+				cash.style.color = '#97d97c';
+			} else {
+				cash.style.color = '';
+				setMoney(money);
+			}
+			window.localStorage.setItem('date', date); // Save last time
+		}
+
 		// Add or decrease
 		function addsub(operator){
 			setMoney(operator == '+' ? money + +keyinp_v.firstChild.innerHTML : money - +keyinp_v.firstChild.innerHTML);
@@ -160,7 +194,14 @@ h1{
 			cash.innerHTML = `${money} ₴`;
 			window.localStorage.setItem('cash', money);
 		}
+
+		// Hold button handler mousedown
+		function zeroHoldDown(th){
+			dailyCashSetting = setTimeout(()=>{
+				let userInput = prompt('Введіть суму, яка автоматично додаватимется щодня:', dailyAddValue);
+				dailyAddValue = (userInput >= 0) ? +userInput : dailyAddValue;
+			}, 500); window.localStorage.setItem('dailyCash', dailyAddValue);
+		}
 	</script>
 </body>
-
 </html>
