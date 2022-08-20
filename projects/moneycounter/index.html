@@ -8,7 +8,7 @@
 body{
 	margin: 0;
 	padding: 0;
-	background-color: #111111;
+	background-color: #181818;
 	color: white;
 	font-family: arial;
 	font-size: 5vmin;
@@ -96,6 +96,7 @@ h1{
 			</div>
 			<div class="innerInput">
 				<div class="keyboard">
+					<!-- Number keyboard -->
 					<div class="innerKeyboard">
 						<!-- Minus button -->
 						<div id="keybtn_-" class="button col1">-</div>
@@ -122,11 +123,11 @@ h1{
 						</div>
 
 						<!-- Zero -->
-						<div class="button" id="keybtn_0" ontouchstart="zeroHoldDown(this)" ontouchend="clearTimeout(dailyCashSetting)" onmousedown="zeroHoldDown();" onmouseup="clearTimeout(dailyCashSetting)">0</div>
+						<div class="button" id="keybtn_0" ontouchstart="zeroHoldDown()" ontouchend="clearTimeout(dailyCashSetting)" onmousedown="zeroHoldDown();" onmouseup="clearTimeout(dailyCashSetting)">0</div>
 
 						<!-- Backscape -->
 						<div class="button col2" id="keybtn_b" style="padding: 0; font-size: 2em; padding-top: 1.7vmin;">
-							<svg fill='#ffffff' xmlns="http://www.w3.org/2000/svg" width="8vmin" viewBox='5 2 45 45' id='kbtnico_b'><path d="m22.55 32.1 5.5-5.45 5.45 5.45 2.65-2.65-5.5-5.45 5.4-5.45-2.65-2.7-5.35 5.5-5.5-5.5-2.7 2.7L25.4 24l-5.55 5.45ZM4.85 24l8.75-12.4q.85-1.25 2.1-2t2.8-.75h20.15q1.85 0 3.225 1.375t1.375 3.225v21.1q0 1.85-1.375 3.2T38.65 39.1H18.5q-1.55 0-2.8-.725-1.25-.725-2.1-1.975Z"/></svg>
+							<svg fill='#ffffff' xmlns="http://www.w3.org/2000/svg" width="8vmin" viewBox='3 3 45 45' id='kbtnico_b'><path d="m22.4 31.7 5.6-5.6 5.6 5.6 2.15-2.15L30.1 24l5.55-5.55-2.15-2.15-5.5 5.6-5.6-5.6-2.15 2.15L25.9 24l-5.65 5.55ZM6 24l8.45-11.95q.65-.9 1.55-1.475.9-.575 2-.575h21q1.25 0 2.125.875T42 13v22q0 1.25-.875 2.125T39 38H18q-1.1 0-2-.575-.9-.575-1.55-1.475Z"/></svg>
 						</div>
 					</div>
 					</div>
@@ -139,19 +140,24 @@ h1{
 		var dailyAddValue = +window.localStorage.getItem('dailyCash') || 400; // Daily add value
 
 		// Button click handler
-		document.querySelector('.innerKeyboard').onclick = function(e){
-			e.preventDefault(); // Prevent zooming on double touch
-			if (e.target.id.includes('keybtn')){
+		document.querySelector('.innerKeyboard').onclick = function(event){
+			event.preventDefault(); // Prevent zooming on double touch
+			var elem = undefined; // Button
+			// Check click on button
+			if ( event.composedPath().some((e) => { elem = e; return elem.id && elem.id.includes('keybtn');} ) ){
+				let e = elem;
+				// Replace zero when input
 				if (keyinp_v.firstChild.innerHTML[0] == '0') keyinp_v.firstChild.innerHTML = '';
-				keyinp_v.firstChild.innerHTML += e.target.id[e.target.id.length-1] <= 9 ? +e.target.id[e.target.id.length-1] : ''; // Number button or clear\backspace
-				switch (e.target.id[e.target.id.length-1]){
-					case 'd':
-						keyinp_v.firstChild.innerHTML = 0;
-						break;
-					case 'b':
-						keyinp_v.firstChild.innerHTML = keyinp_v.firstChild.innerHTML.slice(0, -1);
-						keyinp_v.firstChild.innerHTML = !keyinp_v.firstChild.innerHTML ? 0 : keyinp_v.firstChild.innerHTML; // Print zero
-						break;
+
+				// Number buttons
+				keyinp_v.firstChild.innerHTML += e.id[e.id.length-1] <= 9 ? +e.id[e.id.length-1] : '';
+
+				// Non number button click check
+				switch (e.id[e.id.length-1]){
+					case 'd': // Clear
+						keyinp_v.firstChild.innerHTML = 0; break;
+					case 'b': // Backspace
+						keyinp_v.firstChild.innerHTML = keyinp_v.firstChild.innerHTML.slice(0, -1) || 0; break;
 					case '-':
 						addsub('-'); break;
 					case '+':
@@ -163,21 +169,20 @@ h1{
 		setMoney(money); // Init money counter
 
 		dailyAdd(); // Add daily on start
-		setInterval(dailyAdd, 2500); // Check day changing to daily add
+		setInterval(dailyAdd, 20000); // Check day changing to daily add
 
 		// Add daily cash
 		function dailyAdd(){
 			let timeZone = -(new Date).getTimezoneOffset()/60; // GMT value
 			let date = Math.floor((Date.now()+timeZone*3600000)/86400000); // Days from UNIX
 			let dayCashAdd = dailyAddValue * ( date - (window.localStorage.getItem('date') || date-1 ) ); // Daily add calculate
-			setMoney(money+dayCashAdd);
 			// Change money value color
 			if (dayCashAdd){
-				cash.innerHTML = (dayCashAdd > 0 ? '+' : '') + dayCashAdd + (dayCashAdd > 0 ? ' >> ' : ' << ') + (money - dayCashAdd); // Daily add print
+				setMoney(money+dayCashAdd); // Add daily money
+				// Daily add print
+				cash.innerHTML = (dayCashAdd > 0 ? '+' : '') + dayCashAdd + ' + ' + (money - dayCashAdd)+'₴';
 				cash.style.color = '#97d97c';
-			} else {
-				cash.style.color = '';
-				setMoney(money);
+				setTimeout(()=>{cash.style.color = ''; setMoney(money);}, 3000); // Return cash styles and value to default
 			}
 			window.localStorage.setItem('date', date); // Save last time
 		}
@@ -195,12 +200,18 @@ h1{
 			window.localStorage.setItem('cash', money);
 		}
 
-		// Hold button handler mousedown
-		function zeroHoldDown(th){
+		// Hold zero button handler, mousedown
+		function zeroHoldDown(){
 			dailyCashSetting = setTimeout(()=>{
 				let userInput = prompt('Введіть суму, яка автоматично додаватимется щодня:', dailyAddValue);
-				dailyAddValue = (userInput >= 0) ? +userInput : dailyAddValue;
-			}, 500); window.localStorage.setItem('dailyCash', dailyAddValue);
+				if (userInput !== null){
+					if (!isNaN(userInput)){
+						dailyAddValue = +userInput;
+					} else {
+						alert('Вводити можна тільки числа!');
+					}
+				}
+			}, 500); dailyAddValue;
 		}
 	</script>
 </body>
