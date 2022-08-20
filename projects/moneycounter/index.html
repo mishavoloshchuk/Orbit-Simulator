@@ -169,7 +169,7 @@ h1{
 		function dailyAdd(){
 			let timeZone = -(new Date).getTimezoneOffset()/60; // GMT value
 			let date = Math.floor((Date.now()+timeZone*3600000)/86400000); // Days from UNIX
-			let dayCashAdd = dailyAddValue * ( date - window.localStorage.getItem('date') );
+			let dayCashAdd = dailyAddValue * ( date - (window.localStorage.getItem('date') || date-1 ) ); // Daily add calculate
 			setMoney(money+dayCashAdd);
 			// Change money value color
 			if (dayCashAdd){
