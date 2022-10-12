@@ -7,13 +7,11 @@
 	<link rel="stylesheet" type="text/css" href="css/main.css">
 	<link rel="shortcut icon" href="ico/favicon.png" type="image/icon">
 	<script type="text/javascript" src="lib/jquery.js"></script>
-	<script type="text/javascript" src="js/script.js"></script>
+	<script type="module" src="js/main.js"></script>
+	<script type="text/javascript" src="js/physics.js"></script>
 </head>
 <body>
 	<img src="#" class="bg_image" id="background_image">
-	<canvas id="canvas" class="canvas">No browser support!</canvas>
-	<canvas id="canvas2" class="canvas">No browser support!</canvas>
-	<canvas id="canvas3" class="canvas">No browser support!</canvas>
 	<div class="dimmer"></div>
 	<div class="menu">
 		<div class="btn" id='create'>
@@ -62,14 +60,6 @@
 			<img src="ico/camera.png" alt="Camera" title="Камера  ( V )">
 		</div>
 
-		<div class="btn" id='refresh'>
-			<img src="ico/refresh.png" alt="Refresh" title="Перезапустить">
-		</div>
-
-		<div class="btn" id='music'>
-			<img src="ico/music.png" alt="Music" title="Музыка">
-		</div>
-
 		<div class="btn" id='world_settings'>
 			<img src="ico/functionX.png" alt="Settings" title="Взаимодейстия ( F )">
 		</div>
@@ -94,39 +84,37 @@
 
 			<div class='option_item'>
 				<span>Цвет: </span>
+				<span>Cлучайный</span>
+				<input type="checkbox" class='checkbox' id="randColorCheck">
 				<div class="div_col_select">
-					<input type=color class=col_select value=#ffffff id=col_select onchange="obj_color = this.value; sessionStorage['obj_color'] = this.value;" style="padding: 0; border: none; width: 76px; height: 30px;" onmouseout="this.blur();">			
+					<input type="color" value="#ffffff" id="newObjeColorSelect" style="padding: 0; border: none; width: 76px; height: 30px;">			
 				</div>
 			</div>
 
 			<div class='option_item'>
-				<span>Случайный цвет: </span>
-				<input type="checkbox" class='rand_col_select checkbox' onchange="obj_rand_color = this.checked; sessionStorage['obj_rand_color'] = this.checked;" onmouseout="this.blur();">			
-			</div>
-
-			<div class='option_item'>
 				<span>Масса: </span>
-				<input type="number" class='input_num' id='create_mass' onchange="obj_radius = +this.value; sessionStorage['obj_radius'] = +this.value;">	
-			</div>
-
-			<div class='option_item'>
-				<span>По часовой: </span>
-				<input type="checkbox" class="direction_reverse_select checkbox" onchange="obj_reverse = this.checked; sessionStorage['obj_reverse'] = this.checked;">		
+				<input type="number" class='input_num' id='create_mass'>	
 			</div>
 
 			<div class='option_item'>
 				<span>Клик - круговая орбита: </span>
-				<input type="checkbox" class="orbit_select checkbox" onchange="obj_cirle_orbit = this.checked; sessionStorage['obj_cirle_orbit'] = this.checked;" onmouseout="this.blur();">		
+				<input type="checkbox" class="checkbox" id="circleOrbitCheck" onmouseout="this.blur();">		
+			</div>
+			<div id="circleOrbitCheckMenu" class="additionalOption">
+				<div class='option_item'>
+					<span>По часовой: </span>
+					<input type="checkbox" class="checkbox" id='objReverseCheck'>
+				</div>
 			</div>
 
 			<div class='option_item'>
 				<span>Неподвижный: </span>
-				<input type="checkbox" class="checkbox" onchange="obj_lck = this.checked;" onmouseout="this.blur();">		
+				<input type="checkbox" class="checkbox" id="objLckCeck" onmouseout="this.blur();">		
 			</div>
 
 			<div class='option_item'>
 				<span>Пауза при создании объекта: </span>
-				<input type="checkbox" class='checkbox' id="new_obj_pause">	
+				<input type="checkbox" class='checkbox' id="new_obj_pause" disabled>	
 			</div>
 						
 			<div class='option_item'>
@@ -139,31 +127,39 @@
 			</div>
 
 			<div class='option_item'>
-				<span>Скорость запуска: </span><span id='lnch_pwr_span'></span>
+				<span>Скорость запуска: </span><span id='lnch_pwr_span' class="rangeValue"></span>
 				<input type="range" list='dPwrInpVal' id="launch_power" min="0" max="2" value="1" step="0.01" width="100%">
 				<datalist id='dPwrInpVal'><option value="1"></datalist>
 			</div>
-			
-			<div class='option_item title_option_item'>
-				<span>Параметры прощета траекторий:</span>
-			</div>
+
 			<div class='option_item'>
-				<span>Прощет траекторий: </span>
-				<input type="checkbox" class='checkbox' id="traj_prev_check">	
+				<span>Скорость времени: </span><span id='time_speed_span' class="rangeValue"></span>
+				<input type="range" list='dTInpVal' id="tSpeed" min="0" max="4" value="1" step="0.01" width="100%">
+				<datalist id='dTInpVal'><option value="1"></datalist>
 			</div>
-			<div class='option_item' title="Влияет на быстродействие.">
-				<span>Дальность прощета траектории: </span>
-				<input type="number" class='input_num' id="traj_calc_samples">	
-			</div>
-			<div class='option_item' title="Влияет на быстродействие.">
-				<span>Точность прощета траектории: </span>
-				<input type="range" id="traj_calc_accuracity" min="0" max="100" value="100" step="10" width="100%">
-			</div>
-			<div class='option_item without_border'>
-				<span>Показывать рассояние: </span>
+			
+			<div class='option_item'>
+				<span>Показывать расстояние: </span>
 				<input type="checkbox" class='checkbox' id="vis_distance_check">	
 			</div>
 
+			<div class='option_item without_border'>
+				<span>Прощет траекторий: </span>
+				<input type="checkbox" class='checkbox' id="traj_prev_check" disabled>	
+			</div>
+			<div id="additionalTrajectoryMenu">
+				<div class='option_item title_option_item'>
+					<span>Параметры прощета траекторий:</span>
+				</div>
+				<div class='option_item' title="Влияет на быстродействие.">
+					<span>Дальность прощета траектории: </span>
+					<input type="number" class='input_num' id="traj_calc_samples" value="128">	
+				</div>
+				<div class='option_item without_border' title="Влияет на быстродействие.">
+					<span>Точность прощета траектории: </span>
+					<input type="range" id="traj_calc_accuracity" min="0" max="100" value="100" step="10" width="100%">
+				</div>				
+			</div>
 		</div>
 		<!--Delete menu-->
 		<div class="del_menu_options menu_pos_size" id="del_menu_options">
@@ -171,18 +167,18 @@
 				<span>Параметры удаления обьекта:</span>
 			</div>
 			<div class='option_item without_border'>
-				<form onchange="switcher.del_radio = +this.del_method.value;">
+				<form id="dellMethodRadio">
 					<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px">
 						<span>Удалить ближайший к курсору обьект: </span>
-						<input class="checkbox" type="radio" name="del_method" value=0 checked="">					
+						<input class="checkbox" type="radio" name="del_method" value="nearest" checked="">					
 					</div>
 					<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px">
 						<span>Удалить дальний от курсора обьект: </span>
-						<input class="checkbox" type="radio" name="del_method" value=1>
+						<input class="checkbox" type="radio" name="del_method" value="furthest">
 					</div>
 					<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px">
 						<span>Удалить последний добавленный обьект (Ctrl+Z): </span>
-						<input class="checkbox" type="radio" name="del_method" value=2>
+						<input class="checkbox" type="radio" name="del_method" value="biggest">
 					</div>
 				</form>		
 				
@@ -230,38 +226,142 @@
 			</div>
 
 		</div>
-		<!--Help menu-->
-		<div class="help_menu menu_pos_size" id="help_menu">
-			<div class='option_item title_option_item'>
-				<span>Горячие клавиши:</span>
-			</div>
-			<div class='help_option_item'>
-				<div><span>• H - Меню помощи.</span><br></div>
 
-				<div><span>• С - Перейти в меню создания обьектов.</span><br></div>
-				<div><span>• D - Перейти в меню удаления обьектов.</span><br></div>
-				<div><span>• E - Перейти в меню редактирования объектов.</span><br></div>
-				<div><span>• "<" - Замедлить время.</span><br></div>
-				<div><span>• P - Пауза\Старт.</span><br></div>
-				<div><span>• "/" - Восстановить течение времени по умолчанию.</span><br></div>
-				<div><span>• ">" - Ускорить время.</span><br></div>
-				<div><span>• M - Переместить обьект.</span><br></div>
-				<div><span>• T - Перейти в меню вида траекторий.</span><br></div>
-				<div><span>• V - Перейти в меню камеры.</span><br></div>
-				<div><span>• S - Перейти в меню настроек.</span><br></div>
-				<div><span>• F - Перейти в меню настроек взаемодействий.</span><br></div>
-				<div><span>• Space (Пробел) - Создать новый обьект с круговой орбитой на позиции курсора.</span><br></div>
-				<div><span>• Клик - Создать обьект.</span><br></div>
-				<div><span>• F9 - Вкл\Выкл счетчик FPS.</span><br></div>
-			</div>
+		<!--Trajectory menu-->
+		<div class="traj_menu menu_pos_size menu_pos menu_max_s" id="traj_menu">
 			<div class='option_item title_option_item'>
-				<span>Почта для советов или найденых багов:</span>
+				<span>Параметры следа:</span>
 			</div>
-			<div class='help_option_item'>
-				<span>orbitsimulator1@gmail.com</span>
+			<div class='option_item' style="border: none;">
+				<form id="traj_radio_buttons" style="width: 100%;">
+					<div class="radio_button_menu">
+						<span>Нет следов: </span>
+						<input id="traj_radio_0" class="checkbox" type="radio" name="traj" value=0>					
+					</div>
+					<div class="radio_button_menu">
+						<span>Режим следа - 1: </span>
+						<input id="traj_radio_1" class="checkbox" type="radio" name="traj" value=1>
+					</div>
+					<div class="radio_button_menu">
+						<span>Режим следа - 2: </span>
+						<input id="traj_radio_2" class="checkbox" type="radio" name="traj" value=2>
+					</div>
+					<div class="radio_button_menu">
+						<span>Режим следа - 3: </span>
+						<input id="traj_radio_3" class="checkbox" type="radio" name="traj" value=3>
+					</div>
+				</form>
+			</div>
+			<!--Extra options 1-->
+			<div id="additionalTrajectoryOptions1" class="additionalOption">
+				<div class='option_item title_option_item'>
+					<span>Дополнительные параметры:</span>
+				</div>
+
+				<div class='option_item'>
+					<label>Нерозрачность: </label>
+					<input type="range" id="trace_opacity" min="0" max="1" value="0.8" step="0.01" width="100%">
+				</div>
+				<div class='option_item without_border'>
+					<span>Размытие: </span>
+					<input type="range" id='trace_blur' min="0" step="0.1" value="0" max="5">
+				</div>
+			</div>
+			<!--Extra options 2-->
+			<div id="additionalTrajectoryOptions2" class="additionalOption">
+				<div class='option_item title_option_item'>
+					<span>Дополнительные параметры:</span>
+				</div>
+				
+				<div class='option_item'>
+					<label>Частицы: </label>
+					<input type="checkbox" id="trc2PrtclsChck" class='checkbox'>
+				</div>
+
+				<div class='option_item'>
+					<label>Дрожание: </label>
+					<input type="checkbox" id="trc2TrembChck" class='checkbox'>
+				</div>
+
+				<div class='option_item without_border'>
+					<label>Длинна следа: </label>	
+				</div>
+				<div class='option_item without_border' style="border-top: none; padding-top: 0;">
+					<input type="range" style="width: 80%;" id="trace2Lnth" min="0.8" max="3" value="1.6" step="any">
+					<label id="t2LnthSp" for="trace2Lnth">20</label>
+				</div>
+
+			</div>
+			<!--Extra options 3-->
+			<div id="additionalTrajectoryOptions3" class="additionalOption">
+				<div class='option_item title_option_item'>
+					<span>Дополнительные параметры:</span>
+				</div>
+				
+				<div class='option_item'>
+					<label>Толщина следа: </label>
+					<input type="range" id="trace3WdInp" list="T3WdInpDL" min="0.8" max="2" value="1.1" step="any" width="100%">
+					<datalist id='T3WdInpDL'><option value="1.1"></datalist>
+				</div>
+
+				<div class='option_item'>
+					<label>Качество следа: </label>
+					<input type="range" id="trace3Qu" list="T3QuInpDL" min="0" max="1" value="0.75" step="0.125" width="100%">
+					<datalist id='T3QuInpDL'>
+						<option value="0">
+						<option value="0.25">
+						<option value="0.5">
+						<option value="0.75">
+						<option value="1">
+					</datalist>
+				</div>
+
+				<div class='option_item without_border'>
+					<label>Длинна следа: </label>	
+				</div>
+				<div class='option_item without_border' style="border-top: none; padding-top: 0;">
+					<input type="range" style="width: 80%;" id="trace3Lnth" min="0.8" max="3" value="1.6" step="any">
+					<label id="t3LnthSp" for="trace3Lnth"></label>
+				</div>
 			</div>
 
 		</div>
+
+		<!--Camera menu-->
+		<div class="camera_menu menu_pos_size menu_pos menu_max_s" id="camera_menu">
+			<div class='option_item title_option_item'>
+				<span>Параметры камеры:</span>
+			</div>
+
+			<div class='option_item'>
+				<span>Следить за объектом: </span>
+				<div class="button" id="select_track">
+					<span>
+						Выбрать объект 
+					</span>
+				</div>		
+			</div>
+
+			<div class='option_item'>
+				<span>Масштабировать к курсору: </span>
+				<input type="checkbox" class="checkbox" id="chck_zoomToScreenCenter">		
+			</div>
+
+			<div class='option_item without_border'>
+				<div class="button" id="clear_camera_settings">
+					<span>
+						Сбросить настройки камеры
+					</span>
+				</div>		
+			</div>
+			<!--
+			<div class='option_item menu_close close_btn' style="border-bottom: none;">
+				<div>Закрыть</div>
+			</div>
+			-->
+
+		</div>
+
 		<!--World Settings-->
 		<div class="world_settings_menu menu_pos_size menu_pos menu_max_s" id="world_settings_men">
 			<div class='option_item title_option_item'>
@@ -275,7 +375,7 @@
 					</div>
 					<div class="radio_button_menu">
 						<span>Обратно-пропорционально квадрату расстояния (обычно): </span>
-						<input id="Gravit_mode_radio_1" class="checkbox" type="radio" name="gravit_mode" value=1>					
+						<input id="Gravit_mode_radio_1" class="checkbox" type="radio" name="gravit_mode" value=1 checked>					
 					</div>
 					<div class="radio_button_menu">
 						<span>Обратно-пропорционально от расстояния: </span>
@@ -291,9 +391,11 @@
 					</div>
 				</form>			
 			</div>
-			<div class='option_item' style="padding-top: 0">
-				<span>Сила притяжения: </span>
-				<input type="number" class='input_num' id='G_value' min="0">	
+
+			<div class='option_item without_border' style="padding-top: 0;">
+				<span>Сила притяжения: </span><span id='g_value_title'></span>
+				<input type="range" list='gravitationValue' id="g_value" min="0" max="2" value="1" step="0.01" width="100%">
+				<datalist id='gravitationValue'><option value="1"></datalist>
 			</div>
 
 			<div class='option_item title_option_item'>
@@ -303,18 +405,19 @@
 				<form id="interact_radio_buttons" style="width: 100%;">
 					<div class="radio_button_menu">
 						<span>Между всеми объектами: </span>
-						<input id="Interact_radio_0" class="checkbox" type="radio" name="interact" value=0>					
+						<input id="Interact_radio_0" class="checkbox" type="radio" name="interact" value="0" checked>					
 					</div>
 					<div class="radio_button_menu">
 						<span>Только с родительским объектом: </span>
-						<input id="Interact_radio_1" class="checkbox" type="radio" name="interact" value=1>
+						<input id="Interact_radio_1" class="checkbox" type="radio" name="interact" value="1">
 					</div>
 					<div class="radio_button_menu">
 						<span>Без взаемодействий: </span>
-						<input id="Interact_radio_2" class="checkbox" type="radio" name="interact" value=2>
+						<input id="Interact_radio_2" class="checkbox" type="radio" name="interact" value="2">
 					</div>
 				</form>					
 			</div>
+
 			<div class='option_item without_border'>
 				<div class="button" id="wrap_time">
 					<span>
@@ -330,7 +433,7 @@
 				<form id="collision_radio_buttons" style="width: 100%;">
 					<div class="radio_button_menu">
 						<span>Слияние: </span>
-						<input id="collision_radio_0" class="checkbox" type="radio" name="collision_radio" value=0>					
+						<input id="collision_radio_0" class="checkbox" type="radio" name="collision_radio" value=0 checked>					
 					</div>
 					<div class="radio_button_menu">
 						<span>Отскасивание: </span>
@@ -351,7 +454,7 @@
 				<span>Вид:</span>
 			</div>
 
-			<div class='option_item without_border'>
+			<div class='option_item without_border' style="padding-bottom: 0;">
 				<span>Фоновое изображение: </span>	
 			</div>
 			<div class='option_item without_border' style="padding: 0 10px; color: #ff5555; display: none; font-size: 15px;" id="url_err_message">
@@ -361,7 +464,7 @@
 				<input type="text" class='input_text' id="img_url_inp" placeholder="URL Изображения" style="width: 100%">	
 			</div>
 			<div class='option_item' style="width: 100%" title="Нулевое значение даного параметра повышает производительность.">
-				<label for="cowbell">Интенсивность фона: </label>
+				<label>Интенсивность фона: </label>
 				<input type="range" id="bg_darkness" min="0" max="1" value="0.8" step="0.01" width="100%" oninput="background_image.style.opacity = this.value">
 			</div>
 
@@ -397,138 +500,35 @@
 				</div>		
 			</div>
 		</div>
-
-		<!--Camera menu-->
-		<div class="camera_menu menu_pos_size menu_pos menu_max_s" id="camera_menu">
+		<!--Help menu-->
+		<div class="help_menu menu_pos_size" id="help_menu">
 			<div class='option_item title_option_item'>
-				<span>Параметры камеры:</span>
+				<span>Горячие клавиши:</span>
 			</div>
+			<div class='help_option_item'>
+				<div><span>• H - Меню помощи.</span><br></div>
 
-			<div class='option_item'>
-				<span>Следить за объектом: </span>
-				<div class="button" id="select_track">
-					<span>
-						Выбрать объект 
-					</span>
-				</div>		
+				<div><span>• С - Перейти в меню создания обьектов.</span><br></div>
+				<div><span>• D - Перейти в меню удаления обьектов.</span><br></div>
+				<div><span>• E - Перейти в меню редактирования объектов.</span><br></div>
+				<div><span>• "<" - Замедлить время.</span><br></div>
+				<div><span>• P - Пауза\Старт.</span><br></div>
+				<div><span>• "/" - Восстановить течение времени по умолчанию.</span><br></div>
+				<div><span>• ">" - Ускорить время.</span><br></div>
+				<div><span>• M - Переместить обьект.</span><br></div>
+				<div><span>• T - Перейти в меню вида траекторий.</span><br></div>
+				<div><span>• V - Перейти в меню камеры.</span><br></div>
+				<div><span>• S - Перейти в меню настроек.</span><br></div>
+				<div><span>• F - Перейти в меню настроек взаемодействий.</span><br></div>
+				<div><span>• Space (Пробел) - Создать новый обьект с круговой орбитой на позиции курсора.</span><br></div>
+				<div><span>• Клик - Создать обьект.</span><br></div>
+				<div><span>• F9 - Вкл\Выкл счетчик FPS.</span><br></div>
 			</div>
-
-			<div class='option_item'>
-				<span>Масштабировать к центру экрана: </span>
-				<input type="checkbox" class="checkbox" id="chck_zoomToScreenCenter">		
-			</div>
-
-			<div class='option_item without_border'>
-				<div class="button" id="clear_camera_settings">
-					<span>
-						Сбросить настройки камеры
-					</span>
-				</div>		
-			</div>
-			<!--
-			<div class='option_item menu_close close_btn' style="border-bottom: none;">
-				<div>Закрыть</div>
-			</div>
-			-->
-
-		</div>
-
-		<!--Trajectory menu-->
-		<div class="traj_menu menu_pos_size menu_pos menu_max_s" id="traj_menu">
 			<div class='option_item title_option_item'>
-				<span>Параметры следа:</span>
+				<span>Почта для советов или найденых багов:</span>
 			</div>
-			<div class='option_item' style="border: none;">
-				<form id="traj_radio_buttons" style="width: 100%;">
-					<div class="radio_button_menu">
-						<span>Нет следов: </span>
-						<input id="traj_radio_0" class="checkbox" type="radio" name="traj" value=0>					
-					</div>
-					<div class="radio_button_menu">
-						<span>Режим следа - 1: </span>
-						<input id="traj_radio_1" class="checkbox" type="radio" name="traj" value=1>
-					</div>
-					<div class="radio_button_menu">
-						<span>Режим следа - 2: </span>
-						<input id="traj_radio_2" class="checkbox" type="radio" name="traj" value=2>
-					</div>
-					<div class="radio_button_menu">
-						<span>Режим следа - 3: </span>
-						<input id="traj_radio_3" class="checkbox" type="radio" name="traj" value=3>
-					</div>
-				</form>
-			</div>
-			<!--Extra options 1-->
-			<div class="extra_traj_1_options" style="display: none;">
-				<div class='option_item title_option_item'>
-					<span>Дополнительные параметры:</span>
-				</div>
-
-				<div class='option_item'>
-					<label for="cowbell">Прозрачность: </label>
-					<input type="range" id="trace_opacity" min="0" max="1" value="0.8" step="0.01" width="100%">
-				</div>
-				<div class='option_item without_border'>
-					<span>Размытие: </span>
-					<input type="number" class='input_num' id='trace_blur' min="0">
-				</div>
-			</div>
-			<!--Extra options 2-->
-			<div class="extra_traj_2_options" style="display: none;">
-				<div class='option_item title_option_item'>
-					<span>Дополнительные параметры:</span>
-				</div>
-				
-				<div class='option_item'>
-					<label for="cowbell">Частицы: </label>
-					<input type="checkbox" id="trc2PrtclsChck" class='checkbox'>
-				</div>
-
-				<div class='option_item'>
-					<label for="cowbell">Дрожание: </label>
-					<input type="checkbox" id="trc2TrembChck" class='checkbox'>
-				</div>
-
-				<div class='option_item without_border'>
-					<label for="cowbell">Длинна следа: </label>	
-				</div>
-				<div class='option_item without_border' style="border-top: none; padding-top: 0;">
-					<input type="range" style="width: 80%;" id="trace3Lnth" min="0.8" max="3" value="1.6" step="any">
-					<label id="t3LnthSp" for="trace3Lnth">20</label>
-				</div>
-
-			</div>
-			<!--Extra options 3-->
-			<div class="extra_traj_3_options" style="display: none;">
-				<div class='option_item title_option_item'>
-					<span>Дополнительные параметры:</span>
-				</div>
-				
-				<div class='option_item'>
-					<label for="cowbell">Толщина следа: </label>
-					<input type="range" id="trace4WdInp" list="T4WdInpDL" min="0.8" max="2" value="1.1" step="any" width="100%">
-					<datalist id='T4WdInpDL'><option value="1.1"></datalist>
-				</div>
-
-				<div class='option_item'>
-					<label for="cowbell">Качество следа: </label>
-					<input type="range" id="trace4Qu" list="T4QuInpDL" min="0" max="1" value="0.75" step="0.125" width="100%">
-					<datalist id='T4QuInpDL'>
-						<option value="0">
-						<option value="0.25">
-						<option value="0.5">
-						<option value="0.75">
-						<option value="1">
-					</datalist>
-				</div>
-
-				<div class='option_item without_border'>
-					<label for="cowbell">Длинна следа: </label>	
-				</div>
-				<div class='option_item without_border' style="border-top: none; padding-top: 0;">
-					<input type="range" style="width: 80%;" id="trace4Lnth" min="0.8" max="3" value="1.6" step="any">
-					<label id="t4LnthSp" for="trace4Lnth"></label>
-				</div>
+			<div class='help_option_item'>
+				<span>orbitsimulator1@gmail.com</span>
 			</div>
 
 		</div>
@@ -538,11 +538,11 @@
 		<h2></h2>
 	</div>
 
-	<div class="power canvas">
+	<div class="canvas" id="launchPowerLabel">
 		0
 	</div>
 
-	<div class="object_count canvas" style="z-index: -1;">
+	<div class="canvas" id="object_count" style="z-index: -1;">
 		<h2>Количество обьектов: 1</h2>
 	</div>
 

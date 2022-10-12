@@ -72,18 +72,7 @@ span {
 	font-size: inherit;
 }
 
-#canvas {
-	display: block;
-	position: absolute;
-	top: 0;
-	z-index: -4;
-	-moz-user-select: none; /* Mozilla Firefox */
-	-ms-user-select: none; /* Internet Explorer (не поддерживается) */
-	-o-user-select: none; /* Opera Presto (не поддерживается) */
-	-webkit-user-select: none; /* Google Chrome, Opera Next, Safari */
-}
-
-#canvas2 {
+.renderLayer {
 	display: block;
 	position: absolute;
 	top: 0;
@@ -94,20 +83,6 @@ span {
 	-webkit-user-select: none; /* Google Chrome, Opera Next, Safari */
 }
 
-#canvas3 {
-	display: block;
-	position: absolute;
-	top: 0;
-	z-index: -2;
-	-moz-user-select: none; /* Mozilla Firefox */
-	-ms-user-select: none; /* Internet Explorer (не поддерживается) */
-	-o-user-select: none; /* Opera Presto (не поддерживается) */
-	-webkit-user-select: none; /* Google Chrome, Opera Next, Safari */
-	z-index: -6;
-	mix-blend-mode: screen;
-	filter: blur(0px);
-	opacity: 0.7;
-}
 
 .menu {
 	top: 0;
@@ -170,14 +145,14 @@ span {
 	font-family: arial;
 }
 
-.object_count {
+#object_count {
 	display: inline-block;
 	position: absolute;
 	left: 10px;
 	bottom: 10px;
 }
 
-.object_count h2{
+#object_count h2{
 	color: rgba(255,255,255,0.6);
 	margin: 0;
 	font-family: arial;
@@ -188,7 +163,7 @@ span {
 	max-width: 100%;
 	max-height: 80vh;
 	background-color: rgba(62,62,62,0.68);
-	border: 2px solid rgba(192,192,192,0.1);
+	border: 1px solid rgba(192,192,192,0.1);
 	display: none;
 	padding: 0 5px;
 	overflow: auto;
@@ -204,6 +179,11 @@ span {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
+}
+
+.option_item span {
+	text-align: center;
+	margin-right: 0.5em;
 }
 
 .without_border {
@@ -260,7 +240,7 @@ span {
 	overflow: auto;
 }
 
-.power {
+#launchPowerLabel {
 	-moz-user-select: none; /* Mozilla Firefox */
 	-ms-user-select: none; /* Internet Explorer (не поддерживается) */
 	-o-user-select: none; /* Opera Presto (не поддерживается) */
@@ -369,4 +349,12 @@ span {
 	min-height: 105%;
 	z-index: -8;
 	opacity: 0.8;
+}
+
+.rangeValue {
+	width: 4em;
+}
+
+.additionalOption {
+	display: none;
 }
