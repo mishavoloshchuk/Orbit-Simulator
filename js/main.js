@@ -74,17 +74,14 @@ window.onload = function(){
 	scene.camera = new Camera(scene);
 	scene.activCam = scene.camera;
 
-	var obj_count = 0;
-
-	var switcher = {del_pulse: 10, del_pulse_state: false, pause: false,
+	var switcher = {pause: false,
 		pause2: false,
-		obj_count: obj_count, device: 'desktop',
-		r_gm: 1, ref_Interact: 0,
+		device: 'desktop',
 		sel_orb_obj: false,
-		bg_darkness: 0.8, clr_trace: false, visT: false}; // Collisions: repulsion merge none
+		visT: false}; // Collisions: repulsion merge none
 
-	this.swch = {s_track: true, t_object: false, prev_t_obj: false, vis_traj: false,
-		s_edit: true, edit_obj: false, equilib_orb: false};
+	this.swch = {s_track: true, t_object: false, prev_t_obj: false,
+		s_edit: true, edit_obj: false};
 
 	var menu_names = {create: 'menu_options', delete: 'del_menu_options', edit: 'edit_menu',
 		help: 'help_menu', settings: 'settings_menu', camera: 'camera_menu', trajectory: 'traj_menu',
@@ -283,8 +280,8 @@ window.onload = function(){
 	let mscam = true;
 
 	window.onresize = function(){
-		canv.width = canv2.width = canv3.width = window.innerWidth;
-		canv.height = canv2.height = canv3.height = window.innerHeight;
+		scene.camera.width = window.innerWidth;
+		scene.camera.height = window.innerHeight;
 		adaptive();
 		fram_rend = true;
 	}
@@ -462,7 +459,6 @@ window.onload = function(){
 			}
 
 			if (mbut == 'create' && mscam && !rightMouseDown){
-				swch.vis_traj = false;
 				scene.camera.ctx.beginPath();
 				scene.camera.ctx.fillStyle = newObjColor.state;
 				scene.camera.ctx.arc(scene.mpos[0], scene.mpos[1], Math.sqrt(Math.abs(newObjMass.state))*zm, 0, 7);
@@ -510,7 +506,7 @@ window.onload = function(){
 	document.onmousemove = function(event){
 		mouseMove = true;
 		mouse.move = true;
-		if (backgroundFollowsMouse.state && switcher.bg_darkness){
+		if (backgroundFollowsMouse.state && backgroundDarkness.state){
 			$('.bg_image').css({top: -event.clientY/25, left: -event.clientX/25})	
 		}
 		if (leftMouseDown && mbut == 'move' && mov_obj){
@@ -608,7 +604,7 @@ window.onload = function(){
 
 	scene.frame = frame;
 
-	// frameControl();
+	frameControl();
 	function frameControl(){
 		window.requestAnimationFrame(frameControl);
 		if ( scene.workersJobDone.every(thr => thr === true) ) {
@@ -619,7 +615,7 @@ window.onload = function(){
 	//setInterval(scene.physicsCalculate, 0.1);
 	//scene.physicsCalculate();
 	function frame(){
-		if (!frameLimit){ window.requestAnimationFrame(frame); }
+		//if (!frameLimit){ window.requestAnimationFrame(frame); }
 		frameCount++;
 
 		//if (showFPS){fps_count ++;}
@@ -650,18 +646,11 @@ window.onload = function(){
 
 		if (middleMouseDown || mbut == 'move'){scene.activCam.canv2.style.cursor = "move";}else{scene.activCam.canv2.style.cursor = "default";};
 
-		if (switcher.Interact != switcher.ref_Interact){
-			switcher.ref_Interact = switcher.Interact;
-		}
-		if (switcher.r_gm != gravitationMode.state){
-			switcher.r_gm = gravitationMode.state;
-		}
-
 		switcher.pause2 = switcher.pause ? true:false;
 		if (!switcher.pause){
 			// If spawn and workers job done
 			if (spawn && (scene.workersJobDone && scene.workersJobDone.every(e => e == true) )!==false){
-				scene.addNewObject({ob_col: newObjColor.state, mass: newObjMass.state, objLck: newObjLock.state});
+				scene.addNewObject({ob_col: newObjColor.state, mass: newObjMass.state, objLck: newObjLock.state, main_obj: scene.objIdToOrbit});
 				if (newObjRandColor.state){ newObjColor.state = scene.randomColor(); }; // Set new random color if true
 				spawn = false;
 			}		
@@ -762,10 +751,6 @@ window.onload = function(){
 			// }
 		}
 
-		if (switcher.clr_trace){ // Стирание следа
-			scene.camera.clear(1);
-			switcher.clr_trace = false;
-		}
 		mouse.move = false;
 		mouseMove = false;
 		middleWheelSpin = false;

@@ -18,12 +18,12 @@ export default class Scene {
 
 		this.collidedObjectsIdList = []; // Collisions list
 
-		setInterval(()=>{
-			if (this.showFPS.state){
-				console.log('Physics FPS: ' + this.frameCounter);
-			}
-			this.frameCounter = 0;
-		}, 1000);
+		// setInterval(()=>{
+		// 	if (this.showFPS.state){
+		// 		console.log('Physics FPS: ' + this.frameCounter);
+		// 	}
+		// 	this.frameCounter = 0;
+		// }, 1000);
 
 		//Worker 
 		this.logicalProcessors = window.navigator.hardwareConcurrency > 1 ?window.navigator.hardwareConcurrency - 1 : 1;
@@ -41,22 +41,20 @@ export default class Scene {
 				if (this.workersJobDone.every(e => e == true)){
 					let tasks = []; //new Array(this.logicalProcessors).fill(new Array()); // Distribute tasks by workers
 					for (let i = this.logicalProcessors; i--;){ tasks[i] = [] }
-					//let this.objArr = JSON.parse(JSON.stringify(objectsArray));
-					for(let i in objectsArray){ 
-						if (i == mov_obj) continue;
-						tasks[i%this.logicalProcessors].push(+i); } // Make tasks for all worker threads
 					let compressedObjArr = [];
-					for (let i in this.objArr){
+					for (let i in objectsArray){
+						if (i == mov_obj) continue;
+						tasks[i%this.logicalProcessors].push(+i); // Make tasks for all worker threads
 						compressedObjArr[i] = {};
 						compressedObjArr[i].x = this.objArr[i].x;
 						compressedObjArr[i].y = this.objArr[i].y;
 						//compressedObjArr[i].vx = this.objArr[i].vx;
 						//compressedObjArr[i].vy = this.objArr[i].vy;
 						compressedObjArr[i].m = this.objArr[i].m;
-						if (this.objArr[i].lck) { compressedObjArr[i].lck = this.objArr[i].lck }; // If ojbect locked
+						if (this.objArr[i].lck) { compressedObjArr[i].lck = true }; // If ojbect locked
 						if (this.objArr[i].main_obj !== undefined) { compressedObjArr[i].main_obj = this.objArr[i].main_obj }; // If ojbect locked
 					}
-					//compressedObjArr = JSON.stringify(compressedObjArr);
+					compressedObjArr = JSON.stringify(compressedObjArr);
 					for (let i in this.#workerThreads){
 						this.workersJobDone[i] = false;
 						this.#workerThreads[i].lastPerformance = performance.now();
@@ -76,7 +74,7 @@ export default class Scene {
 							if (this.workersJobDone.every(thr => thr === true)){
 								this.frameCounter ++;
 								this.afterPhysics(objectsArray, this.collidedObjectsIdList);
-								// this.frame();
+								//this.frame();
 							}
 						}
 					}
@@ -182,6 +180,7 @@ export default class Scene {
 		mass,
 		objLck = false,
 		ob_col = '#ffffff',
+		main_obj,
 	}){
 		let svx = 0, svy = 0;
 		let px = mouse.leftDownX, py = mouse.leftDownY;
@@ -214,7 +213,7 @@ export default class Scene {
 			color: ob_col,
 			lck: objLck,
 			trace: [],
-			main_obj: this.objIdToOrbit
+			main_obj: main_obj
 		};
 		this.show_obj_count();
 

@@ -18,9 +18,9 @@ function calculate({
 
 			let R = rad(obj.x, obj.y, obj2.x, obj2.y); // The distance between objects
 
-			let collType = collision(obj, obj2, objectId, object2Id, R, collisionType, collidedObjectsIdList);
+			let collType = collision(obj, obj2, objectId, object2Id, R, collisionType, interactMode, collidedObjectsIdList);
 
-			if(obj.lck !== false && collType === false){
+			if(obj.lck === undefined && collType === false){
 				let sin = (obj2.y - obj.y)/R; // Sin
 				let cos = (obj2.x - obj.x)/R; // Cos
 				// Physics vector calculation
@@ -30,14 +30,18 @@ function calculate({
 			}
 		}
 	} else
-	if (interactMode === '1' && (obj.main_obj !== undefined) ){
-		let obj2 = objectsArray[obj.main_obj];
+	if (interactMode === '1' && obj.main_obj !== undefined ){
+		let object2Id = obj.main_obj;
+		let obj2 = objectsArray[object2Id];
 
 		let R = rad(obj.x, obj.y, obj2.x, obj2.y); // The distance between objects
 
-		if(!obj.lck){
+		let collType = collision(obj, obj2, objectId, object2Id, R, collisionType, interactMode, collidedObjectsIdList);
+
+		if(!obj.lck && collType === false){
 			let sin = (obj2.y - obj.y)/R;
 			let cos = (obj2.x - obj.x)/R;
+			// Physics vector calculation
 			let vector = gravity_func(sin, cos, R, gravitMode, obj2.m, timeSpeed, g);
 			obj.vx += vector[0];
 			obj.vy += vector[1];
@@ -48,17 +52,21 @@ function calculate({
 	}
 };
 // Collision
-function collision(objA, objB, objAId, objBId, R, collisionType, collidedObjectsIdList){
+function collision(objA, objB, objAId, objBId, R, collisionType, interactMode, collidedObjectsIdList){
 	if (R*R - (Math.abs(objA.m) + Math.abs(objB.m)) <= 0){
 		//objB.vx = objB.vy = 0;
 		if (collisionType == 0){ // Collision type: merge
-			if (objA.m >= objB.m){
-				if (objA.m != objB.m || objAId < objBId){ // Fix the same mass bug (only multithread bug)
-					
-					collidedObjectsIdList.push([objAId, objBId]); // Send the collised objects
+			if (interactMode === '0'){
+				if (objA.m >= objB.m){
+					if (objA.m != objB.m || objAId < objBId){ // Fix the same mass bug (only multithread bug)
+						
+						collidedObjectsIdList.push([objAId, objBId]); // Send the collised objects
 
-					return 'merge';
-				}
+						return 'merge';
+					}
+				}				
+			} else if (interactMode === '1') {
+				collidedObjectsIdList.push([objBId, objAId]);
 			}
 		} else
 		if (collisionType == 1){ // Collision type: repulsion

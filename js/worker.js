@@ -1,7 +1,7 @@
 importScripts('physics.js');
 let objectsArray, interactMode, timeSpeed, gravitMode, g, collisionType, collidedObjectsIdList;
 onmessage = function (e) {
-	objectsArray = e.data.objArr;
+	objectsArray = JSON.parse(e.data.objArr);
 	interactMode = e.data.interactMode;
 	timeSpeed = e.data.timeSpeed;
 	gravitMode = e.data.gravitMode;
@@ -10,7 +10,7 @@ onmessage = function (e) {
 	collidedObjectsIdList = []; // Array of objects IDs to delete
 	changedParameterAfterCollisionOjbArr = []; // Array of objects IDs the properties of which have been changed after collision
 	for (let objectId of e.data.task){
-		if (collidedObjectsIdList.includes(objectId)) continue;
+		//if (collidedObjectsIdList.includes(objectId)) continue;
 		calculate({
 			objectsArray: objectsArray,
 			objectId: objectId,

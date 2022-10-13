@@ -9,10 +9,10 @@ export default class Camera{
 	#frameTime = [0, Date.now()]; // Frametime
 
 	set width (width){
-		this.width = this.canv0.width = this.canv2.width = this.canv3.width = width;
+		this.#width = this.canv0.width = this.canv2.width = this.canv3.width = width;
 	}
 	set height (height){
-		this.height = this.canv0.height = this.canv2.height = this.canv3.height = height;
+		this.#height = this.canv0.height = this.canv2.height = this.canv3.height = height;
 	}
 	get width (){
 		return this.#width;
@@ -72,8 +72,8 @@ export default class Camera{
 		this.ctx3 = this.canv3.getContext('2d',{willReadFrequently: false});
 
 		// Camera resolution
-		this.#width = this.canv0.width = this.canv2.width = this.canv3.width = window.innerWidth;
-		this.#height = this.canv0.height = this.canv2.height = this.canv3.height = window.innerHeight;
+		this.width = window.innerWidth;
+		this.height = window.innerHeight;
 	
 		this.scene = scene;
 		this.x = 0; this.y = 0; // Target camera position
