@@ -463,7 +463,7 @@ window.onload = function(){
 				scene.camera.ctx.fillStyle = newObjColor.state;
 				scene.camera.ctx.arc(scene.mpos[0], scene.mpos[1], Math.sqrt(Math.abs(newObjMass.state))*zm, 0, 7);
 				scene.camera.ctx.fill();
-				spawn = true;
+				spawn = {};
 				scene.camera.clear2();
 			}
 			if (mbut == 'create'){
@@ -650,7 +650,7 @@ window.onload = function(){
 		if (!switcher.pause){
 			// If spawn and workers job done
 			if (spawn && (scene.workersJobDone && scene.workersJobDone.every(e => e == true) )!==false){
-				scene.addNewObject({ob_col: newObjColor.state, mass: newObjMass.state, objLck: newObjLock.state, main_obj: scene.objIdToOrbit});
+				scene.addNewObject( Object.assign({ob_col: newObjColor.state, mass: newObjMass.state, objLck: newObjLock.state, main_obj: scene.objIdToOrbit}, spawn) );
 				if (newObjRandColor.state){ newObjColor.state = scene.randomColor(); }; // Set new random color if true
 				spawn = false;
 			}		
@@ -835,7 +835,7 @@ window.onload = function(){
 				case 120: showFPS.state = !showFPS.state; break; // (F9) Show FPS
 				case 32: // (Space) Create object
 					if (mbut == 'create' && mouse.x){
-						spawn = true;
+						spawn = {x: mouse.x, y: mouse.y};
 						let obj_rad = Math.sqrt(Math.abs(newObjMass.state))*scene.camera.animZoom;
 						obj_rad = obj_rad < 0.5 ? 0.5 : obj_rad;
 						scene.camera.ctx.beginPath();
