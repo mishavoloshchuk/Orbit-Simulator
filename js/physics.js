@@ -10,7 +10,7 @@ function calculate({
 	collidedObjectsIdList
 }){
 	let obj = objectsArray[objectId];
-	obj.vx = obj.vy = 0;
+	//obj.vx = obj.vy = 0;
 	if (interactMode === '0'){//(switcher.ref_Interact == 0 && !switcher.pause2 && !bodyEmpty){
 		for (let object2Id = objectsArray.length; object2Id--;){
 			if (object2Id === objectId){ continue; } // Skip itself
@@ -20,7 +20,7 @@ function calculate({
 
 			let collType = collision(obj, obj2, objectId, object2Id, R, collisionType, interactMode, collidedObjectsIdList);
 
-			if(obj.lck === undefined && collType === false){
+			if((obj.lck === undefined || obj.lck === false) && collType === false){
 				let sin = (obj2.y - obj.y)/R; // Sin
 				let cos = (obj2.x - obj.x)/R; // Cos
 				// Physics vector calculation
@@ -60,7 +60,7 @@ function collision(objA, objB, objAId, objBId, R, collisionType, interactMode, c
 				if (objA.m >= objB.m){
 					if (objA.m != objB.m || objAId < objBId){ // Fix the same mass bug (only multithread bug)
 						
-						collidedObjectsIdList.push([objAId, objBId]); // Send the collised objects
+						collidedObjectsIdList.push([objAId, objBId, R]); // Send the collised objects
 
 						return 'merge';
 					}

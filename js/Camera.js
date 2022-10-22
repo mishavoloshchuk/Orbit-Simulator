@@ -24,21 +24,6 @@ export default class Camera{
 	#visualObjectSelectAnimation = 10;
 	#visualObjectSelectAnimDir = 0;
 
-	obj_count = 0;
-
-	switcher = {del_pulse: 10, del_pulse_state: false, pause: false,
-		pause2: false, music: false,
-		obj_count: this.obj_count, device: 'desktop',
-		r_gm: 1, ref_Interact: 0,
-		traj_mode: 1, traj_mode2: 1,
-		sel_orb_obj: false, 
-		create_obj_pause: true,
-		trace_opacity: 0.7, trace_blur: 0,
-		clr_trace: false, clr_canv2: true, visT: false}; // Collisions: repulsion merge none
-
-	swch = {s_track: true, t_object: false, prev_t_obj: false, vis_traj: false,
-		s_edit: true, edit_obj: false, orb_obj: 'sun', equilib_orb: false};
-
 	menu_names = {create: 'menu_options', delete: 'del_menu_options', edit: 'edit_menu',
 		help: 'help_menu', settings: 'settings_menu', camera: 'camera_menu', trajectory: 'traj_menu',
 		world_settings: 'world_settings_men'}
@@ -49,7 +34,7 @@ export default class Camera{
 		this.canv0.className = 'renderLayer';
 		this.canv0.style.zIndex = -2;
 		this.canv0.innerHTML = 'Your browser does not support canvas!';
-		document.body.appendChild(this.canv0);
+		document.getElementById('renderLayers').appendChild(this.canv0);
 		this.ctx = this.canv0.getContext('2d',{willReadFrequently: false});
 
 		this.canv2 = document.createElement('canvas');
@@ -57,7 +42,7 @@ export default class Camera{
 		this.canv2.className = 'renderLayer';
 		this.canv2.style.zIndex = -4;
 		this.canv2.innerHTML = 'Your browser does not support canvas!';
-		document.body.appendChild(this.canv2);
+		document.getElementById('renderLayers').appendChild(this.canv2);
 		this.ctx2 = this.canv2.getContext('2d');
 
 		this.canv3 = document.createElement('canvas');
@@ -68,7 +53,7 @@ export default class Camera{
 		this.canv3.style.filter = 'blur(0px)';
 		this.canv3.style.opacity = 0.7;
 		this.canv3.innerHTML = 'Your browser does not support canvas!';
-		document.body.appendChild(this.canv3);
+		document.getElementById('renderLayers').appendChild(this.canv3);
 		this.ctx3 = this.canv3.getContext('2d',{willReadFrequently: false});
 
 		// Camera resolution
@@ -78,13 +63,13 @@ export default class Camera{
 		this.scene = scene;
 		this.x = 0; this.y = 0; // Target camera position
 		this.ax = 0; this.ay = 0; // Actualy camera postiton with animation
+		this.lastX = 0; this.lastY = 0;
 		this.zoom = 1; // Target zoom
 		this.animZoom = 1; // Actualy zoom with animation
 		this.zoomCff = 1.25; // Zoom coefficient
 		this.Target = false; // Follow target object
 		this.switchTarget = false;
 		this.animTimeCorrect = 5;
-		this.animDuration = 5;
 		this.animTime = 5;
 		this.animation = true; // Enable camera animation
 
@@ -99,21 +84,19 @@ export default class Camera{
 		this.animFunc();
 		for (let objectId in scn.objArr){
 			let obj = scn.objArr[objectId];
-			let coll = false;
-			let prev_x = obj.x - obj.vx;
-			let prev_y = obj.y - obj.vy;
+			let prevScreenX = (obj.x - (obj.x - obj.vx)) != this.x - this.lastX;
+			let prevScreenY = (obj.y - (obj.y - obj.vy)) != this.y - this.lastY;
 			let obCol = obj.color;
 			let obj_rad = Math.sqrt(Math.abs(obj.m))*this.animZoom;
 			obj_rad = obj_rad < 0.5 ? 0.5 : obj_rad;
 
-			if (obj.m < 0 && !this.switcher.pause){ obj.color = obCol = this.scene.randomColor(true) }
+			if (obj.m < 0){ obj.color = obCol = this.scene.randomColor(true) }
 
-			let render = (prev_x != obj.x && prev_y != obj.y)?true:false;
+			let render = (prevScreenX || prevScreenY);
 			let dcanv = scn.backgroundDarkness.state != 0 ? this.ctx3 : this.ctx;
 			if (scn.tracesMode.state == 1){
 				let targetVx = scn.objArr[this.Target] ? scn.objArr[this.Target].vx : 0;
 				let targetVy = scn.objArr[this.Target] ? scn.objArr[this.Target].vy : 0;
-				let cam_vec = scn.objArr[swch.t_object] ? [scn.objArr[swch.t_object].vx, scn.objArr[swch.t_object].vy] : [0, 0]; // Target object vector
 				if (scn.backgroundDarkness.state != 0){
 					if (this.Target != objectId){
 						this.ctx3.fillStyle = obCol;
@@ -122,7 +105,7 @@ export default class Camera{
 						this.ctx3.fill();
 					}
 				} else {
-					if (!render){
+					if (!render && objectId !== mov_obj){
 						this.ctx.beginPath();
 						this.ctx.fillStyle = '#000000';
 						this.ctx.arc(this.crd(obj.x-obj.vx*scn.timeSpeed.state+targetVx, 'x'), this.crd(obj.y-obj.vy*scn.timeSpeed.state+targetVy, 'y'), (obj_rad+0.125), 0, 7);
@@ -138,7 +121,7 @@ export default class Camera{
 			let res = false;
 			let acc = 1000; // Точность следа
 			//Trajectory mode 1 =====
-			if (scn.tracesMode.state == 1){ // !this.switcher.pause2 && 
+			if (scn.tracesMode.state == 1){
 				if (true){//prev_t_obj != objectId
 					//Target Velocity
 					let targetVx = scn.objArr[this.Target] ? scn.objArr[this.Target].vx : 0;
@@ -212,7 +195,6 @@ export default class Camera{
 			if (obj.trace && scn.tracesMode != 2 && scn.tracesMode != 3 && scn.tracesMode != 4) {obj.trace = [];};
 			if ((scn.tracesMode.state == 2 || scn.tracesMode.state == 3) && !obj.lck){// && trace_resolution[2]){
 				res = scn.tracesMode.state == 3?scn.traceMode3Length.state*(1/(trace_resolution[1]+1)):Math.round(Math.pow(8, scn.traceMode3Length.state));
-				//if (!this.switcher.pause2){
 				//console.log(obj.trace.length);
 				obj.trace.unshift([Math.round(obj.x*acc), Math.round(obj.y*acc)]);
 				let trace_length = obj.trace.length;
@@ -224,8 +206,103 @@ export default class Camera{
 		}
 	} // End draw
 
-	visual_trajectory(){
+	trajectoryCalculate(count = 256, col =  ['#006BDE', '#ffffff'], accr = 1){
 		this.clear2();
+		let objArrCopy = JSON.parse(JSON.stringify(this.scene.objArr));
+		count /= accr;
+		//sp_obj = [0,1];
+		let virt_obj = objArrCopy.length;
+
+		let svx = ((mouse.leftDownX - mouse.x)/30) * this.scene.powerFunc(this.scene.launchForce.state);
+		let svy = ((mouse.leftDownY - mouse.y)/30) * this.scene.powerFunc(this.scene.launchForce.state);	
+
+		objArrCopy[objArrCopy.length] = {
+			x: this.screenPix(mouse.leftDownX, 'x'), // Position X
+			y: this.screenPix(mouse.leftDownY, 'y'), // Position Y
+			vx: svx, // Velocity X equals vx if given and svx if not
+			vy: svy, // Velocity Y equals vy if given and svy if not
+			m: this.scene.newObjMass.state, // Object mass via given radius || Radius
+			color: this.scene.newObjColor.state,
+			lck: this.scene.newObjLock.state,
+			trace: [],
+			main_obj: 0
+		};
+
+		let tsw = false;
+		let refMov = [0, 0];
+		let distance = [Infinity, {}, 0];
+		let coll_objcts = {};
+		let asd = (...args) => {
+			this.scene.afterPhysics(...args);
+			for (let objectId in objArrCopy){
+				// let R_size = 2;
+				// this.ctx2.beginPath();
+				// this.ctx2.strokeStyle = "#222222";
+				// this.ctx2.lineWidth = R_size/2;
+				// this.ctx2.moveTo(this.crd((objArrCopy[objectId].x-objArrCopy[objectId].vx)-refMov[0], 'x'), this.crd((objArrCopy[objectId].y-objArrCopy[objectId].vy)-refMov[1], 'y'));
+				// this.ctx2.lineTo(this.crd(objArrCopy[objectId].x-refMov[0], 'x'), this.crd(objArrCopy[objectId].y-refMov[1], 'y'));
+				// this.ctx2.stroke();
+
+				let rad = objectId == objArrCopy.length - 1 ? 1.2 : 0.8;
+				this.ctx2.beginPath();
+				this.ctx2.fillStyle = objectId == objArrCopy.length-1 ? objArrCopy[objectId].color :"#444444";
+				this.ctx2.arc(this.crd(objArrCopy[objectId].x-refMov[0], 'x'), this.crd(objArrCopy[objectId].y-refMov[1], 'y'), rad, 0, 7);
+				this.ctx2.fill();
+				this.ctx2.beginPath();
+
+				// this.ctx2.beginPath();
+				// this.ctx2.fillStyle = "#ffffff";
+				// this.ctx2.arc(100, 100, 100.5, 0, 7);
+				// this.ctx2.fill();
+				// this.ctx2.beginPath();
+			}			
+			// if (!mouse.move && mouse.leftDown){
+			// 	this.scene.physicsMultiThreadCalculate(objArrCopy, asd);
+			// }
+		}
+
+		for (let i = count; i--;){
+			this.scene.physicsCalculate(objArrCopy, asd);
+		}
+
+		// this.scene.physicsMultiThreadCalculate(objArrCopy, (...args)=>{
+		// 	//console.log(this);
+		// 	asd(...args);
+		// });
+
+		
+		// if (distance[2] <= count){ // Отображение точек сближения
+		// 	this.ctx2.beginPath();
+		// 	this.ctx2.globalAlpha = 0.5;
+		// 	this.ctx2.fillStyle = body[distance[1].obj_name].color;
+		// 	let mass = Math.sqrt(Math.abs(body[distance[1].obj_name].m)) < 2 ? 2 : Math.sqrt(Math.abs(body[distance[1].obj_name].m));
+		// 	this.ctx2.arc(camera.crd(distance[1].x-refMov[0], 'x'), camera.crd(distance[1].y-refMov[1], 'y'), mass*camera.animZoom, 0, 7);
+		// 	this.ctx2.fill();
+		// 	this.ctx2.beginPath();
+		// 	this.ctx2.globalAlpha = 0.6;
+		// 	this.ctx2.fillStyle = obj_color;
+		// 	mass = Math.sqrt(Math.abs(obj_radius))*camera.animZoom < 2 ? 2 : Math.sqrt(Math.abs(obj_radius))*camera.animZoom;
+		// 	this.ctx2.arc(camera.crd(distance[1].x2-refMov[0], 'x'), camera.crd(distance[1].y2-refMov[1], 'y'), mass, 0, 7);
+		// 	this.ctx2.fill();
+		// 	this.ctx2.beginPath();
+		// 	this.ctx2.globalAlpha = 1;
+		// }
+		// for (let i in coll_objcts){
+		// 	var size = Math.sqrt(Math.abs(coll_objcts[i].m))*0.7 < 5? 5 : Math.sqrt(Math.abs(coll_objcts[i].m))*0.7;
+		// 	if (switcher.collision_mode == 0){
+		// 		drawCross(camera.crd(coll_objcts[i].x, 'x'), camera.crd(coll_objcts[i].y, 'y'), '#ff0000', 3, size , ctx2);
+		// 	} else if (switcher.collision_mode == 1){
+		// 		this.ctx2.beginPath();
+		// 		this.ctx2.fillStyle = '#0044ff';
+		// 		this.ctx2.arc(camera.crd(coll_objcts[i].x, 'x'), camera.crd(coll_objcts[i].y, 'y'), gipot(coll_objcts[i].vx, coll_objcts[i].vy)/2/t, 0, 7);
+		// 		this.ctx2.fill();
+		// 		this.ctx2.globalAlpha = 1;
+		// 	}
+		// }		
+	}
+
+	visual_trajectory(){
+		// this.clear2();
 		let mcx = this.scene.mouse_coords[0] ? this.scene.mouse_coords[0] - (this.scene.mouse_coords[0] - mouse.x)/10 : mouse.x;
 		let mcy = this.scene.mouse_coords[1] ? this.scene.mouse_coords[1] - (this.scene.mouse_coords[1] - mouse.y)/10 : mouse.y;
 
@@ -278,18 +355,12 @@ export default class Camera{
 				this.#visualObjectSelectAnimation -= 0.5;
 			}
 
-			let mv = [0, 0];
-			if (this.scene.objArr[swch.t_object] && !switcher.pause2){
-				mv[0] = this.scene.objArr[swch.t_object].vx;
-				mv[1] = this.scene.objArr[swch.t_object].vy;
-			}
-
 			this.ctx2.beginPath();
 			this.ctx2.globalAlpha = alpha;
 			this.ctx2.fillStyle = color;
 			this.ctx2.arc(
-				(this.crd(this.scene.objArr[selectObjId].x - mv[0], 'x')), 
-				(this.crd(this.scene.objArr[selectObjId].y - mv[1], 'y')), 
+				(this.crd(this.scene.objArr[selectObjId].x, 'x')), 
+				(this.crd(this.scene.objArr[selectObjId].y, 'y')), 
 				Math.sqrt(Math.abs(this.scene.objArr[selectObjId].m)) * this.animZoom + this.#visualObjectSelectAnimation, 
 				0, 7);
 			this.ctx2.fill();
@@ -299,8 +370,8 @@ export default class Camera{
 			this.ctx2.strokeStyle = color;
 			this.ctx2.lineWidth = 2;
 			this.ctx2.arc(
-				(this.crd(this.scene.objArr[selectObjId].x - mv[0], 'x')), 
-				(this.crd(this.scene.objArr[selectObjId].y - mv[1], 'y')), 
+				(this.crd(this.scene.objArr[selectObjId].x, 'x')), 
+				(this.crd(this.scene.objArr[selectObjId].y, 'y')), 
 				Math.sqrt(Math.abs(this.scene.objArr[selectObjId].m)) * this.animZoom + this.#visualObjectSelectAnimation, 
 				0, 7);
 			this.ctx2.stroke();	
@@ -328,13 +399,18 @@ export default class Camera{
 	}
 
 	animFunc(){
-		this.animDuration = this.animTimeCorrect*(16/this.#frameTime[0]);
-		if (this.switchTarget){this.animTimeCorrect -= (this.animTime-1)/(400/this.#frameTime[0]);} else {this.animTimeCorrect = 5;}
-		this.animDuration = this.animDuration < 1 ? 1 : this.animDuration;
-		this.animZoom += ((this.zoom-this.animZoom)/this.animDuration);
+		let animSpeedCorrected = this.animTimeCorrect*(16/this.#frameTime[0]);
+		if (this.switchTarget){
+			this.animTimeCorrect -= (this.animTime-1)/(400/this.#frameTime[0]);
+		} else {
+			this.animTimeCorrect = 5;
+		}
+		animSpeedCorrected = animSpeedCorrected < 1 ? 1 : animSpeedCorrected;
+		this.animZoom += ((this.zoom-this.animZoom)/animSpeedCorrected);
+		this.lastX = this.ax; this.lastY = this.ay;
 		if (this.animation){
-			this.ax += (this.x-this.ax)/(this.animDuration/(this.zoom/this.animZoom));
-			this.ay += (this.y-this.ay)/(this.animDuration/(this.zoom/this.animZoom));
+			this.ax += (this.x-this.ax)/(animSpeedCorrected/(this.zoom/this.animZoom));
+			this.ay += (this.y-this.ay)/(animSpeedCorrected/(this.zoom/this.animZoom));
 		} else {
 			this.ax = this.x; this.ay = this.y;
 		}
@@ -357,8 +433,8 @@ export default class Camera{
 	}
 
 	clear(col){
-		//if (this.switcher.traj_mode == 0){col = '#000';}
-		if (this.scene.backgroundDarkness.state != 0){ //this.switcher.bg_darkness != 0
+		if (this.scene.tracesMode.state == 0){col = '#000';}
+		if (this.scene.backgroundDarkness.state != 0){
 			if (!col){
 				this.ctx3.globalAlpha = 0.01;
 				col = '#000000';

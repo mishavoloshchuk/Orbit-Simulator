@@ -10,6 +10,7 @@ window.onload = function(){
 		leftDownY: window.innerHeight/2,
 		leftUpX: window.innerWidth/1.4,
 		leftUpY: window.innerHeight/2,
+		leftDown: false,
 		move: false,
 	}
 
@@ -26,10 +27,8 @@ window.onload = function(){
 
 	// === ...
 	this.mov_obj = NaN; // Moving object id
-	var paus = false;
 	var traj_ref = true;
 	this.dis_zone = 5;
-	let spawn = false;
 	var objArrPrev = [];
 	var frameTime = [0, Date.now()]; // Frametime
 	var pause_gAnim = false; // Camera animation in pause
@@ -163,12 +162,14 @@ window.onload = function(){
 				scene.camera.ctx3.clearRect(0,0,scene.camera.canv0.width,scene.camera.canv0.height);
 				scene.camera.canv3.style.display = background_image.style.display = 'none';
 				traj_menu.children.additionalTrajectoryOptions1.setAttribute('disabled', '');
+				scene.camera.canv2.style.zIndex = -1;
 				tracesMode.state = tracesMode.state; // Refresh trace mode menu
 			} else if (statePrev == 0) { // If backgroundDarkness previous state value = 0 then copy imageData from canvas layer 1 to canvas layer 3 and display canvas layer 3
 				scene.camera.ctx3.putImageData(scene.camera.ctx.getImageData(0,0,scene.camera.canv0.width,scene.camera.canv0.height),0,0);
 				scene.camera.ctx.clearRect(0,0,scene.camera.canv0.width,scene.camera.canv0.height);
 				scene.camera.canv3.style.display = background_image.style.display = '';
 				traj_menu.children.additionalTrajectoryOptions1.removeAttribute('disabled');
+				scene.camera.canv2.style.zIndex = -4;
 				tracesMode.state = tracesMode.state; // Refresh trace mode menu
 			}
 		}
@@ -346,6 +347,7 @@ window.onload = function(){
 			launchPowerLabel.style.display = 'none';
 
 			leftMouseDown = false; 
+			mouse.leftDown = false;
 			mscam = false;
 			// Mouse down
 			if (!avTouchPoint.xd){
@@ -387,6 +389,7 @@ window.onload = function(){
 		scene.mpos[0] = event.clientX; scene.mpos[1] = event.clientY;
 		if (event.which == 1 || touch){
 			leftMouseDown = true;
+			mouse.leftDown = true;
 
 			if (mbut == 'create'){
 				try{clearTimeout(mort)}catch(err){};
@@ -438,18 +441,12 @@ window.onload = function(){
 		avTouchPoint.xd = avTouchPoint.yd = NaN;
 		if (event.which == 1 || touch){
 			leftMouseDown = false;
+			mouse.leftDown = false;
 			[mouse.leftUpX, mouse.leftUpY] = [event.clientX, event.clientY] // Set cursor mouseUp position
 			launchPowerLabel.style.display = 'none';
 
 			if (mbut == 'delete' && scene.objArr.length){
-				let delete_obj = scene.objectSelect(deletingMode.state);
-
-				scene.camera.ctx.beginPath();
-				scene.camera.ctx.fillStyle = '#000';
-				scene.camera.ctx.arc(scene.objArr[delete_obj].x, scene.objArr[delete_obj].y, Math.sqrt(Math.abs(scene.objArr[delete_obj].m))+1, 0, 7);
-				scene.camera.ctx.fill();
-
-				scene.deleteObject(delete_obj);
+				addFrameTask( () => scene.deleteObject(scene.objectSelect(deletingMode.state)) );
 				deleted();
 			}
 			if (mbut == 'move' && scene.objArr[mov_obj]){
@@ -459,18 +456,25 @@ window.onload = function(){
 			}
 
 			if (mbut == 'create' && mscam && !rightMouseDown){
+				addFrameTask(()=>{
+					scene.addNewObject({
+						ob_col: newObjColor.state,
+						mass: newObjMass.state,
+						objLck: newObjLock.state,
+						main_obj: scene.objIdToOrbit
+					});
+					if (newObjRandColor.state) newObjColor.state = scene.randomColor();
+				});
 				scene.camera.ctx.beginPath();
 				scene.camera.ctx.fillStyle = newObjColor.state;
 				scene.camera.ctx.arc(scene.mpos[0], scene.mpos[1], Math.sqrt(Math.abs(newObjMass.state))*zm, 0, 7);
 				scene.camera.ctx.fill();
-				spawn = {};
 				scene.camera.clear2();
 			}
 			if (mbut == 'create'){
 				var mort = setTimeout(menu_open_restore, 200);
 			}
 			if (mbut == 'camera' && swch.s_track){
-				paus = switcher.pause; //Пауза уже включена
 				scene.camera.Target = scene.objectSelect('nearest', scene.camera.Target);
 				scene.camera.switchTarget = true;
 				scene.camera.animation = true;
@@ -509,7 +513,7 @@ window.onload = function(){
 		if (backgroundFollowsMouse.state && backgroundDarkness.state){
 			$('.bg_image').css({top: -event.clientY/25, left: -event.clientX/25})	
 		}
-		if (leftMouseDown && mbut == 'move' && mov_obj){
+		if (mouse.leftDown && mbut == 'move' && mov_obj){
 			if (scene.objArr[mov_obj]){
 				let dCanv = backgroundDarkness.state != 0 ? scene.camera.ctx3 : scene.camera.ctx;
 				dCanv.strokeStyle = scene.objArr[mov_obj].color;
@@ -604,10 +608,16 @@ window.onload = function(){
 
 	scene.frame = frame;
 
+	this.frameTasks = new Array(); // Functions array
+
+	function addFrameTask(func, ...args){
+		frameTasks.push({func: func, args: args});
+	}
+
 	frameControl();
 	function frameControl(){
 		window.requestAnimationFrame(frameControl);
-		if ( scene.workersJobDone.every(thr => thr === true) ) {
+		if ( !scene.workersJobDone ) {
 			frame();
 		}
 	}
@@ -617,6 +627,14 @@ window.onload = function(){
 	function frame(){
 		//if (!frameLimit){ window.requestAnimationFrame(frame); }
 		frameCount++;
+
+		// Run all functions from frameTasks array
+		if (!scene.workersJobDone){
+			frameTasks.forEach((task)=>{
+				task.func(...task.args);
+			});
+			frameTasks = []; // Clear frameTasks array
+		}
 
 		//if (showFPS){fps_count ++;}
 		//FrameTime
@@ -647,14 +665,6 @@ window.onload = function(){
 		if (middleMouseDown || mbut == 'move'){scene.activCam.canv2.style.cursor = "move";}else{scene.activCam.canv2.style.cursor = "default";};
 
 		switcher.pause2 = switcher.pause ? true:false;
-		if (!switcher.pause){
-			// If spawn and workers job done
-			if (spawn && (scene.workersJobDone && scene.workersJobDone.every(e => e == true) )!==false){
-				scene.addNewObject( Object.assign({ob_col: newObjColor.state, mass: newObjMass.state, objLck: newObjLock.state, main_obj: scene.objIdToOrbit}, spawn) );
-				if (newObjRandColor.state){ newObjColor.state = scene.randomColor(); }; // Set new random color if true
-				spawn = false;
-			}		
-		}
 
 		// Time wrap
 		if (t_wrap){
@@ -673,18 +683,28 @@ window.onload = function(){
 			t_wrap = false;
 		}
 
+		if (showNewObjTrajectory.state && mbut == 'create' && mouse.leftDown){
+			scene.camera.trajectoryCalculate(newObjTrajLength.state);
+			if (!switcher.pause && pauseWhenCreatingObject.state){
+				switcher.pause = true;
+			}
+		}
+
 		for (let i = 0; i < ref_speed && (!switcher.pause || fram_rend); i++){
 			if (scene.objArr.length){
 				if (!switcher.pause2 && tracesMode.state != 1) { scene.camera.clear(1) }
-				scene.physicsCalculate(); // Scene physics calculations (1 step)
+				if (window.Worker){
+					scene.physicsMultiThreadCalculate();
+				} else {
+					scene.physicsCalculate(); // Scene physics calculations (1 step)
+				}
 				if (showFPS){fps_count ++;}
 				if (scene.objArr[scene.camera.Target]){
 					scene.camera.x = scene.objArr[scene.camera.Target].x;
 					scene.camera.y = scene.objArr[scene.camera.Target].y;
 				} else { scene.camera.Target = false }
-				scene.camera.animFunc();
+				scene.camera.renderObjects(scene.world);
 			}	
-			scene.camera.renderObjects(scene.world);
 			traj_ref = false;
 		}
 
@@ -758,6 +778,21 @@ window.onload = function(){
 		return true;
 	}
 	//scene.frame();
+	this.addObjects = function(count = 100){
+		for (let i = 0; i < count; i++){
+		  	addFrameTask(()=>{ 
+				scene.addNewObject({
+		  	 		x: scene.camera.width * Math.random(), y: scene.camera.height *Math.random(),
+					ob_col: newObjColor.state,
+					mass: newObjMass.state,
+					objLck: newObjLock.state,
+					main_obj: scene.objIdToOrbit
+				});
+				if (newObjRandColor.state) newObjColor.state = scene.randomColor();
+			});
+		}
+	}
+	//addObjects(100);
 
 	//Визуальная дистанция до главного объекта
 	function vis_distance(obj_cord, col = '#888888', targ_obj = scene.objIdToOrbit){
@@ -797,7 +832,7 @@ window.onload = function(){
 		}
 	}
 	//Scene scale
-	scene.camera.canv0.addEventListener('wheel', function(e){
+	document.getElementById('renderLayers').addEventListener('wheel', function(e){
 		middleWheelSpin = true;
 		if (!e.ctrlKey){
 			clrDelay = true;
@@ -835,7 +870,16 @@ window.onload = function(){
 				case 120: showFPS.state = !showFPS.state; break; // (F9) Show FPS
 				case 32: // (Space) Create object
 					if (mbut == 'create' && mouse.x){
-						spawn = {x: mouse.x, y: mouse.y};
+						addFrameTask(()=>{ 
+							scene.addNewObject({
+								x: mouse.x, y: mouse.y,
+								ob_col: newObjColor.state,
+								mass: newObjMass.state,
+								objLck: newObjLock.state,
+								main_obj: scene.objIdToOrbit
+							});
+							if (newObjRandColor.state) newObjColor.state = scene.randomColor();
+						});
 						let obj_rad = Math.sqrt(Math.abs(newObjMass.state))*scene.camera.animZoom;
 						obj_rad = obj_rad < 0.5 ? 0.5 : obj_rad;
 						scene.camera.ctx.beginPath();
@@ -846,12 +890,12 @@ window.onload = function(){
 					if (mbut == 'delete' && scene.objArr.length){
 						//$('.renderLayer').mousedown();
 						//$('.renderLayer').mouseup();
-						delete_obj = scene.objectSelect(switcher.del_radio);
+						let delete_obj = scene.objectSelect(switcher.del_radio);
 						scene.camera.ctx.beginPath();
 						scene.camera.ctx.fillStyle = '#000';
 						scene.camera.ctx.arc(scene.objArr[delete_obj].x, scene.objArr[delete_obj].y, Math.sqrt(Math.abs(scene.objArr[delete_obj].m))+1, 0, 7);
 						scene.camera.ctx.fill();
-						scene.deleteObject(delete_obj);
+						addFrameTask( () => scene.deleteObject(delete_obj) );
 						deleted();
 					}
 					break;
@@ -883,6 +927,10 @@ window.onload = function(){
 				$('.time_speed h2').html('T - X'+timeSpeed.state*ref_speed);
 			}
 		}
+		//Ctrl keys
+		// (Ctrl+Z) Delete last created object
+		if (e.keyCode == 90 && e.ctrlKey) addFrameTask( () => scene.deleteObject( scene.objectSelect('last_created') ) );
+		
 		//Debug
 		if (frameLimit){
 			// (NumPad 9) Increase max FPS
@@ -900,9 +948,6 @@ window.onload = function(){
 				console.log(maxFPS);
 			}			
 		}
-		//Ctrl keys
-		// (Ctrl+Z) Delete last created object
-		if (e.keyCode == 90 && e.ctrlKey){scene.deleteObject( scene.objectSelect('last_created') )}
 	});
 
 	let noMenuBtns = ['clear', 'timedown', 'play', 'pause', 'timeup'];
