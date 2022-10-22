@@ -95,7 +95,7 @@ window.onload = function(){
 	}}), // Menu circle orbit on click input
 	newObjCreateReverseOrbit = new UserInput({type: 'checkbox', id: 'objReverseCheck', stateSaving: true, initState: false}), // Menu reverse ordit direction input
 	newObjLock = new UserInput({type: 'checkbox', id: 'objLckCeck', initState: false}), // Menu lock created object input
-	pauseWhenCreatingObject = new UserInput({type: 'checkbox', id: 'new_obj_pause', stateSaving: true, callback: (val, elem)=>{elem.prevPauseState = false}}), // Menu pause when user add object input
+	pauseWhenCreatingObject = new UserInput({type: 'checkbox', id: 'new_obj_pause', stateSaving: true, initState: true, callback: (val, elem)=>{elem.prevPauseState = false}}), // Menu pause when user add object input
 	launchForce = new UserInput({type: 'range', id: 'launch_power', stateSaving: true, callback: (val)=>{lnch_pwr_span.innerHTML = powerFunc(val)}, eventName: 'input'}), // Menu launch power value input
 	timeSpeed = new UserInput({type: 'range', id: 'tSpeed', callback: (val)=>{ time_speed_span.innerHTML = val; $('.time_speed h2').html('T - X'+val); }, eventName: 'input'}), // Menu time speed
 	showDistanceFromCursorToMainObj = new UserInput({type: 'checkbox', id: 'vis_distance_check', stateSaving: true, callback: ()=>{ launchPowerLabel.style.display = 'none'; }}), // Menu visual distance
@@ -342,7 +342,12 @@ window.onload = function(){
 			 // Clear launch power label display
 			launchPowerLabel.style.display = 'none';
 
-			mouse.leftDown = false; 
+			if (mbut == 'create' && mouse.leftDown){
+				if (pauseWhenCreatingObject.state){
+					pauseState = pauseWhenCreatingObject.prevPauseState;
+				}
+			}
+
 			mouse.leftDown = false;
 			mscam = false;
 			// Mouse down
@@ -368,15 +373,13 @@ window.onload = function(){
 	})
 	//Mouse events =========================================================
 	$('.renderLayer').mousedown(function(event, touch){
-		let usr_multi_touch = false;
 		if (touch){
-			let usr_touch = touch.targetTouches[1] ? true : false;
 			[mouse.leftDownX, mouse.leftDownY] = [touch.targetTouches[0].clientX, touch.targetTouches[0].clientY];
 			multiTouch ++;
 			event.clientX = touch.targetTouches[0].clientX;
 			event.clientY = touch.targetTouches[0].clientY;
 			console.log('touchstart');
-		} else {		
+		} else {
 			[mouse.leftDownX, mouse.leftDownY] = [event.clientX, event.clientY];
 		}
 
@@ -388,9 +391,16 @@ window.onload = function(){
 			if (mbut == 'create'){
 				try{clearTimeout(mort)}catch(err){};
 				// If pause when creating object enabled
-				if (pauseWhenCreatingObject.state){
-					pauseWhenCreatingObject.prevPauseState = pauseState;
-					pauseState = true;
+				if (touch){
+					if (pauseWhenCreatingObject.state && multiTouch == 1){
+						pauseWhenCreatingObject.prevPauseState = pauseState;
+						pauseState = true;
+					}
+				} else {
+					if (pauseWhenCreatingObject.state){
+						pauseWhenCreatingObject.prevPauseState = pauseState;
+						pauseState = true;
+					}
 				}
 			};
 			//Перемещение ближайшео объекта
@@ -414,7 +424,7 @@ window.onload = function(){
 				}
 			}
 		}
-		if (event.which == 2 || usr_multi_touch){
+		if (event.which == 2){
 			mouse.middleDown = true;
 			scene.mpos[0] = event.clientX; scene.mpos[1] = event.clientY;
 
