@@ -6,12 +6,20 @@ window.onload = function(){
 	this.mouse = {
 		x: window.innerWidth/1.5,
 		y: window.innerHeight/2,
+		leftDown: false,
 		leftDownX: window.innerWidth/2,
 		leftDownY: window.innerHeight/2,
 		leftUpX: window.innerWidth/1.4,
 		leftUpY: window.innerHeight/2,
-		leftDown: false,
+		rightDown: false,
+		middleDown: false,
 		move: false,
+	}
+
+	// Tasks to frame begin
+	this.frameTasks = new Array(); // Functions array
+	function addFrameTask(func, ...args){
+		frameTasks.push({func: func, args: args});
 	}
 
 	var mbut = 'create';
@@ -27,38 +35,24 @@ window.onload = function(){
 
 	// === ...
 	this.mov_obj = NaN; // Moving object id
-	var traj_ref = true;
 	this.dis_zone = 5;
-	var objArrPrev = [];
-	var frameTime = [0, Date.now()]; // Frametime
+	this.frameTime = [0, Date.now()]; // Frametime
 	var pause_gAnim = false; // Camera animation in pause
+	let renderStopLatency; // Frames to render after render disabled
 
 	//Camera
 	var prev_cam_x = 0;
 	var prev_cam_y = 0;
-	var anim_cam = [0, 0, true];
 	var zm_prev = 1;
 	var zm_cff = NaN;
-	var zm = 1; // Scene zoom
-	var zspd = 1 + 1/5; // Camera swim animation speed
-	var fram_rend = false;
-
-	var layers_id = ['renderLayer', 'canvas2', 'canvas3', 'canvas4'];
-
-	// Clear trace delay
-	var clrDelay = false;
-	var clrDTim = 75/(zspd-1); // Time to clear, after camera move animation
-	var clrTmt = setTimeout(function(){clrDelay = false}, clrDTim);
 
 	//Debug
-	var frameCount = 0;
 	var ref_speed = 1;
 	var frameLimit = false;
 	var maxFPS = 1;
 
 	var fps_count = 0;
 	var fps_interval = 0;
-
 
 	function fps(){
 		$('.fps').html('FPS: '+fps_count);
@@ -69,17 +63,16 @@ window.onload = function(){
 	}
 	// Init
 	this.scene = new Scene();
-	scene.animationFrame = true;
 	scene.camera = new Camera(scene);
 	scene.activCam = scene.camera;
 
-	var switcher = {pause: false,
-		pause2: false,
-		device: 'desktop',
+	this.pauseState = false; // Global pause state
+
+	var switcher = {device: 'desktop',
 		sel_orb_obj: false,
 		visT: false}; // Collisions: repulsion merge none
 
-	this.swch = {s_track: true, t_object: false, prev_t_obj: false,
+	this.swch = {s_track: true, t_object: false,
 		s_edit: true, edit_obj: false};
 
 	var menu_names = {create: 'menu_options', delete: 'del_menu_options', edit: 'edit_menu',
@@ -102,7 +95,7 @@ window.onload = function(){
 	}}), // Menu circle orbit on click input
 	newObjCreateReverseOrbit = new UserInput({type: 'checkbox', id: 'objReverseCheck', stateSaving: true, initState: false}), // Menu reverse ordit direction input
 	newObjLock = new UserInput({type: 'checkbox', id: 'objLckCeck', initState: false}), // Menu lock created object input
-	pauseWhenCreatingObject = new UserInput({type: 'checkbox', id: 'new_obj_pause', stateSaving: true}), // Menu pause when user add object input
+	pauseWhenCreatingObject = new UserInput({type: 'checkbox', id: 'new_obj_pause', stateSaving: true, callback: (val, elem)=>{elem.prevPauseState = false}}), // Menu pause when user add object input
 	launchForce = new UserInput({type: 'range', id: 'launch_power', stateSaving: true, callback: (val)=>{lnch_pwr_span.innerHTML = powerFunc(val)}, eventName: 'input'}), // Menu launch power value input
 	timeSpeed = new UserInput({type: 'range', id: 'tSpeed', callback: (val)=>{ time_speed_span.innerHTML = val; $('.time_speed h2').html('T - X'+val); }, eventName: 'input'}), // Menu time speed
 	showDistanceFromCursorToMainObj = new UserInput({type: 'checkbox', id: 'vis_distance_check', stateSaving: true, callback: ()=>{ launchPowerLabel.style.display = 'none'; }}), // Menu visual distance
@@ -123,6 +116,11 @@ window.onload = function(){
 		for (let element of traj_menu.getElementsByClassName('additionalOption')){
 			if ( element.id.includes(val.toString()) && !element.hasAttribute('disabled')) { element.style.display = 'inline' } else { element.style.display = 'none' } // Show additional options by radio value
 		}
+		addFrameTask(()=>{
+			scene.camera.clear('#000000');
+			scene.camera.clear3();
+			scene.objArrChanges = true;
+		}); // Clear render layers
 
 	} }),
 	// Mode 1
@@ -155,7 +153,7 @@ window.onload = function(){
 		}
 	}, }),
 	// Set background darkness
-	backgroundDarkness = new UserInput({type: 'range', id: 'bg_darkness', stateSaving: true, eventName: 'input', callback: (state, statePrev)=>{
+	backgroundDarkness = new UserInput({type: 'range', id: 'bg_darkness', stateSaving: true, eventName: 'input', callback: (state, elem)=>{
 		if (tracesMode.state == 1){
 			if (state == 0) { // If backgroundDarkness state value = 0 then copy imageData from canvas layer 3 to canvas layer 1 and hide canvas layer 3
 				scene.camera.ctx.putImageData(scene.camera.ctx3.getImageData(0,0,scene.camera.canv0.width,scene.camera.canv0.height),0,0);
@@ -164,7 +162,7 @@ window.onload = function(){
 				traj_menu.children.additionalTrajectoryOptions1.setAttribute('disabled', '');
 				scene.camera.canv2.style.zIndex = -1;
 				tracesMode.state = tracesMode.state; // Refresh trace mode menu
-			} else if (statePrev == 0) { // If backgroundDarkness previous state value = 0 then copy imageData from canvas layer 1 to canvas layer 3 and display canvas layer 3
+			} else if (elem.prevLocalState == 0) { // If backgroundDarkness previous state value = 0 then copy imageData from canvas layer 1 to canvas layer 3 and display canvas layer 3
 				scene.camera.ctx3.putImageData(scene.camera.ctx.getImageData(0,0,scene.camera.canv0.width,scene.camera.canv0.height),0,0);
 				scene.camera.ctx.clearRect(0,0,scene.camera.canv0.width,scene.camera.canv0.height);
 				scene.camera.canv3.style.display = background_image.style.display = '';
@@ -266,25 +264,24 @@ window.onload = function(){
 
 
 	//====time====
-	this.t_wrap = false;
-	this.pretime = 1;
+	this.timeWrap = false;
 	//======
 
 	//Mouse and touches
-	let leftMouseDown = false;
-	let rightMouseDown = false;
-	let middleMouseDown = false;
-	let middleWheelSpin = false;
-	let mouseMove = false;
 	let multiTouch = 0;
 	let avTouchPoint = {x: NaN, y: NaN, xd: NaN, yd: NaN};
 	let mscam = true;
 
+	// Clear trace delay
+	var clrDelay = false;
+	var clrDTim = 75/((1+1/scene.camera.animationDuration)-1); // Time to clear, after camera move animation
+	var clrTmt = setTimeout(function(){clrDelay = false}, clrDTim);
+
 	window.onresize = function(){
 		scene.camera.width = window.innerWidth;
 		scene.camera.height = window.innerHeight;
+		scene.camera.renderObjects();
 		adaptive();
-		fram_rend = true;
 	}
 	//Touch events ======================================
 	$('.renderLayer').on('touchstart', function(event){
@@ -301,7 +298,6 @@ window.onload = function(){
 
 	$('.renderLayer').on('touchmove', function(event){
 		event.preventDefault();
-		mouseMove = true;
 		mouse.move = true;
 		// Touch point
 		event.clientX = event.targetTouches[0].clientX;// Touch X
@@ -311,7 +307,7 @@ window.onload = function(){
 		let av_touch_x = [];
 		let av_touch_y = [];
 
-		if (leftMouseDown && mbut == 'move' && mov_obj){ // Moving object
+		if (mouse.leftDown && mbut == 'move' && mov_obj){ // Moving object
 			// Draw trace while user moving object
 			if (scene.objArr[mov_obj]){
 				let dcanv = backgroundDarkness.state != 0 ? ctx3 : ctx;
@@ -346,7 +342,7 @@ window.onload = function(){
 			 // Clear launch power label display
 			launchPowerLabel.style.display = 'none';
 
-			leftMouseDown = false; 
+			mouse.leftDown = false; 
 			mouse.leftDown = false;
 			mscam = false;
 			// Mouse down
@@ -368,8 +364,6 @@ window.onload = function(){
 			} else { // If zoom to center
 			}
 			swch.t_object = false; // Track object disable
-			swch.prev_t_obj = false; // Track object disable
-			scene.camera.clear('#000000');
 		}
 	})
 	//Mouse events =========================================================
@@ -388,11 +382,16 @@ window.onload = function(){
 
 		scene.mpos[0] = event.clientX; scene.mpos[1] = event.clientY;
 		if (event.which == 1 || touch){
-			leftMouseDown = true;
+			mouse.leftDown = true;
 			mouse.leftDown = true;
 
 			if (mbut == 'create'){
 				try{clearTimeout(mort)}catch(err){};
+				// If pause when creating object enabled
+				if (pauseWhenCreatingObject.state){
+					pauseWhenCreatingObject.prevPauseState = pauseState;
+					pauseState = true;
+				}
 			};
 			//Перемещение ближайшео объекта
 			if (mbut == 'move'){
@@ -416,17 +415,15 @@ window.onload = function(){
 			}
 		}
 		if (event.which == 2 || usr_multi_touch){
-			middleMouseDown = true;
+			mouse.middleDown = true;
 			scene.mpos[0] = event.clientX; scene.mpos[1] = event.clientY;
 
 			scene.camera.Target = false;
 			scene.camera.animation = true;
-			swch.prev_t_obj = false;
 		}
 		if (event.which == 3){
-			rightMouseDown = true;
-			if (mbut == 'create' && leftMouseDown){
-				scene.camera.clear2();
+			mouse.rightDown = true;
+			if (mbut == 'create' && mouse.leftDown){
 				launchPowerLabel.style.display = 'none';			
 			}
 		}
@@ -440,7 +437,7 @@ window.onload = function(){
 		}
 		avTouchPoint.xd = avTouchPoint.yd = NaN;
 		if (event.which == 1 || touch){
-			leftMouseDown = false;
+			mouse.leftDown = false;
 			mouse.leftDown = false;
 			[mouse.leftUpX, mouse.leftUpY] = [event.clientX, event.clientY] // Set cursor mouseUp position
 			launchPowerLabel.style.display = 'none';
@@ -455,7 +452,7 @@ window.onload = function(){
 				mov_obj = '';
 			}
 
-			if (mbut == 'create' && mscam && !rightMouseDown){
+			if (mbut == 'create' && mscam && !mouse.rightDown){
 				addFrameTask(()=>{
 					scene.addNewObject({
 						ob_col: newObjColor.state,
@@ -467,12 +464,14 @@ window.onload = function(){
 				});
 				scene.camera.ctx.beginPath();
 				scene.camera.ctx.fillStyle = newObjColor.state;
-				scene.camera.ctx.arc(scene.mpos[0], scene.mpos[1], Math.sqrt(Math.abs(newObjMass.state))*zm, 0, 7);
+				scene.camera.ctx.arc(scene.mpos[0], scene.mpos[1], Math.sqrt(Math.abs(newObjMass.state))*scene.camera.animZoom, 0, 7);
 				scene.camera.ctx.fill();
-				scene.camera.clear2();
 			}
 			if (mbut == 'create'){
 				var mort = setTimeout(menu_open_restore, 200);
+				if (pauseWhenCreatingObject.state){
+					pauseState = pauseWhenCreatingObject.prevPauseState;
+				}
 			}
 			if (mbut == 'camera' && swch.s_track){
 				scene.camera.Target = scene.objectSelect('nearest', scene.camera.Target);
@@ -491,7 +490,7 @@ window.onload = function(){
 			}
 		};
 		if (event.which == 2 || !mscam){
-			middleMouseDown = false;
+			mouse.middleDown = false;
 			menu_open_restore();
 		}
 		if (touch){
@@ -499,8 +498,8 @@ window.onload = function(){
 			mscam = multiTouch != 0 ? false : true;
 		}
 		if (event.which == 3){
-			rightMouseDown = false;
-			if (leftMouseDown){
+			mouse.rightDown = false;
+			if (mouse.leftDown){
 				launchPowerLabel.style.display = 'block';
 				launchPowerLabel.innerHTML = '0';
 			}
@@ -508,11 +507,11 @@ window.onload = function(){
 	});	
 
 	document.onmousemove = function(event){
-		mouseMove = true;
 		mouse.move = true;
 		if (backgroundFollowsMouse.state && backgroundDarkness.state){
 			$('.bg_image').css({top: -event.clientY/25, left: -event.clientX/25})	
 		}
+		// Moving object while mouse moves
 		if (mouse.leftDown && mbut == 'move' && mov_obj){
 			if (scene.objArr[mov_obj]){
 				let dCanv = backgroundDarkness.state != 0 ? scene.camera.ctx3 : scene.camera.ctx;
@@ -530,19 +529,16 @@ window.onload = function(){
 
 				dCanv.lineTo(scene.camera.crd(scene.objArr[mov_obj].x, 'x'), scene.camera.crd(scene.objArr[mov_obj].y, 'y'));
 				dCanv.stroke();
-				if (tracesMode.state != 1){
-					clear(1);
-				}
+				scene.objArrChanges = true;
 			}
 		}
-		if (middleMouseDown){
+		if (mouse.middleDown){
 			clrDelay = true;
 			pause_gAnim = true;
 			clearTimeout(clrTmt);
 			clrTmt = setTimeout(function(){clrDelay = false; pause_gAnim = false;}, clrDTim);
 			scene.camera.x += (mouse.x - event.clientX)/scene.camera.animZoom;
 			scene.camera.y += (mouse.y - event.clientY)/scene.camera.animZoom;
-			scene.camera.clear('#000000');
 			let mstate = menu_state;
 			close_all_menus(); menu_state = mstate;
 		}
@@ -568,7 +564,6 @@ window.onload = function(){
 		let inp_name = $(this).attr('name');
 		let eti = e.type == 'input'; // If input type = Input
 		let etch = e.type == 'change'; // If input type = Change
-		fram_rend = true;
 
 		if (chck == 'check_edit_lck' && scene.objArr[swch.edit_obj]){
 			if (document.getElementById(chck).checked){
@@ -608,12 +603,6 @@ window.onload = function(){
 
 	scene.frame = frame;
 
-	this.frameTasks = new Array(); // Functions array
-
-	function addFrameTask(func, ...args){
-		frameTasks.push({func: func, args: args});
-	}
-
 	frameControl();
 	function frameControl(){
 		window.requestAnimationFrame(frameControl);
@@ -626,7 +615,6 @@ window.onload = function(){
 	//scene.physicsCalculate();
 	function frame(){
 		//if (!frameLimit){ window.requestAnimationFrame(frame); }
-		frameCount++;
 
 		// Run all functions from frameTasks array
 		if (!scene.workersJobDone){
@@ -645,29 +633,16 @@ window.onload = function(){
 			scene.objIdToOrbit = scene.objectSelect('biggest');		
 		}
 
+		scene.camera.clear2();
+
 		// Clear delay
-		if (clrDelay){ scene.camera.clear(1) }	
+		if (clrDelay){ scene.camera.clear(1) }
 
-		if ((mouseMove && (middleMouseDown || leftMouseDown)) || middleWheelSpin || switcher.visT || pause_gAnim){
-			fram_rend = true;
-		}
-		
-		if(!switcher.pause2 && tracesMode.state == 1){ scene.activCam.clear() };
-
-		scene.camera.clear2(); 
-		if (switcher.visT && !leftMouseDown){
-			scene.camera.clear2(); //   ==== Comment this line to leave calc trajectory ====
-			switcher.visT = false;
-		}
-
-		if ((!switcher.pause || fram_rend) && backgroundDarkness.state != 0){ scene.activCam.clear3() }
-
-		if (middleMouseDown || mbut == 'move'){scene.camera.layersDiv.style.cursor = "move";}else{scene.camera.layersDiv.style.cursor = "default";};
-
-		switcher.pause2 = switcher.pause ? true:false;
+		// Set move cursor style
+		if (mouse.middleDown || mbut == 'move'){scene.camera.layersDiv.style.cursor = "move";}else{scene.camera.layersDiv.style.cursor = "default";};
 
 		// Time wrap
-		if (t_wrap){
+		if (timeWrap){
 			// Step back
 			for (let object of scene.objArr){
 				// Add vectors
@@ -680,35 +655,38 @@ window.onload = function(){
 				}
 			}
 			timeSpeed.state = -timeSpeed.state;
-			t_wrap = false;
+			timeWrap = false;
 		}
 
 		if (showNewObjTrajectory.state && mbut == 'create' && mouse.leftDown){
 			scene.camera.trajectoryCalculate(newObjTrajLength.state);
-			if (!switcher.pause && pauseWhenCreatingObject.state){
-				switcher.pause = true;
-			}
 		}
 
-		for (let i = 0; i < ref_speed && (!switcher.pause || fram_rend); i++){
-			if (scene.objArr.length){
-				if (!switcher.pause2 && tracesMode.state != 1) { scene.camera.clear(1) }
-				if (window.Worker){
+		if (scene.objArr.length){
+			if (!pauseState){
+				if (window.Worker && window.navigator.hardwareConcurrency > 1){
 					scene.physicsMultiThreadCalculate();
 				} else {
 					scene.physicsCalculate(); // Scene physics calculations (1 step)
 				}
-				if (showFPS){fps_count ++;}
-				if (scene.objArr[scene.camera.Target]){
-					scene.camera.x = scene.objArr[scene.camera.Target].x;
-					scene.camera.y = scene.objArr[scene.camera.Target].y;
-				} else { scene.camera.Target = false }
-				scene.camera.renderObjects(scene.world);
-			}	
-			traj_ref = false;
+			}
+			if (showFPS) fps_count ++;
+			if (scene.objArr[scene.camera.Target]){
+				scene.camera.x = scene.objArr[scene.camera.Target].x;
+				scene.camera.y = scene.objArr[scene.camera.Target].y;
+			} else { scene.camera.Target = false }
 		}
 
-		traj_ref = true;
+		if (scene.objArrChanges || clrDelay){
+			scene.camera.renderObjects(scene.world);
+			renderStopLatency = 130; // Count of frames to render after render is disabled
+		} else {
+			// If traces mode is 1 render ${renderStopLatency} frames after render disabled
+			if (renderStopLatency && tracesMode.state == 1 && !pauseState){
+				renderStopLatency --;
+				scene.camera.renderObjects(scene.world);
+			}
+		}
 
 		if (mbut == 'delete'){
 			scene.camera.visualObjectSelect(deletingMode.state, '#ff0000');
@@ -725,7 +703,7 @@ window.onload = function(){
 		if (mbut == 'edit' && swch.s_edit){
 			scene.camera.visualObjectSelect('nearest', '#11f', mov_obj);
 		}
-		if ((mbut == 'create') && (!leftMouseDown || (multiTouch > 0 && mbut != 'create')) && showDistanceFromCursorToMainObj.state){
+		if ((mbut == 'create') && (!mouse.leftDown || (multiTouch > 0 && mbut != 'create')) && showDistanceFromCursorToMainObj.state){
 			vis_distance([mouse.x, mouse.y], '#888888');
 		}
 		if (mbut == 'sel_orb_obj' && switcher.sel_orb_obj){
@@ -735,27 +713,14 @@ window.onload = function(){
 			launchPowerLabel.style.display = 'none';
 		}
 
-		if (mbut == 'create' && !leftMouseDown){
-			if (switcher.traj_pause){
-				switcher.pause = false;
-				switcher.traj_pause = null;
-			}
-		}
-
-		if (mbut == 'create' && leftMouseDown && !rightMouseDown){
-			if (!switcher.pause && pauseWhenCreatingObject.state){
-				switcher.pause = true;
-				switcher.traj_pause = true;
-			}
-			if (mouseMove || !pauseWhenCreatingObject.state){
-				scene.camera.visual_trajectory();
-			}
+		if (mbut == 'create' && mouse.leftDown && !mouse.rightDown){
+			scene.camera.visual_trajectory();
 
 			let mcx = scene.mouse_coords[0] ? scene.mouse_coords[0] - (scene.mouse_coords[0] - mouse.x)/10 : mouse.x;
 			let mcy = scene.mouse_coords[1] ? scene.mouse_coords[1] - (scene.mouse_coords[1] - mouse.y)/10 : mouse.y;
 
 			// Trajectory preview
-			// if ((!(Math.abs(mouse[0]-mouse.x) < dis_zone && Math.abs(mouse[1]-mouse.y) < dis_zone))&&showNewObjTrajectory.state&&(mouseMove || !pauseWhenCreatingObject.state)&&!newObjLock.state){
+			// if ((!(Math.abs(mouse[0]-mouse.x) < dis_zone && Math.abs(mouse[1]-mouse.y) < dis_zone))&&showNewObjTrajectory.state&&(mouse.move || !pauseWhenCreatingObject.state)&&!newObjLock.state){
 			// 	obj_for_traj = {
 			// 		x: scene.camera.screenPix(mouse[0], 'x'), 
 			// 		y: scene.camera.screenPix(mouse[1], 'y'), 
@@ -771,10 +736,8 @@ window.onload = function(){
 			// }
 		}
 
+		scene.objArrChanges = false;
 		mouse.move = false;
-		mouseMove = false;
-		middleWheelSpin = false;
-		fram_rend = false;
 		return true;
 	}
 	//scene.frame();
@@ -823,7 +786,7 @@ window.onload = function(){
 				Object.assign(launchPowerLabel.style, {left: (mouse.x-10)+'px', top: (mouse.y-30)+'px', display: 'block', color: col});
 				launchPowerLabel.innerHTML = Math.round(size/scene.camera.animZoom*1000)/1000;
 			} else {
-				if (!leftMouseDown){
+				if (!mouse.leftDown){
 					launchPowerLabel.style.display = 'none';	
 				}
 			}		
@@ -833,19 +796,17 @@ window.onload = function(){
 	}
 	//Scene scale
 	scene.camera.layersDiv.addEventListener('wheel', function(e){
-		middleWheelSpin = true;
 		if (!e.ctrlKey && !mov_obj){
 			clrDelay = true;
 			clearTimeout(clrTmt);
 			pause_gAnim = true;
 			clrTmt = setTimeout(function(){clrDelay = false; pause_gAnim = false;}, clrDTim);
-			if (!middleMouseDown){
+			if (!mouse.middleDown){
 				if (e.deltaY > 0){
 					scene.camera.zoomOut();
 				} else {
 					scene.camera.zoomIn();
 				}		
-				scene.camera.clear('#000000');
 			}
 		}
 	});
@@ -904,14 +865,12 @@ window.onload = function(){
 					clearTimeout(clrTmt);
 					clrTmt = setTimeout(function(){clrDelay = false}, clrDTim);
 					scene.camera.zoomIn(2);
-					clear('#000');
 					break;
 				case 109:  // (NumPad -) Zoom out
 					clrDelay = true;
 					clearTimeout(clrTmt);
 					clrTmt = setTimeout(function(){clrDelay = false}, clrDTim);
 					scene.camera.zoomOut(2);
-					scene.camera.clear('#000');
 					break;
 			}
 			// (+) Simulation speed up withoud lost accuracity. Max limit is computer performance
@@ -1012,23 +971,22 @@ window.onload = function(){
 		} else
 		if (mbut == 'pause'){
 			let img_name;
-			if (switcher.pause){
-				switcher.pause = false;
+			if (pauseState){
 				img_name = 'pause';
 				change_state('play');
 				let change_state_play = setTimeout(function(){change_state(pfb);}, 1000);			
 			} else {
-				switcher.pause = true;
 				img_name = 'play';
 				change_state('pause');	
 				try{clearTimeout(change_state_play)}catch(err){};
 			}
+			pauseState = !pauseState;
 			$('img',this).attr('src', 'ico/'+img_name+'.png');
 			//$('.time_speed h2').html('T - X0');
 		} else
 		if (mbut == 'play'){
 			ref_speed = 1;
-			switcher.pause = false;
+			pauseState = false;
 			timeSpeed.state = 1;
 			$('#pause img').attr('src', 'ico/pause.png');
 			change_state('restore');
@@ -1128,7 +1086,6 @@ window.onload = function(){
 			clrDelay = true;
 			clearTimeout(clrTmt);
 			clrTmt = setTimeout(function(){clrDelay = false}, clrDTim);
-			scene.camera.clear('#000');
 			swch.t_object = false;
 			scene.camera.Target = false;
 			scene.camera.x = 0; scene.camera.y = 0;
@@ -1152,10 +1109,10 @@ window.onload = function(){
 			mbut = switcher.sel_orb_obj?'sel_orb_obj':'create';
 		}
 		if (cbut == 'wrap_time'){
-			t_wrap = true;
+			timeWrap = true;
 		}
 		if (cbut == 'save_file'){
-			switcher.pause = true;
+			pauseState = true;
 			change_state('pause');
 			let objArrWrite = JSON.parse(JSON.stringify(scene.objArr));
 			for(let i in objArrWrite){
@@ -1332,9 +1289,9 @@ window.onload = function(){
 			  	g.setInputState(file_data.g ? file_data.g : 1);
 			  	collisionMode.state = file_data.collisionMode || 0;
 			  	timeSpeed.setInputState(file_data.timeSpeed ? file_data.timeSpeed : 1);
-			  	//pretime = times;
-			  	scene.camera.clear('#000000');
 			  	scene.show_obj_count();
+			  	scene.objArrChanges = true;
+			  	scene.camera.clear("#000000");
 			} catch(err){
 				alert('Несовместимый файл!');
 			}

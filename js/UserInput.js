@@ -35,7 +35,7 @@ export default class UserInput {
 						this.#localState = state; // Set this.#localState equals given 'state'
 						this.element.checked = state; // Set the element checked state
 						if ( stateSaving ) sessionStorage[id] = this.#localState; // Save the value to 'sessionStorage'
-						callback && callback(this.#localState); // Run the callback function if given
+						callback && callback(this.#localState, this); // Run the callback function if given
 					}
 					// Checkbox event listener ========
 					this.element.addEventListener(eventName, ()=>{ this.setInputState(this.element.checked) });
@@ -60,7 +60,7 @@ export default class UserInput {
 						this.element.querySelector(`input[value="${state}"]`).checked = this.#localState;
 						// Save user's selection
 						if ( stateSaving ) sessionStorage[id] = this.#localState;
-						callback && callback(this.#localState, this.#prevLocalState); // // Run the callback function if given
+						callback && callback(this.#localState, this); // // Run the callback function if given
 					}
 					// Event listener ========
 					this.element.addEventListener(eventName, ()=>{ this.setInputState(this.element.querySelector(`input:checked`).value) });
@@ -82,7 +82,7 @@ export default class UserInput {
 						this.#localState = +state; // Set this.#localState equals input value
 						this.element.value = this.#localState; // Set input value
 						if ( stateSaving ) sessionStorage[id] = this.#localState; // Save the value to 'sessionStorage'
-						callback && callback(this.#localState, this.#prevLocalState); // Run the callback function if given
+						callback && callback(this.#localState, this); // Run the callback function if given
 					}
 					// Event listener ========
 					this.element.addEventListener(eventName, ()=>{ this.setInputState(this.element.value) });		
@@ -104,7 +104,7 @@ export default class UserInput {
 						this.#localState = state; // Set this.#localState equals input value
 						this.element.value = this.#localState;
 						if ( stateSaving ) sessionStorage[id] = this.#localState; // Save the value to 'sessionStorage'
-						callback && callback(this.#localState, this.#prevLocalState); // Run the callback function if given
+						callback && callback(this.#localState, this); // Run the callback function if given
 					}
 					// Event listener ========
 					this.element.addEventListener(eventName, ()=>{ this.setInputState(this.element.value) });
@@ -114,6 +114,6 @@ export default class UserInput {
 				break;
 			default: console.error("UserInput type: '" + type + "' not finded!");
 		}
-		callback && callback(this.state, this.#prevLocalState); // Run the callback function if given
+		callback && callback(this.state, this); // Run the callback function if given
 	}
 }

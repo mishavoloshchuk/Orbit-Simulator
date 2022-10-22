@@ -10,6 +10,8 @@ export default class Scene {
 
 	objIdToOrbit = 0;
 
+	objArrChanges = true;
+
 	constructor() {
 		this.objArr = Array();
 
@@ -26,11 +28,11 @@ export default class Scene {
 		// }, 1000);
 
 		//Worker 
-		this.logicalProcessors = window.navigator.hardwareConcurrency > 1 ?window.navigator.hardwareConcurrency - 1 : 1;
 		// this.logicalProcessors = 1;
 		//alert('CPU Threads count: ' + (this.logicalProcessors+1));
 
 		if (window.Worker){
+			this.logicalProcessors = window.navigator.hardwareConcurrency > 1 ?window.navigator.hardwareConcurrency - 1 : 1;
 			this.workersJobDone = 0; // Thread job done
 			// Create worker for almost (workerThreads - 1) each local CPU thread
 			for (let i = this.logicalProcessors; i--;) {
@@ -192,6 +194,7 @@ export default class Scene {
 				} else {// If object not locked
 					object.x += object.vx*this.timeSpeed.state;
 					object.y += object.vy*this.timeSpeed.state;
+					this.objArrChanges = object.vx || object.vy ? true : false;
 				}
 			} else {
 				object.vx = object.vy = 0;
@@ -246,6 +249,7 @@ export default class Scene {
 			main_obj: main_obj
 		};
 		this.show_obj_count();
+		this.objArrChanges = true;
 
 		return objArr[newObjId] ? true : false;
 	}
@@ -264,6 +268,7 @@ export default class Scene {
 			this.objArr.splice(objectId, 1);
 			//return console.log(this.objArr);
 			this.show_obj_count();
+			this.objArrChanges = true;
 		}
 	}
 	show_obj_count(){

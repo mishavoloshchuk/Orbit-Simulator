@@ -6,8 +6,6 @@ export default class Camera{
 
 	zoomCff = 1.25;
 
-	#frameTime = [0, Date.now()]; // Frametime
-
 	set width (width){
 		this.#width = this.canv0.width = this.canv2.width = this.canv3.width = width;
 	}
@@ -24,10 +22,26 @@ export default class Camera{
 	#visualObjectSelectAnimation = 10;
 	#visualObjectSelectAnimDir = 0;
 
+	#clrDelay = false;
+
+	x = 0; y = 0; // Target camera position
+	ax = 0; ay = 0; // Actualy camera postiton with animation
+	lastX = 0; lastY = 0; // Last camera position
+	zoom = 1; // Target zoom
+	animZoom = 1; // Actualy zoom with animation
+	zoomCff = 1.25; // Zoom coefficient
+	Target = false; // Follow target object
+	switchTarget = false;
+	animTimeCorrect = 5;
+	animTime = 5;
+	animationDuration = 5; // Animation duration
+	animation = true; // Enable camera animation
+
 	menu_names = {create: 'menu_options', delete: 'del_menu_options', edit: 'edit_menu',
 		help: 'help_menu', settings: 'settings_menu', camera: 'camera_menu', trajectory: 'traj_menu',
 		world_settings: 'world_settings_men'}
 	constructor(scene){
+		this.scene = scene;
 		this.layersDiv = document.createElement('div');
 		this.layersDiv.setAttribute('id', 'renderLayers_camera'+this.cameraId);
 
@@ -64,19 +78,6 @@ export default class Camera{
 		// Camera resolution
 		this.width = window.innerWidth;
 		this.height = window.innerHeight;
-	
-		this.scene = scene;
-		this.x = 0; this.y = 0; // Target camera position
-		this.ax = 0; this.ay = 0; // Actualy camera postiton with animation
-		this.lastX = 0; this.lastY = 0;
-		this.zoom = 1; // Target zoom
-		this.animZoom = 1; // Actualy zoom with animation
-		this.zoomCff = 1.25; // Zoom coefficient
-		this.Target = false; // Follow target object
-		this.switchTarget = false;
-		this.animTimeCorrect = 5;
-		this.animTime = 5;
-		this.animation = true; // Enable camera animation
 
 		Camera.cameraId ++;
 	}
@@ -84,8 +85,9 @@ export default class Camera{
 	//Draw
 	renderObjects(){
 		let scn = this.scene;
-		this.#frameTime[0] = Date.now() - this.#frameTime[1];
-		this.#frameTime[1] = Date.now();
+		this.clear();
+		this.clear2();
+		if (scn.backgroundDarkness !== 0) this.clear3();
 		this.animFunc();
 		for (let objectId in scn.objArr){
 			let obj = scn.objArr[objectId];
@@ -307,7 +309,7 @@ export default class Camera{
 	}
 
 	visual_trajectory(){
-		// this.clear2();
+		this.clear2();
 		let mcx = this.scene.mouse_coords[0] ? this.scene.mouse_coords[0] - (this.scene.mouse_coords[0] - mouse.x)/10 : mouse.x;
 		let mcy = this.scene.mouse_coords[1] ? this.scene.mouse_coords[1] - (this.scene.mouse_coords[1] - mouse.y)/10 : mouse.y;
 
@@ -340,6 +342,7 @@ export default class Camera{
 	//Визуальное выделение объекта
 	visualObjectSelect(mode, color, objectId, alpha = 0.3) {
 		if (this.scene.objArr.length){ // If there are objects
+			this.clear2();
 			let selectObjId;
 			if (!this.scene.objArr[objectId]){
 				selectObjId = this.scene.objectSelect(mode);			
@@ -404,11 +407,11 @@ export default class Camera{
 	}
 
 	animFunc(){
-		let animSpeedCorrected = this.animTimeCorrect*(16/this.#frameTime[0]);
+		let animSpeedCorrected = this.animTimeCorrect*(16/frameTime[0]);
 		if (this.switchTarget){
-			this.animTimeCorrect -= (this.animTime-1)/(400/this.#frameTime[0]);
+			this.animTimeCorrect -= (this.animTime-1)/(400/frameTime[0]);
 		} else {
-			this.animTimeCorrect = 5;
+			this.animTimeCorrect = this.animationDuration;
 		}
 		animSpeedCorrected = animSpeedCorrected < 1 ? 1 : animSpeedCorrected;
 		this.animZoom += ((this.zoom-this.animZoom)/animSpeedCorrected);
@@ -438,7 +441,7 @@ export default class Camera{
 	}
 
 	clear(col){
-		if (this.scene.tracesMode.state == 0){col = '#000';}
+		if (this.scene.tracesMode.state == 0){col = '#000000';}
 		if (this.scene.backgroundDarkness.state != 0){
 			if (!col){
 				this.ctx3.globalAlpha = 0.01;
