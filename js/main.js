@@ -525,8 +525,8 @@ window.onload = function(){
 				dCanv.beginPath();
 				dCanv.moveTo(scene.camera.crd(scene.objArr[mov_obj].x, 'x'), scene.camera.crd(scene.objArr[mov_obj].y, 'y'));
 
-				scene.objArr[mov_obj].x = (event.clientX - scene.mpos[0])/zm + scene.mpos[2]; // New position X
-				scene.objArr[mov_obj].y = (event.clientY - scene.mpos[1])/zm + scene.mpos[3]; // New position Y
+				scene.objArr[mov_obj].x = (event.clientX - scene.mpos[0])/scene.camera.animZoom + scene.mpos[2]; // New position X
+				scene.objArr[mov_obj].y = (event.clientY - scene.mpos[1])/scene.camera.animZoom + scene.mpos[3]; // New position Y
 
 				dCanv.lineTo(scene.camera.crd(scene.objArr[mov_obj].x, 'x'), scene.camera.crd(scene.objArr[mov_obj].y, 'y'));
 				dCanv.stroke();
@@ -662,7 +662,7 @@ window.onload = function(){
 
 		if ((!switcher.pause || fram_rend) && backgroundDarkness.state != 0){ scene.activCam.clear3() }
 
-		if (middleMouseDown || mbut == 'move'){scene.activCam.canv2.style.cursor = "move";}else{scene.activCam.canv2.style.cursor = "default";};
+		if (middleMouseDown || mbut == 'move'){scene.camera.layersDiv.style.cursor = "move";}else{scene.camera.layersDiv.style.cursor = "default";};
 
 		switcher.pause2 = switcher.pause ? true:false;
 
@@ -832,9 +832,9 @@ window.onload = function(){
 		}
 	}
 	//Scene scale
-	document.getElementById('renderLayers').addEventListener('wheel', function(e){
+	scene.camera.layersDiv.addEventListener('wheel', function(e){
 		middleWheelSpin = true;
-		if (!e.ctrlKey){
+		if (!e.ctrlKey && !mov_obj){
 			clrDelay = true;
 			clearTimeout(clrTmt);
 			pause_gAnim = true;

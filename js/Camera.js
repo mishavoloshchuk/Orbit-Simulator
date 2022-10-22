@@ -28,13 +28,16 @@ export default class Camera{
 		help: 'help_menu', settings: 'settings_menu', camera: 'camera_menu', trajectory: 'traj_menu',
 		world_settings: 'world_settings_men'}
 	constructor(scene){
+		this.layersDiv = document.createElement('div');
+		this.layersDiv.setAttribute('id', 'renderLayers_camera'+this.cameraId);
+
 		this.cameraId = Camera.cameraId;
 		this.canv0 = document.createElement('canvas');
 		this.canv0.id = 'layer0_cam'+this.cameraId;
 		this.canv0.className = 'renderLayer';
 		this.canv0.style.zIndex = -2;
 		this.canv0.innerHTML = 'Your browser does not support canvas!';
-		document.getElementById('renderLayers').appendChild(this.canv0);
+		this.layersDiv.appendChild(this.canv0);
 		this.ctx = this.canv0.getContext('2d',{willReadFrequently: false});
 
 		this.canv2 = document.createElement('canvas');
@@ -42,7 +45,7 @@ export default class Camera{
 		this.canv2.className = 'renderLayer';
 		this.canv2.style.zIndex = -4;
 		this.canv2.innerHTML = 'Your browser does not support canvas!';
-		document.getElementById('renderLayers').appendChild(this.canv2);
+		this.layersDiv.appendChild(this.canv2);
 		this.ctx2 = this.canv2.getContext('2d');
 
 		this.canv3 = document.createElement('canvas');
@@ -53,8 +56,10 @@ export default class Camera{
 		this.canv3.style.filter = 'blur(0px)';
 		this.canv3.style.opacity = 0.7;
 		this.canv3.innerHTML = 'Your browser does not support canvas!';
-		document.getElementById('renderLayers').appendChild(this.canv3);
+		this.layersDiv.appendChild(this.canv3);
 		this.ctx3 = this.canv3.getContext('2d',{willReadFrequently: false});
+
+		document.body.appendChild(this.layersDiv);
 
 		// Camera resolution
 		this.width = window.innerWidth;
