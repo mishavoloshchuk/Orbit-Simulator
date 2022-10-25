@@ -131,12 +131,6 @@
 				<input type="range" list='dPwrInpVal' id="launch_power" min="0" max="2" value="1" step="0.01" width="100%">
 				<datalist id='dPwrInpVal'><option value="1"></datalist>
 			</div>
-
-			<div class='option_item'>
-				<span>Скорость времени: </span><span id='time_speed_span' class="rangeValue"></span>
-				<input type="range" list='dTInpVal' id="tSpeed" min="0" max="4" value="1" step="0.01" width="100%">
-				<datalist id='dTInpVal'><option value="1"></datalist>
-			</div>
 			
 			<div class='option_item'>
 				<span>Показывать расстояние: </span>
@@ -474,13 +468,17 @@
 			</div>
 
 			<div class='option_item title_option_item'>
-				<span>Разное:</span>
+				<span>Производительность:</span>
 			</div>
 			<div class='option_item' title="F9">
 				<span>Показывать FPS: </span>
 				<div class="lck_edit_div">
 					<input type="checkbox" class='checkbox' id='check_fps_swch' onmouseout="this.blur();">
 				</div>	
+			</div>
+			<div class='option_item'>
+				<span>Многопоточная обработка: </span>
+				<input type="checkbox" class='checkbox' id='multithread_comput' onmouseout="this.blur();">	
 			</div>
 
 			<div class='option_item title_option_item'>
@@ -551,10 +549,6 @@
 
 	<div class="deleted">
 		<h1 style="color: #dd0;">Удален!</h1>
-	</div>
-
-	<div class="canvas fps">
-		FPS: __
 	</div>
 </body>
 </html>

@@ -1,44 +1,29 @@
 import UserInput from '/js/UserInput.js';
 export default class Scene {
 	mouse_coords = [false, false]; // used for accuracity mode when object creating (Press CTRL while creating object)
-	mpos = [];
-
-	fps_count = 0;
-	fps_interval = 0;
-
+	mpos = []; // Move object position
+	objArr = Array(); // Scene objects array
+	collidedObjectsIdList = []; // Collisions list
 	#workerThreads = []; // Threads workers
-
-	objIdToOrbit = 0;
-
-	objArrChanges = true;
+	objIdToOrbit = 0; // The ID of the object around which the new object will orbit
+	objArrChanges = true; // Forces render frame if true and frame not render
 
 	constructor() {
-		this.objArr = Array();
-
 		this.dis_zone = 5;
-		this.frameCounter = 0;
-
-		this.collidedObjectsIdList = []; // Collisions list
-
-		// setInterval(()=>{
-		// 	if (this.showFPS.state){
-		// 		console.log('Physics FPS: ' + this.frameCounter);
-		// 	}
-		// 	this.frameCounter = 0;
-		// }, 1000);
 
 		//Worker 
-		// this.logicalProcessors = 1;
-		//alert('CPU Threads count: ' + (this.logicalProcessors+1));
-
 		if (window.Worker){
 			this.logicalProcessors = window.navigator.hardwareConcurrency > 1 ?window.navigator.hardwareConcurrency - 1 : 1;
+			// this.logicalProcessors = 1;
+			//alert('CPU Threads count: ' + (this.logicalProcessors+1));
 			this.workersJobDone = 0; // Thread job done
 			// Create worker for almost (workerThreads - 1) each local CPU thread
 			for (let i = this.logicalProcessors; i--;) {
 				this.#workerThreads[i] = new Worker('js/worker.js');
 			}
 
+			this.workersTime = 0;
+			// Multithread physics calculations
 			this.physicsMultiThreadCalculate = (
 				objectsArray = this.objArr, 
 				callback = this.afterPhysics,
@@ -60,15 +45,14 @@ export default class Scene {
 						//compressedObjArr[i].vx = objectsArray[i].vx;
 						//compressedObjArr[i].vy = objectsArray[i].vy;
 						compressedObjArr[i].m = objectsArray[i].m;
-						if (objectsArray[i].lck) { compressedObjArr[i].lck = true }; // If ojbect locked
+						if (objectsArray[i].lck === true) { compressedObjArr[i].lck = true }; // If ojbect locked
 						if (objectsArray[i].main_obj !== undefined) { compressedObjArr[i].main_obj = objectsArray[i].main_obj }; // If ojbect locked
 					}
 					compressedObjArr = JSON.stringify(compressedObjArr);
 					this.workersJobDone = tasks.length;
 					for (let i in tasks){
-						this.#workerThreads[i].lastPerformance = performance.now();
+						this.#workerThreads[i].performance = performance.now();
 						this.#workerThreads[i].postMessage({
-							threadID: i, 
 							task: tasks[i], 
 							objArr: compressedObjArr, 
 							interactMode: interactMode, 
@@ -81,7 +65,8 @@ export default class Scene {
 						// On worker message
 						this.#workerThreads[i].onmessage = (e) => {
 							//console.log(i, performance.now() - this.#workerThreads[i].lastPerformance);
-							//this.#workerThreads[i].performance = performance.now() - this.#workerThreads[i].performance;
+							this.#workerThreads[i].performance = performance.now() - this.#workerThreads[i].performance;
+							this.workersTime += this.#workerThreads[i].performance;
 							this.workersJobDone --;
 							this.collidedObjectsIdList.push(...e.data.collidedObjectsIdList);
 							for (let i of e.data.task){
@@ -113,7 +98,7 @@ export default class Scene {
 		for (let objectId in objectsArray){
 			calculate({
 				objectsArray: objectsArray,
-				objectId: objectId,
+				objectId: +objectId,
 				interactMode: this.interactMode.state,
 				gravitMode: +this.gravitationMode.state,
 				g: this.g.state,
@@ -125,9 +110,22 @@ export default class Scene {
 		callback && callback(objectsArray, this.collidedObjectsIdList, interactMode, collisionType, timeSpeed);
 		this.collidedObjectsIdList = [];
 	}
+	// Runs after finish computing physics
 	afterPhysics = (objArr, collidedObjectsIdList, interactMode, collisionType, timeSpeed) => {
 		// After physics
 		// Set values after collisions
+		let deleteObjectList = this.collision(objArr, collidedObjectsIdList, interactMode, collisionType);
+		this.deleteObject(deleteObjectList, objArr);
+		// Time wrap
+		if (timeWrap === true){
+			this.timeSpeed.state = -timeSpeed;
+			timeWrap = false;
+		} else {
+			this.addVectors(objArr);
+		}
+	}
+	// Collision handler
+	collision(objArr, collidedObjectsIdList, interactMode, collisionType){
 		let deleteObjectList = [];
 		for (let collidedObjectsId of collidedObjectsIdList){
 			let [objA, objB] = [ objArr[collidedObjectsId[0]], objArr[collidedObjectsId[1]] ];
@@ -150,8 +148,8 @@ export default class Scene {
 
 				deleteObjectList.push(collidedObjectsId[1]);
 			} else if (collisionType == 1){ // Repulsion
-				let R = collidedObjectsId[2]; // The distance between objects
-				// let R = rad(objA.x, objA.y, objB.x, objB.y); // The distance between objects
+				// let R = collidedObjectsId[2]; // The distance between objects
+				let R = rad(objA.x, objA.y, objB.x, objB.y); // The distance between objects
 				let v1 = this.gipot(objB.vx, objB.vy); // Scallar velocity
 				let v2 = this.gipot(objA.vx, objA.vy); // Scallar velocity
 				let vcos1 = v1 == 0?0:objB.vx/v1; // cos vx 1
@@ -168,7 +166,7 @@ export default class Scene {
 				let m1 = objB.m;
 				let m2 = objA.m;
 
-				if (!objB.lck && this.interactMode.state != 1){
+				if (!objB.lck && interactMode != 1){
 					if (!objA.lck){
 						objA.vx = (( v2*Math.cos(ag2 - fi)*(m2-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1+m2) ) * Math.cos(fi) + v2*Math.sin(ag2 - fi)*Math.cos(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
 						objA.vy = (( v2*Math.cos(ag2 - fi)*(m2-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1+m2) ) * Math.sin(fi) + v2*Math.sin(ag2 - fi)*Math.sin(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
@@ -181,9 +179,10 @@ export default class Scene {
 
 			}
 		}
-		this.deleteObject(...deleteObjectList);
-		// End collision
-
+		return deleteObjectList;
+	}
+	// Add objects vectors to objects
+	addVectors(objArr){
 		// Add the vectors
 		for (let object of objArr){
 			if (mov_obj != objArr.indexOf(object)){
@@ -194,13 +193,12 @@ export default class Scene {
 				} else {// If object not locked
 					object.x += object.vx*this.timeSpeed.state;
 					object.y += object.vy*this.timeSpeed.state;
-					this.objArrChanges = object.vx || object.vy ? true : false;
+					this.objArrChanges = objArr == this.objArr && (object.vx || object.vy) ? true : false;
 				}
 			} else {
 				object.vx = object.vy = 0;
 			}
 		}
-		return this.collidedObjectsIdList;
 	}
 	//Создание нового объекта
 	addNewObject({
@@ -254,23 +252,29 @@ export default class Scene {
 		return objArr[newObjId] ? true : false;
 	}
 	//Удаление объекта
-	deleteObject(){
-		let objectsToDelete = (arguments.length === 1 ? [arguments[0]] : Array.apply(null, arguments)).sort( (a,b)=>b-a ); // Given objects ID's to delete, sorted
+	deleteObject(objects, objArr = this.objArr){
+		let objectsToDelete;
+		if (Array.isArray(objects)){
+			objectsToDelete = objects.sort( (a,b)=>b-a ); // Given objects ID's to delete, sorted	
+		} else {
+			objectsToDelete = [objects]; // If given not an array
+		}
 		for (let objectId of objectsToDelete){
 			// Change main object in child objects before delete
-			for (let obj of this.objArr){
+			for (let obj of objArr){
 				if (obj.main_obj == objectId){
-					obj.main_obj = this.objArr[objectId].main_obj;
+					obj.main_obj = objArr[objectId].main_obj;
 				}
 			}
 			if (objectId == mov_obj) mov_obj = NaN;
 			if (objectId < mov_obj) mov_obj --;
-			this.objArr.splice(objectId, 1);
+			objArr.splice(objectId, 1);
 			//return console.log(this.objArr);
 			this.show_obj_count();
 			this.objArrChanges = true;
 		}
 	}
+	// Show number of objects
 	show_obj_count(){
 		document.querySelector('#object_count h2').innerHTML = 'Количество обьектов: ' + this.objArr.length;
 	}
@@ -384,12 +388,6 @@ export default class Scene {
 		g = g.length < 2 ? '0'+g.toString(16) : g.toString(16);
 		b = b.length < 2 ? '0'+b.toString(16) : b.toString(16);
 		let color = '#' + r + g + b;
-		//$('#col_select').attr({'value': color});
-		// if (!rco){
-		// 	$('.div_col_select').html('<input type=color class=col_select value='+color+
-		// 		' id=col_select onchange="newObjColor = this.value; sessionStorage[\'newObjColor\'] = this.value;"\
-		// 		 style="padding: 0; border: none; width: 76px; height: 30px;" onmouseout="this.blur();">');
-		// }
 		return color;
 	}
 }

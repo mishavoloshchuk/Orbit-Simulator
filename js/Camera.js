@@ -86,7 +86,6 @@ export default class Camera{
 	renderObjects(){
 		let scn = this.scene;
 		this.clear();
-		this.clear2();
 		if (scn.backgroundDarkness !== 0) this.clear3();
 		this.animFunc();
 		for (let objectId in scn.objArr){
@@ -235,38 +234,41 @@ export default class Camera{
 			main_obj: 0
 		};
 
-		let tsw = false;
 		let refMov = [0, 0];
 		let distance = [Infinity, {}, 0];
-		let coll_objcts = {};
+		let coll_objcts = [];
 		let asd = (...args) => {
-			this.scene.afterPhysics(...args);
-			for (let objectId in objArrCopy){
-				// let R_size = 2;
-				// this.ctx2.beginPath();
-				// this.ctx2.strokeStyle = "#222222";
-				// this.ctx2.lineWidth = R_size/2;
-				// this.ctx2.moveTo(this.crd((objArrCopy[objectId].x-objArrCopy[objectId].vx)-refMov[0], 'x'), this.crd((objArrCopy[objectId].y-objArrCopy[objectId].vy)-refMov[1], 'y'));
-				// this.ctx2.lineTo(this.crd(objArrCopy[objectId].x-refMov[0], 'x'), this.crd(objArrCopy[objectId].y-refMov[1], 'y'));
-				// this.ctx2.stroke();
+			let deleteObjectList = this.scene.collision(...args);
 
-				let rad = objectId == objArrCopy.length - 1 ? 1.2 : 0.8;
+			for (let objectId in objArrCopy){
+
+
+				let rad = objectId == objArrCopy.length - 1 ? 1.2 : 1; // If object is new
 				this.ctx2.beginPath();
-				this.ctx2.fillStyle = objectId == objArrCopy.length-1 ? objArrCopy[objectId].color :"#444444";
+				this.ctx2.fillStyle = objectId == virt_obj ? objArrCopy[objectId].color :"#444444";
+				this.ctx2.fillStyle = objArrCopy[objectId].collided ? '#ff0000' : this.ctx2.fillStyle;
+				if (this.scene.collisionMode.state != 0) objArrCopy[objectId].collided = false;
 				this.ctx2.arc(this.crd(objArrCopy[objectId].x-refMov[0], 'x'), this.crd(objArrCopy[objectId].y-refMov[1], 'y'), rad, 0, 7);
 				this.ctx2.fill();
 				this.ctx2.beginPath();
-
-				// this.ctx2.beginPath();
-				// this.ctx2.fillStyle = "#ffffff";
-				// this.ctx2.arc(100, 100, 100.5, 0, 7);
-				// this.ctx2.fill();
-				// this.ctx2.beginPath();
 			}			
 			// if (!mouse.move && mouse.leftDown){
 			// 	this.scene.physicsMultiThreadCalculate(objArrCopy, asd);
 			// }
+			args[1].forEach((colObjsId)=>{
+				colObjsId.forEach((objId)=>{
+					objArrCopy[objId].collided = true;
+				})
+			});
+			deleteObjectList.forEach((objId)=>{
+				if (virt_obj > objId) virt_obj --;
+				else if (virt_obj == objId) virt_obj = NaN;
+			})
+			this.scene.deleteObject(deleteObjectList, objArrCopy);
+
+			this.scene.addVectors(objArrCopy);
 		}
+
 
 		for (let i = count; i--;){
 			this.scene.physicsCalculate(objArrCopy, asd);
@@ -309,20 +311,17 @@ export default class Camera{
 	}
 
 	visual_trajectory(){
-		this.clear2();
 		let mcx = this.scene.mouse_coords[0] ? this.scene.mouse_coords[0] - (this.scene.mouse_coords[0] - mouse.x)/10 : mouse.x;
 		let mcy = this.scene.mouse_coords[1] ? this.scene.mouse_coords[1] - (this.scene.mouse_coords[1] - mouse.y)/10 : mouse.y;
 
-		if (!(Math.abs(mouse.leftDownX-mouse.x) <= dis_zone && Math.abs(mouse.leftDownY-mouse.y) <= dis_zone)){
-			// let mstate = menu_state;
-			// close_all_menus();
-			// menu_state = mstate;
-			let offsX = -10;
-			let offsY = -30;
-			if (['mobile', 'tablet'].includes( getDeviceType() ) ){ offsX = -25; offsY = -140; } // If device is mobile or tablet
-			Object.assign(launchPowerLabel.style, {left: (mouse.x+offsX)+'px', top: (mouse.y+offsY)+'px', display: 'block', color: this.scene.newObjColor.state});
-			launchPowerLabel.innerHTML = Math.round(this.scene.rad(mouse.leftDownX, mouse.leftDownY, mouse.x, mouse.y) * this.scene.powerFunc(this.scene.launchForce.state) * 100)/100;
-		}
+		// let mstate = menu_state;
+		// close_all_menus();
+		// menu_state = mstate;
+		let offsX = -10;
+		let offsY = -30;
+		if (['mobile', 'tablet'].includes( getDeviceType() ) ){ offsX = -25; offsY = -140; } // If device is mobile or tablet
+		Object.assign(launchPowerLabel.style, {left: (mouse.x+offsX)+'px', top: (mouse.y+offsY)+'px', display: 'block', color: this.scene.newObjColor.state});
+		launchPowerLabel.innerHTML = Math.round(this.scene.rad(mouse.leftDownX, mouse.leftDownY, mouse.x, mouse.y) * this.scene.powerFunc(this.scene.launchForce.state) * 100)/100;
 		let D = Math.sqrt(Math.abs(this.scene.newObjMass.state))*this.animZoom*2;
 		this.ctx2.globalAlpha = 0.5;
 		this.ctx2.strokeStyle = this.scene.newObjColor.state;
@@ -407,9 +406,9 @@ export default class Camera{
 	}
 
 	animFunc(){
-		let animSpeedCorrected = this.animTimeCorrect*(16/frameTime[0]);
+		let animSpeedCorrected = this.animTimeCorrect*(16/fpsIndicator.frameTime);
 		if (this.switchTarget){
-			this.animTimeCorrect -= (this.animTime-1)/(400/frameTime[0]);
+			this.animTimeCorrect -= (this.animTime-1)/(400/fpsIndicator.frameTime);
 		} else {
 			this.animTimeCorrect = this.animationDuration;
 		}

@@ -1,6 +1,7 @@
 import Scene from '/js/Scene.js';
 import Camera from '/js/Camera.js';
 import UserInput from '/js/UserInput.js';
+import IndicateFPS from '/js/IndicateFPS.js';
 window.onload = function(){
 	//Mouse
 	this.mouse = {
@@ -48,20 +49,12 @@ window.onload = function(){
 
 	//Debug
 	var ref_speed = 1;
-	var frameLimit = false;
-	var maxFPS = 1;
+	var maxFPS = false;
 
-	var fps_count = 0;
-	var fps_interval = 0;
+	// FPS indicator init
+	this.fpsIndicator = new IndicateFPS();
 
-	function fps(){
-		$('.fps').html('FPS: '+fps_count);
-		if (fps_count >= 45){ $('.fps').css({color: '#0f0'}) }
-		else if (fps_count >= 20){ $('.fps').css({color: '#ff0'}) } 
-		else { $('.fps').css({color: '#f04'}) }
-		fps_count = 0;
-	}
-	// Init
+	// Scene init
 	this.scene = new Scene();
 	scene.camera = new Camera(scene);
 	scene.activCam = scene.camera;
@@ -97,7 +90,6 @@ window.onload = function(){
 	newObjLock = new UserInput({type: 'checkbox', id: 'objLckCeck', initState: false}), // Menu lock created object input
 	pauseWhenCreatingObject = new UserInput({type: 'checkbox', id: 'new_obj_pause', stateSaving: true, initState: true, callback: (val, elem)=>{elem.prevPauseState = false}}), // Menu pause when user add object input
 	launchForce = new UserInput({type: 'range', id: 'launch_power', stateSaving: true, callback: (val)=>{lnch_pwr_span.innerHTML = powerFunc(val)}, eventName: 'input'}), // Menu launch power value input
-	timeSpeed = new UserInput({type: 'range', id: 'tSpeed', callback: (val)=>{ time_speed_span.innerHTML = val; $('.time_speed h2').html('T - X'+val); }, eventName: 'input'}), // Menu time speed
 	showDistanceFromCursorToMainObj = new UserInput({type: 'checkbox', id: 'vis_distance_check', stateSaving: true, callback: ()=>{ launchPowerLabel.style.display = 'none'; }}), // Menu visual distance
 	//
 	showNewObjTrajectory = new UserInput({type: 'checkbox', id: 'traj_prev_check', stateSaving: true, callback: (val)=>{
@@ -176,16 +168,18 @@ window.onload = function(){
 	backgroundFollowsMouse = new UserInput({type: 'checkbox', id: 'mouse_move_bg', stateSaving: true, initState: true}), // If true, background follows the cursor
 	// Show FPS
 	showFPS = new UserInput({type: 'checkbox', id: 'check_fps_swch', stateSaving: true, callback: (val)=>{
-			if (val){
-				$('.fps').css({display: 'block'});
-				fps_interval = setInterval(fps, 1000);
-			} else {
-				fps_count = 0;
-				$('.fps').css({display: 'none'});
-				clearInterval(fps_interval);
-			}
-	}, })
+			if (val){ fpsIndicator.turnOn() }
+			else { fpsIndicator.turnOff() }
+	}, }),
+	multitreadCompute = new UserInput({type: 'checkbox', id: 'multithread_comput', stateSaving: true, initState: true, callback: (val, input)=>{
+		if (window.navigator.hardwareConcurrency < 2) {
+			input.element.parentElement.style.display = 'none'; // Hide multithread option, if computer have only 1 thread
+		}
+	}})
 	;
+
+	let timeSpeed = new UserInput({type: 'manualInput', initState: 1, callback: (val)=>{
+	document.querySelector('.time_speed h2').innerHTML = 'T - X'+val; }, eventName: 'input'}); // Time speed control
 
 	//=================================================================================================================
 	//=================================================================================================================
@@ -605,27 +599,22 @@ window.onload = function(){
 		*/
 	});
 
-	if (frameLimit){
+	if (maxFPS !== false){
 		setInterval(frame, 1000/maxFPS);
 	} else {
-		window.requestAnimationFrame(frame);
+		// window.requestAnimationFrame(frame);
+		// scene.frame = frame;
+		frameControl();
 	}
 
-	scene.frame = frame;
-
-	frameControl();
 	function frameControl(){
 		window.requestAnimationFrame(frameControl);
 		if ( !scene.workersJobDone ) {
 			frame();
 		}
 	}
-	//setInterval(frame, 0.1);
-	//setInterval(scene.physicsCalculate, 0.1);
-	//scene.physicsCalculate();
-	function frame(){
-		//if (!frameLimit){ window.requestAnimationFrame(frame); }
 
+	function frame(){
 		// Run all functions from frameTasks array
 		if (!scene.workersJobDone){
 			frameTasks.forEach((task)=>{
@@ -633,11 +622,6 @@ window.onload = function(){
 			});
 			frameTasks = []; // Clear frameTasks array
 		}
-
-		//if (showFPS){fps_count ++;}
-		//FrameTime
-		frameTime[0] = Date.now() - frameTime[1];
-		frameTime[1] = Date.now();
 
 		if (!scene.objArr[scene.objIdToOrbit]){
 			scene.objIdToOrbit = scene.objectSelect('biggest');		
@@ -651,36 +635,16 @@ window.onload = function(){
 		// Set move cursor style
 		if (mouse.middleDown || mbut == 'move'){scene.camera.layersDiv.style.cursor = "move";}else{scene.camera.layersDiv.style.cursor = "default";};
 
-		// Time wrap
-		if (timeWrap){
-			// Step back
-			for (let object of scene.objArr){
-				// Add vectors
-				if (object.lck){ // If object locked
-					object.vx = 0;
-					object.vy = 0;
-				} else {// If object not locked
-					object.x -= object.vx*timeSpeed.state;
-					object.y -= object.vy*timeSpeed.state;
-				}
-			}
-			timeSpeed.state = -timeSpeed.state;
-			timeWrap = false;
-		}
-
-		if (showNewObjTrajectory.state && mbut == 'create' && mouse.leftDown){
-			scene.camera.trajectoryCalculate(newObjTrajLength.state);
-		}
-
 		if (scene.objArr.length){
 			if (!pauseState){
-				if (window.Worker && window.navigator.hardwareConcurrency > 1){
+				if (window.Worker && window.navigator.hardwareConcurrency > 1 && multitreadCompute.state){
 					scene.physicsMultiThreadCalculate();
 				} else {
 					scene.physicsCalculate(); // Scene physics calculations (1 step)
 				}
 			}
-			if (showFPS) fps_count ++;
+			fpsIndicator.measure();
+
 			if (scene.objArr[scene.camera.Target]){
 				scene.camera.x = scene.objArr[scene.camera.Target].x;
 				scene.camera.y = scene.objArr[scene.camera.Target].y;
@@ -724,7 +688,12 @@ window.onload = function(){
 		}
 
 		if (mbut == 'create' && mouse.leftDown && !mouse.rightDown){
-			scene.camera.visual_trajectory();
+			if (!(Math.abs(mouse.leftDownX-mouse.x) <= dis_zone && Math.abs(mouse.leftDownY-mouse.y) <= dis_zone)){
+				if (showNewObjTrajectory.state){
+					scene.camera.trajectoryCalculate(newObjTrajLength.state); // Trajectory calculation
+				}
+				scene.camera.visual_trajectory();
+			}
 
 			let mcx = scene.mouse_coords[0] ? scene.mouse_coords[0] - (scene.mouse_coords[0] - mouse.x)/10 : mouse.x;
 			let mcy = scene.mouse_coords[1] ? scene.mouse_coords[1] - (scene.mouse_coords[1] - mouse.y)/10 : mouse.y;
@@ -901,7 +870,7 @@ window.onload = function(){
 		if (e.keyCode == 90 && e.ctrlKey) addFrameTask( () => scene.deleteObject( scene.objectSelect('last_created') ) );
 		
 		//Debug
-		if (frameLimit){
+		if (maxFPS !== false){
 			// (NumPad 9) Increase max FPS
 			if (e.keyCode == 105){ 
 				maxFPS++;
@@ -1294,11 +1263,11 @@ window.onload = function(){
 			  	let file_data = JSON.parse(reader.result);
 				console.log('file loaded');
 			  	scene.objArr = file_data.objArr;
-			  	interactMode.setInputState(file_data.interactMode || 0);
-			  	gravitationMode.setInputState(file_data.gravitationMode || 1);
-			  	g.setInputState(file_data.g ? file_data.g : 1);
+			  	interactMode = file_data.interactMode || 0;
+			  	gravitationMode = file_data.gravitationMode || 1;
+			  	g = file_data.g ? file_data.g : 1;
 			  	collisionMode.state = file_data.collisionMode || 0;
-			  	timeSpeed.setInputState(file_data.timeSpeed ? file_data.timeSpeed : 1);
+			  	timeSpeed = file_data.timeSpeed ? file_data.timeSpeed : 1;
 			  	scene.show_obj_count();
 			  	scene.objArrChanges = true;
 			  	scene.camera.clear("#000000");

@@ -34,7 +34,6 @@ onmessage = function (e) {
 	//console.log(JSON.stringify(messageObjArr));
 	postMessage({
 		objArr: messageObjArr,
-		threadID: e.data.threadID,
 		task: e.data.task,
 		collidedObjectsIdList: collidedObjectsIdList
 	});

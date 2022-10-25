@@ -14,7 +14,7 @@ export default class UserInput {
 		return this.#prevLocalState; // Return #prevLocalState
 	}
 	constructor({ type, id, stateSaving = false, eventName = 'change', initState, callback}) {
-		this.element = document.getElementById(id); // Search input in DOM
+		if (type !== 'manualInput') this.element = document.getElementById(id); // Search input in DOM
 
 		switch (type){ // Assign the same types of input realizaton
 			case 'color': type = 'text'; break; // Color realizaton is the same to text realization e.t.c...
@@ -112,7 +112,16 @@ export default class UserInput {
 					console.error(err); // Log error message
 				}
 				break;
-			default: console.error("UserInput type: '" + type + "' not finded!");
+			case 'manualInput':
+					this.#localState = this.#prevLocalState = initState; // Set userInput value
+					this.setInputState = (state) => {
+						this.#prevLocalState = this.#localState; // Set previous input state
+						this.#localState = state; // Set this.#localState equals input value
+						if ( stateSaving ) sessionStorage[id] = this.#localState; // Save the value to 'sessionStorage'
+						callback && callback(this.#localState, this); // Run the callback function if given
+					}				
+				break;
+			default: console.error("UserInput type: '" + type + "' was not found!");
 		}
 		callback && callback(this.state, this); // Run the callback function if given
 	}

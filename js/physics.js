@@ -20,7 +20,7 @@ function calculate({
 
 			let collType = collision(obj, obj2, objectId, object2Id, R, collisionType, interactMode, collidedObjectsIdList);
 
-			if((obj.lck === undefined || obj.lck === false) && collType === false){
+			if(obj.lck !== true && collType === false){
 				let sin = (obj2.y - obj.y)/R; // Sin
 				let cos = (obj2.x - obj.x)/R; // Cos
 				// Physics vector calculation
@@ -60,7 +60,7 @@ function collision(objA, objB, objAId, objBId, R, collisionType, interactMode, c
 				if (objA.m >= objB.m){
 					if (objA.m != objB.m || objAId < objBId){ // Fix the same mass bug (only multithread bug)
 						
-						collidedObjectsIdList.push([objAId, objBId, R]); // Send the collised objects
+						collidedObjectsIdList.push([objAId, objBId]); // Send the collised objects
 
 						return 'merge';
 					}
@@ -70,7 +70,7 @@ function collision(objA, objB, objAId, objBId, R, collisionType, interactMode, c
 			}
 		} else
 		if (collisionType == 1){ // Collision type: repulsion
-			collidedObjectsIdList.push([objAId, objBId, R]); // Send the collised objects and distance between them
+			collidedObjectsIdList.push([objAId, objBId]); // Send the collised objects and distance between them
 			return 'repulsion';
 		} else
 		if (collisionType == 2){ // Collision type: none
