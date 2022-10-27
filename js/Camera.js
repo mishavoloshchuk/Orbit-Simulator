@@ -270,13 +270,14 @@ export default class Camera{
 				}
 				if (objArrCopy[objectId].lck !== true){ // Don't draw if the object is locked
 					let R = objectId == objArrCopy.length - 1 ? 1.2 : 1; // If object is new
+					// Circle
 					this.ctx2.beginPath();
 					this.ctx2.fillStyle = objectId == virt_obj ? objArrCopy[objectId].color :"#444444";
-					this.ctx2.fillStyle = objArrCopy[objectId].collided && this.scene.collisionMode === '0' ? '#ff0000' : this.ctx2.fillStyle;
+					this.ctx2.fillStyle = objArrCopy[objectId].collided && this.scene.collisionMode.state === '0' ? '#ff0000' : this.ctx2.fillStyle;
 					if (this.scene.collisionMode.state != 0) objArrCopy[objectId].collided = false;
 					this.ctx2.arc(this.crd(objArrCopy[objectId].x-refMov[0], 'x'), this.crd(objArrCopy[objectId].y-refMov[1], 'y'), R, 0, 7);
 					this.ctx2.fill();
-
+					// Line
 					this.ctx2.beginPath();
 					this.ctx2.strokeStyle = this.ctx2.fillStyle;
 					this.ctx2.lineWidth = R;
@@ -299,18 +300,22 @@ export default class Camera{
 		// });
 
 		 // Отображение точек сближения
+		 // New object
 		this.ctx2.beginPath();
 		this.ctx2.globalAlpha = 0.6;
 		this.ctx2.fillStyle = this.scene.newObjColor.state;
-		let mass = Math.sqrt(Math.abs(this.scene.newObjMass.state))*this.animZoom < 2 ? 2 : Math.sqrt(Math.abs(this.scene.newObjMass.state))*this.animZoom;
+		let mass = Math.sqrt(Math.abs(this.scene.newObjMass.state))*this.animZoom;
+		mass = mass < 2 ? 2 : mass;
 		this.ctx2.arc(this.crd(distance[1].x-refMov[0], 'x'), this.crd(distance[1].y-refMov[1], 'y'), mass, 0, 7);
 		this.ctx2.fill();
 
+		// Other object
 		this.ctx2.beginPath();
 		this.ctx2.globalAlpha = 0.5;
 		this.ctx2.fillStyle = this.scene.objArr[distance[1].obj2Id].color;
-		mass = Math.sqrt(Math.abs(this.scene.objArr[distance[1].obj2Id].m)) < 2 ? 2 : Math.sqrt(Math.abs(this.scene.objArr[distance[1].obj2Id].m));
-		this.ctx2.arc(this.crd(distance[1].x2-refMov[0], 'x'), this.crd(distance[1].y2-refMov[1], 'y'), mass*this.animZoom, 0, 7);
+		mass = Math.sqrt(Math.abs(this.scene.objArr[distance[1].obj2Id].m))*this.animZoom;
+		mass = mass < 2 ? 2 : mass;
+		this.ctx2.arc(this.crd(distance[1].x2-refMov[0], 'x'), this.crd(distance[1].y2-refMov[1], 'y'), mass, 0, 7);
 		this.ctx2.fill();
 
 		this.ctx2.globalAlpha = 1;
