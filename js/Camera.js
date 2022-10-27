@@ -4,8 +4,6 @@ export default class Camera{
 	#width = window.innerWidth;
 	#height = window.innerHeight;
 
-	zoomCff = 1.25;
-
 	set width (width){
 		this.#width = this.canv0.width = this.canv2.width = this.canv3.width = width;
 	}
@@ -23,7 +21,7 @@ export default class Camera{
 	#visualObjectSelectAnimDir = 0;
 
 	#clrDelay = false;
-
+	zoomCff = 1.25;
 	x = 0; y = 0; // Target camera position
 	ax = 0; ay = 0; // Actualy camera postiton with animation
 	lastX = 0; lastY = 0; // Last camera position
@@ -49,7 +47,7 @@ export default class Camera{
 		this.canv0 = document.createElement('canvas');
 		this.canv0.id = 'layer0_cam'+this.cameraId;
 		this.canv0.className = 'renderLayer';
-		this.canv0.style.zIndex = -2;
+		this.canv0.style.zIndex = -4;
 		this.canv0.innerHTML = 'Your browser does not support canvas!';
 		this.layersDiv.appendChild(this.canv0);
 		this.ctx = this.canv0.getContext('2d',{willReadFrequently: false});
@@ -57,7 +55,7 @@ export default class Camera{
 		this.canv2 = document.createElement('canvas');
 		this.canv2.id = 'layer1_cam'+this.cameraId;
 		this.canv2.className = 'renderLayer';
-		this.canv2.style.zIndex = -4;
+		this.canv2.style.zIndex = -2;
 		this.canv2.innerHTML = 'Your browser does not support canvas!';
 		this.layersDiv.appendChild(this.canv2);
 		this.ctx2 = this.canv2.getContext('2d');
@@ -85,8 +83,12 @@ export default class Camera{
 	//Draw
 	renderObjects(){
 		let scn = this.scene;
-		this.clear();
-		if (scn.backgroundDarkness !== 0) this.clear3();
+		if (scn.tracesMode.state === '1'){
+			this.clear();
+		} else {
+			this.clear3();
+		}
+		if (scn.backgroundDarkness.state !== 0) this.clear3();
 		this.animFunc();
 		for (let objectId in scn.objArr){
 			let obj = scn.objArr[objectId];
@@ -212,15 +214,18 @@ export default class Camera{
 		}
 	} // End draw
 
-	trajectoryCalculate(count = 256, col =  ['#006BDE', '#ffffff'], accr = 1){
-		this.clear2();
+	trajectoryCalculate(count = 256, accr = 1, col =  ['#006BDE', '#ffffff']){
 		let objArrCopy = JSON.parse(JSON.stringify(this.scene.objArr));
-		count /= accr;
+		// Ctrl pressed change mouse accuracity
+		let mcx = scene.mouse_coords[0] ? scene.mouse_coords[0] - (scene.mouse_coords[0] - mouse.x)/10 : mouse.x;
+		let mcy = scene.mouse_coords[1] ? scene.mouse_coords[1] - (scene.mouse_coords[1] - mouse.y)/10 : mouse.y;
+
+		count = count * accr; // Trajectory calculation accuracity
 		//sp_obj = [0,1];
 		let virt_obj = objArrCopy.length;
 
-		let svx = ((mouse.leftDownX - mouse.x)/30) * this.scene.powerFunc(this.scene.launchForce.state);
-		let svy = ((mouse.leftDownY - mouse.y)/30) * this.scene.powerFunc(this.scene.launchForce.state);	
+		let svx = ((mouse.leftDownX - mcx)/30) * this.scene.powerFunc(this.scene.launchForce.state);
+		let svy = ((mouse.leftDownY - mcy)/30) * this.scene.powerFunc(this.scene.launchForce.state);	
 
 		objArrCopy[objArrCopy.length] = {
 			x: this.screenPix(mouse.leftDownX, 'x'), // Position X
@@ -235,82 +240,91 @@ export default class Camera{
 		};
 
 		let refMov = [0, 0];
-		let distance = [Infinity, {}, 0];
+		let distance = [Infinity, {}];
 		let coll_objcts = [];
-		let asd = (...args) => {
+		let afterPhysicsCallback = (...args) => {
 			let deleteObjectList = this.scene.collision(...args);
-
-			for (let objectId in objArrCopy){
-
-
-				let rad = objectId == objArrCopy.length - 1 ? 1.2 : 1; // If object is new
-				this.ctx2.beginPath();
-				this.ctx2.fillStyle = objectId == virt_obj ? objArrCopy[objectId].color :"#444444";
-				this.ctx2.fillStyle = objArrCopy[objectId].collided ? '#ff0000' : this.ctx2.fillStyle;
-				if (this.scene.collisionMode.state != 0) objArrCopy[objectId].collided = false;
-				this.ctx2.arc(this.crd(objArrCopy[objectId].x-refMov[0], 'x'), this.crd(objArrCopy[objectId].y-refMov[1], 'y'), rad, 0, 7);
-				this.ctx2.fill();
-				this.ctx2.beginPath();
-			}			
-			// if (!mouse.move && mouse.leftDown){
-			// 	this.scene.physicsMultiThreadCalculate(objArrCopy, asd);
-			// }
+			this.scene.addVectors(objArrCopy, this.scene.timeSpeed.state/accr);
+			// If collided
 			args[1].forEach((colObjsId)=>{
+				coll_objcts.push( JSON.parse(JSON.stringify(objArrCopy[colObjsId[1]])) );
 				colObjsId.forEach((objId)=>{
 					objArrCopy[objId].collided = true;
 				})
 			});
+			// Delete virtual objects
 			deleteObjectList.forEach((objId)=>{
 				if (virt_obj > objId) virt_obj --;
 				else if (virt_obj == objId) virt_obj = NaN;
 			})
 			this.scene.deleteObject(deleteObjectList, objArrCopy);
+			// Draw trajectory trace
+			for (let objectId = objArrCopy.length; objectId--;){
+				// Minimal distance calculate
+				if (objArrCopy[virt_obj]){
+					let S = rad(objArrCopy[virt_obj].x, objArrCopy[virt_obj].y, objArrCopy[objectId].x, objArrCopy[objectId].y);
+					if (objectId !== virt_obj && S < distance[0]){
+						distance[0] = S;
+						distance[1] = {x: objArrCopy[virt_obj].x, y: objArrCopy[virt_obj].y, x2: objArrCopy[objectId].x, y2: objArrCopy[objectId].y, obj2Id: objectId};
+					}
+				}
+				if (objArrCopy[objectId].lck !== true){ // Don't draw if the object is locked
+					let R = objectId == objArrCopy.length - 1 ? 1.2 : 1; // If object is new
+					this.ctx2.beginPath();
+					this.ctx2.fillStyle = objectId == virt_obj ? objArrCopy[objectId].color :"#444444";
+					this.ctx2.fillStyle = objArrCopy[objectId].collided && this.scene.collisionMode === '0' ? '#ff0000' : this.ctx2.fillStyle;
+					if (this.scene.collisionMode.state != 0) objArrCopy[objectId].collided = false;
+					this.ctx2.arc(this.crd(objArrCopy[objectId].x-refMov[0], 'x'), this.crd(objArrCopy[objectId].y-refMov[1], 'y'), R, 0, 7);
+					this.ctx2.fill();
 
-			this.scene.addVectors(objArrCopy);
+					this.ctx2.beginPath();
+					this.ctx2.strokeStyle = this.ctx2.fillStyle;
+					this.ctx2.lineWidth = R;
+					this.ctx2.moveTo(this.crd((objArrCopy[objectId].x - objArrCopy[objectId].vx / accr)-refMov[0], 'x'), this.crd((objArrCopy[objectId].y - objArrCopy[objectId].vy / accr)-refMov[1], 'y'));
+					this.ctx2.lineTo(this.crd(objArrCopy[objectId].x-refMov[0], 'x'), this.crd(objArrCopy[objectId].y-refMov[1], 'y'));
+					this.ctx2.stroke();				
+				}
+			}			
+			// if (!mouse.move && mouse.leftDown){
+			// 	this.scene.physicsMultiThreadCalculate(objArrCopy, asd);
+			// }
 		}
 
-
-		for (let i = count; i--;){
-			this.scene.physicsCalculate(objArrCopy, asd);
+		for (let i = 0; i < count; i++){
+			this.scene.physicsCalculate(objArrCopy, afterPhysicsCallback, this.scene.interactMode.state, this.scene.timeSpeed.state, this.scene.g.state/accr);
 		}
-
 		// this.scene.physicsMultiThreadCalculate(objArrCopy, (...args)=>{
 		// 	//console.log(this);
 		// 	asd(...args);
 		// });
 
-		
-		// if (distance[2] <= count){ // Отображение точек сближения
-		// 	this.ctx2.beginPath();
-		// 	this.ctx2.globalAlpha = 0.5;
-		// 	this.ctx2.fillStyle = body[distance[1].obj_name].color;
-		// 	let mass = Math.sqrt(Math.abs(body[distance[1].obj_name].m)) < 2 ? 2 : Math.sqrt(Math.abs(body[distance[1].obj_name].m));
-		// 	this.ctx2.arc(camera.crd(distance[1].x-refMov[0], 'x'), camera.crd(distance[1].y-refMov[1], 'y'), mass*camera.animZoom, 0, 7);
-		// 	this.ctx2.fill();
-		// 	this.ctx2.beginPath();
-		// 	this.ctx2.globalAlpha = 0.6;
-		// 	this.ctx2.fillStyle = obj_color;
-		// 	mass = Math.sqrt(Math.abs(obj_radius))*camera.animZoom < 2 ? 2 : Math.sqrt(Math.abs(obj_radius))*camera.animZoom;
-		// 	this.ctx2.arc(camera.crd(distance[1].x2-refMov[0], 'x'), camera.crd(distance[1].y2-refMov[1], 'y'), mass, 0, 7);
-		// 	this.ctx2.fill();
-		// 	this.ctx2.beginPath();
-		// 	this.ctx2.globalAlpha = 1;
-		// }
-		// for (let i in coll_objcts){
-		// 	var size = Math.sqrt(Math.abs(coll_objcts[i].m))*0.7 < 5? 5 : Math.sqrt(Math.abs(coll_objcts[i].m))*0.7;
-		// 	if (switcher.collision_mode == 0){
-		// 		drawCross(camera.crd(coll_objcts[i].x, 'x'), camera.crd(coll_objcts[i].y, 'y'), '#ff0000', 3, size , ctx2);
-		// 	} else if (switcher.collision_mode == 1){
-		// 		this.ctx2.beginPath();
-		// 		this.ctx2.fillStyle = '#0044ff';
-		// 		this.ctx2.arc(camera.crd(coll_objcts[i].x, 'x'), camera.crd(coll_objcts[i].y, 'y'), gipot(coll_objcts[i].vx, coll_objcts[i].vy)/2/t, 0, 7);
-		// 		this.ctx2.fill();
-		// 		this.ctx2.globalAlpha = 1;
-		// 	}
-		// }		
+		 // Отображение точек сближения
+		this.ctx2.beginPath();
+		this.ctx2.globalAlpha = 0.6;
+		this.ctx2.fillStyle = this.scene.newObjColor.state;
+		let mass = Math.sqrt(Math.abs(this.scene.newObjMass.state))*this.animZoom < 2 ? 2 : Math.sqrt(Math.abs(this.scene.newObjMass.state))*this.animZoom;
+		this.ctx2.arc(this.crd(distance[1].x-refMov[0], 'x'), this.crd(distance[1].y-refMov[1], 'y'), mass, 0, 7);
+		this.ctx2.fill();
+
+		this.ctx2.beginPath();
+		this.ctx2.globalAlpha = 0.5;
+		this.ctx2.fillStyle = this.scene.objArr[distance[1].obj2Id].color;
+		mass = Math.sqrt(Math.abs(this.scene.objArr[distance[1].obj2Id].m)) < 2 ? 2 : Math.sqrt(Math.abs(this.scene.objArr[distance[1].obj2Id].m));
+		this.ctx2.arc(this.crd(distance[1].x2-refMov[0], 'x'), this.crd(distance[1].y2-refMov[1], 'y'), mass*this.animZoom, 0, 7);
+		this.ctx2.fill();
+
+		this.ctx2.globalAlpha = 1;
+		// Draw crosses
+		for (let collObj of coll_objcts){
+			var size = Math.sqrt(Math.abs(collObj.m))*0.7 < 5? 5 : Math.sqrt(Math.abs(collObj.m))*0.7;
+			if (this.scene.collisionMode.state == 0){
+				this.drawCross(this.crd(collObj.x - collObj.vx/accr, 'x'), this.crd(collObj.y - collObj.vy/accr, 'y'), 3, size, '#ff0000');
+			}
+		}		
 	}
 
 	visual_trajectory(){
+		this.clear2();
 		let mcx = this.scene.mouse_coords[0] ? this.scene.mouse_coords[0] - (this.scene.mouse_coords[0] - mouse.x)/10 : mouse.x;
 		let mcy = this.scene.mouse_coords[1] ? this.scene.mouse_coords[1] - (this.scene.mouse_coords[1] - mouse.y)/10 : mouse.y;
 
@@ -340,8 +354,9 @@ export default class Camera{
 
 	//Визуальное выделение объекта
 	visualObjectSelect(mode, color, objectId, alpha = 0.3) {
+		this.canv2.visualSelect = true;
+		this.clear2();
 		if (this.scene.objArr.length){ // If there are objects
-			this.clear2();
 			let selectObjId;
 			if (!this.scene.objArr[objectId]){
 				selectObjId = this.scene.objectSelect(mode);			
@@ -424,50 +439,61 @@ export default class Camera{
 	}
 
 	zoomIn(vl = this.zoomCff){ // Zoom IN. vl is a zoom coeficient
-		this.zoom *= vl; // Set zoom value
-		if (this.scene.zoomToCursor.state){
-			this.x += (this.screenPix(mouse.x, 'x')-this.x)/(vl/(vl-1));
-			this.y += (this.screenPix(mouse.y, 'y')-this.y)/(vl/(vl-1));
+		if (this.zoom < 10000){
+			this.zoom *= vl; // Set zoom value
+			if (this.scene.zoomToCursor.state){
+				this.x += (this.screenPix(mouse.x, 'x')-this.x)/(vl/(vl-1));
+				this.y += (this.screenPix(mouse.y, 'y')-this.y)/(vl/(vl-1));
+			}
 		}
 	}
 
 	zoomOut(vl = this.zoomCff){ // Zoom OUT. vl is a zoom coeficient
-		this.zoom /= vl; // Set zoom value
-		if (this.scene.zoomToCursor.state){
-			this.x -= (this.screenPix(mouse.x, 'x')-this.x)/(1/(vl-1));
-			this.y -= (this.screenPix(mouse.y, 'y')-this.y)/(1/(vl-1));
+		if (this.zoom > 1.0e-12){
+			this.zoom /= vl; // Set zoom value
+			if (this.scene.zoomToCursor.state){
+				this.x -= (this.screenPix(mouse.x, 'x')-this.x)/(1/(vl-1));
+				this.y -= (this.screenPix(mouse.y, 'y')-this.y)/(1/(vl-1));
+			}
 		}
 	}
 
 	clear(col){
+		//console.log('clear layer 1');
 		if (this.scene.tracesMode.state == 0){col = '#000000';}
-		if (this.scene.backgroundDarkness.state != 0){
-			if (!col){
-				this.ctx3.globalAlpha = 0.01;
-				col = '#000000';
-				this.ctx3.fillStyle = col;
-				this.ctx3.fillRect(0, 0, this.width, this.height);
-				this.ctx3.globalAlpha = 1;
-			} else {
-				this.ctx3.clearRect(0, 0, this.width, this.height);
-			}
+		let canvas = this.scene.backgroundDarkness.state != 0 ? this.ctx3 : this.ctx;
+		if (!col){
+			canvas.globalAlpha = 0.01;
+			canvas.fillStyle = '#000000';
+			canvas.fillRect(0, 0, this.width, this.height);
+			canvas.globalAlpha = 1;
 		} else {
-			if (!col){
-				this.ctx.globalAlpha = 0.01;
-				col = '#000000';
-				this.ctx.fillStyle = col;
-				this.ctx.fillRect(0, 0, this.width, this.height);
-				this.ctx.globalAlpha = 1;
-			} else {
-				this.ctx.clearRect(0, 0, this.width, this.height);
-			}			
+			canvas.clearRect(0, 0, this.width, this.height);
 		}
 	}
 	clear2(){
+		//console.log('clear layer 2');
 		this.ctx2.clearRect(0, 0, this.width, this.height);
+		delete this.canv2.changed;
 	}
 	clear3(){
+		//console.log('clear layer 3');
 		this.ctx.clearRect(0, 0, this.width, this.height);
+	}
+	//Draw cross function
+	drawCross(x, y, width = 1, size = 5, color = '#ff0000', canvObj = this.ctx2){
+		canvObj.strokeStyle = '#000000';
+		canvObj.lineWidth = 2;
+		for (let i = 0; i < 2; i++){
+			canvObj.beginPath();
+			canvObj.moveTo(x - size, y - size);
+			canvObj.lineTo(x + size, y + size);
+			canvObj.moveTo(x + size, y - size);
+			canvObj.lineTo(x - size, y + size);
+			canvObj.stroke();
+			canvObj.strokeStyle = color;
+			canvObj.lineWidth = width;
+		}
 	}
 
 }

@@ -126,7 +126,7 @@
 				</div>
 			</div>
 
-			<div class='option_item'>
+			<div class='option_item' title="Изменяется колесом мыши при создании объекта">
 				<span>Скорость запуска: </span><span id='lnch_pwr_span' class="rangeValue"></span>
 				<input type="range" list='dPwrInpVal' id="launch_power" min="0" max="2" value="1" step="0.01" width="100%">
 				<datalist id='dPwrInpVal'><option value="1"></datalist>
@@ -139,19 +139,19 @@
 
 			<div class='option_item without_border'>
 				<span>Прощет траекторий: </span>
-				<input type="checkbox" class='checkbox' id="traj_prev_check" disabled>	
+				<input type="checkbox" class='checkbox' id="traj_prev_check">	
 			</div>
 			<div id="additionalTrajectoryMenu">
 				<div class='option_item title_option_item'>
 					<span>Параметры прощета траекторий:</span>
 				</div>
-				<div class='option_item' title="Влияет на быстродействие.">
+				<div class='option_item' title="Влияет на быстродействие, при прощете траектории">
 					<span>Дальность прощета траектории: </span>
 					<input type="number" class='input_num' id="traj_calc_samples" value="128">	
 				</div>
-				<div class='option_item without_border' title="Влияет на быстродействие.">
+				<div class='option_item without_border' title="Влияет на быстродействие, при прощете траектории">
 					<span>Точность прощета траектории: </span>
-					<input type="range" id="traj_calc_accuracity" min="0" max="100" value="100" step="10" width="100%">
+					<input type="range" id="traj_calc_accuracity" min="0.05" max="1" value="1" step="0.05" width="100%">
 				</div>				
 			</div>
 		</div>

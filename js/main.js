@@ -38,7 +38,6 @@ window.onload = function(){
 	this.mov_obj = NaN; // Moving object id
 	this.dis_zone = 5;
 	this.frameTime = [0, Date.now()]; // Frametime
-	var pause_gAnim = false; // Camera animation in pause
 	let renderStopLatency; // Frames to render after render disabled
 
 	//Camera
@@ -89,14 +88,14 @@ window.onload = function(){
 	newObjCreateReverseOrbit = new UserInput({type: 'checkbox', id: 'objReverseCheck', stateSaving: true, initState: false}), // Menu reverse ordit direction input
 	newObjLock = new UserInput({type: 'checkbox', id: 'objLckCeck', initState: false}), // Menu lock created object input
 	pauseWhenCreatingObject = new UserInput({type: 'checkbox', id: 'new_obj_pause', stateSaving: true, initState: true, callback: (val, elem)=>{elem.prevPauseState = false}}), // Menu pause when user add object input
-	launchForce = new UserInput({type: 'range', id: 'launch_power', stateSaving: true, callback: (val)=>{lnch_pwr_span.innerHTML = powerFunc(val)}, eventName: 'input'}), // Menu launch power value input
+	launchForce = new UserInput({type: 'range', id: 'launch_power', stateSaving: true, callback: (val)=>{lnch_pwr_span.innerHTML = Math.round(powerFunc(val)*1000)/1000; mouse.move = true;}, eventName: 'input'}), // Menu launch power value input
 	showDistanceFromCursorToMainObj = new UserInput({type: 'checkbox', id: 'vis_distance_check', stateSaving: true, callback: ()=>{ launchPowerLabel.style.display = 'none'; }}), // Menu visual distance
 	//
 	showNewObjTrajectory = new UserInput({type: 'checkbox', id: 'traj_prev_check', stateSaving: true, callback: (val)=>{
 		additionalTrajectoryMenu.style.display = val ? 'initial' : 'none'; // Show or hide additional menu
 	}}), // Enable trajectory calculation before create object
 	newObjTrajLength = new UserInput({type: 'range', id: 'traj_calc_samples', stateSaving: true}), // Trajectory calutulation length input
-	newObjTrajAccuracity = new UserInput({type: 'range', id: 'traj_calc_accuracity', stateSaving: true, callback: (val)=>{val = 100/val;}, }), // Trajectory accuracity input
+	newObjTrajAccuracity = new UserInput({type: 'range', id: 'traj_calc_accuracity', stateSaving: true }), // Trajectory accuracity input
 
 	// Delete object menu =================================================
 	deletingMode = new UserInput({type: 'radio', id: 'dellMethodRadio'}), // Deleting method
@@ -104,15 +103,17 @@ window.onload = function(){
 	// Edit object menu ===================================================
 
 	// Trace settings =====================================================
-	tracesMode = new UserInput({type: 'radio', id: 'traj_radio_buttons', stateSaving: true, initState: 1, callback: (val) => {
+	tracesMode = new UserInput({type: 'radio', id: 'traj_radio_buttons', stateSaving: true, initState: 1, callback: (val, elem) => {
 		for (let element of traj_menu.getElementsByClassName('additionalOption')){
 			if ( element.id.includes(val.toString()) && !element.hasAttribute('disabled')) { element.style.display = 'inline' } else { element.style.display = 'none' } // Show additional options by radio value
 		}
-		addFrameTask(()=>{
-			scene.camera.clear('#000000');
-			scene.camera.clear3();
-			scene.objArrChanges = true;
-		}); // Clear render layers
+		if (elem.prevLocalState != val){ // If state changed
+			addFrameTask(()=>{
+				scene.camera.clear('#000000');
+				scene.camera.clear3();
+				scene.objArrChanges = true;
+			}); // Clear render layers
+		}
 
 	} }),
 	// Mode 1
@@ -152,14 +153,14 @@ window.onload = function(){
 				scene.camera.ctx3.clearRect(0,0,scene.camera.canv0.width,scene.camera.canv0.height);
 				scene.camera.canv3.style.display = background_image.style.display = 'none';
 				traj_menu.children.additionalTrajectoryOptions1.setAttribute('disabled', '');
-				scene.camera.canv2.style.zIndex = -1;
+				scene.objArrChanges = true; // Render
 				tracesMode.state = tracesMode.state; // Refresh trace mode menu
-			} else if (elem.prevLocalState == 0) { // If backgroundDarkness previous state value = 0 then copy imageData from canvas layer 1 to canvas layer 3 and display canvas layer 3
+			} else if (!elem.prevLocalState) { // If backgroundDarkness previous state value = 0 then copy imageData from canvas layer 1 to canvas layer 3 and display canvas layer 3
 				scene.camera.ctx3.putImageData(scene.camera.ctx.getImageData(0,0,scene.camera.canv0.width,scene.camera.canv0.height),0,0);
 				scene.camera.ctx.clearRect(0,0,scene.camera.canv0.width,scene.camera.canv0.height);
 				scene.camera.canv3.style.display = background_image.style.display = '';
 				traj_menu.children.additionalTrajectoryOptions1.removeAttribute('disabled');
-				scene.camera.canv2.style.zIndex = -4;
+				scene.objArrChanges = true; // Render
 				tracesMode.state = tracesMode.state; // Refresh trace mode menu
 			}
 		}
@@ -177,6 +178,13 @@ window.onload = function(){
 		}
 	}})
 	;
+
+	// Fix background darkness
+	{
+		let state = backgroundDarkness.state;
+		backgroundDarkness.state = 0;
+		backgroundDarkness.state = state;
+	}
 
 	let timeSpeed = new UserInput({type: 'manualInput', initState: 1, callback: (val)=>{
 	document.querySelector('.time_speed h2').innerHTML = 'T - X'+val; }, eventName: 'input'}); // Time speed control
@@ -353,8 +361,7 @@ window.onload = function(){
 
 			clrDelay = true;
 			clearTimeout(clrTmt);
-			pause_gAnim = true;
-			clrTmt = setTimeout(function(){clrDelay = false; pause_gAnim = false;}, clrDTim);
+			clrTmt = setTimeout(function(){clrDelay = false;}, clrDTim);
 
 			scene.camera.zoom = scene.camera.animZoom = zm_prev / Math.pow(Math.sqrt(zm_cff) / Math.sqrt(touchZoom), 2); // Zoom
 			if (zoomToCursor.state){ // If no zoom to center
@@ -396,6 +403,10 @@ window.onload = function(){
 						pauseState = true;
 					}
 				}
+				if (event.ctrlKey){ // If Ctrl pressed
+					scene.mouse_coords[0] = mouse.x;
+					scene.mouse_coords[1] = mouse.y;
+				}
 			};
 			//Перемещение ближайшео объекта
 			if (mbut == 'move'){
@@ -428,7 +439,8 @@ window.onload = function(){
 		if (event.which == 3){
 			mouse.rightDown = true;
 			if (mbut == 'create' && mouse.leftDown){
-				launchPowerLabel.style.display = 'none';			
+				launchPowerLabel.style.display = 'none';
+				scene.camera.clear2();		
 			}
 		}
 	});
@@ -442,10 +454,8 @@ window.onload = function(){
 		avTouchPoint.xd = avTouchPoint.yd = NaN;
 		if (event.which == 1 || touch){
 			mouse.leftDown = false;
-			mouse.leftDown = false;
 			[mouse.leftUpX, mouse.leftUpY] = [event.clientX, event.clientY] // Set cursor mouseUp position
 			launchPowerLabel.style.display = 'none';
-
 			if (mbut == 'delete' && scene.objArr.length){
 				addFrameTask( () => scene.deleteObject(scene.objectSelect(deletingMode.state)) );
 				deleted();
@@ -453,7 +463,7 @@ window.onload = function(){
 			if (mbut == 'move' && scene.objArr[mov_obj]){
 				scene.objArr[mov_obj].vx = scene.mpos[4];
 				scene.objArr[mov_obj].vy = scene.mpos[5];
-				mov_obj = '';
+				mov_obj = NaN;
 			}
 
 			if (mbut == 'create' && mscam && !mouse.rightDown){
@@ -476,6 +486,7 @@ window.onload = function(){
 				if (pauseWhenCreatingObject.state){
 					pauseState = pauseWhenCreatingObject.prevPauseState;
 				}
+				scene.camera.clear2();
 			}
 			if (mbut == 'camera' && swch.s_track){
 				scene.camera.Target = scene.objectSelect('nearest', scene.camera.Target);
@@ -485,7 +496,7 @@ window.onload = function(){
 				scene.camera.clear('#000000');
 				clrDelay = true;
 				clearTimeout(clrTmt);
-				clrTmt = setTimeout(function(){clrDelay = false; pause_gAnim = false;}, clrDTim);
+				clrTmt = setTimeout(function(){clrDelay = false;}, clrDTim);
 			}
 			if (mbut == 'sel_orb_obj'){
 				scene.objIdToOrbit = scene.objectSelect();
@@ -538,9 +549,8 @@ window.onload = function(){
 		}
 		if (mouse.middleDown){
 			clrDelay = true;
-			pause_gAnim = true;
 			clearTimeout(clrTmt);
-			clrTmt = setTimeout(function(){clrDelay = false; pause_gAnim = false;}, clrDTim);
+			clrTmt = setTimeout(function(){clrDelay = false;}, clrDTim);
 			scene.camera.x += (mouse.x - event.clientX)/scene.camera.animZoom;
 			scene.camera.y += (mouse.y - event.clientY)/scene.camera.animZoom;
 			let mstate = menu_state;
@@ -627,8 +637,6 @@ window.onload = function(){
 			scene.objIdToOrbit = scene.objectSelect('biggest');		
 		}
 
-		scene.camera.clear2();
-
 		// Clear delay
 		if (clrDelay){ scene.camera.clear(1) }
 
@@ -653,7 +661,7 @@ window.onload = function(){
 
 		if (scene.objArrChanges || clrDelay){
 			scene.camera.renderObjects(scene.world);
-			renderStopLatency = 130; // Count of frames to render after render is disabled
+			renderStopLatency = 125; // Count of frames to render after render is disabled
 		} else {
 			// If traces mode is 1 render ${renderStopLatency} frames after render disabled
 			if (renderStopLatency && tracesMode.state == 1 && !pauseState){
@@ -662,57 +670,47 @@ window.onload = function(){
 			}
 		}
 
+		if (scene.camera.canv2.visualSelect){
+			scene.camera.clear2();
+			delete scene.camera.canv2.visualSelect;
+		}
+
 		if (mbut == 'delete'){
 			scene.camera.visualObjectSelect(deletingMode.state, '#ff0000');
 		} else
-
 		if (mbut == 'camera' && swch.s_track){
 			scene.camera.visualObjectSelect('nearest', '#0af', scene.objectSelect('nearest', scene.camera.Target));
 		} else
-
 		if (mbut == 'move'){
 			scene.camera.visualObjectSelect('nearest', '#bbb', mov_obj);
 		} else
-
 		if (mbut == 'edit' && swch.s_edit){
 			scene.camera.visualObjectSelect('nearest', '#11f', mov_obj);
-		}
-		if ((mbut == 'create') && (!mouse.leftDown || (multiTouch > 0 && mbut != 'create')) && showDistanceFromCursorToMainObj.state){
-			vis_distance([mouse.x, mouse.y], '#888888');
-		}
+		} else
 		if (mbut == 'sel_orb_obj' && switcher.sel_orb_obj){
 			scene.camera.visualObjectSelect('nearest', '#bf0', mov_obj);
 		}
+		// Show distance
+		if ((mbut == 'create') && (!mouse.leftDown || (multiTouch > 0 && mbut != 'create')) && showDistanceFromCursorToMainObj.state){
+			vis_distance([mouse.x, mouse.y], '#888888');
+		}
+		// Hide launch power label
 		if (mbut != 'create'){
 			launchPowerLabel.style.display = 'none';
 		}
-
-		if (mbut == 'create' && mouse.leftDown && !mouse.rightDown){
+		// New object trajectory
+		if (mbut == 'create' 
+			&& mouse.leftDown 
+			&& !mouse.rightDown 
+			&& (mouse.move || (!pauseWhenCreatingObject.state && scene.objArrChanges)
+			)
+			){
 			if (!(Math.abs(mouse.leftDownX-mouse.x) <= dis_zone && Math.abs(mouse.leftDownY-mouse.y) <= dis_zone)){
-				if (showNewObjTrajectory.state){
-					scene.camera.trajectoryCalculate(newObjTrajLength.state); // Trajectory calculation
-				}
 				scene.camera.visual_trajectory();
+				if (showNewObjTrajectory.state){
+					scene.camera.trajectoryCalculate(newObjTrajLength.state, newObjTrajAccuracity.state); // Trajectory calculation
+				}
 			}
-
-			let mcx = scene.mouse_coords[0] ? scene.mouse_coords[0] - (scene.mouse_coords[0] - mouse.x)/10 : mouse.x;
-			let mcy = scene.mouse_coords[1] ? scene.mouse_coords[1] - (scene.mouse_coords[1] - mouse.y)/10 : mouse.y;
-
-			// Trajectory preview
-			// if ((!(Math.abs(mouse[0]-mouse.x) < dis_zone && Math.abs(mouse[1]-mouse.y) < dis_zone))&&showNewObjTrajectory.state&&(mouse.move || !pauseWhenCreatingObject.state)&&!newObjLock.state){
-			// 	obj_for_traj = {
-			// 		x: scene.camera.screenPix(mouse[0], 'x'), 
-			// 		y: scene.camera.screenPix(mouse[1], 'y'), 
-			// 		vx: ((mouse[0]-mcx)/30)*timeSpeed.state*powerFunc(launch_powr), 
-			// 		vy: ((mouse[1]-mcy)/30)*timeSpeed.state*powerFunc(launch_powr), 
-			// 		m: newObjMass, 
-			// 		color: newObjColor, 
-			// 		lck: obj_lck, 
-			// 		main_obj: scene.objIdToOrbit, 
-			// 		F:{x:0,y:0}
-			// 	};
-			// 	traj_prev(obj_for_traj, traj_calc_smpls, ['#006BDE', '#ffffff'], true, switcher.traj_accuracity);
-			// }
 		}
 
 		scene.objArrChanges = false;
@@ -775,11 +773,10 @@ window.onload = function(){
 	}
 	//Scene scale
 	scene.camera.layersDiv.addEventListener('wheel', function(e){
-		if (!e.ctrlKey && !mov_obj){
+		if (!e.ctrlKey && !mov_obj && !(mouse.leftDown && mbut == 'create')){
 			clrDelay = true;
 			clearTimeout(clrTmt);
-			pause_gAnim = true;
-			clrTmt = setTimeout(function(){clrDelay = false; pause_gAnim = false;}, clrDTim);
+			clrTmt = setTimeout(function(){clrDelay = false;}, clrDTim);
 			if (!mouse.middleDown){
 				if (e.deltaY > 0){
 					scene.camera.zoomOut();
@@ -787,6 +784,18 @@ window.onload = function(){
 					scene.camera.zoomIn();
 				}		
 			}
+		}
+		// Change the launch force when mouse wheel spins
+		if (mouse.leftDown && mbut == 'create') {
+			let launchForceChangeValue = 0.1;
+			if (!mouse.middleDown){
+				if (e.deltaY > 0){
+					launchForce.state = launchForce.state > 0 ? launchForce.state - launchForceChangeValue : 0;
+				} else {
+					launchForce.state = launchForce.state < 2 ? launchForce.state + launchForceChangeValue : 2;
+				}					
+			}
+		
 		}
 	});
 	//События клавиатуры
@@ -1154,9 +1163,7 @@ window.onload = function(){
 		$('#close_button').css({display: 'none'});
 		menu_state = false;
 	}
-	function change_state(img, format, path){
-		format = format==undefined?'png':format;
-		path = path==undefined?'ico/':path;
+	function change_state(img, format = "png", path = "ico/"){
 		if (img == 'world_settings'){ img = 'functionX'; }
 		$('.state').html('<img src="'+path+img+'.'+format+'" alt="">');
 	}
@@ -1257,7 +1264,6 @@ window.onload = function(){
 		let file = input.files[0];
 		let reader = new FileReader();
 		reader.readAsText(file);
-
 		reader.onload = function() {
 			try {
 			  	let file_data = JSON.parse(reader.result);
@@ -1276,7 +1282,6 @@ window.onload = function(){
 			}
 			document.getElementById('select_file').value = '';
 		};
-
 		reader.onerror = function() {
 			alert("Ошибка чтения файла!");
 		};

@@ -1,6 +1,6 @@
 import UserInput from '/js/UserInput.js';
 export default class Scene {
-	mouse_coords = [false, false]; // used for accuracity mode when object creating (Press CTRL while creating object)
+	mouse_coords = [false, false]; // Used for accuracity mode when object creating (Press CTRL while creating object)
 	mpos = []; // Move object position
 	objArr = Array(); // Scene objects array
 	collidedObjectsIdList = []; // Collisions list
@@ -99,11 +99,11 @@ export default class Scene {
 			calculate({
 				objectsArray: objectsArray,
 				objectId: +objectId,
-				interactMode: this.interactMode.state,
-				gravitMode: +this.gravitationMode.state,
-				g: this.g.state,
-				timeSpeed: this.timeSpeed.state,
-				collisionType: this.collisionMode.state,
+				interactMode: interactMode,
+				gravitMode: +gravitMode,
+				g: g,
+				timeSpeed: timeSpeed,
+				collisionType: collisionType,
 				collidedObjectsIdList: this.collidedObjectsIdList
 			});
 		}
@@ -182,7 +182,7 @@ export default class Scene {
 		return deleteObjectList;
 	}
 	// Add objects vectors to objects
-	addVectors(objArr){
+	addVectors(objArr, timeSpeed = this.timeSpeed.state){
 		// Add the vectors
 		for (let object of objArr){
 			if (mov_obj != objArr.indexOf(object)){
@@ -191,8 +191,8 @@ export default class Scene {
 					object.vx = 0;
 					object.vy = 0;
 				} else {// If object not locked
-					object.x += object.vx*this.timeSpeed.state;
-					object.y += object.vy*this.timeSpeed.state;
+					object.x += object.vx*timeSpeed;
+					object.y += object.vy*timeSpeed;
 					this.objArrChanges = objArr == this.objArr && (object.vx || object.vy) ? true : false;
 				}
 			} else {
