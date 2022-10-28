@@ -215,17 +215,32 @@ export default class Camera{
 	} // End draw
 
 	trajectoryCalculate(count = 256, accr = 1, col =  ['#006BDE', '#ffffff']){
-		let objArrCopy = JSON.parse(JSON.stringify(this.scene.objArr));
 		// Ctrl pressed change mouse accuracity
 		let mcx = scene.mouse_coords[0] ? scene.mouse_coords[0] - (scene.mouse_coords[0] - mouse.x)/10 : mouse.x;
 		let mcy = scene.mouse_coords[1] ? scene.mouse_coords[1] - (scene.mouse_coords[1] - mouse.y)/10 : mouse.y;
-
+		// New obj vector
+		let svx = ((mouse.leftDownX - mcx)/30) * this.scene.powerFunc(this.scene.launchForce.state);
+		let svy = ((mouse.leftDownY - mcy)/30) * this.scene.powerFunc(this.scene.launchForce.state);	
 		count = count * accr; // Trajectory calculation accuracity
+		let objArrCopy;
+		if (this.scene.interactMode.state === '0'){
+			objArrCopy = JSON.parse(JSON.stringify(this.scene.objArr));
+		} else if (this.scene.interactMode.state === '1') {
+			objArrCopy = JSON.parse(JSON.stringify([this.scene.objArr[scene.objIdToOrbit]]));
+		} else if (this.scene.interactMode.state === '2') {
+			// Line
+			this.ctx2.beginPath();
+			this.ctx2.strokeStyle = this.scene.newObjColor.state;
+			this.ctx2.lineWidth = 1;
+			this.ctx2.moveTo(mouse.leftDownX, mouse.leftDownY);
+			this.ctx2.lineTo(mouse.leftDownX+svx*count*this.animZoom, mouse.leftDownY+svy*count*this.animZoom);
+			this.ctx2.stroke();				
+			return;
+		}
+
 		//sp_obj = [0,1];
 		let virt_obj = objArrCopy.length;
 
-		let svx = ((mouse.leftDownX - mcx)/30) * this.scene.powerFunc(this.scene.launchForce.state);
-		let svy = ((mouse.leftDownY - mcy)/30) * this.scene.powerFunc(this.scene.launchForce.state);	
 
 		objArrCopy[objArrCopy.length] = {
 			x: this.screenPix(mouse.leftDownX, 'x'), // Position X
