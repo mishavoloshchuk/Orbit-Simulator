@@ -79,7 +79,7 @@ window.onload = function(){
 
 	// Create object menu ================================================
 	let 
-	newObjColor = new UserInput({type: 'color', id: 'newObjeColorSelect', stateSaving: true}), // Menu color select input
+	newObjColor = new UserInput({type: 'color', id: 'newObjeColorSelect', stateSaving: true, initState: scene.randomColor()}), // Menu color select input
 	newObjRandColor = new UserInput({type: 'checkbox', id: 'randColorCheck', stateSaving: true, initState: true}), // Menu new object random color input
 	newObjMass = new UserInput({type: 'number', id: 'create_mass', stateSaving: true, initState: Math.round(getRandomArbitrary(0.5, 100)*10)/10}), // Menu new object's mass input
 	newObjCircularOrbit = new UserInput({type: 'checkbox', id: 'circleOrbitCheck', stateSaving: true, initState: true, callback: (state)=>{
@@ -91,7 +91,7 @@ window.onload = function(){
 	launchForce = new UserInput({type: 'range', id: 'launch_power', stateSaving: true, callback: (val)=>{lnch_pwr_span.innerHTML = Math.round(powerFunc(val)*1000)/1000; mouse.move = true;}, eventName: 'input'}), // Menu launch power value input
 	showDistanceFromCursorToMainObj = new UserInput({type: 'checkbox', id: 'vis_distance_check', stateSaving: true, callback: ()=>{ launchPowerLabel.style.display = 'none'; }}), // Menu visual distance
 	//
-	showNewObjTrajectory = new UserInput({type: 'checkbox', id: 'traj_prev_check', stateSaving: true, callback: (val)=>{
+	showNewObjTrajectory = new UserInput({type: 'checkbox', id: 'traj_prev_check', stateSaving: true, initState: true, callback: (val)=>{
 		additionalTrajectoryMenu.style.display = val ? 'initial' : 'none'; // Show or hide additional menu
 	}}), // Enable trajectory calculation before create object
 	newObjTrajLength = new UserInput({type: 'range', id: 'traj_calc_samples', stateSaving: true}), // Trajectory calutulation length input
@@ -348,6 +348,7 @@ window.onload = function(){
 				if (pauseWhenCreatingObject.state){
 					pauseState = pauseWhenCreatingObject.prevPauseState;
 				}
+				scene.camera.clear2();
 			}
 
 			mouse.leftDown = false;

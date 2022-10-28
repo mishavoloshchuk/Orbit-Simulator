@@ -377,7 +377,7 @@ export default class Scene {
 		return "#" + this._mixColors(c1, c2, m1, m2);
 	}
 
-	randomColor(rco) {
+	randomColor() {
 		let r = Math.floor(this.getRandomArbitrary(40, 255)),
 			g = Math.floor(this.getRandomArbitrary(40, 255)),
 			b = Math.floor(this.getRandomArbitrary(40, 255));
