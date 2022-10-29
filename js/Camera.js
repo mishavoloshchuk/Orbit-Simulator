@@ -34,6 +34,7 @@ export default class Camera{
 	animTime = 5;
 	animationDuration = 5; // Animation duration
 	animation = true; // Enable camera animation
+	renderedFrames = 0;
 
 	menu_names = {create: 'menu_options', delete: 'del_menu_options', edit: 'edit_menu',
 		help: 'help_menu', settings: 'settings_menu', camera: 'camera_menu', trajectory: 'traj_menu',
@@ -126,7 +127,8 @@ export default class Camera{
 			this.ctx.arc(this.crd(obj.x, 'x'), this.crd(obj.y, 'y'), obj_rad, 0, 7);
 			this.ctx.fill();
 
-			let res = false;
+			let traceLength = false;
+			let traceResolution = 1;
 			let acc = 1000; // Точность следа
 			//Trajectory mode 1 =====
 			if (scn.tracesMode.state == 1){
@@ -148,11 +150,12 @@ export default class Camera{
 				}
 			} else
 			//Trajectory mode 2 =====
-			if (scn.tracesMode.state == 2 && !obj.lck && res <= 20){
+			if (scn.tracesMode.state == 2 && !obj.lck){
 				let randKff = 0.8;
 				let TLength = obj.trace.length; //Length of trace array
 				let prev_randX = 0, prev_randY = 0;
 				let randX = 0, randY = 0;
+				traceLength = Math.round(Math.pow(8, scn.traceMode2Length.state));
 
 				this.ctx.fillStyle = obCol;
 				this.ctx.strokeStyle = obCol;
@@ -187,32 +190,28 @@ export default class Camera{
 			} else
 			//Trajectory mode 3 =====
 			if (scn.tracesMode.state == 3 && !obj.lck){
-				this.ctx.fillStyle = obCol;
+				traceResolution = +scn.traceMode3Quality.element.getAttribute('max') + 1 - Math.round(scn.traceMode3Quality.state);
+				traceLength = scn.powerFunc(scn.traceMode3Length.state) / traceResolution;
 				this.ctx.strokeStyle = obCol;
-				this.ctx.lineWidth = Math.pow(scn.traceMode3Width.state, 10);
+				this.ctx.lineWidth = Math.min(Math.sqrt(obj.m)*2*this.animZoom, Math.pow(scn.traceMode3Width.state, 10));
 				if (obj.trace[0]){
 					this.ctx.beginPath();
 					this.ctx.moveTo(this.crd(obj.x, 'x'), this.crd(obj.y, 'y'));
+					for (let i in obj.trace){
+						let itr = i;
+						this.ctx.lineTo(this.crd(obj.trace[itr][0]/acc, 'x'), this.crd(obj.trace[itr][1]/acc, 'y'));
+					}	
+					this.ctx.stroke();
 				}
-				for (let i in obj.trace){
-					let itr = i;
-					this.ctx.lineTo(this.crd(obj.trace[itr][0]/acc, 'x'), this.crd(obj.trace[itr][1]/acc, 'y'));
-				}	
-				this.ctx.stroke();
 			}
-			if (obj.trace && scn.tracesMode.state != 2 && scn.tracesMode.state != 3 && scn.tracesMode.state != 4) {obj.trace = [];};
-			if ((scn.tracesMode.state == 2 || scn.tracesMode.state == 3) && !obj.lck){// && trace_resolution[2]){
-				res = scn.tracesMode.state == 3
-					? scn.traceMode3Length.state*(1/(scn.traceMode3Quality.state+1))
-					: Math.round(Math.pow(8, scn.traceMode3Length.state));
-				//console.log(obj.trace.length);
+			if (!obj.lck && !pauseState && this.renderedFrames % traceResolution === 0){
 				obj.trace.unshift([Math.round(obj.x*acc), Math.round(obj.y*acc)]);
-				res = 100;
-				while (obj.trace.length > res){
+				while (obj.trace.length > traceLength){
 					obj.trace.pop();
 				}
 			}
 		}
+		this.renderedFrames ++;
 	} // End draw
 
 	trajectoryCalculate(count = 256, accr = 1, col =  ['#006BDE', '#ffffff']){

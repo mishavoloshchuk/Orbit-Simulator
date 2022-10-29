@@ -73,7 +73,9 @@ window.onload = function(){
 
 	choise_restore('traj_mode', 'traj_mode2', 'radio');
 
-
+	function allowRender(){
+		scene.objArrChanges = true;
+	}
 	// MENU INPUTS \/ \/ \/
 	// new UserInput({type: '', id: '', stateSaving: true}),
 
@@ -89,7 +91,7 @@ window.onload = function(){
 	newObjLock = new UserInput({type: 'checkbox', id: 'objLckCeck', initState: false}), // Menu lock created object input
 	pauseWhenCreatingObject = new UserInput({type: 'checkbox', id: 'new_obj_pause', stateSaving: true, initState: true, callback: (val, elem)=>{elem.prevPauseState = false}}), // Menu pause when user add object input
 	launchForce = new UserInput({type: 'range', id: 'launch_power', stateSaving: true, callback: (val)=>{lnch_pwr_span.innerHTML = Math.round(powerFunc(val)*1000)/1000; mouse.move = true;}, eventName: 'input'}), // Menu launch power value input
-	showDistanceFromCursorToMainObj = new UserInput({type: 'checkbox', id: 'vis_distance_check', stateSaving: true, callback: ()=>{ launchPowerLabel.style.display = 'none'; }}), // Menu visual distance
+	showDistanceFromCursorToMainObj = new UserInput({type: 'checkbox', id: 'vis_distance_check', stateSaving: true, callback: ()=>{ launchPowerLabel.style.display = 'none'; scene.camera.clear2(); }}), // Menu visual distance
 	//
 	showNewObjTrajectory = new UserInput({type: 'checkbox', id: 'traj_prev_check', stateSaving: true, initState: true, callback: (val)=>{
 		additionalTrajectoryMenu.style.display = val ? 'initial' : 'none'; // Show or hide additional menu
@@ -111,22 +113,22 @@ window.onload = function(){
 			addFrameTask(()=>{
 				scene.camera.clear('#000000');
 				scene.camera.clear3();
-				scene.objArrChanges = true;
+				allowRender();
 			}); // Clear render layers
 		}
 
 	} }),
 	// Mode 1
-	traceMode1Opacity = new UserInput({type: 'range', id: 'trace_opacity', stateSaving: true, eventName: 'input', callback: (val)=>{scene.activCam.canv3.style.opacity = val} }),
-	traceMode1Blur = new UserInput({type: 'range', id: 'trace_blur', stateSaving: true, eventName: 'input', callback: (val)=>{scene.activCam.canv3.style.filter = `blur(${val*val}px)`} }),
+	traceMode1Opacity = new UserInput({type: 'range', id: 'trace_opacity', stateSaving: true, eventName: 'input', callback: (val)=>{scene.activCam.canv3.style.opacity = val; allowRender();} }),
+	traceMode1Blur = new UserInput({type: 'range', id: 'trace_blur', stateSaving: true, eventName: 'input', callback: (val)=>{scene.activCam.canv3.style.filter = `blur(${val*val}px)`; allowRender();} }),
 	// Mode 2
-	traceMode2Particles = new UserInput({type: 'checkbox', id: 'trc2PrtclsChck', stateSaving: true}),
-	traceMode2Trembling = new UserInput({type: 'checkbox', id: 'trc2TrembChck', stateSaving: true}),
-	traceMode2Length = new UserInput({type: 'range', id: 'trace2Lnth', stateSaving: true}),
+	traceMode2Particles = new UserInput({type: 'checkbox', id: 'trc2PrtclsChck', stateSaving: true, callback: allowRender}),
+	traceMode2Trembling = new UserInput({type: 'checkbox', id: 'trc2TrembChck', stateSaving: true, callback: allowRender}),
+	traceMode2Length = new UserInput({type: 'range', id: 'trace2Lnth', stateSaving: true, eventName: 'input', callback: allowRender}),
 	// Mode 3 
-	traceMode3Width = new UserInput({type: 'range', id: 'trace3WdInp', stateSaving: true, eventName: 'input'}),
-	traceMode3Quality = new UserInput({type: 'range', id: 'trace3Qu', stateSaving: true}),
-	traceMode3Length = new UserInput({type: 'range', id: 'trace3Lnth', stateSaving: true}),
+	traceMode3Width = new UserInput({type: 'range', id: 'trace3WdInp', stateSaving: true, eventName: 'input', callback: allowRender}),
+	traceMode3Quality = new UserInput({type: 'range', id: 'trace3Qu', stateSaving: true, eventName: 'input', callback: allowRender}),
+	traceMode3Length = new UserInput({type: 'range', id: 'trace3Lnth', stateSaving: true, eventName: 'input', callback: allowRender}),
 
 	// Camera menu ========================================================
 	zoomToCursor = new UserInput({type: 'checkbox', id: 'chck_zoomToScreenCenter', stateSaving: true, initState: true}), // Zoom to cursor as default. If enabled zoom, zooming to screen center
@@ -531,21 +533,28 @@ window.onload = function(){
 		// Moving object while mouse moves
 		if (mouse.leftDown && mbut == 'move' && mov_obj){
 			if (scene.objArr[mov_obj]){
-				let dCanv = backgroundDarkness.state != 0 ? scene.camera.ctx3 : scene.camera.ctx;
-				dCanv.strokeStyle = scene.objArr[mov_obj].color;
-				dCanv.fillStyle = scene.objArr[mov_obj].color;
-				dCanv.lineWidth = Math.sqrt(scene.objArr[mov_obj].m)*2*scene.camera.animZoom < 0.5 ? 0.5 : Math.sqrt(scene.objArr[mov_obj].m)*2*scene.camera.animZoom;
-				dCanv.beginPath();
-				dCanv.arc(scene.camera.crd(scene.objArr[mov_obj].x, 'x'), scene.camera.crd(scene.objArr[mov_obj].y, 'y'), Math.sqrt(Math.abs(scene.objArr[mov_obj].m))*scene.camera.animZoom, 0, 7);
-				dCanv.fill();
-				dCanv.beginPath();
-				dCanv.moveTo(scene.camera.crd(scene.objArr[mov_obj].x, 'x'), scene.camera.crd(scene.objArr[mov_obj].y, 'y'));
+				if (tracesMode.state == 1){ // If traces mode == 1
+					let dCanv = backgroundDarkness.state != 0 ? scene.camera.ctx3 : scene.camera.ctx;
+					dCanv.strokeStyle = scene.objArr[mov_obj].color;
+					dCanv.fillStyle = scene.objArr[mov_obj].color;
+					dCanv.lineWidth = Math.sqrt(scene.objArr[mov_obj].m)*2*scene.camera.animZoom < 0.5 ? 0.5 : Math.sqrt(scene.objArr[mov_obj].m)*2*scene.camera.animZoom;
+					// Circle
+					dCanv.beginPath();
+					dCanv.arc(scene.camera.crd(scene.objArr[mov_obj].x, 'x'), scene.camera.crd(scene.objArr[mov_obj].y, 'y'), Math.sqrt(Math.abs(scene.objArr[mov_obj].m))*scene.camera.animZoom, 0, 7);
+					dCanv.fill();
+					// Line
+					dCanv.beginPath();
+					dCanv.moveTo(scene.camera.crd(scene.objArr[mov_obj].x, 'x'), scene.camera.crd(scene.objArr[mov_obj].y, 'y'));
 
-				scene.objArr[mov_obj].x = (event.clientX - scene.mpos[0])/scene.camera.animZoom + scene.mpos[2]; // New position X
-				scene.objArr[mov_obj].y = (event.clientY - scene.mpos[1])/scene.camera.animZoom + scene.mpos[3]; // New position Y
+					scene.objArr[mov_obj].x = (event.clientX - scene.mpos[0])/scene.camera.animZoom + scene.mpos[2]; // New position X
+					scene.objArr[mov_obj].y = (event.clientY - scene.mpos[1])/scene.camera.animZoom + scene.mpos[3]; // New position Y
 
-				dCanv.lineTo(scene.camera.crd(scene.objArr[mov_obj].x, 'x'), scene.camera.crd(scene.objArr[mov_obj].y, 'y'));
-				dCanv.stroke();
+					dCanv.lineTo(scene.camera.crd(scene.objArr[mov_obj].x, 'x'), scene.camera.crd(scene.objArr[mov_obj].y, 'y'));
+					dCanv.stroke();			
+				} else {
+					scene.objArr[mov_obj].x = (event.clientX - scene.mpos[0])/scene.camera.animZoom + scene.mpos[2]; // New position X
+					scene.objArr[mov_obj].y = (event.clientY - scene.mpos[1])/scene.camera.animZoom + scene.mpos[3]; // New position Y					
+				}
 				scene.objArrChanges = true;
 			}
 		}
@@ -568,6 +577,9 @@ window.onload = function(){
 			}
 		} else {
 			scene.mouse_coords[0] = scene.mouse_coords [1] = false;
+		}
+		if (showDistanceFromCursorToMainObj.state){
+			scene.camera.clear2();
 		}
 	};
 	$('*').bind('contextmenu', function(e) {
@@ -653,13 +665,13 @@ window.onload = function(){
 					scene.physicsCalculate(); // Scene physics calculations (1 step)
 				}
 			}
-			fpsIndicator.measure();
 
 			if (scene.objArr[scene.camera.Target]){
 				scene.camera.x = scene.objArr[scene.camera.Target].x;
 				scene.camera.y = scene.objArr[scene.camera.Target].y;
 			} else { scene.camera.Target = false }
 		}
+		fpsIndicator.measure();
 
 		if (scene.objArrChanges || clrDelay){
 			scene.camera.renderObjects(scene.world);
@@ -693,7 +705,7 @@ window.onload = function(){
 			scene.camera.visualObjectSelect('nearest', '#bf0', mov_obj);
 		}
 		// Show distance
-		if ((mbut == 'create') && (!mouse.leftDown || (multiTouch > 0 && mbut != 'create')) && showDistanceFromCursorToMainObj.state){
+		if ((mbut == 'create') && (!mouse.leftDown || (multiTouch > 0 && mbut != 'create')) && showDistanceFromCursorToMainObj.state && mouse.move){
 			vis_distance([mouse.x, mouse.y], '#888888');
 		}
 		// Hide launch power label

@@ -5,14 +5,13 @@ export default class UserInput {
 	set state(state){
 		this.setInputState(state); // Set UserInput state
 	}
-
 	get state(){
 		return this.#localState; // Return localState variable
 	}
-
 	get prevLocalState() {
 		return this.#prevLocalState; // Return #prevLocalState
 	}
+	
 	constructor({ type, id, stateSaving = false, eventName = 'change', initState, callback}) {
 		if (type !== 'manualInput') this.element = document.getElementById(id); // Search input in DOM
 

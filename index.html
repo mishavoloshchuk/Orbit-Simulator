@@ -279,10 +279,7 @@
 
 				<div class='option_item without_border'>
 					<label>Длинна следа: </label>	
-				</div>
-				<div class='option_item without_border' style="border-top: none; padding-top: 0;">
-					<input type="range" style="width: 80%;" id="trace2Lnth" min="0.8" max="3" value="1.6" step="any">
-					<label id="t2LnthSp" for="trace2Lnth">20</label>
+					<input type="range" id="trace2Lnth" min="0.8" max="3" value="1.6" step="any">
 				</div>
 
 			</div>
@@ -300,22 +297,12 @@
 
 				<div class='option_item'>
 					<label>Качество следа: </label>
-					<input type="range" id="trace3Qu" list="T3QuInpDL" min="0" max="1" value="0.75" step="0.125" width="100%">
-					<datalist id='T3QuInpDL'>
-						<option value="0">
-						<option value="0.25">
-						<option value="0.5">
-						<option value="0.75">
-						<option value="1">
-					</datalist>
+					<input type="range" id="trace3Qu" min="1" max="60" value="57" step="1">
 				</div>
 
 				<div class='option_item without_border'>
 					<label>Длинна следа: </label>	
-				</div>
-				<div class='option_item without_border' style="border-top: none; padding-top: 0;">
-					<input type="range" style="width: 80%;" id="trace3Lnth" min="0.8" max="3" value="1.6" step="any">
-					<label id="t3LnthSp" for="trace3Lnth"></label>
+					<input type="range" id="trace3Lnth" min="1.5" max="3" value="2" step="any">
 				</div>
 			</div>
 
