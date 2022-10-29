@@ -124,7 +124,7 @@ window.onload = function(){
 	traceMode2Trembling = new UserInput({type: 'checkbox', id: 'trc2TrembChck', stateSaving: true}),
 	traceMode2Length = new UserInput({type: 'range', id: 'trace2Lnth', stateSaving: true}),
 	// Mode 3 
-	traceMode3Width = new UserInput({type: 'range', id: 'trace3WdInp', stateSaving: true}),
+	traceMode3Width = new UserInput({type: 'range', id: 'trace3WdInp', stateSaving: true, eventName: 'input'}),
 	traceMode3Quality = new UserInput({type: 'range', id: 'trace3Qu', stateSaving: true}),
 	traceMode3Length = new UserInput({type: 'range', id: 'trace3Lnth', stateSaving: true}),
 
@@ -186,8 +186,9 @@ window.onload = function(){
 		backgroundDarkness.state = state;
 	}
 
-	let timeSpeed = new UserInput({type: 'manualInput', initState: 1, callback: (val)=>{
-	document.querySelector('.time_speed h2').innerHTML = 'T - X'+val; }, eventName: 'input'}); // Time speed control
+	let timeSpeed = new UserInput({type: 'manualInput', initState: 1, callback: (val, inpVar)=>{
+		document.querySelector('.time_speed h2').innerHTML = 'T - X'+val;
+	}, eventName: 'input'}); // Time speed control
 
 	//=================================================================================================================
 	//=================================================================================================================

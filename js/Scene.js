@@ -234,12 +234,14 @@ export default class Scene {
 				svy += objArr[this.objIdToOrbit].vy;
 			}
 		}
+		svx = vx !== undefined? vx : svx;
+		svy = vy !== undefined? vy : svy;
 		// Add new objArr with parameters
 		objArr[newObjId] = {
-			x: this.activCam.screenPix(px, 'x'), // Position X
-			y: this.activCam.screenPix(py, 'y'), // Position Y
-			vx: (vx !== undefined? vx : svx), // Velocity X equals vx if given and svx if not
-			vy: (vy !== undefined? vy : svy), // Velocity Y equals vy if given and svy if not
+			x: this.activCam.screenPix(px + svx/2*this.timeSpeed.state, 'x'), // Position X
+			y: this.activCam.screenPix(py + svy/2*this.timeSpeed.state, 'y'), // Position Y
+			vx: svx, // Velocity X equals vx if given and svx if not
+			vy: svy, // Velocity Y equals vy if given and svy if not
 			m: mass, // Object mass via given radius || Radius
 			color: ob_col,
 			lck: objLck,
@@ -267,6 +269,7 @@ export default class Scene {
 				}
 			}
 			if (objectId == mov_obj) mov_obj = NaN;
+			if (objectId < this.camera.Target) this.camera.Target --;
 			if (objectId < mov_obj) mov_obj --;
 			objArr.splice(objectId, 1);
 			//return console.log(this.objArr);

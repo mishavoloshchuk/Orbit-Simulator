@@ -200,15 +200,16 @@ export default class Camera{
 				}	
 				this.ctx.stroke();
 			}
-			if (obj.trace && scn.tracesMode != 2 && scn.tracesMode != 3 && scn.tracesMode != 4) {obj.trace = [];};
+			if (obj.trace && scn.tracesMode.state != 2 && scn.tracesMode.state != 3 && scn.tracesMode.state != 4) {obj.trace = [];};
 			if ((scn.tracesMode.state == 2 || scn.tracesMode.state == 3) && !obj.lck){// && trace_resolution[2]){
-				res = scn.tracesMode.state == 3?scn.traceMode3Length.state*(1/(trace_resolution[1]+1)):Math.round(Math.pow(8, scn.traceMode3Length.state));
+				res = scn.tracesMode.state == 3
+					? scn.traceMode3Length.state*(1/(scn.traceMode3Quality.state+1))
+					: Math.round(Math.pow(8, scn.traceMode3Length.state));
 				//console.log(obj.trace.length);
 				obj.trace.unshift([Math.round(obj.x*acc), Math.round(obj.y*acc)]);
-				let trace_length = obj.trace.length;
-				while (trace_length > res){
+				res = 100;
+				while (obj.trace.length > res){
 					obj.trace.pop();
-					trace_length --;
 				}
 			}
 		}
