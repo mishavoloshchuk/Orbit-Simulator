@@ -116,13 +116,8 @@ export default class Scene {
 		// Set values after collisions
 		let deleteObjectList = this.collision(objArr, collidedObjectsIdList, interactMode, collisionType);
 		this.deleteObject(deleteObjectList, objArr);
-		// Time wrap
-		if (timeWrap === true){
-			this.timeSpeed.state = -timeSpeed;
-			timeWrap = false;
-		} else {
-			this.addVectors(objArr);
-		}
+
+		this.addVectors(objArr, timeSpeed);
 	}
 	// Collision handler
 	collision(objArr, collidedObjectsIdList, interactMode, collisionType){
@@ -182,7 +177,7 @@ export default class Scene {
 		return deleteObjectList;
 	}
 	// Add objects vectors to objects
-	addVectors(objArr, timeSpeed = this.timeSpeed.state){
+	addVectors(objArr, timeSpeed){
 		// Add the vectors
 		for (let object of objArr){
 			if (mov_obj != objArr.indexOf(object)){
@@ -226,7 +221,7 @@ export default class Scene {
 		} else {px = x; py = y;};
 
 		if (((Math.abs(mouse.leftDownX-mouse.leftUpX) <= dis_zone && Math.abs(mouse.leftDownY-mouse.leftUpY) <= dis_zone) || (x && y)) && objArr[this.objIdToOrbit] && this.newObjCircularOrbit.state && !objLck) {
-			let vel = this.forceToCircularOrbit(scene.activCam.screenPix(px, 'x'), scene.activCam.screenPix(py, 'y'), this.objIdToOrbit);
+			let vel = this.forceToCircularOrbit(this.activCam.screenPix(px, 'x'), this.activCam.screenPix(py, 'y'), this.objIdToOrbit);
 			svx = vel[0];
 			svy = vel[1];
 			if (!objArr[this.objIdToOrbit].lck){
@@ -234,12 +229,16 @@ export default class Scene {
 				svy += objArr[this.objIdToOrbit].vy;
 			}
 		}
+		// New object velocity
 		svx = vx !== undefined? vx : svx;
 		svy = vy !== undefined? vy : svy;
+		// Circular orbit correction
+		px += vx === undefined ? svx/2*this.timeSpeed.state : 0;
+		py += vy === undefined ? svy/2*this.timeSpeed.state : 0;
 		// Add new objArr with parameters
 		objArr[newObjId] = {
-			x: this.activCam.screenPix(px + svx/2*this.timeSpeed.state, 'x'), // Position X
-			y: this.activCam.screenPix(py + svy/2*this.timeSpeed.state, 'y'), // Position Y
+			x: this.activCam.screenPix(px, 'x'), // Position X
+			y: this.activCam.screenPix(py, 'y'), // Position Y
 			vx: svx, // Velocity X equals vx if given and svx if not
 			vy: svy, // Velocity Y equals vy if given and svy if not
 			m: mass, // Object mass via given radius || Radius
@@ -283,20 +282,20 @@ export default class Scene {
 	}
 	//Необходимая скорость для круговой орбиты
 	forceToCircularOrbit(px, py, objId){
-		if (scene.objArr[objId]){
-			let R = this.rad(scene.camera.screenPix(px, 'x'), scene.camera.screenPix(py, 'y'), scene.camera.screenPix(scene.objArr[objId].x, 'x'), scene.camera.screenPix(scene.objArr[objId].y, 'y'))*scene.camera.animZoom;
-			let V = Math.sqrt((scene.objArr[objId].m*10)*(R)/this.g.state);
-			let a = scene.objArr[objId].x - px;
-			let b = scene.objArr[objId].y - py;
+		if (this.objArr[objId]){
+			let R = this.rad(this.camera.screenPix(px, 'x'), this.camera.screenPix(py, 'y'), this.camera.screenPix(this.objArr[objId].x, 'x'), this.camera.screenPix(this.objArr[objId].y, 'y'))*this.camera.animZoom;
+			let V = Math.sqrt((this.objArr[objId].m*10)*(R)/this.g.state);
+			let a = this.objArr[objId].x - px;
+			let b = this.objArr[objId].y - py;
 			let sin = b/R, cos = a/R;
-			let svx = -(sin/V)*scene.objArr[objId].m*10;
-			let svy = (cos/V)*scene.objArr[objId].m*10;
-			//if (scene.objArr[objId].main_obj){
-			//	let object = scene.objArr[objId].main_obj;
-			//	while (scene.objArr[object].main_obj){
-			//		svx -= scene.objArr[object].vx;
-			//		svx -= scene.objArr[object].vy;
-			//		object = scene.objArr[object].main_obj;
+			let svx = -(sin/V)*this.objArr[objId].m*10;
+			let svy = (cos/V)*this.objArr[objId].m*10;
+			//if (this.objArr[objId].main_obj){
+			//	let object = this.objArr[objId].main_obj;
+			//	while (this.objArr[object].main_obj){
+			//		svx -= this.objArr[object].vx;
+			//		svx -= this.objArr[object].vy;
+			//		object = this.objArr[object].main_obj;
 			//	}
 			//}
 			if (this.newObjCreateReverseOrbit.state){
@@ -313,12 +312,12 @@ export default class Scene {
 		let sel = [Infinity, '', 0];
 		// Last object in array
 		if (mode == 'last_created'){
-			sel[1] = scene.objArr.length - 1;
+			sel[1] = this.objArr.length - 1;
 		}
 		// The nearest or the furthest object
 		if (mode == 'nearest' || mode == 'furthest'){
-			for (let i in scene.objArr){
-				let r = rad(mouse.x, mouse.y, scene.camera.crd(scene.objArr[i].x, 'x'), scene.camera.crd(scene.objArr[i].y, 'y'));
+			for (let i in this.objArr){
+				let r = rad(mouse.x, mouse.y, this.camera.crd(this.objArr[i].x, 'x'), this.camera.crd(this.objArr[i].y, 'y'));
 				if (r < sel[0] && i!=not && mode == 'nearest'){
 					sel[0] = r;
 					sel[1] = i;
@@ -331,9 +330,9 @@ export default class Scene {
 		}
 		// The most bigger object
 		if (mode == 'biggest'){
-			for(let i in scene.objArr){
-				if (scene.objArr[i].m > sel[2]){
-					sel[2] = scene.objArr[i].m;
+			for(let i in this.objArr){
+				if (this.objArr[i].m > sel[2]){
+					sel[2] = this.objArr[i].m;
 					sel[1] = i;
 				}
 			}

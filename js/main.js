@@ -19,7 +19,7 @@ window.onload = function(){
 
 	// Tasks to frame begin
 	this.frameTasks = new Array(); // Functions array
-	function addFrameTask(func, ...args){
+	function addFrameBeginTask(func, ...args){
 		frameTasks.push({func: func, args: args});
 	}
 
@@ -109,8 +109,8 @@ window.onload = function(){
 		for (let element of traj_menu.getElementsByClassName('additionalOption')){
 			if ( element.id.includes(val.toString()) && !element.hasAttribute('disabled')) { element.style.display = 'inline' } else { element.style.display = 'none' } // Show additional options by radio value
 		}
-		if (elem.prevLocalState != val){ // If state changed
-			addFrameTask(()=>{
+		if (elem.prevState != val){ // If state changed
+			addFrameBeginTask(()=>{
 				scene.camera.clear('#000000');
 				scene.camera.clear3();
 				allowRender();
@@ -157,7 +157,7 @@ window.onload = function(){
 				traj_menu.children.additionalTrajectoryOptions1.setAttribute('disabled', '');
 				scene.objArrChanges = true; // Render
 				tracesMode.state = tracesMode.state; // Refresh trace mode menu
-			} else if (!elem.prevLocalState) { // If backgroundDarkness previous state value = 0 then copy imageData from canvas layer 1 to canvas layer 3 and display canvas layer 3
+			} else if (!elem.prevState) { // If backgroundDarkness previous state value = 0 then copy imageData from canvas layer 1 to canvas layer 3 and display canvas layer 3
 				scene.camera.ctx3.putImageData(scene.camera.ctx.getImageData(0,0,scene.camera.canv0.width,scene.camera.canv0.height),0,0);
 				scene.camera.ctx.clearRect(0,0,scene.camera.canv0.width,scene.camera.canv0.height);
 				scene.camera.canv3.style.display = background_image.style.display = '';
@@ -190,6 +190,19 @@ window.onload = function(){
 
 	let timeSpeed = new UserInput({type: 'manualInput', initState: 1, callback: (val, inpVar)=>{
 		document.querySelector('.time_speed h2').innerHTML = 'T - X'+val;
+		let changedVal = val / inpVar.prevState;
+		inpVar.changed = inpVar.changed !== undefined ? inpVar.changed * changedVal : changedVal;
+		addFrameBeginTask(()=>{ // Frame begin taks
+			// Change time speed correction
+			if (scene.timeSpeed.changed !== undefined){
+				for (let object of scene.objArr){
+					object.x += (object.vx * scene.timeSpeed.state - object.vx * (scene.timeSpeed.state / scene.timeSpeed.changed))/2;
+					object.y += (object.vy * scene.timeSpeed.state - object.vy * (scene.timeSpeed.state / scene.timeSpeed.changed))/2;
+				}
+				delete scene.timeSpeed.changed;
+			}
+		});
+		
 	}, eventName: 'input'}); // Time speed control
 
 	//=================================================================================================================
@@ -266,11 +279,6 @@ window.onload = function(){
 		}
 	}
 	menu_open_restore();
-
-
-	//====time====
-	this.timeWrap = false;
-	//======
 
 	//Mouse and touches
 	let multiTouch = 0;
@@ -461,7 +469,7 @@ window.onload = function(){
 			[mouse.leftUpX, mouse.leftUpY] = [event.clientX, event.clientY] // Set cursor mouseUp position
 			launchPowerLabel.style.display = 'none';
 			if (mbut == 'delete' && scene.objArr.length){
-				addFrameTask( () => scene.deleteObject(scene.objectSelect(deletingMode.state)) );
+				addFrameBeginTask( () => scene.deleteObject(scene.objectSelect(deletingMode.state)) );
 				deleted();
 			}
 			if (mbut == 'move' && scene.objArr[mov_obj]){
@@ -471,7 +479,7 @@ window.onload = function(){
 			}
 
 			if (mbut == 'create' && mscam && !mouse.rightDown){
-				addFrameTask(()=>{
+				addFrameBeginTask(()=>{
 					scene.addNewObject({
 						ob_col: newObjColor.state,
 						mass: newObjMass.state,
@@ -490,7 +498,7 @@ window.onload = function(){
 				if (pauseWhenCreatingObject.state){
 					pauseState = pauseWhenCreatingObject.prevPauseState;
 				}
-				scene.camera.clear2();
+				// scene.camera.clear2();
 			}
 			if (mbut == 'camera' && swch.s_track){
 				scene.camera.Target = scene.objectSelect('nearest', scene.camera.Target);
@@ -646,7 +654,7 @@ window.onload = function(){
 			});
 			frameTasks = []; // Clear frameTasks array
 		}
-
+		// Select object to orbit
 		if (!scene.objArr[scene.objIdToOrbit]){
 			scene.objIdToOrbit = scene.objectSelect('biggest');		
 		}
@@ -665,7 +673,7 @@ window.onload = function(){
 					scene.physicsCalculate(); // Scene physics calculations (1 step)
 				}
 			}
-
+			// Camera position
 			if (scene.objArr[scene.camera.Target]){
 				scene.camera.x = scene.objArr[scene.camera.Target].x;
 				scene.camera.y = scene.objArr[scene.camera.Target].y;
@@ -724,6 +732,10 @@ window.onload = function(){
 				if (showNewObjTrajectory.state){
 					scene.camera.trajectoryCalculate(newObjTrajLength.state, newObjTrajAccuracity.state); // Trajectory calculation
 				}
+				// Hide menu while creating new object
+				let mstate = menu_state;
+				close_all_menus();
+				menu_state = mstate;
 			}
 		}
 
@@ -734,7 +746,7 @@ window.onload = function(){
 	//scene.frame();
 	this.addObjects = function(count = 100){
 		for (let i = 0; i < count; i++){
-		  	addFrameTask(()=>{ 
+		  	addFrameBeginTask(()=>{ 
 				scene.addNewObject({
 		  	 		x: scene.camera.width * Math.random(), y: scene.camera.height *Math.random(),
 					ob_col: newObjColor.state,
@@ -833,7 +845,7 @@ window.onload = function(){
 				case 120: showFPS.state = !showFPS.state; break; // (F9) Show FPS
 				case 32: // (Space) Create object
 					if (mbut == 'create' && mouse.x){
-						addFrameTask(()=>{ 
+						addFrameBeginTask(()=>{ 
 							scene.addNewObject({
 								x: mouse.x, y: mouse.y,
 								ob_col: newObjColor.state,
@@ -858,7 +870,7 @@ window.onload = function(){
 						scene.camera.ctx.fillStyle = '#000';
 						scene.camera.ctx.arc(scene.objArr[delete_obj].x, scene.objArr[delete_obj].y, Math.sqrt(Math.abs(scene.objArr[delete_obj].m))+1, 0, 7);
 						scene.camera.ctx.fill();
-						addFrameTask( () => scene.deleteObject(delete_obj) );
+						addFrameBeginTask( () => scene.deleteObject(delete_obj) );
 						deleted();
 					}
 					break;
@@ -890,7 +902,7 @@ window.onload = function(){
 		}
 		//Ctrl keys
 		// (Ctrl+Z) Delete last created object
-		if (e.keyCode == 90 && e.ctrlKey) addFrameTask( () => scene.deleteObject( scene.objectSelect('last_created') ) );
+		if (e.keyCode == 90 && e.ctrlKey) addFrameBeginTask( () => scene.deleteObject( scene.objectSelect('last_created') ) );
 		
 		//Debug
 		if (maxFPS !== false){
@@ -1111,7 +1123,7 @@ window.onload = function(){
 			mbut = switcher.sel_orb_obj?'sel_orb_obj':'create';
 		}
 		if (cbut == 'wrap_time'){
-			timeWrap = true;
+			timeSpeed.state = -timeSpeed.state;
 		}
 		if (cbut == 'save_file'){
 			pauseState = true;
@@ -1283,11 +1295,11 @@ window.onload = function(){
 			  	let file_data = JSON.parse(reader.result);
 				console.log('file loaded');
 			  	scene.objArr = file_data.objArr;
-			  	interactMode = file_data.interactMode || 0;
-			  	gravitationMode = file_data.gravitationMode || 1;
-			  	g = file_data.g ? file_data.g : 1;
+			  	interactMode.state = file_data.interactMode || 0;
+			  	gravitationMode.state = file_data.gravitationMode || 1;
+			  	g.state = file_data.g ? file_data.g : 1;
 			  	collisionMode.state = file_data.collisionMode || 0;
-			  	timeSpeed = file_data.timeSpeed ? file_data.timeSpeed : 1;
+			  	timeSpeed.state = file_data.timeSpeed ? file_data.timeSpeed : 1;
 			  	scene.show_obj_count();
 			  	scene.objArrChanges = true;
 			  	scene.camera.clear("#000000");

@@ -243,8 +243,8 @@ export default class Camera{
 
 
 		objArrCopy[objArrCopy.length] = {
-			x: this.screenPix(mouse.leftDownX, 'x'), // Position X
-			y: this.screenPix(mouse.leftDownY, 'y'), // Position Y
+			x: this.screenPix(mouse.leftDownX + svx/2, 'x'), // Position X
+			y: this.screenPix(mouse.leftDownY + svy/2, 'y'), // Position Y
 			vx: svx, // Velocity X equals vx if given and svx if not
 			vy: svy, // Velocity Y equals vy if given and svy if not
 			m: this.scene.newObjMass.state, // Object mass via given radius || Radius
@@ -348,9 +348,6 @@ export default class Camera{
 		let mcx = this.scene.mouse_coords[0] ? this.scene.mouse_coords[0] - (this.scene.mouse_coords[0] - mouse.x)/10 : mouse.x;
 		let mcy = this.scene.mouse_coords[1] ? this.scene.mouse_coords[1] - (this.scene.mouse_coords[1] - mouse.y)/10 : mouse.y;
 
-		// let mstate = menu_state;
-		// close_all_menus();
-		// menu_state = mstate;
 		let offsX = -10;
 		let offsY = -30;
 		if (['mobile', 'tablet'].includes( getDeviceType() ) ){ offsX = -25; offsY = -140; } // If device is mobile or tablet
@@ -492,7 +489,7 @@ export default class Camera{
 		}
 	}
 	clear2(){
-		//console.log('clear layer 2');
+		// console.log('clear layer 2');
 		this.ctx2.clearRect(0, 0, this.width, this.height);
 		delete this.canv2.changed;
 	}
