@@ -498,7 +498,7 @@ window.onload = function(){
 				if (pauseWhenCreatingObject.state){
 					pauseState = pauseWhenCreatingObject.prevPauseState;
 				}
-				// scene.camera.clear2();
+				scene.camera.clear2();
 			}
 			if (mbut == 'camera' && swch.s_track){
 				scene.camera.Target = scene.objectSelect('nearest', scene.camera.Target);
