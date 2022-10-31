@@ -34,7 +34,7 @@ export default class Camera{
 	animTime = 5;
 	animationDuration = 5; // Animation duration
 	animation = true; // Enable camera animation
-	renderedFrames = 0;
+	renderedSceneFrames = 0;
 
 	menu_names = {create: 'menu_options', delete: 'del_menu_options', edit: 'edit_menu',
 		help: 'help_menu', settings: 'settings_menu', camera: 'camera_menu', trajectory: 'traj_menu',
@@ -129,7 +129,6 @@ export default class Camera{
 
 			let traceLength = false;
 			let traceResolution = 1;
-			let acc = 1000; // Точность следа
 			//Trajectory mode 1 =====
 			if (scn.tracesMode.state == 1){
 				if (true){//prev_t_obj != objectId
@@ -163,7 +162,7 @@ export default class Camera{
 					this.ctx.lineWidth = obj_rad*2;
 					this.ctx.beginPath();
 					this.ctx.moveTo(this.crd(obj.x, 'x')+randX, this.crd(obj.y, 'y')+randY);
-					this.ctx.lineTo(this.crd(obj.trace[0][0]/acc, 'x')+prev_randX, this.crd(obj.trace[0][1]/acc, 'y')+prev_randY);
+					this.ctx.lineTo(this.crd(obj.trace[0][0], 'x')+prev_randX, this.crd(obj.trace[0][1], 'y')+prev_randY);
 					this.ctx.stroke();				
 				}
 				for (let i in obj.trace){
@@ -176,14 +175,14 @@ export default class Camera{
 					this.ctx.lineWidth = obj_rad * (1-i/TLength) * 1.8;
 					if (scn.traceMode2Particles.state){
 						this.ctx.beginPath();
-						this.ctx.arc(Math.floor(this.crd(obj.trace[itr][0]/acc,'x')+randX*2), Math.floor(this.crd(obj.trace[itr][1]/acc,'y')+randY*2), this.ctx.lineWidth/2, 0, 7);
+						this.ctx.arc(Math.floor(this.crd(obj.trace[itr][0],'x')+randX*2), Math.floor(this.crd(obj.trace[itr][1],'y')+randY*2), this.ctx.lineWidth/2, 0, 7);
 						this.ctx.fill();			
 					}
 					if (!scn.traceMode2Trembling.state){ randX = randY = 0; }
 					this.ctx.globalAlpha = (TLength-i/1.5)/TLength;
 					this.ctx.beginPath();
-					this.ctx.moveTo(this.crd(obj.trace[i][0]/acc, 'x')+randX, this.crd(obj.trace[i][1]/acc, 'y')+randY);
-					this.ctx.lineTo(this.crd(obj.trace[itr][0]/acc, 'x')+prev_randX, this.crd(obj.trace[itr][1]/acc, 'y')+prev_randY);
+					this.ctx.moveTo(this.crd(obj.trace[i][0], 'x')+randX, this.crd(obj.trace[i][1], 'y')+randY);
+					this.ctx.lineTo(this.crd(obj.trace[itr][0], 'x')+prev_randX, this.crd(obj.trace[itr][1], 'y')+prev_randY);
 					this.ctx.stroke();
 					this.ctx.globalAlpha = 1;
 				}
@@ -191,27 +190,47 @@ export default class Camera{
 			//Trajectory mode 3 =====
 			if (scn.tracesMode.state == 3 && !obj.lck){
 				traceResolution = +scn.traceMode3Quality.element.getAttribute('max') + 1 - Math.round(scn.traceMode3Quality.state);
-				traceLength = scn.powerFunc(scn.traceMode3Length.state) / traceResolution;
+				traceLength = Math.ceil(scn.powerFunc(scn.traceMode3Length.state) / traceResolution);
 				this.ctx.strokeStyle = obCol;
-				this.ctx.lineWidth = Math.min(Math.sqrt(obj.m)*2*this.animZoom, Math.pow(scn.traceMode3Width.state, 10));
-				if (obj.trace[0]){
+				this.ctx.lineWidth = Math.min(obj_rad*2, Math.pow(scn.traceMode3Width.state, 10));
+				if (obj.trace.length > 0){
+					// Smooth the end cut of the trace
+					if (obj.trace.length === traceLength && !pauseState){
+						let point = obj.trace[obj.trace.length-1];
+						let pPoint = obj.trace[obj.trace.length-2];
+						// The difference between the last and pre-last trace array points divided by traceResolution
+						point[2] = point[2] === undefined ? (point[0] - pPoint[0]) / traceResolution : point[2];
+						point[3] = point[3] === undefined ? (point[1] - pPoint[1]) / traceResolution : point[3];
+						point[0] = point[0] - point[2];
+						point[1] = point[1] - point[3];
+					}
+					// Line
 					this.ctx.beginPath();
 					this.ctx.moveTo(this.crd(obj.x, 'x'), this.crd(obj.y, 'y'));
 					for (let i in obj.trace){
 						let itr = i;
-						this.ctx.lineTo(this.crd(obj.trace[itr][0]/acc, 'x'), this.crd(obj.trace[itr][1]/acc, 'y'));
-					}	
+						this.ctx.lineTo(this.crd(obj.trace[itr][0], 'x'), this.crd(obj.trace[itr][1], 'y'));
+					}
 					this.ctx.stroke();
+					// Round end of trace if the line width is enough
+					if (this.ctx.lineWidth > 3){
+						this.ctx.beginPath();
+						this.ctx.fillStyle = this.ctx.strokeStyle;
+						this.ctx.arc(this.crd(obj.trace[obj.trace.length-1][0], 'x'), this.crd(obj.trace[obj.trace.length-1][1], 'y'), this.ctx.lineWidth/2, 0, 7);
+						this.ctx.fill();
+					}
 				}
 			}
-			if (!obj.lck && !pauseState && this.renderedFrames % traceResolution === 0){
-				obj.trace.unshift([Math.round(obj.x*acc), Math.round(obj.y*acc)]);
+			if (!obj.lck && !pauseState && this.renderedSceneFrames % traceResolution === 0){
+				obj.trace.unshift([obj.x, obj.y]);
 				while (obj.trace.length > traceLength){
 					obj.trace.pop();
 				}
 			}
 		}
-		this.renderedFrames ++;
+		if (!pauseState){
+			this.renderedSceneFrames ++;
+		}
 	} // End draw
 
 	trajectoryCalculate(count = 256, accr = 1, col =  ['#006BDE', '#ffffff']){
@@ -335,9 +354,9 @@ export default class Camera{
 
 		this.ctx2.globalAlpha = 1;
 		// Draw crosses
-		for (let collObj of coll_objcts){
-			var size = Math.sqrt(Math.abs(collObj.m))*0.7 < 5? 5 : Math.sqrt(Math.abs(collObj.m))*0.7;
-			if (this.scene.collisionMode.state == 0){
+		if (this.scene.collisionMode.state == 0){
+			for (let collObj of coll_objcts){
+				var size = Math.sqrt(Math.abs(collObj.m))*0.7 < 5? 5 : Math.sqrt(Math.abs(collObj.m))*0.7;
 				this.drawCross(this.crd(collObj.x - collObj.vx/accr, 'x'), this.crd(collObj.y - collObj.vy/accr, 'y'), 3, size, '#ff0000');
 			}
 		}		
