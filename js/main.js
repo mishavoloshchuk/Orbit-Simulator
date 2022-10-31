@@ -122,8 +122,8 @@ window.onload = function(){
 	traceMode1Opacity = new UserInput({type: 'range', id: 'trace_opacity', stateSaving: true, eventName: 'input', callback: (val)=>{scene.activCam.canv3.style.opacity = val; allowRender();} }),
 	traceMode1Blur = new UserInput({type: 'range', id: 'trace_blur', stateSaving: true, eventName: 'input', callback: (val)=>{scene.activCam.canv3.style.filter = `blur(${val*val}px)`; allowRender();} }),
 	// Mode 2
-	traceMode2Particles = new UserInput({type: 'checkbox', id: 'trc2PrtclsChck', stateSaving: true, callback: allowRender}),
-	traceMode2Trembling = new UserInput({type: 'checkbox', id: 'trc2TrembChck', stateSaving: true, callback: allowRender}),
+	traceMode2Particles = new UserInput({type: 'checkbox', id: 'trc2PrtclsChck', stateSaving: true, initState: true, callback: allowRender}),
+	traceMode2Trembling = new UserInput({type: 'checkbox', id: 'trc2TrembChck', stateSaving: true, initState: true, callback: allowRender}),
 	traceMode2Length = new UserInput({type: 'range', id: 'trace2Lnth', stateSaving: true, eventName: 'input', callback: allowRender}),
 	// Mode 3 
 	traceMode3Width = new UserInput({type: 'range', id: 'trace3WdInp', stateSaving: true, eventName: 'input', callback: allowRender}),
@@ -437,7 +437,7 @@ window.onload = function(){
 				if (scene.objArr[swch.edit_obj]){
 					document.getElementById('col_edit').value = scene.objArr[swch.edit_obj].color;
 					document.getElementById('mass_edit').value = scene.objArr[swch.edit_obj].m;
-					document.getElementById('check_edit_lck').checked = scene.objArr[swch.edit_obj].lck;
+					document.getElementById('check_edit_lck').checked = scene.objArr[swch.edit_obj].lock;
 				}
 			}
 		}
@@ -603,12 +603,12 @@ window.onload = function(){
 
 		if (chck == 'check_edit_lck' && scene.objArr[swch.edit_obj]){
 			if (document.getElementById(chck).checked){
-				scene.objArr[swch.edit_obj].lck = true;
+				scene.objArr[swch.edit_obj].lock = true;
 			} else {
-				scene.objArr[swch.edit_obj].lck = false;
+				scene.objArr[swch.edit_obj].lock = false;
 			}
 			if (swch.edit_obj == 0){ // ID of main object
-				sessionStorage['sun_lck'] = scene.objArr[swch.edit_obj].lck;
+				sessionStorage['sun_lck'] = scene.objArr[swch.edit_obj].lock;
 			}
 		} else
 		if (chck == 'mass_edit' && scene.objArr[swch.edit_obj]){		

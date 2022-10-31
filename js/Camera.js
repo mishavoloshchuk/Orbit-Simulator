@@ -103,7 +103,7 @@ export default class Camera{
 
 			let render = (prevScreenX || prevScreenY);
 			let dcanv = scn.backgroundDarkness.state != 0 ? this.ctx3 : this.ctx;
-			if (scn.tracesMode.state == 1){
+			if (scn.tracesMode.state == 1 && !obj.lock){
 				let targetVx = scn.objArr[this.Target] ? scn.objArr[this.Target].vx : 0;
 				let targetVy = scn.objArr[this.Target] ? scn.objArr[this.Target].vy : 0;
 				if (scn.backgroundDarkness.state != 0){
@@ -131,7 +131,7 @@ export default class Camera{
 			let traceResolution = 1;
 			//Trajectory mode 1 =====
 			if (scn.tracesMode.state == 1){
-				if (true){//prev_t_obj != objectId
+				if (!obj.lock){//prev_t_obj != objectId
 					//Target Velocity
 					let targetVx = scn.objArr[this.Target] ? scn.objArr[this.Target].vx : 0;
 					let targetVy = scn.objArr[this.Target] ? scn.objArr[this.Target].vy : 0;
@@ -149,7 +149,7 @@ export default class Camera{
 				}
 			} else
 			//Trajectory mode 2 =====
-			if (scn.tracesMode.state == 2 && !obj.lck){
+			if (scn.tracesMode.state == 2 && !obj.lock){
 				let randKff = 0.8;
 				let TLength = obj.trace.length; //Length of trace array
 				let prev_randX = 0, prev_randY = 0;
@@ -188,7 +188,7 @@ export default class Camera{
 				}
 			} else
 			//Trajectory mode 3 =====
-			if (scn.tracesMode.state == 3 && !obj.lck){
+			if (scn.tracesMode.state == 3 && !obj.lock){
 				traceResolution = +scn.traceMode3Quality.element.getAttribute('max') + 1 - Math.round(scn.traceMode3Quality.state);
 				traceLength = Math.ceil(scn.powerFunc(scn.traceMode3Length.state) / traceResolution);
 				this.ctx.strokeStyle = obCol;
@@ -221,7 +221,7 @@ export default class Camera{
 					}
 				}
 			}
-			if (!obj.lck && !pauseState && this.renderedSceneFrames % traceResolution === 0){
+			if (!obj.lock && !pauseState && this.renderedSceneFrames % traceResolution === 0){
 				obj.trace.unshift([obj.x, obj.y]);
 				while (obj.trace.length > traceLength){
 					obj.trace.pop();
@@ -268,7 +268,7 @@ export default class Camera{
 			vy: svy, // Velocity Y equals vy if given and svy if not
 			m: this.scene.newObjMass.state, // Object mass via given radius || Radius
 			color: this.scene.newObjColor.state,
-			lck: this.scene.newObjLock.state,
+			lock: this.scene.newObjLock.state,
 			trace: [],
 			main_obj: 0
 		};
@@ -302,7 +302,7 @@ export default class Camera{
 						distance[1] = {x: objArrCopy[virt_obj].x, y: objArrCopy[virt_obj].y, x2: objArrCopy[objectId].x, y2: objArrCopy[objectId].y, obj2Id: objectId};
 					}
 				}
-				if (objArrCopy[objectId].lck !== true){ // Don't draw if the object is locked
+				if (objArrCopy[objectId].lock !== true){ // Don't draw if the object is locked
 					let R = objectId == objArrCopy.length - 1 ? 1.2 : 1; // If object is new
 					// Circle
 					this.ctx2.beginPath();
@@ -315,7 +315,7 @@ export default class Camera{
 					this.ctx2.beginPath();
 					this.ctx2.strokeStyle = this.ctx2.fillStyle;
 					this.ctx2.lineWidth = R;
-					this.ctx2.moveTo(this.crd((objArrCopy[objectId].x - objArrCopy[objectId].vx / accr)-refMov[0], 'x'), this.crd((objArrCopy[objectId].y - objArrCopy[objectId].vy / accr)-refMov[1], 'y'));
+					this.ctx2.moveTo(this.crd((objArrCopy[objectId].x - objArrCopy[objectId].vx / accr * this.scene.timeSpeed.state)-refMov[0], 'x'), this.crd((objArrCopy[objectId].y - objArrCopy[objectId].vy / accr * this.scene.timeSpeed.state)-refMov[1], 'y'));
 					this.ctx2.lineTo(this.crd(objArrCopy[objectId].x-refMov[0], 'x'), this.crd(objArrCopy[objectId].y-refMov[1], 'y'));
 					this.ctx2.stroke();				
 				}
@@ -325,9 +325,11 @@ export default class Camera{
 			// }
 		}
 
-		for (let i = 0; i < count; i++){
+		for (let i = count; i > 0; i--){
+			this.ctx2.globalAlpha = i/Math.min(128 * accr, count); // End trajectory opacity smooth (left value is smooth length)
 			this.scene.physicsCalculate(objArrCopy, afterPhysicsCallback, this.scene.interactMode.state, this.scene.timeSpeed.state, this.scene.g.state/accr);
 		}
+		this.ctx2.globalAlpha = 1;
 		// this.scene.physicsMultiThreadCalculate(objArrCopy, (...args)=>{
 		// 	//console.log(this);
 		// 	asd(...args);

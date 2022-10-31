@@ -45,7 +45,7 @@ export default class Scene {
 						//compressedObjArr[i].vx = objectsArray[i].vx;
 						//compressedObjArr[i].vy = objectsArray[i].vy;
 						compressedObjArr[i].m = objectsArray[i].m;
-						if (objectsArray[i].lck === true) { compressedObjArr[i].lck = true }; // If ojbect locked
+						if (objectsArray[i].lock === true) { compressedObjArr[i].lock = true }; // If ojbect locked
 						if (objectsArray[i].main_obj !== undefined) { compressedObjArr[i].main_obj = objectsArray[i].main_obj }; // If ojbect locked
 					}
 					compressedObjArr = JSON.stringify(compressedObjArr);
@@ -134,7 +134,7 @@ export default class Scene {
 						continue;
 					}
 				}
-				if (!objA.lck){
+				if (!objA.lock){
 					objA.vx = (objA.m*objA.vx+objB.m*objB.vx)/(objA.m+objB.m);// Формула абсолютно-неупругого столкновения
 					objA.vy = (objA.m*objA.vy+objB.m*objB.vy)/(objA.m+objB.m);// Формула абсолютно-неупругого столкновения
 				}
@@ -161,8 +161,8 @@ export default class Scene {
 				let m1 = objB.m;
 				let m2 = objA.m;
 
-				if (!objB.lck && interactMode != 1){
-					if (!objA.lck){
+				if (!objB.lock && interactMode != 1){
+					if (!objA.lock){
 						objA.vx = (( v2*Math.cos(ag2 - fi)*(m2-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1+m2) ) * Math.cos(fi) + v2*Math.sin(ag2 - fi)*Math.cos(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
 						objA.vy = (( v2*Math.cos(ag2 - fi)*(m2-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1+m2) ) * Math.sin(fi) + v2*Math.sin(ag2 - fi)*Math.sin(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
 					}
@@ -182,7 +182,7 @@ export default class Scene {
 		for (let object of objArr){
 			if (mov_obj != objArr.indexOf(object)){
 				// Add vectors
-				if (object.lck){ // If object locked
+				if (object.lock){ // If object locked
 					object.vx = 0;
 					object.vy = 0;
 				} else {// If object not locked
@@ -224,7 +224,7 @@ export default class Scene {
 			let vel = this.forceToCircularOrbit(this.activCam.screenPix(px, 'x'), this.activCam.screenPix(py, 'y'), this.objIdToOrbit);
 			svx = vel[0];
 			svy = vel[1];
-			if (!objArr[this.objIdToOrbit].lck){
+			if (!objArr[this.objIdToOrbit].lock){
 				svx += objArr[this.objIdToOrbit].vx;
 				svy += objArr[this.objIdToOrbit].vy;
 			}
@@ -243,7 +243,7 @@ export default class Scene {
 			vy: svy, // Velocity Y equals vy if given and svy if not
 			m: mass, // Object mass via given radius || Radius
 			color: ob_col,
-			lck: objLck,
+			lock: objLck,
 			trace: [],
 			main_obj: main_obj
 		};
