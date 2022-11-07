@@ -122,10 +122,6 @@ export default class Camera{
 					}
 				}
 			}
-			this.ctx.fillStyle = obCol;
-			this.ctx.beginPath();
-			this.ctx.arc(this.crd(obj.x, 'x'), this.crd(obj.y, 'y'), obj_rad, 0, 7);
-			this.ctx.fill();
 
 			let traceLength = false;
 			let traceResolution = 1;
@@ -137,15 +133,12 @@ export default class Camera{
 					let targetVy = scn.objArr[this.Target] ? scn.objArr[this.Target].vy : 0;
 					dcanv.strokeStyle = obCol;
 					dcanv.lineWidth = obj_rad*2;
+					dcanv.lineCap = obj_rad > 1 ? 'round' : 'butt';
 					dcanv.beginPath();
 					dcanv.moveTo(this.crd(obj.x-obj.vx*scn.timeSpeed.state+targetVx, 'x'), this.crd(obj.y-obj.vy*scn.timeSpeed.state+targetVy, 'y'));
 					dcanv.lineTo(this.crd(obj.x, 'x'), this.crd(obj.y, 'y'));
 					dcanv.stroke();
-
-					//this.ctx.fillStyle = obCol;
-					//this.ctx.beginPath();
-					//this.ctx.arc(this.crd(obj.x, 'x'), this.crd(obj.y, 'y'), obj_rad, 0, 7);
-					//this.ctx.fill();
+					dcanv.lineCap = 'butt';
 				}
 			} else
 			//Trajectory mode 2 =====
@@ -158,6 +151,7 @@ export default class Camera{
 
 				this.ctx.fillStyle = obCol;
 				this.ctx.strokeStyle = obCol;
+				this.ctx.globalCompositeOperation = 'destination-over';
 				if (obj.trace[0]){
 					this.ctx.lineWidth = obj_rad*2;
 					this.ctx.beginPath();
@@ -170,15 +164,24 @@ export default class Camera{
 					itr = itr < 0?0:itr;
 					prev_randX = randX; prev_randY = randY;
 					let rnd_lim = obj_rad*(i/TLength)*randKff;
-					randX = scn.getRandomArbitrary(-rnd_lim, rnd_lim);
-					randY = scn.getRandomArbitrary(-rnd_lim, rnd_lim);
+					if (scn.traceMode2Trembling.state === true || scn.traceMode2Particles.state === true){
+						randX = scn.getRandomArbitrary(-rnd_lim, rnd_lim);
+						randY = scn.getRandomArbitrary(-rnd_lim, rnd_lim);
+					}
 					this.ctx.lineWidth = obj_rad * (1-i/TLength) * 1.8;
+					// Particles
 					if (scn.traceMode2Particles.state){
 						this.ctx.beginPath();
-						this.ctx.arc(Math.floor(this.crd(obj.trace[itr][0],'x')+randX*2), Math.floor(this.crd(obj.trace[itr][1],'y')+randY*2), this.ctx.lineWidth/2, 0, 7);
-						this.ctx.fill();			
+						this.ctx.translate(
+							Math.floor(this.crd(obj.trace[itr][0],'x')+randX*2), 
+							Math.floor(this.crd(obj.trace[itr][1],'y')+randY*2));
+						this.ctx.rotate(Math.random()*3.14);
+						this.ctx.fillRect(0-this.ctx.lineWidth/2, 0-this.ctx.lineWidth/2, this.ctx.lineWidth, this.ctx.lineWidth);
+						this.ctx.fill();
+						this.ctx.resetTransform();
 					}
-					if (!scn.traceMode2Trembling.state){ randX = randY = 0; }
+					// Line
+					if (scn.traceMode2Trembling.state === false) randX = randY = 0;
 					this.ctx.globalAlpha = (TLength-i/1.5)/TLength;
 					this.ctx.beginPath();
 					this.ctx.moveTo(this.crd(obj.trace[i][0], 'x')+randX, this.crd(obj.trace[i][1], 'y')+randY);
@@ -186,13 +189,15 @@ export default class Camera{
 					this.ctx.stroke();
 					this.ctx.globalAlpha = 1;
 				}
+				this.ctx.globalCompositeOperation = 'source-over';
 			} else
 			//Trajectory mode 3 =====
 			if (scn.tracesMode.state == 3 && !obj.lock){
 				traceResolution = +scn.traceMode3Quality.element.getAttribute('max') + 1 - Math.round(scn.traceMode3Quality.state);
 				traceLength = Math.ceil(scn.powerFunc(scn.traceMode3Length.state) / traceResolution);
 				this.ctx.strokeStyle = obCol;
-				this.ctx.lineWidth = Math.min(obj_rad*2, Math.pow(scn.traceMode3Width.state, 10));
+				this.ctx.lineWidth = Math.min(obj_rad*1.7, Math.pow(scn.traceMode3Width.state, 10));
+				this.ctx.globalCompositeOperation = 'destination-over';
 				if (obj.trace.length > 0){
 					// Smooth the end cut of the trace
 					if (obj.trace.length === traceLength && !pauseState){
@@ -204,7 +209,12 @@ export default class Camera{
 						point[0] = point[0] - point[2];
 						point[1] = point[1] - point[3];
 					}
-					// Line
+					// Draw line
+					// Round end of trace if the line width is enough
+					if (this.ctx.lineWidth > 3) {
+						this.ctx.lineCap = 'round';
+						this.ctx.lineJoin = 'round';
+					}
 					this.ctx.beginPath();
 					this.ctx.moveTo(this.crd(obj.x, 'x'), this.crd(obj.y, 'y'));
 					for (let i in obj.trace){
@@ -212,15 +222,21 @@ export default class Camera{
 						this.ctx.lineTo(this.crd(obj.trace[itr][0], 'x'), this.crd(obj.trace[itr][1], 'y'));
 					}
 					this.ctx.stroke();
-					// Round end of trace if the line width is enough
-					if (this.ctx.lineWidth > 3){
-						this.ctx.beginPath();
-						this.ctx.fillStyle = this.ctx.strokeStyle;
-						this.ctx.arc(this.crd(obj.trace[obj.trace.length-1][0], 'x'), this.crd(obj.trace[obj.trace.length-1][1], 'y'), this.ctx.lineWidth/2, 0, 7);
-						this.ctx.fill();
-					}
+					this.ctx.lineCap = 'butt';
+					this.ctx.lineJoin = 'bevel';
 				}
+				this.ctx.globalCompositeOperation = 'destination-out';
+				this.ctx.fillStyle = "#ffffff";
+				this.ctx.beginPath();
+				this.ctx.arc(this.crd(obj.x, 'x'), this.crd(obj.y, 'y'), obj_rad+1.5, 0, 7);
+				this.ctx.fill();
+				this.ctx.globalCompositeOperation = 'source-over';
 			}
+			this.ctx.fillStyle = obCol;
+			this.ctx.beginPath();
+			this.ctx.arc(this.crd(obj.x, 'x'), this.crd(obj.y, 'y'), obj_rad, 0, 7);
+			this.ctx.fill();
+
 			if (!obj.lock && !pauseState && this.renderedSceneFrames % traceResolution === 0){
 				obj.trace.unshift([obj.x, obj.y]);
 				while (obj.trace.length > traceLength){
@@ -233,7 +249,7 @@ export default class Camera{
 		}
 	} // End draw
 
-	trajectoryCalculate(count = 256, accr = 1, col =  ['#006BDE', '#ffffff']){
+	trajectoryCalculate(count = 256, accr = 1, col = ['#006BDE', '#ffffff']){
 		// Ctrl pressed change mouse accuracity
 		let mcx = scene.mouse_coords[0] ? scene.mouse_coords[0] - (scene.mouse_coords[0] - mouse.x)/10 : mouse.x;
 		let mcy = scene.mouse_coords[1] ? scene.mouse_coords[1] - (scene.mouse_coords[1] - mouse.y)/10 : mouse.y;
@@ -242,11 +258,18 @@ export default class Camera{
 		let svy = ((mouse.leftDownY - mcy)/30) * this.scene.powerFunc(this.scene.launchForce.state);	
 		count = count * accr; // Trajectory calculation accuracity
 		let objArrCopy;
-		if (this.scene.interactMode.state === '0'){
+		if (this.scene.interactMode.state === '0'){ // Add all objects to trajectory calculate array
 			objArrCopy = JSON.parse(JSON.stringify(this.scene.objArr));
-		} else if (this.scene.interactMode.state === '1') {
-			objArrCopy = JSON.parse(JSON.stringify([this.scene.objArr[scene.objIdToOrbit]]));
-		} else if (this.scene.interactMode.state === '2') {
+		} else if (this.scene.interactMode.state === '1') { // Add all only main (and main of main) objects to trajectory calculate array
+			let objects = []; // Array of objects to calculate
+			// let orbObj = scene.objIdToOrbit;
+			// while (orbObj !== undefined) {
+				// objects.push(this.scene.objArr[orbObj]);
+				// orbObj = this.scene.objArr[orbObj].main_obj;
+			// }
+			objects[0] = this.scene.objArr[scene.objIdToOrbit];
+			objArrCopy = JSON.parse(JSON.stringify(objects));
+		} else if (this.scene.interactMode.state === '2') { // Don't do any calculations, just draw the line
 			// Line
 			this.ctx2.beginPath();
 			this.ctx2.strokeStyle = this.scene.newObjColor.state;
@@ -257,10 +280,8 @@ export default class Camera{
 			return;
 		}
 
-		//sp_obj = [0,1];
-		let virt_obj = objArrCopy.length;
-
-
+		let newObjId = objArrCopy.length;
+		let savedNewObjId = newObjId;
 		objArrCopy[objArrCopy.length] = {
 			x: this.screenPix(mouse.leftDownX + svx/2, 'x'), // Position X
 			y: this.screenPix(mouse.leftDownY + svy/2, 'y'), // Position Y
@@ -273,95 +294,161 @@ export default class Camera{
 			main_obj: 0
 		};
 
-		let refMov = [0, 0];
+		// Create a trajectoryTrace array in each object
+		let trajectoryTraces = [];
+		for (let objectId in objArrCopy){
+			objArrCopy[objectId].initId = objectId;
+			if (objArrCopy[objectId].lock !== true){
+				trajectoryTraces[objectId] = [[objArrCopy[objectId].x, objArrCopy[objectId].y]];
+			}
+		}
+		let deletedObjectsList = [];
 		let distance = [Infinity, {}];
-		let coll_objcts = [];
 		let afterPhysicsCallback = (...args) => {
-			let deleteObjectList = this.scene.collision(...args);
-			this.scene.addVectors(objArrCopy, this.scene.timeSpeed.state/accr);
-			// If collided
-			args[1].forEach((colObjsId)=>{
-				coll_objcts.push( JSON.parse(JSON.stringify(objArrCopy[colObjsId[1]])) );
-				colObjsId.forEach((objId)=>{
-					objArrCopy[objId].collided = true;
-				})
-			});
+			const toDeleteObjectsList = this.scene.collision(...args);
+			this.scene.addSelfVectors(objArrCopy, this.scene.timeSpeed.state/accr);
+
 			// Delete virtual objects
-			deleteObjectList.forEach((objId)=>{
-				if (virt_obj > objId) virt_obj --;
-				else if (virt_obj == objId) virt_obj = NaN;
-			})
-			this.scene.deleteObject(deleteObjectList, objArrCopy);
-			// Draw trajectory trace
+			toDeleteObjectsList.forEach((objId)=>{
+				// Change new object ID
+				if (newObjId > objId) newObjId --;
+				else if (newObjId == objId) newObjId = NaN;
+			});
+
+			// Delete objects after collide and return the deleted objects to the deletedObjectsList array
+			deletedObjectsList = deletedObjectsList.concat(this.scene.deleteObject(toDeleteObjectsList, objArrCopy));
+
+			// Add points to trajectory trace array
 			for (let objectId = objArrCopy.length; objectId--;){
+				let obj = objArrCopy[objectId];
 				// Minimal distance calculate
-				if (objArrCopy[virt_obj]){
-					let S = rad(objArrCopy[virt_obj].x, objArrCopy[virt_obj].y, objArrCopy[objectId].x, objArrCopy[objectId].y);
-					if (objectId !== virt_obj && S < distance[0]){
+				if (objArrCopy[newObjId]){
+					let S = rad(objArrCopy[newObjId].x, objArrCopy[newObjId].y, obj.x, obj.y);
+					if (objectId !== newObjId && S < distance[0]){
 						distance[0] = S;
-						distance[1] = {x: objArrCopy[virt_obj].x, y: objArrCopy[virt_obj].y, x2: objArrCopy[objectId].x, y2: objArrCopy[objectId].y, obj2Id: objectId};
+						distance[1] = {x: objArrCopy[newObjId].x, y: objArrCopy[newObjId].y, x2: obj.x, y2: obj.y, obj2Id: objectId};
 					}
 				}
-				if (objArrCopy[objectId].lock !== true){ // Don't draw if the object is locked
-					let R = objectId == objArrCopy.length - 1 ? 1.2 : 1; // If object is new
-					// Circle
-					this.ctx2.beginPath();
-					this.ctx2.fillStyle = objectId == virt_obj ? objArrCopy[objectId].color :"#444444";
-					this.ctx2.fillStyle = objArrCopy[objectId].collided && this.scene.collisionMode.state === '0' ? '#ff0000' : this.ctx2.fillStyle;
-					if (this.scene.collisionMode.state != 0) objArrCopy[objectId].collided = false;
-					this.ctx2.arc(this.crd(objArrCopy[objectId].x-refMov[0], 'x'), this.crd(objArrCopy[objectId].y-refMov[1], 'y'), R, 0, 7);
-					this.ctx2.fill();
-					// Line
-					this.ctx2.beginPath();
-					this.ctx2.strokeStyle = this.ctx2.fillStyle;
-					this.ctx2.lineWidth = R;
-					this.ctx2.moveTo(this.crd((objArrCopy[objectId].x - objArrCopy[objectId].vx / accr * this.scene.timeSpeed.state)-refMov[0], 'x'), this.crd((objArrCopy[objectId].y - objArrCopy[objectId].vy / accr * this.scene.timeSpeed.state)-refMov[1], 'y'));
-					this.ctx2.lineTo(this.crd(objArrCopy[objectId].x-refMov[0], 'x'), this.crd(objArrCopy[objectId].y-refMov[1], 'y'));
-					this.ctx2.stroke();				
-				}
-			}			
+				if (obj.lock !== true) trajectoryTraces[obj.initId].push([obj.x, obj.y]);
+			}
+				
 			// if (!mouse.move && mouse.leftDown){
-			// 	this.scene.physicsMultiThreadCalculate(objArrCopy, asd);
+			// 	this.scene.physicsMultiThreadCalculate(objArrCopy, afterPhysicsCallback);
 			// }
 		}
-
-		for (let i = count; i > 0; i--){
-			this.ctx2.globalAlpha = i/Math.min(128 * accr, count); // End trajectory opacity smooth (left value is smooth length)
-			this.scene.physicsCalculate(objArrCopy, afterPhysicsCallback, this.scene.interactMode.state, this.scene.timeSpeed.state, this.scene.g.state/accr);
-		}
-		this.ctx2.globalAlpha = 1;
+		// this.ctx2.globalAlpha = 1;
 		// this.scene.physicsMultiThreadCalculate(objArrCopy, (...args)=>{
 		// 	//console.log(this);
-		// 	asd(...args);
+		// 	afterPhysicsCallback(...args);
 		// });
+		for (let i = count; i > 0; i--){ // Objects trajectory calculate
+			this.scene.physicsCalculate(objArrCopy, afterPhysicsCallback, this.scene.interactMode.state, this.scene.timeSpeed.state, this.scene.g.state/accr);
+		}
 
-		 // Отображение точек сближения
-		 // New object
-		this.ctx2.beginPath();
-		this.ctx2.globalAlpha = 0.6;
+		// Отображение точек сближения
+		// New object
+		this.ctx2.globalAlpha = 0.5;
 		this.ctx2.fillStyle = this.scene.newObjColor.state;
+		this.ctx2.beginPath();
 		let mass = Math.sqrt(Math.abs(this.scene.newObjMass.state))*this.animZoom;
 		mass = mass < 2 ? 2 : mass;
-		this.ctx2.arc(this.crd(distance[1].x-refMov[0], 'x'), this.crd(distance[1].y-refMov[1], 'y'), mass, 0, 7);
+		this.ctx2.arc(this.crd(distance[1].x, 'x'), this.crd(distance[1].y, 'y'), mass, 0, 7);
 		this.ctx2.fill();
-
 		// Other object
 		this.ctx2.beginPath();
-		this.ctx2.globalAlpha = 0.5;
 		this.ctx2.fillStyle = this.scene.objArr[distance[1].obj2Id].color;
 		mass = Math.sqrt(Math.abs(this.scene.objArr[distance[1].obj2Id].m))*this.animZoom;
 		mass = mass < 2 ? 2 : mass;
-		this.ctx2.arc(this.crd(distance[1].x2-refMov[0], 'x'), this.crd(distance[1].y2-refMov[1], 'y'), mass, 0, 7);
+		this.ctx2.arc(this.crd(distance[1].x2, 'x'), this.crd(distance[1].y2, 'y'), mass, 0, 7);
 		this.ctx2.fill();
-
+		// The line between approachment points
+		// Line gradient
+		let gradient = this.ctx2.createLinearGradient(
+			this.crd(distance[1].x, 'x'),//   X1
+			this.crd(distance[1].y, 'y'),//   Y1
+			this.crd(distance[1].x2, 'x'),//  X2
+			this.crd(distance[1].y2, 'y'));// Y2
+		gradient.addColorStop(0, this.scene.newObjColor.state); // New object color
+		gradient.addColorStop(1, this.scene.objArr[distance[1].obj2Id].color); // Second object color
+		this.ctx2.strokeStyle = gradient;
+		this.ctx2.lineWidth = 2; // Line width between approachment points
+		this.ctx2.beginPath();
+		this.ctx2.moveTo(this.crd(distance[1].x, 'x'), this.crd(distance[1].y, 'y'));
+		this.ctx2.lineTo(this.crd(distance[1].x2, 'x'), this.crd(distance[1].y2, 'y'));
+		this.ctx2.stroke();
 		this.ctx2.globalAlpha = 1;
-		// Draw crosses
-		if (this.scene.collisionMode.state == 0){
-			for (let collObj of coll_objcts){
-				var size = Math.sqrt(Math.abs(collObj.m))*0.7 < 5? 5 : Math.sqrt(Math.abs(collObj.m))*0.7;
-				this.drawCross(this.crd(collObj.x - collObj.vx/accr, 'x'), this.crd(collObj.y - collObj.vy/accr, 'y'), 3, size, '#ff0000');
+
+		// Draw trajectory lines
+		// Line dash settings
+		let dashLineLen = 2; // Dash pattern line length
+		let dashSpaceLen = 3; // Dash pattern space length
+		let trajectoryEndSmooth = (this.#width + this.#height) / 2; // Trajectory end smooth length
+		for (let trace = 0; trace < trajectoryTraces.length; trace ++){
+			if (trajectoryTraces[trace] !== undefined){ // Don't draw if the object is locked
+				let R, color;
+				// Set styles to new object trajectory trace
+				if (trace === savedNewObjId){
+					color  = this.scene.newObjColor.state;
+					R = 2;
+				} else { // Set styles to objects trajectory trace
+					color = "#555555";
+					R = 1.2;
+				}
+				// Dashed line
+				let dashPattern = []; // Dashed line pattern array
+				// ==== Making line dash pattern ===========================
+				// Trajectory trace length in pixels
+				let traceLenInPixs = trajectoryTraces[trace].reduce((trajLength, point, pId, pArr)=>{
+					if (pId != 0) {
+						return trajLength + rad(point[0], point[1], pArr[pId-1][0], pArr[pId-1][1]);
+					}
+					return trajLength;
+				}, 0) * this.animZoom;
+				const possibleTrajEndSmooth = Math.min(trajectoryEndSmooth, traceLenInPixs); // Minimal value between trajectory end smooth length and trajectory trace length in pixels
+				// Form dash pattern to smooth the end of trajectory
+				while (traceLenInPixs > 0){
+					if (traceLenInPixs > possibleTrajEndSmooth){ // Trajecroty pattern
+						if (dashPattern.length % 2 === 0){ // Line
+							traceLenInPixs -= dashLineLen;
+							dashPattern.push(dashLineLen); // Add pattern
+						} else { // Space
+							traceLenInPixs -= dashSpaceLen;
+							dashPattern.push(dashSpaceLen); // Add pattern
+						}
+					} else { // Trajectory end smoothing pattern
+						if (dashPattern.length % 2 === 0){ // Line
+							const line = traceLenInPixs / possibleTrajEndSmooth * dashLineLen;
+							traceLenInPixs -= line;
+							dashPattern.push(line); // Add pattern
+						} else { // Space
+							traceLenInPixs -= dashSpaceLen;
+							dashPattern.push(dashSpaceLen); // Add pattern
+						}
+					}
+				}
+				this.ctx2.beginPath();
+				this.ctx2.setLineDash(dashPattern); // Dash line
+				this.ctx2.strokeStyle = color;
+				this.ctx2.lineWidth = R;
+				this.ctx2.moveTo(this.crd(trajectoryTraces[trace][0][0], 'x'), this.crd(trajectoryTraces[trace][0][1], 'y'));
+				for (let point of trajectoryTraces[trace]){
+					this.ctx2.lineTo(this.crd(point[0], 'x'), this.crd(point[1], 'y'));
+				}
+				this.ctx2.stroke();
+				this.ctx2.setLineDash([]); // Solid line
 			}
-		}		
+		}
+		// Draw the cross if object deleted after collision
+		for (let deletedObj of deletedObjectsList){
+			const size = Math.sqrt(Math.abs(deletedObj.m))*0.7 < 5? 5 : Math.sqrt(Math.abs(deletedObj.m))*0.7;
+			this.drawCross(
+				this.crd(deletedObj.x - deletedObj.vx, 'x'), 
+				this.crd(deletedObj.y - deletedObj.vy, 'y'), 
+				2, 
+				size, 
+				'#ff0000'
+			);
+		}
 	}
 
 	visual_trajectory(){

@@ -47,8 +47,10 @@ window.onload = function(){
 	var zm_cff = NaN;
 
 	//Debug
-	var ref_speed = 1;
-	var maxFPS = false;
+	this.simulationSpeed = 1;
+	this.maxFPS = false;
+
+	this.simulationDone = simulationSpeed;
 
 	// FPS indicator init
 	this.fpsIndicator = new IndicateFPS();
@@ -488,10 +490,6 @@ window.onload = function(){
 					});
 					if (newObjRandColor.state) newObjColor.state = scene.randomColor();
 				});
-				scene.camera.ctx.beginPath();
-				scene.camera.ctx.fillStyle = newObjColor.state;
-				scene.camera.ctx.arc(scene.mpos[0], scene.mpos[1], Math.sqrt(Math.abs(newObjMass.state))*scene.camera.animZoom, 0, 7);
-				scene.camera.ctx.fill();
 			}
 			if (mbut == 'create'){
 				var mort = setTimeout(menu_open_restore, 200);
@@ -631,18 +629,17 @@ window.onload = function(){
 		*/
 	});
 
-	if (maxFPS !== false){
-		setInterval(frame, 1000/maxFPS);
-	} else {
-		// window.requestAnimationFrame(frame);
-		// scene.frame = frame;
-		frameControl();
-	}
-
+	let frameInterval;
+	frameControl();
 	function frameControl(){
-		window.requestAnimationFrame(frameControl);
-		if ( !scene.workersJobDone ) {
-			frame();
+		if (maxFPS !== false){
+			if (!frameInterval) frameInterval = setInterval(()=>{frame(); frameControl();}, 1000/maxFPS);
+		} else {
+			clearInterval(frameInterval);
+			if ( !scene.workersJobDone ) {
+				frame();
+			}
+			window.requestAnimationFrame(frameControl);
 		}
 	}
 
@@ -665,6 +662,7 @@ window.onload = function(){
 		// Set move cursor style
 		if (mouse.middleDown || mbut == 'move'){scene.camera.layersDiv.style.cursor = "move";}else{scene.camera.layersDiv.style.cursor = "default";};
 
+		simulationDone = simulationSpeed;
 		if (scene.objArr.length){
 			if (!pauseState){
 				if (window.Worker && window.navigator.hardwareConcurrency > 1 && multitreadCompute.state){
@@ -856,20 +854,12 @@ window.onload = function(){
 							if (newObjRandColor.state) newObjColor.state = scene.randomColor();
 						});
 						let obj_rad = Math.sqrt(Math.abs(newObjMass.state))*scene.camera.animZoom;
-						obj_rad = obj_rad < 0.5 ? 0.5 : obj_rad;
-						scene.camera.ctx.beginPath();
-						scene.camera.ctx.fillStyle = newObjColor.state;
-						scene.camera.ctx.arc(mouse.x, mouse.y, obj_rad, 0, 7);
-						scene.camera.ctx.fill();		
+						obj_rad = obj_rad < 0.5 ? 0.5 : obj_rad;		
 					}
 					if (mbut == 'delete' && scene.objArr.length){
 						//$('.renderLayer').mousedown();
 						//$('.renderLayer').mouseup();
 						let delete_obj = scene.objectSelect(switcher.del_radio);
-						scene.camera.ctx.beginPath();
-						scene.camera.ctx.fillStyle = '#000';
-						scene.camera.ctx.arc(scene.objArr[delete_obj].x, scene.objArr[delete_obj].y, Math.sqrt(Math.abs(scene.objArr[delete_obj].m))+1, 0, 7);
-						scene.camera.ctx.fill();
 						addFrameBeginTask( () => scene.deleteObject(delete_obj) );
 						deleted();
 					}
@@ -889,15 +879,15 @@ window.onload = function(){
 			}
 			// (+) Simulation speed up withoud lost accuracity. Max limit is computer performance
 			if (e.keyCode == 187 || e.keyCode == 61){
-				ref_speed *= 2;
-				console.log(ref_speed);
-				$('.time_speed h2').html('T - X'+timeSpeed.state*ref_speed);
+				simulationSpeed *= 2;
+				console.log(simulationSpeed);
+				$('.time_speed h2').html('T - X'+timeSpeed.state*simulationSpeed);
 			} else
 			// (-) Simulation speed down withoud lost accuracity. Min value is realtime
 			if (e.keyCode == 189 || e.keyCode == 173){
-				if (ref_speed > 1){ref_speed /= 2;}
-				console.log(ref_speed);
-				$('.time_speed h2').html('T - X'+timeSpeed.state*ref_speed);
+				if (simulationSpeed > 1){simulationSpeed /= 2;}
+				console.log(simulationSpeed);
+				$('.time_speed h2').html('T - X'+timeSpeed.state*simulationSpeed);
 			}
 		}
 		//Ctrl keys
@@ -999,7 +989,7 @@ window.onload = function(){
 			//$('.time_speed h2').html('T - X0');
 		} else
 		if (mbut == 'play'){
-			ref_speed = 1;
+			simulationSpeed = 1;
 			pauseState = false;
 			timeSpeed.state = 1;
 			$('#pause img').attr('src', 'ico/pause.png');

@@ -76,7 +76,7 @@ export default class Scene {
 							}
 							if (!this.workersJobDone){
 								this.frameCounter ++;
-								callback && callback(objectsArray, this.collidedObjectsIdList, interactMode, collisionType, timeSpeed);
+								callback && callback(objectsArray, this.collidedObjectsIdList, interactMode, collisionType, timeSpeed, 'multiThread');
 								//this.frame();
 								this.collidedObjectsIdList = [];
 							}
@@ -107,17 +107,25 @@ export default class Scene {
 				collidedObjectsIdList: this.collidedObjectsIdList
 			});
 		}
-		callback && callback(objectsArray, this.collidedObjectsIdList, interactMode, collisionType, timeSpeed);
+		callback && callback(objectsArray, this.collidedObjectsIdList, interactMode, collisionType, timeSpeed, 'singleThread');
 		this.collidedObjectsIdList = [];
 	}
 	// Runs after finish computing physics
-	afterPhysics = (objArr, collidedObjectsIdList, interactMode, collisionType, timeSpeed) => {
+	afterPhysics = (objArr, collidedObjectsIdList, interactMode, collisionType, timeSpeed, func) => {
 		// After physics
 		// Set values after collisions
 		let deleteObjectList = this.collision(objArr, collidedObjectsIdList, interactMode, collisionType);
 		this.deleteObject(deleteObjectList, objArr);
 
-		this.addVectors(objArr, timeSpeed);
+		this.addSelfVectors(objArr, timeSpeed);
+		if (0&&(simulationDone > 1)){
+			simulationDone --;
+			if (func === 'multiThread'){
+				this.physicsMultiThreadCalculate();
+			} else if (func === 'singleThread') {
+				this.physicsCalculate();
+			}
+		}
 	}
 	// Collision handler
 	collision(objArr, collidedObjectsIdList, interactMode, collisionType){
@@ -177,7 +185,7 @@ export default class Scene {
 		return deleteObjectList;
 	}
 	// Add objects vectors to objects
-	addVectors(objArr, timeSpeed){
+	addSelfVectors(objArr, timeSpeed){
 		// Add the vectors
 		for (let object of objArr){
 			if (mov_obj != objArr.indexOf(object)){
@@ -249,17 +257,18 @@ export default class Scene {
 		};
 		this.show_obj_count();
 		this.objArrChanges = true;
-
-		return objArr[newObjId] ? true : false;
+		// If object created return its ID, else return false
+		return objArr[newObjId] ? newObjId : false;
 	}
 	//Удаление объекта
 	deleteObject(objects, objArr = this.objArr){
 		let objectsToDelete;
 		if (Array.isArray(objects)){
-			objectsToDelete = objects.sort( (a,b)=>b-a ); // Given objects ID's to delete, sorted	
+			objectsToDelete = objects.sort( (a,b)=>a-b ); // Given objects ID's to delete, sorted	
 		} else {
 			objectsToDelete = [objects]; // If given not an array
 		}
+		let deletedObjectsList = [];
 		for (let objectId of objectsToDelete){
 			// Change main object in child objects before delete
 			for (let obj of objArr){
@@ -270,11 +279,11 @@ export default class Scene {
 			if (objectId == mov_obj) mov_obj = NaN;
 			if (objectId < this.camera.Target) this.camera.Target --;
 			if (objectId < mov_obj) mov_obj --;
-			objArr.splice(objectId, 1);
-			//return console.log(this.objArr);
 			this.show_obj_count();
 			this.objArrChanges = true;
+			deletedObjectsList = deletedObjectsList.concat(objArr.splice(objectId, 1));
 		}
+		return deletedObjectsList;
 	}
 	// Show number of objects
 	show_obj_count(){
