@@ -23,6 +23,17 @@ window.onload = function(){
 		frameTasks.push({func: func, args: args});
 	}
 
+	this.getDeviceType = () => {
+		const ua = navigator.userAgent;
+		if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
+			return "tablet";
+		} else
+		if ( /Mobile|iP(hone|od)|Android|BlackBerry|IEMobile|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(ua) ) {
+		  return "mobile";
+		}
+		return "desktop";
+	};
+
 	var mbut = 'create';
 	var menu_state = true; // Menu state (Opened/Closed)
 	if (sessionStorage['mbut'] && sessionStorage['menu_state']){
@@ -59,6 +70,7 @@ window.onload = function(){
 	this.scene = new Scene();
 	scene.camera = new Camera(scene);
 	scene.activCam = scene.camera;
+	scene.frame = frame;
 
 	this.pauseState = false; // Global pause state
 
@@ -105,7 +117,15 @@ window.onload = function(){
 	deletingMode = new UserInput({type: 'radio', id: 'dellMethodRadio'}), // Deleting method
 
 	// Edit object menu ===================================================
-
+	editMass = new UserInput({type: 'number', id: 'mass_edit', callback: (state) => addFrameBeginTask(() => {
+		if (scene.objArr[swch.edit_obj]){ scene.objArr[swch.edit_obj].m = state; allowRender();}
+	}), }),
+	editColor = new UserInput({type: 'color', id: 'col_edit', eventName: 'input', callback: (state) => addFrameBeginTask(() => {
+		if (scene.objArr[swch.edit_obj]){ scene.objArr[swch.edit_obj].color = state; allowRender();}
+	}), }),
+	editLock = new UserInput({type: 'checkbox', id: 'lck_edit_chbox', callback: (state) => addFrameBeginTask(() => {
+		if (scene.objArr[swch.edit_obj]){ scene.objArr[swch.edit_obj].lock = state; allowRender();}
+	}), }),
 	// Trace settings =====================================================
 	tracesMode = new UserInput({type: 'radio', id: 'traj_radio_buttons', stateSaving: true, initState: 1, callback: (val, elem) => {
 		for (let element of traj_menu.getElementsByClassName('additionalOption')){
@@ -153,15 +173,15 @@ window.onload = function(){
 	backgroundDarkness = new UserInput({type: 'range', id: 'bg_darkness', stateSaving: true, eventName: 'input', callback: (state, elem)=>{
 		if (tracesMode.state == 1){
 			if (state == 0) { // If backgroundDarkness state value = 0 then copy imageData from canvas layer 3 to canvas layer 1 and hide canvas layer 3
-				scene.camera.ctx.putImageData(scene.camera.ctx3.getImageData(0,0,scene.camera.canv0.width,scene.camera.canv0.height),0,0);
-				scene.camera.ctx3.clearRect(0,0,scene.camera.canv0.width,scene.camera.canv0.height);
+				// scene.camera.ctx.putImageData(scene.camera.ctx3.getImageData(0,0,scene.camera.canv0.resolutionX,scene.camera.canv0.resolutionY),0,0);
+				// scene.camera.ctx3.clearRect(0,0,scene.camera.canv0.resolutionX,scene.camera.canv0.resolutionY);
 				scene.camera.canv3.style.display = background_image.style.display = 'none';
 				traj_menu.children.additionalTrajectoryOptions1.setAttribute('disabled', '');
 				scene.objArrChanges = true; // Render
 				tracesMode.state = tracesMode.state; // Refresh trace mode menu
 			} else if (!elem.prevState) { // If backgroundDarkness previous state value = 0 then copy imageData from canvas layer 1 to canvas layer 3 and display canvas layer 3
-				scene.camera.ctx3.putImageData(scene.camera.ctx.getImageData(0,0,scene.camera.canv0.width,scene.camera.canv0.height),0,0);
-				scene.camera.ctx.clearRect(0,0,scene.camera.canv0.width,scene.camera.canv0.height);
+				// scene.camera.ctx3.putImageData(scene.camera.ctx.getImageData(0,0,scene.camera.canv0.resolutionX,scene.camera.canv0.resolutionY),0,0);
+				// scene.camera.ctx.clearRect(0,0,scene.camera.canv0.resolutionX,scene.camera.canv0.resolutionY);
 				scene.camera.canv3.style.display = background_image.style.display = '';
 				traj_menu.children.additionalTrajectoryOptions1.removeAttribute('disabled');
 				scene.objArrChanges = true; // Render
@@ -176,19 +196,17 @@ window.onload = function(){
 			if (val){ fpsIndicator.turnOn() }
 			else { fpsIndicator.turnOff() }
 	}, }),
-	multitreadCompute = new UserInput({type: 'checkbox', id: 'multithread_comput', stateSaving: true, initState: true, callback: (val, input)=>{
+	multitreadCompute = new UserInput({type: 'checkbox', id: 'multithread_comput', stateSaving: true, initState: getDeviceType() === 'desktop', callback: (val, input)=>{
 		if (window.navigator.hardwareConcurrency < 2) {
 			input.element.parentElement.style.display = 'none'; // Hide multithread option, if computer have only 1 thread
 		}
 	}})
 	;
-
-	// Fix background darkness
-	{
-		let state = backgroundDarkness.state;
-		backgroundDarkness.state = 0;
-		backgroundDarkness.state = state;
-	}
+	// { // Fix background darkness
+	// 	let state = backgroundDarkness.state;
+	// 	backgroundDarkness.state = 0;
+	// 	backgroundDarkness.state = state;
+	// }
 
 	let timeSpeed = new UserInput({type: 'manualInput', initState: 1, callback: (val, inpVar)=>{
 		document.querySelector('.time_speed h2').innerHTML = 'T - X'+val;
@@ -293,8 +311,8 @@ window.onload = function(){
 	var clrTmt = setTimeout(function(){clrDelay = false}, clrDTim);
 
 	window.onresize = function(){
-		scene.camera.width = window.innerWidth;
-		scene.camera.height = window.innerHeight;
+		scene.camera.resolutionX = window.innerWidth;
+		scene.camera.resolutionY = window.innerHeight;
 		scene.camera.renderObjects();
 		adaptive();
 	}
@@ -401,7 +419,6 @@ window.onload = function(){
 		scene.mpos[0] = event.clientX; scene.mpos[1] = event.clientY;
 		if (event.which == 1 || touch){
 			mouse.leftDown = true;
-			mouse.leftDown = true;
 
 			if (mbut == 'create'){
 				try{clearTimeout(mort)}catch(err){};
@@ -437,9 +454,9 @@ window.onload = function(){
 				swch.edit_obj = scene.objectSelect();
 				swch.s_edit = false;
 				if (scene.objArr[swch.edit_obj]){
-					document.getElementById('col_edit').value = scene.objArr[swch.edit_obj].color;
-					document.getElementById('mass_edit').value = scene.objArr[swch.edit_obj].m;
-					document.getElementById('check_edit_lck').checked = scene.objArr[swch.edit_obj].lock;
+					editColor.state = scene.objArr[swch.edit_obj].color;
+					editMass.state = scene.objArr[swch.edit_obj].m;
+					document.getElementById('lck_edit_chbox').checked = scene.objArr[swch.edit_obj].lock;
 				}
 			}
 		}
@@ -599,7 +616,7 @@ window.onload = function(){
 		let eti = e.type == 'input'; // If input type = Input
 		let etch = e.type == 'change'; // If input type = Change
 
-		if (chck == 'check_edit_lck' && scene.objArr[swch.edit_obj]){
+		if (chck == 'lck_edit_chbox' && scene.objArr[swch.edit_obj]){
 			if (document.getElementById(chck).checked){
 				scene.objArr[swch.edit_obj].lock = true;
 			} else {
@@ -608,12 +625,6 @@ window.onload = function(){
 			if (swch.edit_obj == 0){ // ID of main object
 				sessionStorage['sun_lck'] = scene.objArr[swch.edit_obj].lock;
 			}
-		} else
-		if (chck == 'mass_edit' && scene.objArr[swch.edit_obj]){		
-			scene.objArr[swch.edit_obj].m = +document.getElementById(chck).value;
-		} else
-		if (chck == 'col_edit' && scene.objArr[swch.edit_obj]){
-			scene.objArr[swch.edit_obj].color = document.getElementById(chck).value;
 		} else
 		if (chck == 'select_file'){
 			var selectedFile = $('#select_file')[0].files[0];
@@ -630,19 +641,21 @@ window.onload = function(){
 	});
 
 	let frameInterval;
+	this.allowCompute = false;
 	frameControl();
 	function frameControl(){
 		if (maxFPS !== false){
 			if (!frameInterval) frameInterval = setInterval(()=>{frame(); frameControl();}, 1000/maxFPS);
 		} else {
 			clearInterval(frameInterval);
-			if ( !scene.workersJobDone ) {
+			if ( !scene.workersJobDone ) { // If workers job done, render frame
 				frame();
+			} else { // If workers are still working, allow them to call the frame (if fps < 60)
+				allowCompute = true;
 			}
 			window.requestAnimationFrame(frameControl);
 		}
 	}
-
 	function frame(){
 		// Run all functions from frameTasks array
 		if (!scene.workersJobDone){
@@ -705,7 +718,7 @@ window.onload = function(){
 			scene.camera.visualObjectSelect('nearest', '#bbb', mov_obj);
 		} else
 		if (mbut == 'edit' && swch.s_edit){
-			scene.camera.visualObjectSelect('nearest', '#11f', mov_obj);
+			scene.camera.visualObjectSelect('nearest', '#f81', mov_obj, 0);
 		} else
 		if (mbut == 'sel_orb_obj' && switcher.sel_orb_obj){
 			scene.camera.visualObjectSelect('nearest', '#bf0', mov_obj);
@@ -728,7 +741,10 @@ window.onload = function(){
 			if (!(Math.abs(mouse.leftDownX-mouse.x) <= dis_zone && Math.abs(mouse.leftDownY-mouse.y) <= dis_zone)){
 				scene.camera.visual_trajectory();
 				if (showNewObjTrajectory.state){
-					scene.camera.trajectoryCalculate(newObjTrajLength.state, newObjTrajAccuracity.state); // Trajectory calculation
+					// Trajectory calculation
+					scene.camera.trajectoryCalculate({
+					trajLen: newObjTrajLength.state, 
+					accuracity: newObjTrajAccuracity.state, });
 				}
 				// Hide menu while creating new object
 				let mstate = menu_state;
@@ -746,7 +762,7 @@ window.onload = function(){
 		for (let i = 0; i < count; i++){
 		  	addFrameBeginTask(()=>{ 
 				scene.addNewObject({
-		  	 		x: scene.camera.width * Math.random(), y: scene.camera.height *Math.random(),
+		  	 		x: scene.camera.resolutionX * Math.random(), y: scene.camera.resolutionY *Math.random(),
 					ob_col: newObjColor.state,
 					mass: newObjMass.state,
 					objLck: newObjLock.state,
@@ -784,7 +800,7 @@ window.onload = function(){
 				scene.camera.ctx2.fill();
 				scene.camera.ctx2.beginPath();
 
-				Object.assign(launchPowerLabel.style, {left: (mouse.x-10)+'px', top: (mouse.y-30)+'px', display: 'block', color: col});
+				Object.assign(launchPowerLabel.style, {left: `calc(${mouse.x}px + 1em)`, top: `calc(${mouse.y}px - 1em)`, display: 'block', color: col});
 				launchPowerLabel.innerHTML = Math.round(size/scene.camera.animZoom*1000)/1000;
 			} else {
 				if (!mouse.leftDown){
@@ -1200,17 +1216,6 @@ window.onload = function(){
 		if (F > 1){ return Math.round(Math.pow(F, Math.pow(F, 3))*100)/100 } else { return F }
 	}
 	//=====================================================
-
-	this.getDeviceType = () => {
-		const ua = navigator.userAgent;
-		if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
-			return "tablet";
-		} else
-		if ( /Mobile|iP(hone|od)|Android|BlackBerry|IEMobile|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(ua) ) {
-		  return "mobile";
-		}
-		return "desktop";
-	};
 
 	adaptive();
 	function adaptive(){

@@ -1,27 +1,26 @@
 import UserInput from '/js/UserInput.js';
 export default class Camera{
 	static cameraId = 0;
-	#width = window.innerWidth;
-	#height = window.innerHeight;
+	#resolutionX = window.innerWidth;
+	#resolutionY = window.innerHeight;
 
-	set width (width){
-		this.#width = this.canv0.width = this.canv2.width = this.canv3.width = width;
+	set resolutionX (resolutionX){
+		this.#resolutionX = this.canv0.width = this.canv2.width = this.canv3.width = resolutionX;
 	}
-	set height (height){
-		this.#height = this.canv0.height = this.canv2.height = this.canv3.height = height;
+	set resolutionY (resolutionY){
+		this.#resolutionY = this.canv0.height = this.canv2.height = this.canv3.height = resolutionY;
 	}
-	get width (){
-		return this.#width;
+	get resolutionX (){
+		return this.#resolutionX;
 	}
-	get height (){
-		return this.#height;
+	get resolutionY (){
+		return this.#resolutionY;
 	}
 
 	#visualObjectSelectAnimation = 10;
 	#visualObjectSelectAnimDir = 0;
 
 	#clrDelay = false;
-	zoomCff = 1.25;
 	x = 0; y = 0; // Target camera position
 	ax = 0; ay = 0; // Actualy camera postiton with animation
 	lastX = 0; lastY = 0; // Last camera position
@@ -42,7 +41,7 @@ export default class Camera{
 	constructor(scene){
 		this.scene = scene;
 		this.layersDiv = document.createElement('div');
-		this.layersDiv.setAttribute('id', 'renderLayers_camera'+this.cameraId);
+		this.layersDiv.setAttribute('id', 'renderLayers_camera_'+Camera.cameraId);
 
 		this.cameraId = Camera.cameraId;
 		this.canv0 = document.createElement('canvas');
@@ -75,8 +74,8 @@ export default class Camera{
 		document.body.appendChild(this.layersDiv);
 
 		// Camera resolution
-		this.width = window.innerWidth;
-		this.height = window.innerHeight;
+		this.resolutionX = window.innerWidth;
+		this.resolutionY = window.innerHeight;
 
 		Camera.cameraId ++;
 	}
@@ -225,6 +224,7 @@ export default class Camera{
 					this.ctx.lineCap = 'butt';
 					this.ctx.lineJoin = 'bevel';
 				}
+				// Separate the traces of objectsz
 				this.ctx.globalCompositeOperation = 'destination-out';
 				this.ctx.fillStyle = "#ffffff";
 				this.ctx.beginPath();
@@ -249,14 +249,14 @@ export default class Camera{
 		}
 	} // End draw
 
-	trajectoryCalculate(count = 256, accr = 1, col = ['#006BDE', '#ffffff']){
+	trajectoryCalculate({trajLen = 256, accuracity = 1, color = ['#006BDE', '#ffffff']}){
 		// Ctrl pressed change mouse accuracity
 		let mcx = scene.mouse_coords[0] ? scene.mouse_coords[0] - (scene.mouse_coords[0] - mouse.x)/10 : mouse.x;
 		let mcy = scene.mouse_coords[1] ? scene.mouse_coords[1] - (scene.mouse_coords[1] - mouse.y)/10 : mouse.y;
 		// New obj vector
 		let svx = ((mouse.leftDownX - mcx)/30) * this.scene.powerFunc(this.scene.launchForce.state);
 		let svy = ((mouse.leftDownY - mcy)/30) * this.scene.powerFunc(this.scene.launchForce.state);	
-		count = count * accr; // Trajectory calculation accuracity
+		trajLen = trajLen * accuracity; // Trajectory calculation accuracity
 		let objArrCopy;
 		if (this.scene.interactMode.state === '0'){ // Add all objects to trajectory calculate array
 			objArrCopy = JSON.parse(JSON.stringify(this.scene.objArr));
@@ -275,7 +275,7 @@ export default class Camera{
 			this.ctx2.strokeStyle = this.scene.newObjColor.state;
 			this.ctx2.lineWidth = 1;
 			this.ctx2.moveTo(mouse.leftDownX, mouse.leftDownY);
-			this.ctx2.lineTo(mouse.leftDownX+svx*count*this.animZoom, mouse.leftDownY+svy*count*this.animZoom);
+			this.ctx2.lineTo(mouse.leftDownX+svx*trajLen*this.animZoom, mouse.leftDownY+svy*trajLen*this.animZoom);
 			this.ctx2.stroke();				
 			return;
 		}
@@ -303,10 +303,10 @@ export default class Camera{
 			}
 		}
 		let deletedObjectsList = [];
-		let distance = [Infinity, {}];
+		let distance = [Infinity, ];
 		let afterPhysicsCallback = (...args) => {
 			const toDeleteObjectsList = this.scene.collision(...args);
-			this.scene.addSelfVectors(objArrCopy, this.scene.timeSpeed.state/accr);
+			this.scene.addSelfVectors(objArrCopy, this.scene.timeSpeed.state/accuracity);
 
 			// Delete virtual objects
 			toDeleteObjectsList.forEach((objId)=>{
@@ -341,48 +341,50 @@ export default class Camera{
 		// 	//console.log(this);
 		// 	afterPhysicsCallback(...args);
 		// });
-		for (let i = count; i > 0; i--){ // Objects trajectory calculate
-			this.scene.physicsCalculate(objArrCopy, afterPhysicsCallback, this.scene.interactMode.state, this.scene.timeSpeed.state, this.scene.g.state/accr);
+		for (let i = trajLen; i > 0; i--){ // Objects trajectory calculate
+			this.scene.physicsCalculate(objArrCopy, afterPhysicsCallback, this.scene.interactMode.state, this.scene.timeSpeed.state, this.scene.g.state/accuracity);
 		}
 
 		// Отображение точек сближения
-		// New object
-		this.ctx2.globalAlpha = 0.5;
-		this.ctx2.fillStyle = this.scene.newObjColor.state;
-		this.ctx2.beginPath();
-		let mass = Math.sqrt(Math.abs(this.scene.newObjMass.state))*this.animZoom;
-		mass = mass < 2 ? 2 : mass;
-		this.ctx2.arc(this.crd(distance[1].x, 'x'), this.crd(distance[1].y, 'y'), mass, 0, 7);
-		this.ctx2.fill();
-		// Other object
-		this.ctx2.beginPath();
-		this.ctx2.fillStyle = this.scene.objArr[distance[1].obj2Id].color;
-		mass = Math.sqrt(Math.abs(this.scene.objArr[distance[1].obj2Id].m))*this.animZoom;
-		mass = mass < 2 ? 2 : mass;
-		this.ctx2.arc(this.crd(distance[1].x2, 'x'), this.crd(distance[1].y2, 'y'), mass, 0, 7);
-		this.ctx2.fill();
-		// The line between approachment points
-		// Line gradient
-		let gradient = this.ctx2.createLinearGradient(
-			this.crd(distance[1].x, 'x'),//   X1
-			this.crd(distance[1].y, 'y'),//   Y1
-			this.crd(distance[1].x2, 'x'),//  X2
-			this.crd(distance[1].y2, 'y'));// Y2
-		gradient.addColorStop(0, this.scene.newObjColor.state); // New object color
-		gradient.addColorStop(1, this.scene.objArr[distance[1].obj2Id].color); // Second object color
-		this.ctx2.strokeStyle = gradient;
-		this.ctx2.lineWidth = 2; // Line width between approachment points
-		this.ctx2.beginPath();
-		this.ctx2.moveTo(this.crd(distance[1].x, 'x'), this.crd(distance[1].y, 'y'));
-		this.ctx2.lineTo(this.crd(distance[1].x2, 'x'), this.crd(distance[1].y2, 'y'));
-		this.ctx2.stroke();
-		this.ctx2.globalAlpha = 1;
+		if (distance[1]){
+			// New object arc
+			this.ctx2.globalAlpha = 0.5;
+			this.ctx2.fillStyle = this.scene.newObjColor.state;
+			this.ctx2.beginPath();
+			let mass = Math.sqrt(Math.abs(this.scene.newObjMass.state))*this.animZoom;
+			mass = mass < 2 ? 2 : mass;
+			this.ctx2.arc(this.crd(distance[1].x, 'x'), this.crd(distance[1].y, 'y'), mass, 0, 7);
+			this.ctx2.fill();
+			// Second object arc
+			this.ctx2.beginPath();
+			this.ctx2.fillStyle = this.scene.objArr[distance[1].obj2Id].color;
+			mass = Math.sqrt(Math.abs(this.scene.objArr[distance[1].obj2Id].m))*this.animZoom;
+			mass = mass < 2 ? 2 : mass;
+			this.ctx2.arc(this.crd(distance[1].x2, 'x'), this.crd(distance[1].y2, 'y'), mass, 0, 7);
+			this.ctx2.fill();
+
+			// The line between approachment points	
+			let gradient = this.ctx2.createLinearGradient(// Line gradient
+				this.crd(distance[1].x, 'x'),//   X1
+				this.crd(distance[1].y, 'y'),//   Y1
+				this.crd(distance[1].x2, 'x'),//  X2
+				this.crd(distance[1].y2, 'y'));// Y2
+			gradient.addColorStop(0, this.scene.newObjColor.state); // New object color
+			gradient.addColorStop(1, this.scene.objArr[distance[1].obj2Id].color); // Second object color
+			this.ctx2.strokeStyle = gradient;
+			this.ctx2.lineWidth = 2; // Line width between approachment points
+			this.ctx2.beginPath();
+			this.ctx2.moveTo(this.crd(distance[1].x, 'x'), this.crd(distance[1].y, 'y'));
+			this.ctx2.lineTo(this.crd(distance[1].x2, 'x'), this.crd(distance[1].y2, 'y'));
+			this.ctx2.stroke();
+			this.ctx2.globalAlpha = 1;		
+		}
 
 		// Draw trajectory lines
 		// Line dash settings
 		let dashLineLen = 2; // Dash pattern line length
 		let dashSpaceLen = 3; // Dash pattern space length
-		let trajectoryEndSmooth = (this.#width + this.#height) / 2; // Trajectory end smooth length
+		let trajectoryEndSmooth = 300; // Trajectory end smooth length
 		for (let trace = 0; trace < trajectoryTraces.length; trace ++){
 			if (trajectoryTraces[trace] !== undefined){ // Don't draw if the object is locked
 				let R, color;
@@ -391,8 +393,8 @@ export default class Camera{
 					color  = this.scene.newObjColor.state;
 					R = 2;
 				} else { // Set styles to objects trajectory trace
-					color = "#555555";
-					R = 1.2;
+					color = "#999999";
+					R = 1;
 				}
 				// Dashed line
 				let dashPattern = []; // Dashed line pattern array
@@ -501,17 +503,19 @@ export default class Camera{
 			} else {
 				this.#visualObjectSelectAnimation -= 0.5;
 			}
-
-			this.ctx2.beginPath();
-			this.ctx2.globalAlpha = alpha;
-			this.ctx2.fillStyle = color;
-			this.ctx2.arc(
-				(this.crd(this.scene.objArr[selectObjId].x, 'x')), 
-				(this.crd(this.scene.objArr[selectObjId].y, 'y')), 
-				Math.sqrt(Math.abs(this.scene.objArr[selectObjId].m)) * this.animZoom + this.#visualObjectSelectAnimation, 
-				0, 7);
-			this.ctx2.fill();
-
+			if (alpha > 0){
+				// Fill circle
+				this.ctx2.beginPath();
+				this.ctx2.globalAlpha = alpha;
+				this.ctx2.fillStyle = color;
+				this.ctx2.arc(
+					(this.crd(this.scene.objArr[selectObjId].x, 'x')), 
+					(this.crd(this.scene.objArr[selectObjId].y, 'y')), 
+					Math.sqrt(Math.abs(this.scene.objArr[selectObjId].m)) * this.animZoom + this.#visualObjectSelectAnimation, 
+					0, 7);
+				this.ctx2.fill();
+			}
+			// Stroke circle
 			this.ctx2.beginPath();
 			this.ctx2.globalAlpha = 1;
 			this.ctx2.strokeStyle = color;
@@ -526,8 +530,8 @@ export default class Camera{
 	}
 
 	crd (coord, axis){		// Cursor position
-		let sCtrX = this.#width/2 - this.ax;
-		let sCtrY = this.#height/2 - this.ay;
+		let sCtrX = this.#resolutionX/2 - this.ax;
+		let sCtrY = this.#resolutionY/2 - this.ay;
 
 		switch (axis){
 			case 'x': return coord*this.animZoom + sCtrX - this.ax*(this.animZoom-1);
@@ -590,25 +594,26 @@ export default class Camera{
 		if (!col){
 			canvas.globalAlpha = 0.01;
 			canvas.fillStyle = '#000000';
-			canvas.fillRect(0, 0, this.width, this.height);
+			canvas.fillRect(0, 0, this.resolutionX, this.resolutionY);
 			canvas.globalAlpha = 1;
 		} else {
-			canvas.clearRect(0, 0, this.width, this.height);
+			canvas.clearRect(0, 0, this.resolutionX, this.resolutionY);
 		}
 	}
 	clear2(){
 		// console.log('clear layer 2');
-		this.ctx2.clearRect(0, 0, this.width, this.height);
+		this.ctx2.clearRect(0, 0, this.resolutionX, this.resolutionY);
 		delete this.canv2.changed;
 	}
 	clear3(){
 		//console.log('clear layer 3');
-		this.ctx.clearRect(0, 0, this.width, this.height);
+		this.ctx.clearRect(0, 0, this.resolutionX, this.resolutionY);
 	}
 	//Draw cross function
 	drawCross(x, y, width = 1, size = 5, color = '#ff0000', canvObj = this.ctx2){
 		canvObj.strokeStyle = '#000000';
 		canvObj.lineWidth = 2;
+		canvObj.lineCap = 'round';
 		for (let i = 0; i < 2; i++){
 			canvObj.beginPath();
 			canvObj.moveTo(x - size, y - size);
@@ -619,6 +624,7 @@ export default class Camera{
 			canvObj.strokeStyle = color;
 			canvObj.lineWidth = width;
 		}
+		canvObj.lineCap = 'butt';
 	}
 
 }

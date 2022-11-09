@@ -8,7 +8,6 @@ onmessage = function (e) {
 	g = e.data.g;
 	collisionType = e.data.collisionType;
 	collidedObjectsIdList = []; // Array of objects IDs to delete
-	changedParameterAfterCollisionOjbArr = []; // Array of objects IDs the properties of which have been changed after collision
 	for (let objectId of e.data.task){
 		objectsArray[objectId].vx = objectsArray[objectId].vy = 0;
 		calculate({

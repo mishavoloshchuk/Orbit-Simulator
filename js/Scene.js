@@ -77,7 +77,10 @@ export default class Scene {
 							if (!this.workersJobDone){
 								this.frameCounter ++;
 								callback && callback(objectsArray, this.collidedObjectsIdList, interactMode, collisionType, timeSpeed, 'multiThread');
-								//this.frame();
+								if (allowCompute){
+									allowCompute = false;
+									this.frame();
+								}
 								this.collidedObjectsIdList = [];
 							}
 						}
@@ -293,12 +296,12 @@ export default class Scene {
 	forceToCircularOrbit(px, py, objId){
 		if (this.objArr[objId]){
 			let R = this.rad(this.camera.screenPix(px, 'x'), this.camera.screenPix(py, 'y'), this.camera.screenPix(this.objArr[objId].x, 'x'), this.camera.screenPix(this.objArr[objId].y, 'y'))*this.camera.animZoom;
-			let V = Math.sqrt((this.objArr[objId].m*10)*(R)/this.g.state);
+			let V = Math.sqrt((this.objArr[objId].m*5)*(R)/this.g.state);
 			let a = this.objArr[objId].x - px;
 			let b = this.objArr[objId].y - py;
 			let sin = b/R, cos = a/R;
-			let svx = -(sin/V)*this.objArr[objId].m*10;
-			let svy = (cos/V)*this.objArr[objId].m*10;
+			let svx = -(sin/V)*this.objArr[objId].m*5;
+			let svy = (cos/V)*this.objArr[objId].m*5;
 			//if (this.objArr[objId].main_obj){
 			//	let object = this.objArr[objId].main_obj;
 			//	while (this.objArr[object].main_obj){
