@@ -58,7 +58,7 @@ export default class Camera{
 		this.canv2.style.zIndex = -2;
 		this.canv2.innerHTML = 'Your browser does not support canvas!';
 		this.layersDiv.appendChild(this.canv2);
-		this.ctx2 = this.canv2.getContext('2d');
+		this.ctx2 = this.canv2.getContext('2d', {willReadFrequently: false});
 
 		this.canv3 = document.createElement('canvas');
 		this.canv3.id = 'layer2_cam'+this.cameraId;
@@ -224,7 +224,7 @@ export default class Camera{
 					this.ctx.lineCap = 'butt';
 					this.ctx.lineJoin = 'bevel';
 				}
-				// Separate the traces of objectsz
+				// Separate the traces of objects
 				this.ctx.globalCompositeOperation = 'destination-out';
 				this.ctx.fillStyle = "#ffffff";
 				this.ctx.beginPath();

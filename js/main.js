@@ -406,6 +406,7 @@ window.onload = function(){
 	})
 	//Mouse events =========================================================
 	$('.renderLayer').mousedown(function(event, touch){
+		// Touch
 		if (touch){
 			[mouse.leftDownX, mouse.leftDownY] = [touch.targetTouches[0].clientX, touch.targetTouches[0].clientY];
 			multiTouch ++;
@@ -416,7 +417,11 @@ window.onload = function(){
 			[mouse.leftDownX, mouse.leftDownY] = [event.clientX, event.clientY];
 		}
 
+		// Set cursor position
+		[mouse.x, mouse.y] = [event.clientX, event.clientY];
 		scene.mpos[0] = event.clientX; scene.mpos[1] = event.clientY;
+
+		// Left mouse down
 		if (event.which == 1 || touch){
 			mouse.leftDown = true;
 
@@ -460,6 +465,7 @@ window.onload = function(){
 				}
 			}
 		}
+		// Middle mouse down
 		if (event.which == 2){
 			mouse.middleDown = true;
 			scene.mpos[0] = event.clientX; scene.mpos[1] = event.clientY;
@@ -467,6 +473,7 @@ window.onload = function(){
 			scene.camera.Target = false;
 			scene.camera.animation = true;
 		}
+		// Right mouse down
 		if (event.which == 3){
 			mouse.rightDown = true;
 			if (mbut == 'create' && mouse.leftDown){
@@ -482,7 +489,10 @@ window.onload = function(){
 			event.clientX = mouse.x;
 			event.clientY = mouse.y;
 		}
+		// Set cursor position
+		[mouse.x, mouse.y] = [event.clientX, event.clientY];
 		avTouchPoint.xd = avTouchPoint.yd = NaN;
+		// Left mouse up
 		if (event.which == 1 || touch){
 			mouse.leftDown = false;
 			[mouse.leftUpX, mouse.leftUpY] = [event.clientX, event.clientY] // Set cursor mouseUp position
@@ -530,21 +540,24 @@ window.onload = function(){
 				switcher.sel_orb_obj = false;
 				mbut = 'create';
 			}
-		};
+		}
+		// Middle mouse up
 		if (event.which == 2 || !mscam){
 			mouse.middleDown = false;
 			menu_open_restore();
 		}
-		if (touch){
-			multiTouch --;
-			mscam = multiTouch != 0 ? false : true;
-		}
+		// Right mouse up
 		if (event.which == 3){
 			mouse.rightDown = false;
 			if (mouse.leftDown){
 				launchPowerLabel.style.display = 'block';
 				launchPowerLabel.innerHTML = '0';
 			}
+		}
+		// Touch up
+		if (touch){
+			multiTouch --;
+			mscam = multiTouch != 0 ? false : true;
 		}
 	});	
 
