@@ -51,7 +51,7 @@ window.onload = function(){
 	this.frameTime = [0, Date.now()]; // Frametime
 	let renderStopLatency; // Frames to render after render disabled
 
-	//Camera
+	// Camera touch control
 	var prev_cam_x = 0;
 	var prev_cam_y = 0;
 	var zm_prev = 1;
@@ -88,7 +88,7 @@ window.onload = function(){
 	choise_restore('traj_mode', 'traj_mode2', 'radio');
 
 	function allowRender(){
-		scene.objArrChanges = true;
+		scene.activCam.allowFrameRender = true;
 	}
 	// MENU INPUTS \/ \/ \/
 	// new UserInput({type: '', id: '', stateSaving: true}),
@@ -105,7 +105,7 @@ window.onload = function(){
 	newObjLock = new UserInput({type: 'checkbox', id: 'objLckCeck', initState: false}), // Menu lock created object input
 	pauseWhenCreatingObject = new UserInput({type: 'checkbox', id: 'new_obj_pause', stateSaving: true, initState: true, callback: (val, elem)=>{elem.prevPauseState = false}}), // Menu pause when user add object input
 	launchForce = new UserInput({type: 'range', id: 'launch_power', stateSaving: true, callback: (val)=>{lnch_pwr_span.innerHTML = Math.round(powerFunc(val)*1000)/1000; mouse.move = true;}, eventName: 'input'}), // Menu launch power value input
-	showDistanceFromCursorToMainObj = new UserInput({type: 'checkbox', id: 'vis_distance_check', stateSaving: true, callback: ()=>{ launchPowerLabel.style.display = 'none'; scene.camera.clear2(); }}), // Menu visual distance
+	showDistanceFromCursorToMainObj = new UserInput({type: 'checkbox', id: 'vis_distance_check', stateSaving: true, callback: ()=>{ launchPowerLabel.style.display = 'none'; scene.camera.clearLayer2(); }}), // Menu visual distance
 	//
 	showNewObjTrajectory = new UserInput({type: 'checkbox', id: 'traj_prev_check', stateSaving: true, initState: true, callback: (val)=>{
 		additionalTrajectoryMenu.style.display = val ? 'initial' : 'none'; // Show or hide additional menu
@@ -133,8 +133,8 @@ window.onload = function(){
 		}
 		if (elem.prevState != val){ // If state changed
 			addFrameBeginTask(()=>{
-				scene.camera.clear('#000000');
-				scene.camera.clear3();
+				scene.camera.clearLayer1();
+				scene.camera.clearLayer3();
 				allowRender();
 			}); // Clear render layers
 		}
@@ -171,22 +171,20 @@ window.onload = function(){
 	}, }),
 	// Set background darkness
 	backgroundDarkness = new UserInput({type: 'range', id: 'bg_darkness', stateSaving: true, eventName: 'input', callback: (state, elem)=>{
-		if (tracesMode.state == 1){
-			if (state == 0) { // If backgroundDarkness state value = 0 then copy imageData from canvas layer 3 to canvas layer 1 and hide canvas layer 3
-				// scene.camera.ctx.putImageData(scene.camera.ctx3.getImageData(0,0,scene.camera.canv0.resolutionX,scene.camera.canv0.resolutionY),0,0);
-				// scene.camera.ctx3.clearRect(0,0,scene.camera.canv0.resolutionX,scene.camera.canv0.resolutionY);
-				scene.camera.canv3.style.display = background_image.style.display = 'none';
-				traj_menu.children.additionalTrajectoryOptions1.setAttribute('disabled', '');
-				scene.objArrChanges = true; // Render
-				tracesMode.state = tracesMode.state; // Refresh trace mode menu
-			} else if (!elem.prevState) { // If backgroundDarkness previous state value = 0 then copy imageData from canvas layer 1 to canvas layer 3 and display canvas layer 3
-				// scene.camera.ctx3.putImageData(scene.camera.ctx.getImageData(0,0,scene.camera.canv0.resolutionX,scene.camera.canv0.resolutionY),0,0);
-				// scene.camera.ctx.clearRect(0,0,scene.camera.canv0.resolutionX,scene.camera.canv0.resolutionY);
-				scene.camera.canv3.style.display = background_image.style.display = '';
-				traj_menu.children.additionalTrajectoryOptions1.removeAttribute('disabled');
-				scene.objArrChanges = true; // Render
-				tracesMode.state = tracesMode.state; // Refresh trace mode menu
-			}
+		if (state == 0) { // If backgroundDarkness state value = 0 then copy imageData from canvas layer 3 to canvas layer 1 and hide canvas layer 3
+			// scene.camera.ctx.putImageData(scene.camera.ctx3.getImageData(0,0,scene.camera.canv0.resolutionX,scene.camera.canv0.resolutionY),0,0);
+			scene.camera.ctx3.clearRect(0,0,scene.camera.resolutionX,scene.camera.resolutionY);
+			scene.camera.canv3.style.display = background_image.style.display = 'none';
+			traj_menu.children.additionalTrajectoryOptions1.setAttribute('disabled', '');
+			scene.activCam.allowFrameRender = true; // Render
+			tracesMode.state = tracesMode.state; // Refresh trace mode menu
+		} else if (!elem.prevState) { // If backgroundDarkness previous state value = 0 then copy imageData from canvas layer 1 to canvas layer 3 and display canvas layer 3
+			// scene.camera.ctx3.putImageData(scene.camera.ctx.getImageData(0,0,scene.camera.canv0.resolutionX,scene.camera.canv0.resolutionY),0,0);
+			scene.camera.ctx.clearRect(0,0,scene.camera.resolutionX,scene.camera.resolutionY);
+			scene.camera.canv3.style.display = background_image.style.display = '';
+			traj_menu.children.additionalTrajectoryOptions1.removeAttribute('disabled');
+			scene.activCam.allowFrameRender = true; // Render
+			tracesMode.state = tracesMode.state; // Refresh trace mode menu
 		}
 		background_image.style.opacity = state;
 	}, }),
@@ -305,11 +303,6 @@ window.onload = function(){
 	let avTouchPoint = {x: NaN, y: NaN, xd: NaN, yd: NaN};
 	let mscam = true;
 
-	// Clear trace delay
-	var clrDelay = false;
-	var clrDTim = 75/((1+1/scene.camera.animationDuration)-1); // Time to clear, after camera move animation
-	var clrTmt = setTimeout(function(){clrDelay = false}, clrDTim);
-
 	window.onresize = function(){
 		scene.camera.resolutionX = window.innerWidth;
 		scene.camera.resolutionY = window.innerHeight;
@@ -379,7 +372,7 @@ window.onload = function(){
 				if (pauseWhenCreatingObject.state){
 					pauseState = pauseWhenCreatingObject.prevPauseState;
 				}
-				scene.camera.clear2();
+				scene.camera.clearLayer2();
 			}
 
 			mouse.leftDown = false;
@@ -390,10 +383,6 @@ window.onload = function(){
 				avTouchPoint.yd = avTouchPoint.y;
 				zm_cff = touchZoom;
 			}
-
-			clrDelay = true;
-			clearTimeout(clrTmt);
-			clrTmt = setTimeout(function(){clrDelay = false;}, clrDTim);
 
 			scene.camera.zoom = scene.camera.animZoom = zm_prev / Math.pow(Math.sqrt(zm_cff) / Math.sqrt(touchZoom), 2); // Zoom
 			if (zoomToCursor.state){ // If no zoom to center
@@ -478,7 +467,7 @@ window.onload = function(){
 			mouse.rightDown = true;
 			if (mbut == 'create' && mouse.leftDown){
 				launchPowerLabel.style.display = 'none';
-				scene.camera.clear2();		
+				scene.camera.clearLayer2();		
 			}
 		}
 	});
@@ -523,17 +512,14 @@ window.onload = function(){
 				if (pauseWhenCreatingObject.state){
 					pauseState = pauseWhenCreatingObject.prevPauseState;
 				}
-				scene.camera.clear2();
+				scene.camera.clearLayer2();
 			}
 			if (mbut == 'camera' && swch.s_track){
 				scene.camera.Target = scene.objectSelect('nearest', scene.camera.Target);
 				scene.camera.switchTarget = true;
 				scene.camera.animation = true;
 				setTimeout(()=>{scene.camera.animation = false; scene.camera.switchTarget = false;}, 400);
-				scene.camera.clear('#000000');
-				clrDelay = true;
-				clearTimeout(clrTmt);
-				clrTmt = setTimeout(function(){clrDelay = false;}, clrDTim);
+				scene.camera.clearLayer1();
 			}
 			if (mbut == 'sel_orb_obj'){
 				scene.objIdToOrbit = scene.objectSelect();
@@ -591,13 +577,10 @@ window.onload = function(){
 					scene.objArr[mov_obj].x = (event.clientX - scene.mpos[0])/scene.camera.animZoom + scene.mpos[2]; // New position X
 					scene.objArr[mov_obj].y = (event.clientY - scene.mpos[1])/scene.camera.animZoom + scene.mpos[3]; // New position Y					
 				}
-				scene.objArrChanges = true;
+				scene.activCam.allowFrameRender = true;
 			}
 		}
 		if (mouse.middleDown){
-			clrDelay = true;
-			clearTimeout(clrTmt);
-			clrTmt = setTimeout(function(){clrDelay = false;}, clrDTim);
 			scene.camera.x += (mouse.x - event.clientX)/scene.camera.animZoom;
 			scene.camera.y += (mouse.y - event.clientY)/scene.camera.animZoom;
 			let mstate = menu_state;
@@ -615,44 +598,14 @@ window.onload = function(){
 			scene.mouse_coords[0] = scene.mouse_coords [1] = false;
 		}
 		if (showDistanceFromCursorToMainObj.state){
-			scene.camera.clear2();
+			scene.camera.clearLayer2();
 		}
 	};
 	$('*').bind('contextmenu', function(e) {
 		return false;
-	});
-	//End mouse events ============
-	$('input').on('input change', function(e){
-		//alert($(this).attr('id'));
-		chck = $(this).attr('id');
-		let inp_name = $(this).attr('name');
-		let eti = e.type == 'input'; // If input type = Input
-		let etch = e.type == 'change'; // If input type = Change
+	}); //===================================================================================
 
-		if (chck == 'lck_edit_chbox' && scene.objArr[swch.edit_obj]){
-			if (document.getElementById(chck).checked){
-				scene.objArr[swch.edit_obj].lock = true;
-			} else {
-				scene.objArr[swch.edit_obj].lock = false;
-			}
-			if (swch.edit_obj == 0){ // ID of main object
-				sessionStorage['sun_lck'] = scene.objArr[swch.edit_obj].lock;
-			}
-		} else
-		if (chck == 'select_file'){
-			var selectedFile = $('#select_file')[0].files[0];
-			if (selectedFile !== undefined){
-				readFile(document.getElementById('select_file'));
-			}
-		}
-		/*
-		 else
-		if (chck == ''){
-			
-		}
-		*/
-	});
-
+	// Frame control
 	let frameInterval;
 	this.allowCompute = false;
 	frameControl();
@@ -670,6 +623,7 @@ window.onload = function(){
 		}
 	}
 	function frame(){
+		scene.camera.frame();
 		// Run all functions from frameTasks array
 		if (!scene.workersJobDone){
 			frameTasks.forEach((task)=>{
@@ -681,9 +635,6 @@ window.onload = function(){
 		if (!scene.objArr[scene.objIdToOrbit]){
 			scene.objIdToOrbit = scene.objectSelect('biggest');		
 		}
-
-		// Clear delay
-		if (clrDelay){ scene.camera.clear(1) }
 
 		// Set move cursor style
 		if (mouse.middleDown || mbut == 'move'){scene.camera.layersDiv.style.cursor = "move";}else{scene.camera.layersDiv.style.cursor = "default";};
@@ -705,7 +656,7 @@ window.onload = function(){
 		}
 		fpsIndicator.measure();
 
-		if (scene.objArrChanges || clrDelay){
+		if (scene.activCam.allowFrameRender){
 			scene.camera.renderObjects(scene.world);
 			renderStopLatency = 125; // Count of frames to render after render is disabled
 		} else {
@@ -717,7 +668,7 @@ window.onload = function(){
 		}
 
 		if (scene.camera.canv2.visualSelect){
-			scene.camera.clear2();
+			scene.camera.clearLayer2();
 			delete scene.camera.canv2.visualSelect;
 		}
 
@@ -748,7 +699,7 @@ window.onload = function(){
 		if (mbut == 'create' 
 			&& mouse.leftDown 
 			&& !mouse.rightDown 
-			&& (mouse.move || (!pauseWhenCreatingObject.state && scene.objArrChanges)
+			&& (mouse.move || (!pauseWhenCreatingObject.state && scene.activCam.allowFrameRender)
 			)
 			){
 			if (!(Math.abs(mouse.leftDownX-mouse.x) <= dis_zone && Math.abs(mouse.leftDownY-mouse.y) <= dis_zone)){
@@ -766,7 +717,7 @@ window.onload = function(){
 			}
 		}
 
-		scene.objArrChanges = false;
+		scene.activCam.allowFrameRender = false;
 		mouse.move = false;
 		return true;
 	}
@@ -827,9 +778,6 @@ window.onload = function(){
 	//Scene scale
 	scene.camera.layersDiv.addEventListener('wheel', function(e){
 		if (!e.ctrlKey && !mov_obj && !(mouse.leftDown && mbut == 'create')){
-			clrDelay = true;
-			clearTimeout(clrTmt);
-			clrTmt = setTimeout(function(){clrDelay = false;}, clrDTim);
 			if (!mouse.middleDown){
 				if (e.deltaY > 0){
 					scene.camera.zoomOut();
@@ -894,15 +842,9 @@ window.onload = function(){
 					}
 					break;
 				case 107:  // (NumPad +) Zoom in
-					clrDelay = true;
-					clearTimeout(clrTmt);
-					clrTmt = setTimeout(function(){clrDelay = false}, clrDTim);
 					scene.camera.zoomIn(2);
 					break;
 				case 109:  // (NumPad -) Zoom out
-					clrDelay = true;
-					clearTimeout(clrTmt);
-					clrTmt = setTimeout(function(){clrDelay = false}, clrDTim);
 					scene.camera.zoomOut(2);
 					break;
 			}
@@ -950,7 +892,7 @@ window.onload = function(){
 		mbut = $(this).attr('id');
 		let btn_id = mbut;
 		if (mbut == 'clear'){
-			scene.camera.clear('#000');
+			scene.camera.clearLayer1();
 			for (let i in scene.objArr){
 				scene.objArr[i].trace = [];
 			}
@@ -1116,9 +1058,6 @@ window.onload = function(){
 			}		
 		}
 		if (cbut == 'clear_camera_settings'){
-			clrDelay = true;
-			clearTimeout(clrTmt);
-			clrTmt = setTimeout(function(){clrDelay = false}, clrDTim);
 			swch.t_object = false;
 			scene.camera.Target = false;
 			scene.camera.x = 0; scene.camera.y = 0;
@@ -1218,9 +1157,9 @@ window.onload = function(){
 	}
 
 	function sumArray(arr){
-		let val = 0;
-		for (let i in arr){val += arr[i];}
-		return val;
+		let sum = 0;
+		for (let val of arr){ sum += val }
+		return sum;
 	}
 
 	function rad(x1, y1, x2, y2){ return Math.sqrt(Math.pow((x1 - x2), 2) + Math.pow((y1 - y2), 2)) }
@@ -1282,7 +1221,14 @@ window.onload = function(){
 			$('.time_speed').css({right: 10, top: 130});
 		}	
 	}
-	//Запись файла
+	// File select listener
+	document.getElementById('select_file').addEventListener('change', function(e){
+		let selectedFile = $('#select_file')[0].files[0];
+		if (selectedFile !== undefined){
+			readFile(selectedFile);
+		}		
+	});
+	// Write file
 	function writeFile(name, data = '') {
 		let download = document.createElement("a");
 		download.href = 'data:application/txt;charset=utf-8,' + encodeURIComponent(data);
@@ -1294,14 +1240,13 @@ window.onload = function(){
 		document.body.removeChild(download);
 	}
 	// Read file
-	function readFile(input) {
-		let file = input.files[0];
+	function readFile(file) {
 		let reader = new FileReader();
 		reader.readAsText(file);
 		reader.onload = function() {
 			try {
 			  	let file_data = JSON.parse(reader.result);
-				console.log('file loaded');
+				console.log('File loaded successfully!');
 			  	scene.objArr = file_data.objArr;
 			  	interactMode.state = file_data.interactMode || 0;
 			  	gravitationMode.state = file_data.gravitationMode || 1;
@@ -1309,14 +1254,15 @@ window.onload = function(){
 			  	collisionMode.state = file_data.collisionMode || 0;
 			  	timeSpeed.state = file_data.timeSpeed ? file_data.timeSpeed : 1;
 			  	scene.show_obj_count();
-			  	scene.objArrChanges = true;
-			  	scene.camera.clear("#000000");
+			  	scene.activCam.allowFrameRender = true;
+			  	scene.camera.clearLayer3();
 			} catch(err){
+				console.error(err);
 				alert('Несовместимый файл!');
 			}
-			document.getElementById('select_file').value = '';
 		};
-		reader.onerror = function() {
+		reader.onerror = function(err) {
+			console.error(err);
 			alert("Ошибка чтения файла!");
 		};
 	}

@@ -6,7 +6,6 @@ export default class Scene {
 	collidedObjectsIdList = []; // Collisions list
 	#workerThreads = []; // Threads workers
 	objIdToOrbit = 0; // The ID of the object around which the new object will orbit
-	objArrChanges = true; // Forces render frame if true and frame not render
 
 	constructor() {
 		this.dis_zone = 5;
@@ -199,7 +198,7 @@ export default class Scene {
 				} else {// If object not locked
 					object.x += object.vx*timeSpeed;
 					object.y += object.vy*timeSpeed;
-					this.objArrChanges = objArr == this.objArr && (object.vx || object.vy) ? true : false;
+					this.activCam.allowFrameRender = objArr == this.objArr && (object.vx || object.vy) ? true : false;
 				}
 			} else {
 				object.vx = object.vy = 0;
@@ -259,7 +258,7 @@ export default class Scene {
 			main_obj: main_obj
 		};
 		this.show_obj_count();
-		this.objArrChanges = true;
+		this.activCam.allowFrameRender = true;
 		// If object created return its ID, else return false
 		return objArr[newObjId] ? newObjId : false;
 	}
@@ -283,7 +282,7 @@ export default class Scene {
 			if (objectId < this.camera.Target) this.camera.Target --;
 			if (objectId < mov_obj) mov_obj --;
 			this.show_obj_count();
-			this.objArrChanges = true;
+			this.activCam.allowFrameRender = true;
 			deletedObjectsList = deletedObjectsList.concat(objArr.splice(objectId, 1));
 		}
 		return deletedObjectsList;

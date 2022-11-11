@@ -20,8 +20,10 @@ export default class Camera{
 	#visualObjectSelectAnimation = 10;
 	#visualObjectSelectAnimDir = 0;
 
-	#clrDelay = false;
-	x = 0; y = 0; // Target camera position
+	#x = 0; #y = 0; // Target camera position
+	get x() { return this.#x } get y() { return this.#y } // Get x, y handler
+	set x(pos) { this.#x = pos; this.cameraChangedState(); } // Set x handler
+	set y(pos) { this.#y = pos; this.cameraChangedState(); } // Set y handler
 	ax = 0; ay = 0; // Actualy camera postiton with animation
 	lastX = 0; lastY = 0; // Last camera position
 	zoom = 1; // Target zoom
@@ -34,10 +36,16 @@ export default class Camera{
 	animationDuration = 5; // Animation duration
 	animation = true; // Enable camera animation
 	renderedSceneFrames = 0;
+	allowFrameRender = true; // Forces render frame if true and frame not render
+	#clrDelay = false;
+	#clrDTim = 75/(1 + 1/this.animationDuration - 1); // Time to clear, after camera move animation
+	#clrTmt = setTimeout(()=>{ this.#clrDelay = false }, this.#clrDTim);
+	cameraChangedState(){
+		this.#clrDelay = true;
+		clearTimeout(this.#clrTmt);;
+		this.#clrTmt = setTimeout(()=>{ this.#clrDelay = false }, this.#clrDTim);
+	}
 
-	menu_names = {create: 'menu_options', delete: 'del_menu_options', edit: 'edit_menu',
-		help: 'help_menu', settings: 'settings_menu', camera: 'camera_menu', trajectory: 'traj_menu',
-		world_settings: 'world_settings_men'}
 	constructor(scene){
 		this.scene = scene;
 		this.layersDiv = document.createElement('div');
@@ -80,15 +88,24 @@ export default class Camera{
 		Camera.cameraId ++;
 	}
 
+	frame(){
+		// If camera changed position or zoom
+		if (this.#clrDelay){ 
+			scene.camera.clearLayer3(); 
+			this.allowFrameRender = true;
+		}
+	}
+
 	//Draw
 	renderObjects(){
+		// console.log('Render objects');
 		let scn = this.scene;
 		if (scn.tracesMode.state === '1'){
-			this.clear();
+			this.tracesMode1Wiping();
 		} else {
-			this.clear3();
+			this.clearLayer3();
 		}
-		if (scn.backgroundDarkness.state !== 0) this.clear3();
+		if (scn.backgroundDarkness.state !== 0) this.clearLayer1();
 		this.animFunc();
 		for (let objectId in scn.objArr){
 			let obj = scn.objArr[objectId];
@@ -454,7 +471,7 @@ export default class Camera{
 	}
 
 	visual_trajectory(){
-		this.clear2();
+		this.clearLayer2();
 		let mcx = this.scene.mouse_coords[0] ? this.scene.mouse_coords[0] - (this.scene.mouse_coords[0] - mouse.x)/10 : mouse.x;
 		let mcy = this.scene.mouse_coords[1] ? this.scene.mouse_coords[1] - (this.scene.mouse_coords[1] - mouse.y)/10 : mouse.y;
 
@@ -482,7 +499,7 @@ export default class Camera{
 	//Визуальное выделение объекта
 	visualObjectSelect(mode, color, objectId, alpha = 0.3) {
 		this.canv2.visualSelect = true;
-		this.clear2();
+		this.clearLayer2();
 		if (this.scene.objArr.length){ // If there are objects
 			let selectObjId;
 			if (!this.scene.objArr[objectId]){
@@ -568,6 +585,7 @@ export default class Camera{
 	}
 
 	zoomIn(vl = this.zoomCff){ // Zoom IN. vl is a zoom coeficient
+		this.cameraChangedState();
 		if (this.zoom < 10000){
 			this.zoom *= vl; // Set zoom value
 			if (this.scene.zoomToCursor.state){
@@ -578,6 +596,7 @@ export default class Camera{
 	}
 
 	zoomOut(vl = this.zoomCff){ // Zoom OUT. vl is a zoom coeficient
+		this.cameraChangedState();
 		if (this.zoom > 1.0e-12){
 			this.zoom /= vl; // Set zoom value
 			if (this.scene.zoomToCursor.state){
@@ -587,27 +606,27 @@ export default class Camera{
 		}
 	}
 
-	clear(col){
+	tracesMode1Wiping(){
 		//console.log('clear layer 1');
-		if (this.scene.tracesMode.state == 0){col = '#000000';}
 		let canvas = this.scene.backgroundDarkness.state != 0 ? this.ctx3 : this.ctx;
-		if (!col){
-			canvas.globalAlpha = 0.01;
-			canvas.fillStyle = '#000000';
-			canvas.fillRect(0, 0, this.resolutionX, this.resolutionY);
-			canvas.globalAlpha = 1;
-		} else {
-			canvas.clearRect(0, 0, this.resolutionX, this.resolutionY);
-		}
+		canvas.globalAlpha = 0.01;
+		canvas.fillStyle = '#000000';
+		canvas.fillRect(0, 0, this.resolutionX, this.resolutionY);
+		canvas.globalAlpha = 1;	
 	}
-	clear2(){
+	clearLayer1(col){
+		//console.log('clear layer 1');
+		this.ctx.clearRect(0, 0, this.resolutionX, this.resolutionY);
+	}
+	clearLayer2(){
 		// console.log('clear layer 2');
 		this.ctx2.clearRect(0, 0, this.resolutionX, this.resolutionY);
 		delete this.canv2.changed;
 	}
-	clear3(){
+	clearLayer3(){
 		//console.log('clear layer 3');
-		this.ctx.clearRect(0, 0, this.resolutionX, this.resolutionY);
+		let canvas = this.scene.backgroundDarkness.state != 0 ? this.ctx3 : this.ctx;
+		canvas.clearRect(0, 0, this.resolutionX, this.resolutionY);
 	}
 	//Draw cross function
 	drawCross(x, y, width = 1, size = 5, color = '#ff0000', canvObj = this.ctx2){
