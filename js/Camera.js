@@ -22,14 +22,14 @@ export default class Camera{
 
 	#x = 0; #y = 0; // Target camera position
 	get x() { return this.#x } get y() { return this.#y } // Get x, y handler
-	set x(pos) { this.#x = pos; if (this.Target === null) this.cameraChangedState(); } // Set x handler
-	set y(pos) { this.#y = pos; if (this.Target === null) this.cameraChangedState(); } // Set y handler
+	set x(pos) { this.#x = pos; if (this.Target === undefined) this.cameraChangedState(); } // Set x handler
+	set y(pos) { this.#y = pos; if (this.Target === undefined) this.cameraChangedState(); } // Set y handler
 	ax = 0; ay = 0; // Actualy camera postiton with animation
 	lastX = 0; lastY = 0; // Last camera position
 	zoom = 1; // Target zoom
 	animZoom = 1; // Actualy zoom with animation
 	zoomCff = 1.25; // Zoom coefficient
-	Target = null; // Follow target object
+	Target = undefined; // Follow target object
 	switchTarget = false;
 	animTimeCorrect = 5;
 	animTime = 5;
@@ -167,13 +167,14 @@ export default class Camera{
 	}
 
 	setTarget(objectId){
-		if (!this.scene.objArr[objectId]) objectId = null; // If there is no object with given id
+		if (!this.scene.objArr[objectId]) objectId = undefined; // If there is no object with given id
 		this.Target = objectId;
-		if (objectId !== null){
-		this.switchTarget = true;
-		this.animation = true;
-		setTimeout(()=>{this.animation = objectId === null ? true : false; this.switchTarget = false;}, 400);
-			
+		if (objectId !== undefined){
+			this.switchTarget = true;
+			this.animation = true;
+			setTimeout(()=>{this.animation = false; this.switchTarget = false;}, 400);
+		} else {
+			this.animation = true;
 		}
 	}
 
@@ -194,9 +195,11 @@ export default class Camera{
 			if (obj.m < 0){ obj.color = obCol = this.scene.randomColor(true) } // Random color if object has negative mass
 			let drawRadius = Math.sqrt(Math.abs(obj.m))*this.animZoom; // Object draw radius
 			drawRadius = drawRadius < 0.5 ? 0.5 : drawRadius; // Minimal draw radius
-
-			let dcanv = scn.backgroundDarkness.state != 0 ? this.ctx3 : this.ctx;
-			const enoughObjMove = Math.sqrt(Math.pow(obj.vx, 2) + Math.pow(obj.vy, 2))*this.animZoom > 0.3 ? true : false;
+			// If object screen speed is enough to render or anyhting else 
+			const enoughObjMove = Math.sqrt(Math.pow(obj.vx, 2) + Math.pow(obj.vy, 2))*scn.timeSpeed.state*this.animZoom > 0.1 ? true : false;
+			// Camera target velocity
+			const targetVx = scn.objArr[this.Target] ? scn.objArr[this.Target].vx : 0;
+			const targetVy = scn.objArr[this.Target] ? scn.objArr[this.Target].vy : 0;
 			// Fix object anti-aliasing when backgroundDarkness = 0
 			if (scn.tracesMode.state == 1 && scn.backgroundDarkness.state == 0){	
 				if (// Smooth object edges if true
@@ -208,13 +211,11 @@ export default class Camera{
 						)
 					)
 				){
-					const targetVx = scn.objArr[this.Target] ? scn.objArr[this.Target].vx : 0;
-					const targetVy = scn.objArr[this.Target] ? scn.objArr[this.Target].vy : 0;
 					this.ctx.save();
 					this.ctx.beginPath();
 					this.ctx.fillStyle = '#ffffff';
 					this.ctx.globalCompositeOperation = 'destination-out';
-					this.ctx.arc(this.crd(obj.x-obj.vx*scn.timeSpeed.state+targetVx, 'x'), this.crd(obj.y-obj.vy*scn.timeSpeed.state+targetVy, 'y'), (drawRadius+0.125), 0, 7);
+					this.ctx.arc(this.crd(obj.x, 'x'), this.crd(obj.y, 'y'), (drawRadius+0.125), 0, 7);
 					this.ctx.fill();
 					this.ctx.restore();
 				}
@@ -222,21 +223,23 @@ export default class Camera{
 
 			let traceLength = false;
 			let traceResolution = 1;
-			//Trajectory mode 1 =====
-			if (scn.tracesMode.state == 1 && !obj.lock && this.Target !== objectId){
-				//Target Velocity
-				const targetVx = scn.objArr[this.Target] ? scn.objArr[this.Target].vx : 0;
-				const targetVy = scn.objArr[this.Target] ? scn.objArr[this.Target].vy : 0;
-				dcanv.strokeStyle = obCol;
-				dcanv.lineWidth = drawRadius*(enoughObjMove ? 2 : 1.9);
-				dcanv.lineCap = drawRadius > 1 ? 'round' : 'butt';
-				dcanv.beginPath();
-				dcanv.moveTo(this.crd(obj.x-obj.vx*scn.timeSpeed.state+targetVx, 'x'), this.crd(obj.y-obj.vy*scn.timeSpeed.state+targetVy, 'y'));
-				dcanv.lineTo(this.crd(obj.x, 'x'), this.crd(obj.y, 'y'));
-				dcanv.stroke();
-				dcanv.lineCap = 'butt';
+			// Traces mode 1 =====
+			if (// Draw line if
+				scn.tracesMode.state == 1 // If traces mode = 1
+				&& (!obj.lock || (scn.objArr[this.Target] && !scn.objArr[this.Target].lock)) // If object not locked or camera target not locked
+				&& this.Target !== objectId // If camera target != current object
+			){
+				let canv = scn.backgroundDarkness.state != 0 ? this.ctx3 : this.ctx;
+				canv.strokeStyle = obCol;
+				canv.lineWidth = drawRadius * 2 - (enoughObjMove ? 0 : 1);
+				canv.lineCap = drawRadius > 1 ? 'round' : 'butt';
+				canv.beginPath();
+				canv.moveTo(this.crd(obj.x - obj.vx*scn.timeSpeed.state + targetVx * scn.timeSpeed.state, 'x'), this.crd(obj.y - obj.vy*scn.timeSpeed.state + targetVy * scn.timeSpeed.state, 'y'));
+				canv.lineTo(this.crd(obj.x, 'x'), this.crd(obj.y, 'y'));
+				canv.stroke();
+				canv.lineCap = 'butt';
 			} else
-			//Trajectory mode 2 =====
+			// Traces mode 2 =====
 			if (scn.tracesMode.state == 2 && !obj.lock){
 				let randKff = 0.8;
 				let TLength = obj.trace.length; //Length of trace array
@@ -286,7 +289,7 @@ export default class Camera{
 				}
 				this.ctx.globalCompositeOperation = 'source-over';
 			} else
-			//Trajectory mode 3 =====
+			// Traces mode 3 =====
 			if (scn.tracesMode.state == 3 && !obj.lock){
 				traceResolution = +scn.traceMode3Quality.element.getAttribute('max') + 1 - Math.round(scn.traceMode3Quality.state);
 				traceLength = Math.ceil(scn.powerFunc(scn.traceMode3Length.state) / traceResolution);

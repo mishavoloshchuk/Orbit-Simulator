@@ -458,8 +458,6 @@ window.onload = function(){
 		if (event.which == 2){
 			mouse.middleDown = true;
 			scene.mpos[0] = event.clientX; scene.mpos[1] = event.clientY;
-
-			scene.camera.setTarget(null);
 		}
 		// Right mouse down
 		if (event.which == 3){
@@ -579,7 +577,9 @@ window.onload = function(){
 			scene.camera.x += (mouse.x - event.clientX)/scene.camera.animZoom;
 			scene.camera.y += (mouse.y - event.clientY)/scene.camera.animZoom;
 			let mstate = menu_state;
-			close_all_menus(); menu_state = mstate;
+			close_all_menus(); 
+			menu_state = mstate;
+			scene.camera.setTarget();
 		}
 
 		// Set cursor position
@@ -1050,7 +1050,7 @@ window.onload = function(){
 		if (cbut == 'clear_camera_settings'){
 			swch.t_object = false;
 			scene.camera.animation = true;
-			scene.camera.setTarget(null);
+			scene.camera.setTarget();
 			scene.camera.x = 0; scene.camera.y = 0;
 			scene.camera.zoom = 1;
 			zm_prev = scene.camera.zoom;

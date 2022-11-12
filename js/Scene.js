@@ -141,6 +141,7 @@ export default class Scene {
 				} else {
 					if (objB.m + objA.m == 0){
 						deleteObjectList.push(...collidedObjectsId);
+						if ( collidedObjectsId.includes(+this.camera.Target) && objArr === this.objArr ) this.camera.setTarget();
 						continue;
 					}
 				}
@@ -150,7 +151,9 @@ export default class Scene {
 				}
 
 				objA.m = objA.m + objB.m; // Set new mass to objA
-
+				// Change camera target
+				if (collidedObjectsId[1] == this.camera.Target && objArr === this.objArr) this.camera.setTarget(collidedObjectsId[0]);
+				// Add collided object to deleteObjectList
 				deleteObjectList.push(collidedObjectsId[1]);
 			} else if (collisionType == 1){ // Repulsion
 				// let R = collidedObjectsId[2]; // The distance between objects
@@ -198,7 +201,7 @@ export default class Scene {
 				} else {// If object not locked
 					object.x += object.vx*timeSpeed;
 					object.y += object.vy*timeSpeed;
-					this.activCam.allowFrameRender = objArr == this.objArr && (object.vx || object.vy) ? true : false;
+					this.activCam.allowFrameRender = objArr === this.objArr && (object.vx || object.vy) ? true : false;
 				}
 			} else {
 				object.vx = object.vy = 0;
@@ -285,7 +288,6 @@ export default class Scene {
 	}
 	delObjectCallback(objectId){
 		if (objectId == mov_obj) mov_obj = NaN;
-		if (objectId == this.camera.Target) this.camera.setTarget(null);
 		if (objectId < this.camera.Target) this.camera.Target --;
 		if (objectId < mov_obj) mov_obj --;
 		this.show_obj_count();
@@ -324,7 +326,7 @@ export default class Scene {
 	}
 	//Выбор объекта по функции
 	objectSelect(mode = 'nearest', not){
-		let sel = [Infinity, '', 0];
+		let sel = [Infinity, null, 0];
 		// Last object in array
 		if (mode == 'last_created'){
 			sel[1] = this.objArr.length - 1;
@@ -336,11 +338,11 @@ export default class Scene {
 				let r = rad(mouse.x, mouse.y, this.camera.crd(this.objArr[i].x, 'x'), this.camera.crd(this.objArr[i].y, 'y'));
 				if (r < sel[0] && mode == 'nearest'){
 					sel[0] = r;
-					sel[1] = i;
+					sel[1] = +i;
 				} else 
 				if (r > sel[2] && mode == 'furthest'){
 					sel[2] = r;
-					sel[1] = i;
+					sel[1] = +i;
 				}
 			}
 		}
@@ -349,7 +351,7 @@ export default class Scene {
 			for(let i in this.objArr){
 				if (this.objArr[i].m > sel[2]){
 					sel[2] = this.objArr[i].m;
-					sel[1] = i;
+					sel[1] = +i;
 				}
 			}
 		}
