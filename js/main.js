@@ -46,7 +46,7 @@ window.onload = function(){
 	var pfb = mbut;
 
 	// === ...
-	this.mov_obj = NaN; // Moving object id
+	this.mov_obj = null; // Moving object id
 	this.dis_zone = 5;
 	this.frameTime = [0, Date.now()]; // Frametime
 	let renderStopLatency; // Frames to render after render disabled
@@ -55,7 +55,7 @@ window.onload = function(){
 	var prev_cam_x = 0;
 	var prev_cam_y = 0;
 	var zm_prev = 1;
-	var zm_cff = NaN;
+	var zm_cff = null;
 
 	//Debug
 	this.simulationSpeed = 1;
@@ -459,7 +459,7 @@ window.onload = function(){
 			mouse.middleDown = true;
 			scene.mpos[0] = event.clientX; scene.mpos[1] = event.clientY;
 
-			scene.camera.Target = false;
+			scene.camera.Target = null;
 			scene.camera.animation = true;
 		}
 		// Right mouse down
@@ -480,7 +480,7 @@ window.onload = function(){
 		}
 		// Set cursor position
 		[mouse.x, mouse.y] = [event.clientX, event.clientY];
-		avTouchPoint.xd = avTouchPoint.yd = NaN;
+		avTouchPoint.xd = avTouchPoint.yd = null;
 		// Left mouse up
 		if (event.which == 1 || touch){
 			mouse.leftDown = false;
@@ -493,7 +493,7 @@ window.onload = function(){
 			if (mbut == 'move' && scene.objArr[mov_obj]){
 				scene.objArr[mov_obj].vx = scene.mpos[4];
 				scene.objArr[mov_obj].vy = scene.mpos[5];
-				mov_obj = NaN;
+				mov_obj = null;
 			}
 
 			if (mbut == 'create' && mscam && !mouse.rightDown){
@@ -652,7 +652,7 @@ window.onload = function(){
 			if (scene.objArr[scene.camera.Target]){
 				scene.camera.x = scene.objArr[scene.camera.Target].x;
 				scene.camera.y = scene.objArr[scene.camera.Target].y;
-			} else { scene.camera.Target = false }
+			} else { scene.camera.Target = null }
 		}
 		fpsIndicator.measure();
 
@@ -671,21 +671,21 @@ window.onload = function(){
 			scene.camera.clearLayer2();
 			delete scene.camera.canv2.visualSelect;
 		}
-
+		const nearObjId = scene.objectSelect('nearest');
 		if (mbut == 'delete'){
-			scene.camera.visualObjectSelect(deletingMode.state, '#ff0000');
+			scene.camera.visualObjectSelect(scene.objectSelect(deletingMode.state), '#ff0000');
 		} else
 		if (mbut == 'camera' && swch.s_track){
-			scene.camera.visualObjectSelect('nearest', '#0af', scene.objectSelect('nearest', scene.camera.Target));
+			scene.camera.visualObjectSelect(nearObjId === scene.camera.Target ? null : nearObjId,'#0af');
 		} else
 		if (mbut == 'move'){
-			scene.camera.visualObjectSelect('nearest', '#bbb', mov_obj);
+			scene.camera.visualObjectSelect(nearObjId,'#bbb');
 		} else
 		if (mbut == 'edit' && swch.s_edit){
-			scene.camera.visualObjectSelect('nearest', '#f81', mov_obj, 0);
+			scene.camera.visualObjectSelect(nearObjId, '#f81', 0);
 		} else
 		if (mbut == 'sel_orb_obj' && switcher.sel_orb_obj){
-			scene.camera.visualObjectSelect('nearest', '#bf0', mov_obj);
+			scene.camera.visualObjectSelect(nearObjId,'#bf0');
 		}
 		// Show distance
 		if ((mbut == 'create') && (!mouse.leftDown || (multiTouch > 0 && mbut != 'create')) && showDistanceFromCursorToMainObj.state && mouse.move){
@@ -1059,7 +1059,7 @@ window.onload = function(){
 		}
 		if (cbut == 'clear_camera_settings'){
 			swch.t_object = false;
-			scene.camera.Target = false;
+			scene.camera.Target = null;
 			scene.camera.x = 0; scene.camera.y = 0;
 			scene.camera.animation = true;
 			scene.camera.zoom = 1;
@@ -1226,6 +1226,7 @@ window.onload = function(){
 		let selectedFile = $('#select_file')[0].files[0];
 		if (selectedFile !== undefined){
 			readFile(selectedFile);
+			this.value = '';
 		}		
 	});
 	// Write file

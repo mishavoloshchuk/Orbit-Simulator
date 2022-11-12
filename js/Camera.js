@@ -22,8 +22,8 @@ export default class Camera{
 
 	#x = 0; #y = 0; // Target camera position
 	get x() { return this.#x } get y() { return this.#y } // Get x, y handler
-	set x(pos) { this.#x = pos; this.cameraChangedState(); } // Set x handler
-	set y(pos) { this.#y = pos; this.cameraChangedState(); } // Set y handler
+	set x(pos) { this.#x = pos; if (this.Target === null) this.cameraChangedState(); } // Set x handler
+	set y(pos) { this.#y = pos; if (this.Target === null) this.cameraChangedState(); } // Set y handler
 	ax = 0; ay = 0; // Actualy camera postiton with animation
 	lastX = 0; lastY = 0; // Last camera position
 	zoom = 1; // Target zoom
@@ -37,6 +37,7 @@ export default class Camera{
 	animation = true; // Enable camera animation
 	renderedSceneFrames = 0;
 	allowFrameRender = true; // Forces render frame if true and frame not render
+	wipeColor = '#000000';
 	#clrDelay = false;
 	#clrDTim = 75/(1 + 1/this.animationDuration - 1); // Time to clear, after camera move animation
 	#clrTmt = setTimeout(()=>{ this.#clrDelay = false }, this.#clrDTim);
@@ -88,11 +89,74 @@ export default class Camera{
 		Camera.cameraId ++;
 	}
 
+	crd (coord, axis){ // Get object screen position
+		let sCtrX = this.#resolutionX/2 - this.ax;
+		let sCtrY = this.#resolutionY/2 - this.ay;
+
+		switch (axis){
+			case 'x': return coord*this.animZoom + sCtrX - this.ax*(this.animZoom-1);
+			case 'y': return coord*this.animZoom + sCtrY - this.ay*(this.animZoom-1);
+		}		
+	}
+
+	screenPix(coord, axis){ // Cursor position in world
+		let sCtrX = window.innerWidth/2 - this.ax;
+		let sCtrY = window.innerHeight/2 - this.ay;
+
+		switch (axis){
+			case 'x': return coord/this.animZoom - (sCtrX - this.ax*(this.animZoom-1))/(this.animZoom);
+			case 'y': return coord/this.animZoom - (sCtrY - this.ay*(this.animZoom-1))/(this.animZoom);
+		}
+	}
+
+	animFunc(){
+		let animSpeedCorrected = this.animTimeCorrect*(16/fpsIndicator.frameTime);
+		if (this.switchTarget){
+			this.animTimeCorrect -= (this.animTime-1)/(400/fpsIndicator.frameTime);
+		} else {
+			this.animTimeCorrect = this.animationDuration;
+		}
+		animSpeedCorrected = animSpeedCorrected < 1 ? 1 : animSpeedCorrected;
+		this.animZoom += ((this.zoom-this.animZoom)/animSpeedCorrected);
+		this.lastX = this.ax; this.lastY = this.ay;
+		if (this.animation){
+			this.ax += (this.x-this.ax)/(animSpeedCorrected/(this.zoom/this.animZoom));
+			this.ay += (this.y-this.ay)/(animSpeedCorrected/(this.zoom/this.animZoom));
+		} else {
+			this.ax = this.x; this.ay = this.y;
+		}
+	}
+
+	zoomIn(vl = this.zoomCff){ // Zoom IN. vl is a zoom coeficient
+		this.cameraChangedState();
+		if (this.zoom < 10000){
+			this.zoom *= vl; // Set zoom value
+			if (this.scene.zoomToCursor.state){
+				this.x += (this.screenPix(mouse.x, 'x')-this.x)/(vl/(vl-1));
+				this.y += (this.screenPix(mouse.y, 'y')-this.y)/(vl/(vl-1));
+			}
+		}
+	}
+
+	zoomOut(vl = this.zoomCff){ // Zoom OUT. vl is a zoom coeficient
+		this.cameraChangedState();
+		if (this.zoom > 1.0e-12){
+			this.zoom /= vl; // Set zoom value
+			if (this.scene.zoomToCursor.state){
+				this.x -= (this.screenPix(mouse.x, 'x')-this.x)/(1/(vl-1));
+				this.y -= (this.screenPix(mouse.y, 'y')-this.y)/(1/(vl-1));
+			}
+		}
+	}
+
 	frame(){
 		// If camera changed position or zoom
 		if (this.#clrDelay){ 
 			scene.camera.clearLayer3(); 
 			this.allowFrameRender = true;
+		}
+		if (this.switchTarget){
+			this.cameraChangedState();
 		}
 	}
 
@@ -117,25 +181,19 @@ export default class Camera{
 
 			if (obj.m < 0){ obj.color = obCol = this.scene.randomColor(true) }
 
-			let render = (prevScreenX || prevScreenY);
 			let dcanv = scn.backgroundDarkness.state != 0 ? this.ctx3 : this.ctx;
-			if (scn.tracesMode.state == 1 && !obj.lock){
-				let targetVx = scn.objArr[this.Target] ? scn.objArr[this.Target].vx : 0;
-				let targetVy = scn.objArr[this.Target] ? scn.objArr[this.Target].vy : 0;
-				if (scn.backgroundDarkness.state != 0){
-					if (this.Target != objectId){
-						this.ctx3.fillStyle = obCol;
-						this.ctx3.beginPath();
-						this.ctx3.arc(this.crd(obj.x-obj.vx*scn.timeSpeed.state+targetVx, 'x'), this.crd(obj.y-obj.vy*scn.timeSpeed.state+targetVy, 'y'), obj_rad, 0, 7);
-						this.ctx3.fill();
-					}
-				} else {
-					if (!render && objectId !== mov_obj){
-						this.ctx.beginPath();
-						this.ctx.fillStyle = '#000000';
-						this.ctx.arc(this.crd(obj.x-obj.vx*scn.timeSpeed.state+targetVx, 'x'), this.crd(obj.y-obj.vy*scn.timeSpeed.state+targetVy, 'y'), (obj_rad+0.125), 0, 7);
-						this.ctx.fill();
-					}
+			// Fix anti-aliasing objects when backgroundDarkness = 0
+			if (scn.tracesMode.state == 1 && scn.backgroundDarkness.state == 0){
+				if ((!scn.objArr[this.Target] && obj.lock) // If there is no camera target and object locked
+					||( scn.objArr[this.Target] 
+						&& ((!scn.objArr[this.Target].lock && !obj.lock) || scn.objArr[this.Target].lock) )
+					){
+					const targetVx = scn.objArr[this.Target] ? scn.objArr[this.Target].vx : 0;
+					const targetVy = scn.objArr[this.Target] ? scn.objArr[this.Target].vy : 0;
+					this.ctx.beginPath();
+					this.ctx.fillStyle = this.wipeColor;
+					this.ctx.arc(this.crd(obj.x-obj.vx*scn.timeSpeed.state+targetVx, 'x'), this.crd(obj.y-obj.vy*scn.timeSpeed.state+targetVy, 'y'), (obj_rad+0.125), 0, 7);
+					this.ctx.fill();
 				}
 			}
 
@@ -145,8 +203,8 @@ export default class Camera{
 			if (scn.tracesMode.state == 1){
 				if (!obj.lock){//prev_t_obj != objectId
 					//Target Velocity
-					let targetVx = scn.objArr[this.Target] ? scn.objArr[this.Target].vx : 0;
-					let targetVy = scn.objArr[this.Target] ? scn.objArr[this.Target].vy : 0;
+					const targetVx = scn.objArr[this.Target] ? scn.objArr[this.Target].vx : 0;
+					const targetVy = scn.objArr[this.Target] ? scn.objArr[this.Target].vy : 0;
 					dcanv.strokeStyle = obCol;
 					dcanv.lineWidth = obj_rad*2;
 					dcanv.lineCap = obj_rad > 1 ? 'round' : 'butt';
@@ -497,16 +555,12 @@ export default class Camera{
 	}
 
 	//Визуальное выделение объекта
-	visualObjectSelect(mode, color, objectId, alpha = 0.3) {
-		this.canv2.visualSelect = true;
-		this.clearLayer2();
-		if (this.scene.objArr.length){ // If there are objects
-			let selectObjId;
-			if (!this.scene.objArr[objectId]){
-				selectObjId = this.scene.objectSelect(mode);			
-			} else {
-				selectObjId = objectId;
-			}
+	visualObjectSelect(objectId, color, alpha = 0.3) {
+		// console.log(objectId)
+		if (this.scene.objArr[objectId]){ // If there are target object
+			this.canv2.visualSelect = true;
+			this.clearLayer2();
+			let selectObjId = objectId;
 
 			if (this.#visualObjectSelectAnimation <= 5){
 				this.#visualObjectSelectAnimDir = 1;
@@ -546,71 +600,11 @@ export default class Camera{
 		}
 	}
 
-	crd (coord, axis){		// Cursor position
-		let sCtrX = this.#resolutionX/2 - this.ax;
-		let sCtrY = this.#resolutionY/2 - this.ay;
-
-		switch (axis){
-			case 'x': return coord*this.animZoom + sCtrX - this.ax*(this.animZoom-1);
-			case 'y': return coord*this.animZoom + sCtrY - this.ay*(this.animZoom-1);
-		}		
-	}
-
-	screenPix(coord, axis){		// Cursor position
-		let sCtrX = window.innerWidth/2 - this.ax;
-		let sCtrY = window.innerHeight/2 - this.ay;
-
-		switch (axis){
-			case 'x': return coord/this.animZoom - (sCtrX - this.ax*(this.animZoom-1))/(this.animZoom);
-			case 'y': return coord/this.animZoom - (sCtrY - this.ay*(this.animZoom-1))/(this.animZoom);
-		}
-	}
-
-	animFunc(){
-		let animSpeedCorrected = this.animTimeCorrect*(16/fpsIndicator.frameTime);
-		if (this.switchTarget){
-			this.animTimeCorrect -= (this.animTime-1)/(400/fpsIndicator.frameTime);
-		} else {
-			this.animTimeCorrect = this.animationDuration;
-		}
-		animSpeedCorrected = animSpeedCorrected < 1 ? 1 : animSpeedCorrected;
-		this.animZoom += ((this.zoom-this.animZoom)/animSpeedCorrected);
-		this.lastX = this.ax; this.lastY = this.ay;
-		if (this.animation){
-			this.ax += (this.x-this.ax)/(animSpeedCorrected/(this.zoom/this.animZoom));
-			this.ay += (this.y-this.ay)/(animSpeedCorrected/(this.zoom/this.animZoom));
-		} else {
-			this.ax = this.x; this.ay = this.y;
-		}
-	}
-
-	zoomIn(vl = this.zoomCff){ // Zoom IN. vl is a zoom coeficient
-		this.cameraChangedState();
-		if (this.zoom < 10000){
-			this.zoom *= vl; // Set zoom value
-			if (this.scene.zoomToCursor.state){
-				this.x += (this.screenPix(mouse.x, 'x')-this.x)/(vl/(vl-1));
-				this.y += (this.screenPix(mouse.y, 'y')-this.y)/(vl/(vl-1));
-			}
-		}
-	}
-
-	zoomOut(vl = this.zoomCff){ // Zoom OUT. vl is a zoom coeficient
-		this.cameraChangedState();
-		if (this.zoom > 1.0e-12){
-			this.zoom /= vl; // Set zoom value
-			if (this.scene.zoomToCursor.state){
-				this.x -= (this.screenPix(mouse.x, 'x')-this.x)/(1/(vl-1));
-				this.y -= (this.screenPix(mouse.y, 'y')-this.y)/(1/(vl-1));
-			}
-		}
-	}
-
 	tracesMode1Wiping(){
 		//console.log('clear layer 1');
 		let canvas = this.scene.backgroundDarkness.state != 0 ? this.ctx3 : this.ctx;
 		canvas.globalAlpha = 0.01;
-		canvas.fillStyle = '#000000';
+		canvas.fillStyle = this.wipeColor;
 		canvas.fillRect(0, 0, this.resolutionX, this.resolutionY);
 		canvas.globalAlpha = 1;	
 	}
@@ -630,7 +624,7 @@ export default class Camera{
 	}
 	//Draw cross function
 	drawCross(x, y, width = 1, size = 5, color = '#ff0000', canvObj = this.ctx2){
-		canvObj.strokeStyle = '#000000';
+		canvObj.strokeStyle = this.wipeColor;
 		canvObj.lineWidth = 2;
 		canvObj.lineCap = 'round';
 		for (let i = 0; i < 2; i++){

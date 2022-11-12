@@ -328,8 +328,9 @@ export default class Scene {
 		// The nearest or the furthest object
 		if (mode == 'nearest' || mode == 'furthest'){
 			for (let i in this.objArr){
+				if (i == not) continue;
 				let r = rad(mouse.x, mouse.y, this.camera.crd(this.objArr[i].x, 'x'), this.camera.crd(this.objArr[i].y, 'y'));
-				if (r < sel[0] && i!=not && mode == 'nearest'){
+				if (r < sel[0] && mode == 'nearest'){
 					sel[0] = r;
 					sel[1] = i;
 				} else 
