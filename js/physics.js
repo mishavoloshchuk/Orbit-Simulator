@@ -20,7 +20,7 @@ function calculate({
 
 			const collType = collision(obj, obj2, objectId, object2Id, S, collisionType, interactMode, collidedObjectsIdList);
 
-			if(obj.lck !== true && collType === false){
+			if(obj.lock !== true && collType === false){
 				const sin = (obj2.y - obj.y)/S; // Sin
 				const cos = (obj2.x - obj.x)/S; // Cos
 				// Physics vector calculation
@@ -45,7 +45,7 @@ function calculate({
 
 		const collType = collision(obj, obj2, objectId, object2Id, S, collisionType, interactMode, collidedObjectsIdList);
 
-		if(!obj.lck && collType === false){
+		if(!obj.lock && collType === false){
 			const sin = (obj2.y - obj.y)/S;
 			const cos = (obj2.x - obj.x)/S;
 			// Physics vector calculation

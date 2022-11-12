@@ -306,7 +306,7 @@ window.onload = function(){
 	window.onresize = function(){
 		scene.camera.resolutionX = window.innerWidth;
 		scene.camera.resolutionY = window.innerHeight;
-		scene.camera.renderObjects();
+		scene.camera.allowFrameRender = true;
 		adaptive();
 	}
 	//Touch events ======================================
@@ -459,8 +459,7 @@ window.onload = function(){
 			mouse.middleDown = true;
 			scene.mpos[0] = event.clientX; scene.mpos[1] = event.clientY;
 
-			scene.camera.Target = null;
-			scene.camera.animation = true;
+			scene.camera.setTarget(null);
 		}
 		// Right mouse down
 		if (event.which == 3){
@@ -515,11 +514,7 @@ window.onload = function(){
 				scene.camera.clearLayer2();
 			}
 			if (mbut == 'camera' && swch.s_track){
-				scene.camera.Target = scene.objectSelect('nearest', scene.camera.Target);
-				scene.camera.switchTarget = true;
-				scene.camera.animation = true;
-				setTimeout(()=>{scene.camera.animation = false; scene.camera.switchTarget = false;}, 400);
-				scene.camera.clearLayer1();
+				scene.camera.setTarget(scene.objectSelect('nearest', scene.camera.Target));
 			}
 			if (mbut == 'sel_orb_obj'){
 				scene.objIdToOrbit = scene.objectSelect();
@@ -648,11 +643,6 @@ window.onload = function(){
 					scene.physicsCalculate(); // Scene physics calculations (1 step)
 				}
 			}
-			// Camera position
-			if (scene.objArr[scene.camera.Target]){
-				scene.camera.x = scene.objArr[scene.camera.Target].x;
-				scene.camera.y = scene.objArr[scene.camera.Target].y;
-			} else { scene.camera.Target = null }
 		}
 		fpsIndicator.measure();
 
@@ -676,7 +666,7 @@ window.onload = function(){
 			scene.camera.visualObjectSelect(scene.objectSelect(deletingMode.state), '#ff0000');
 		} else
 		if (mbut == 'camera' && swch.s_track){
-			scene.camera.visualObjectSelect(nearObjId === scene.camera.Target ? null : nearObjId,'#0af');
+			scene.camera.visualObjectSelect(scene.objectSelect('nearest', scene.camera.Target),'#0af');
 		} else
 		if (mbut == 'move'){
 			scene.camera.visualObjectSelect(nearObjId,'#bbb');
@@ -1059,9 +1049,9 @@ window.onload = function(){
 		}
 		if (cbut == 'clear_camera_settings'){
 			swch.t_object = false;
-			scene.camera.Target = null;
-			scene.camera.x = 0; scene.camera.y = 0;
 			scene.camera.animation = true;
+			scene.camera.setTarget(null);
+			scene.camera.x = 0; scene.camera.y = 0;
 			scene.camera.zoom = 1;
 			zm_prev = scene.camera.zoom;
 		}

@@ -263,7 +263,7 @@ export default class Scene {
 		return objArr[newObjId] ? newObjId : false;
 	}
 	//Удаление объекта
-	deleteObject(objects, objArr = this.objArr){
+	deleteObject(objects, objArr = this.objArr, eachObjectCallback = this.delObjectCallback.bind(this)){
 		let objectsToDelete;
 		if (Array.isArray(objects)){
 			objectsToDelete = objects.sort( (a,b)=>a-b ); // Given objects ID's to delete, sorted	
@@ -278,14 +278,18 @@ export default class Scene {
 					obj.main_obj = objArr[objectId].main_obj;
 				}
 			}
-			if (objectId == mov_obj) mov_obj = NaN;
-			if (objectId < this.camera.Target) this.camera.Target --;
-			if (objectId < mov_obj) mov_obj --;
-			this.show_obj_count();
-			this.activCam.allowFrameRender = true;
+			eachObjectCallback && eachObjectCallback(objectId);
 			deletedObjectsList = deletedObjectsList.concat(objArr.splice(objectId, 1));
 		}
 		return deletedObjectsList;
+	}
+	delObjectCallback(objectId){
+		if (objectId == mov_obj) mov_obj = NaN;
+		if (objectId == this.camera.Target) this.camera.setTarget(null);
+		if (objectId < this.camera.Target) this.camera.Target --;
+		if (objectId < mov_obj) mov_obj --;
+		this.show_obj_count();
+		this.activCam.allowFrameRender = true;
 	}
 	// Show number of objects
 	show_obj_count(){

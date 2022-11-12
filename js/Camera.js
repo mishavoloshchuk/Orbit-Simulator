@@ -29,7 +29,7 @@ export default class Camera{
 	zoom = 1; // Target zoom
 	animZoom = 1; // Actualy zoom with animation
 	zoomCff = 1.25; // Zoom coefficient
-	Target = false; // Follow target object
+	Target = null; // Follow target object
 	switchTarget = false;
 	animTimeCorrect = 5;
 	animTime = 5;
@@ -127,9 +127,9 @@ export default class Camera{
 		}
 	}
 
-	zoomIn(vl = this.zoomCff){ // Zoom IN. vl is a zoom coeficient
-		this.cameraChangedState();
+	zoomIn(vl = this.zoomCff){ // Zoom IN. vl is a zoom coefficient
 		if (this.zoom < 10000){
+			this.cameraChangedState();
 			this.zoom *= vl; // Set zoom value
 			if (this.scene.zoomToCursor.state){
 				this.x += (this.screenPix(mouse.x, 'x')-this.x)/(vl/(vl-1));
@@ -138,9 +138,9 @@ export default class Camera{
 		}
 	}
 
-	zoomOut(vl = this.zoomCff){ // Zoom OUT. vl is a zoom coeficient
-		this.cameraChangedState();
+	zoomOut(vl = this.zoomCff){ // Zoom OUT. vl is a zoom coefficient
 		if (this.zoom > 1.0e-12){
+			this.cameraChangedState();
 			this.zoom /= vl; // Set zoom value
 			if (this.scene.zoomToCursor.state){
 				this.x -= (this.screenPix(mouse.x, 'x')-this.x)/(1/(vl-1));
@@ -158,6 +158,23 @@ export default class Camera{
 		if (this.switchTarget){
 			this.cameraChangedState();
 		}
+
+		// Camera position
+		if (scene.objArr[scene.camera.Target]){
+			scene.camera.x = scene.objArr[scene.camera.Target].x;
+			scene.camera.y = scene.objArr[scene.camera.Target].y;
+		}
+	}
+
+	setTarget(objectId){
+		if (!this.scene.objArr[objectId]) objectId = null; // If there is no object with given id
+		this.Target = objectId;
+		if (objectId !== null){
+		this.switchTarget = true;
+		this.animation = true;
+		setTimeout(()=>{this.animation = objectId === null ? true : false; this.switchTarget = false;}, 400);
+			
+		}
 	}
 
 	//Draw
@@ -172,48 +189,52 @@ export default class Camera{
 		if (scn.backgroundDarkness.state !== 0) this.clearLayer1();
 		this.animFunc();
 		for (let objectId in scn.objArr){
-			let obj = scn.objArr[objectId];
-			let prevScreenX = (obj.x - (obj.x - obj.vx)) != this.x - this.lastX;
-			let prevScreenY = (obj.y - (obj.y - obj.vy)) != this.y - this.lastY;
-			let obCol = obj.color;
-			let obj_rad = Math.sqrt(Math.abs(obj.m))*this.animZoom;
-			obj_rad = obj_rad < 0.5 ? 0.5 : obj_rad;
-
-			if (obj.m < 0){ obj.color = obCol = this.scene.randomColor(true) }
+			let obj = scn.objArr[objectId]; // Object to draw
+			const obCol = obj.color; // Object draw color
+			if (obj.m < 0){ obj.color = obCol = this.scene.randomColor(true) } // Random color if object has negative mass
+			let drawRadius = Math.sqrt(Math.abs(obj.m))*this.animZoom; // Object draw radius
+			drawRadius = drawRadius < 0.5 ? 0.5 : drawRadius; // Minimal draw radius
 
 			let dcanv = scn.backgroundDarkness.state != 0 ? this.ctx3 : this.ctx;
-			// Fix anti-aliasing objects when backgroundDarkness = 0
-			if (scn.tracesMode.state == 1 && scn.backgroundDarkness.state == 0){
-				if ((!scn.objArr[this.Target] && obj.lock) // If there is no camera target and object locked
-					||( scn.objArr[this.Target] 
-						&& ((!scn.objArr[this.Target].lock && !obj.lock) || scn.objArr[this.Target].lock) )
-					){
+			const enoughObjMove = Math.sqrt(Math.pow(obj.vx, 2) + Math.pow(obj.vy, 2))*this.animZoom > 0.3 ? true : false;
+			// Fix object anti-aliasing when backgroundDarkness = 0
+			if (scn.tracesMode.state == 1 && scn.backgroundDarkness.state == 0){	
+				if (// Smooth object edges if true
+					(!scn.objArr[this.Target] && !enoughObjMove) // If there is no camera target and object locked or
+					|| ( scn.objArr[this.Target] // If there is camera target
+						&& ( // And
+							(scn.objArr[this.Target].lock && !enoughObjMove) // Camera target and object lock
+							|| (!scn.objArr[this.Target].lock && objectId == this.Target) // Or target not locked and object is camera target
+						)
+					)
+				){
 					const targetVx = scn.objArr[this.Target] ? scn.objArr[this.Target].vx : 0;
 					const targetVy = scn.objArr[this.Target] ? scn.objArr[this.Target].vy : 0;
+					this.ctx.save();
 					this.ctx.beginPath();
-					this.ctx.fillStyle = this.wipeColor;
-					this.ctx.arc(this.crd(obj.x-obj.vx*scn.timeSpeed.state+targetVx, 'x'), this.crd(obj.y-obj.vy*scn.timeSpeed.state+targetVy, 'y'), (obj_rad+0.125), 0, 7);
+					this.ctx.fillStyle = '#ffffff';
+					this.ctx.globalCompositeOperation = 'destination-out';
+					this.ctx.arc(this.crd(obj.x-obj.vx*scn.timeSpeed.state+targetVx, 'x'), this.crd(obj.y-obj.vy*scn.timeSpeed.state+targetVy, 'y'), (drawRadius+0.125), 0, 7);
 					this.ctx.fill();
+					this.ctx.restore();
 				}
 			}
 
 			let traceLength = false;
 			let traceResolution = 1;
 			//Trajectory mode 1 =====
-			if (scn.tracesMode.state == 1){
-				if (!obj.lock){//prev_t_obj != objectId
-					//Target Velocity
-					const targetVx = scn.objArr[this.Target] ? scn.objArr[this.Target].vx : 0;
-					const targetVy = scn.objArr[this.Target] ? scn.objArr[this.Target].vy : 0;
-					dcanv.strokeStyle = obCol;
-					dcanv.lineWidth = obj_rad*2;
-					dcanv.lineCap = obj_rad > 1 ? 'round' : 'butt';
-					dcanv.beginPath();
-					dcanv.moveTo(this.crd(obj.x-obj.vx*scn.timeSpeed.state+targetVx, 'x'), this.crd(obj.y-obj.vy*scn.timeSpeed.state+targetVy, 'y'));
-					dcanv.lineTo(this.crd(obj.x, 'x'), this.crd(obj.y, 'y'));
-					dcanv.stroke();
-					dcanv.lineCap = 'butt';
-				}
+			if (scn.tracesMode.state == 1 && !obj.lock && this.Target !== objectId){
+				//Target Velocity
+				const targetVx = scn.objArr[this.Target] ? scn.objArr[this.Target].vx : 0;
+				const targetVy = scn.objArr[this.Target] ? scn.objArr[this.Target].vy : 0;
+				dcanv.strokeStyle = obCol;
+				dcanv.lineWidth = drawRadius*(enoughObjMove ? 2 : 1.9);
+				dcanv.lineCap = drawRadius > 1 ? 'round' : 'butt';
+				dcanv.beginPath();
+				dcanv.moveTo(this.crd(obj.x-obj.vx*scn.timeSpeed.state+targetVx, 'x'), this.crd(obj.y-obj.vy*scn.timeSpeed.state+targetVy, 'y'));
+				dcanv.lineTo(this.crd(obj.x, 'x'), this.crd(obj.y, 'y'));
+				dcanv.stroke();
+				dcanv.lineCap = 'butt';
 			} else
 			//Trajectory mode 2 =====
 			if (scn.tracesMode.state == 2 && !obj.lock){
@@ -227,7 +248,7 @@ export default class Camera{
 				this.ctx.strokeStyle = obCol;
 				this.ctx.globalCompositeOperation = 'destination-over';
 				if (obj.trace[0]){
-					this.ctx.lineWidth = obj_rad*2;
+					this.ctx.lineWidth = drawRadius*2;
 					this.ctx.beginPath();
 					this.ctx.moveTo(this.crd(obj.x, 'x')+randX, this.crd(obj.y, 'y')+randY);
 					this.ctx.lineTo(this.crd(obj.trace[0][0], 'x')+prev_randX, this.crd(obj.trace[0][1], 'y')+prev_randY);
@@ -237,12 +258,12 @@ export default class Camera{
 					let itr = i-1;
 					itr = itr < 0?0:itr;
 					prev_randX = randX; prev_randY = randY;
-					let rnd_lim = obj_rad*(i/TLength)*randKff;
+					let rnd_lim = drawRadius*(i/TLength)*randKff;
 					if (scn.traceMode2Trembling.state === true || scn.traceMode2Particles.state === true){
 						randX = scn.getRandomArbitrary(-rnd_lim, rnd_lim);
 						randY = scn.getRandomArbitrary(-rnd_lim, rnd_lim);
 					}
-					this.ctx.lineWidth = obj_rad * (1-i/TLength) * 1.8;
+					this.ctx.lineWidth = drawRadius * (1-i/TLength) * 1.8;
 					// Particles
 					if (scn.traceMode2Particles.state){
 						this.ctx.beginPath();
@@ -270,7 +291,7 @@ export default class Camera{
 				traceResolution = +scn.traceMode3Quality.element.getAttribute('max') + 1 - Math.round(scn.traceMode3Quality.state);
 				traceLength = Math.ceil(scn.powerFunc(scn.traceMode3Length.state) / traceResolution);
 				this.ctx.strokeStyle = obCol;
-				this.ctx.lineWidth = Math.min(obj_rad*1.7, Math.pow(scn.traceMode3Width.state, 10));
+				this.ctx.lineWidth = Math.min(drawRadius*1.7, Math.pow(scn.traceMode3Width.state, 10));
 				this.ctx.globalCompositeOperation = 'destination-over';
 				if (obj.trace.length > 0){
 					// Smooth the end cut of the trace
@@ -303,13 +324,13 @@ export default class Camera{
 				this.ctx.globalCompositeOperation = 'destination-out';
 				this.ctx.fillStyle = "#ffffff";
 				this.ctx.beginPath();
-				this.ctx.arc(this.crd(obj.x, 'x'), this.crd(obj.y, 'y'), obj_rad+1.5, 0, 7);
+				this.ctx.arc(this.crd(obj.x, 'x'), this.crd(obj.y, 'y'), drawRadius+1.5, 0, 7);
 				this.ctx.fill();
 				this.ctx.globalCompositeOperation = 'source-over';
 			}
 			this.ctx.fillStyle = obCol;
 			this.ctx.beginPath();
-			this.ctx.arc(this.crd(obj.x, 'x'), this.crd(obj.y, 'y'), obj_rad, 0, 7);
+			this.ctx.arc(this.crd(obj.x, 'x'), this.crd(obj.y, 'y'), drawRadius, 0, 7);
 			this.ctx.fill();
 
 			if (!obj.lock && !pauseState && this.renderedSceneFrames % traceResolution === 0){
@@ -391,7 +412,7 @@ export default class Camera{
 			});
 
 			// Delete objects after collide and return the deleted objects to the deletedObjectsList array
-			deletedObjectsList = deletedObjectsList.concat(this.scene.deleteObject(toDeleteObjectsList, objArrCopy));
+			deletedObjectsList = deletedObjectsList.concat(this.scene.deleteObject(toDeleteObjectsList, objArrCopy, null));
 
 			// Add points to trajectory trace array
 			for (let objectId = objArrCopy.length; objectId--;){
