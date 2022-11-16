@@ -279,6 +279,10 @@ span {
 	background-color: rgba(192,192,192,0.4);
 }
 
+.button *:hover {
+	cursor: pointer;
+}
+
 .fps {
 	position: absolute;
 	right: 10px;

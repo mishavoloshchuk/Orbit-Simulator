@@ -17,6 +17,9 @@ window.onload = function(){
 		move: false,
 	}
 
+	// Touch
+	let allowClick = true; // If touches > 1 cancel the click event. If true - allow click
+
 	// Tasks to frame begin
 	this.frameTasks = new Array(); // Functions array
 	function addFrameBeginTask(func, ...args){
@@ -333,13 +336,14 @@ window.onload = function(){
 		let av_touch_x = [];
 		let av_touch_y = [];
 
-		if (mouse.leftDown && mbut == 'move' && mov_obj){ // Moving object
+		if (mouse.leftDown && mbut == 'move' && mov_obj !== null){ // Moving object
 			// Draw trace while user moving object
 			if (scene.objArr[mov_obj]){
-				let dcanv = backgroundDarkness.state != 0 ? ctx3 : ctx;
+				let dcanv = backgroundDarkness.state != 0 ? scene.camera.ctx3 : scene.camera.ctx;
 				dcanv.strokeStyle = scene.objArr[mov_obj].color;
 				dcanv.fillStyle = scene.objArr[mov_obj].color;
 				dcanv.lineWidth = Math.sqrt(scene.objArr[mov_obj].m)*2*scene.camera.animZoom < 0.5 ? 0.5 : Math.sqrt(scene.objArr[mov_obj].m)*2*scene.camera.animZoom;
+				// Circle
 				dcanv.beginPath();
 				dcanv.arc(scene.camera.crd(scene.objArr[mov_obj].x, 'x'), scene.camera.crd(scene.objArr[mov_obj].y, 'y'), Math.sqrt(Math.abs(scene.objArr[mov_obj].m))*scene.camera.animZoom, 0, 7);
 				dcanv.fill();
@@ -401,6 +405,7 @@ window.onload = function(){
 			multiTouch ++;
 			event.clientX = touch.targetTouches[0].clientX;
 			event.clientY = touch.targetTouches[0].clientY;
+			allowClick = multiTouch > 1 ? false : true  // If touches > 1 cancel click event
 			console.log('touchstart');
 		} else {
 			[mouse.leftDownX, mouse.leftDownY] = [event.clientX, event.clientY];
@@ -479,7 +484,7 @@ window.onload = function(){
 		[mouse.x, mouse.y] = [event.clientX, event.clientY];
 		avTouchPoint.xd = avTouchPoint.yd = null;
 		// Left mouse up
-		if (event.which == 1 || touch){
+		if (event.which == 1 || (touch && allowClick)){
 			mouse.leftDown = false;
 			[mouse.leftUpX, mouse.leftUpY] = [event.clientX, event.clientY] // Set cursor mouseUp position
 			launchPowerLabel.style.display = 'none';
@@ -546,7 +551,7 @@ window.onload = function(){
 			$('.bg_image').css({top: -event.clientY/25, left: -event.clientX/25})	
 		}
 		// Moving object while mouse moves
-		if (mouse.leftDown && mbut == 'move' && mov_obj){
+		if (mouse.leftDown && mbut == 'move' && typeof mov_obj !== null){
 			if (scene.objArr[mov_obj]){
 				if (tracesMode.state == 1){ // If traces mode == 1
 					let dCanv = backgroundDarkness.state != 0 ? scene.camera.ctx3 : scene.camera.ctx;
@@ -560,7 +565,7 @@ window.onload = function(){
 					// Line
 					dCanv.beginPath();
 					dCanv.moveTo(scene.camera.crd(scene.objArr[mov_obj].x, 'x'), scene.camera.crd(scene.objArr[mov_obj].y, 'y'));
-
+					// Set position to user's moving objec
 					scene.objArr[mov_obj].x = (event.clientX - scene.mpos[0])/scene.camera.animZoom + scene.mpos[2]; // New position X
 					scene.objArr[mov_obj].y = (event.clientY - scene.mpos[1])/scene.camera.animZoom + scene.mpos[3]; // New position Y
 
@@ -874,19 +879,13 @@ window.onload = function(){
 		}
 	});
 
-	let noMenuBtns = ['clear', 'timedown', 'play', 'pause', 'timeup'];
+	let noMenuBtns = ['timedown', 'play', 'pause', 'timeup'];
 
 	$('.btn').mousedown(function(){
 		//alert($(this).attr('id'));
 		pfb = mbut;
 		mbut = $(this).attr('id');
 		let btn_id = mbut;
-		if (mbut == 'clear'){
-			scene.camera.clearLayer1();
-			for (let i in scene.objArr){
-				scene.objArr[i].trace = [];
-			}
-		} else
 		if (mbut == 'create'){
 			if (menu_state && btn_id == pfb){
 				$('.menu_options').css('display', 'none');
@@ -1040,61 +1039,71 @@ window.onload = function(){
 	$('.button').mouseup(function(){
 		cbut = $(this).attr('id');
 		//alert(cbut);
-		if (cbut == 'select_track'){
-			if (swch.s_track){
-				swch.s_track = false;
-			} else {
-				swch.s_track = true;
-			}		
-		}
-		if (cbut == 'clear_camera_settings'){
-			swch.t_object = false;
-			scene.camera.animation = true;
-			scene.camera.setTarget();
-			scene.camera.x = 0; scene.camera.y = 0;
-			scene.camera.zoom = 1;
-			zm_prev = scene.camera.zoom;
-		}
-		if (cbut == 'select_edit_obj'){
-			if (swch.s_edit){
-				swch.s_edit = false;
-			} else {
-				swch.s_edit = true;
-			}				
-		}
-		if (cbut == 'reset_speed_btn' && scene.objArr[swch.edit_obj]){
-			scene.objArr[swch.edit_obj].vx = 0;
-			scene.objArr[swch.edit_obj].vy = 0;
-		}
-		if (cbut == 'select_main_obj'){
-			switcher.sel_orb_obj = switcher.sel_orb_obj?false:true;
-			mbut = switcher.sel_orb_obj?'sel_orb_obj':'create';
-		}
-		if (cbut == 'wrap_time'){
-			timeSpeed.state = -timeSpeed.state;
-		}
-		if (cbut == 'save_file'){
-			pauseState = true;
-			change_state('pause');
-			let objArrWrite = JSON.parse(JSON.stringify(scene.objArr));
-			for(let i in objArrWrite){
-				objArrWrite[i].trace = [];
-			}
-			let my_data = {
-				objArr: objArrWrite, 
-				timeSpeed: timeSpeed.state, 
-				interactMode: interactMode.state, 
-				collisionMode: collisionMode.state,
-				gravitationMode: gravitationMode.state,
-				g: g.state,
-			};
-			my_data = JSON.stringify(my_data);
-			writeFile("Orbit Simulator - Мой мир.osw", my_data);
-			objArrWrite = null;
-			//saveFile(name, forat, value, event);
-		}
-		if (cbut == 'sel_file_but'){
-			$('#select_file').click();
+		switch (cbut) { // Pressed button id
+			case 'select_track': // Visual select object to select camera target
+				if (swch.s_track){
+					swch.s_track = false;
+				} else {
+					swch.s_track = true;
+				}
+				break;
+			case 'clear_camera_settings': // Restore camera defaults
+				swch.t_object = false;
+				scene.camera.animation = true;
+				scene.camera.setTarget();
+				scene.camera.x = 0; scene.camera.y = 0;
+				scene.camera.zoom = 1;
+				zm_prev = scene.camera.zoom;
+				break;
+			case 'select_edit_obj': // Visual select object to select edit object
+				if (swch.s_edit){
+					swch.s_edit = false;
+				} else {
+					swch.s_edit = true;
+				}				
+				break;
+			case 'reset_speed_btn' && scene.objArr[swch.edit_obj]: // Edit menu, set object velocity to 0
+				scene.objArr[swch.edit_obj].vx = 0;
+				scene.objArr[swch.edit_obj].vy = 0;
+				break;
+			case 'select_main_obj': // Visual select object to select main object
+				switcher.sel_orb_obj = switcher.sel_orb_obj?false:true;
+				mbut = switcher.sel_orb_obj?'sel_orb_obj':'create';
+				break;
+			case 'wrap_time': // Wrap time
+				timeSpeed.state = -timeSpeed.state;
+				break;
+			case 'save_file': // Save button
+				pauseState = true;
+				change_state('pause');
+				let objArrWrite = JSON.parse(JSON.stringify(scene.objArr));
+				for(let i in objArrWrite){
+					objArrWrite[i].trace = [];
+				}
+				let my_data = {
+					objArr: objArrWrite, 
+					timeSpeed: timeSpeed.state, 
+					interactMode: interactMode.state, 
+					collisionMode: collisionMode.state,
+					gravitationMode: gravitationMode.state,
+					g: g.state,
+				};
+				my_data = JSON.stringify(my_data);
+				writeFile("Orbit Simulator - Мой мир.osw", my_data);
+				objArrWrite = null;
+				//saveFile(name, forat, value, event);
+				break;
+			case 'sel_file_but': // Load button
+				$('#select_file').click();
+				break;
+			case 'clear_trace_mode_1': // Clear traces in mode 1
+				scene.camera.clearLayer3();			
+				break;
+			case 'clear_trace_mode_3': // Clear traces in mode 3
+				for (let i in scene.objArr){
+					scene.objArr[i].trace = [];
+				}
+				break;
 		}
 
 	});
@@ -1113,14 +1122,14 @@ window.onload = function(){
 	});
 
 	let no_del_anim = false;
-	var mytimeout;
+	let objDeletedMessageTimeout;
 	function deleted(){
 		if (!no_del_anim){
 			$('.deleted').css({display: 'block'});
 			$('.deleted').animate({right: 10}, 500);
-			clearTimeout(mytimeout);				
+			clearTimeout(objDeletedMessageTimeout);				
 		}
-		mytimeout = setTimeout(function(){
+		objDeletedMessageTimeout = setTimeout(function(){
 			no_del_anim = true;
 			$('.deleted').animate({right: -300}, 500, function(){
 				$('.deleted').css({display: 'none'});

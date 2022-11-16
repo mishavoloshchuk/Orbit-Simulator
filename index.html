@@ -3,6 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name = "description" content="Orbit Simulator. Развлекайся, наблюдая за тем, как ведет себя твой собственный мир со своими законами и правилами! Орбитальный симулятор с множеством возможностей прямо в браузере!">
+	<meta name="viewport" content="user-scalable=no">
 	<title>Orbit Simulator - Создай свой мир!</title>
 	<link rel="stylesheet" type="text/css" href="css/main.css">
 	<link rel="shortcut icon" href="ico/favicon.png" type="image/icon">
@@ -46,10 +47,6 @@
 
 		<div class="btn" id='move'>
 			<img src="ico/move.png" alt="Move" title="Переместить ( M )">
-		</div>
-
-		<div class="btn" id='clear'>
-			<img src="ico/clear.png" alt="Clear" title="Очистить">
 		</div>
 
 		<div class="btn" id='trajectory'>
@@ -256,9 +253,14 @@
 					<label>Нерозрачность: </label>
 					<input type="range" id="trace_opacity" min="0" max="1" value="0.8" step="0.01" width="100%">
 				</div>
-				<div class='option_item without_border'>
+				<div class='option_item'>
 					<span>Размытие: </span>
 					<input type="range" id='trace_blur' min="0" step="0.1" value="0" max="5">
+				</div>
+				<div class='option_item without_border'>
+					<div class="button" id="clear_trace_mode_1">
+						<span>Очистить следы</span>
+					</div>	
 				</div>
 			</div>
 			<!--Extra options 2-->
@@ -300,9 +302,14 @@
 					<input type="range" id="trace3Qu" min="1" max="60" value="57" step="1">
 				</div>
 
-				<div class='option_item without_border'>
+				<div class='option_item'>
 					<label>Длинна следа: </label>	
 					<input type="range" id="trace3Lnth" min="1.5" max="3" value="2" step="any">
+				</div>
+				<div class='option_item without_border'>
+					<div class="button" id="clear_trace_mode_3">
+						<span>Очистить следы</span>
+					</div>	
 				</div>
 			</div>
 
