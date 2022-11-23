@@ -41,7 +41,7 @@ window.onload = function(){
 	var menu_state = true; // Menu state (Opened/Closed)
 	if (sessionStorage['mbut'] && sessionStorage['menu_state']){
 		mbut = sessionStorage['mbut'];
-		menu_state = sessionStorage['menu_state'] == 'true' ? true : false;
+		menu_state = sessionStorage['menu_state'] == 'true';
 	}
 	//Buttons
 	var cbut = '';
@@ -86,7 +86,7 @@ window.onload = function(){
 
 	var menu_names = {create: 'menu_options', delete: 'del_menu_options', edit: 'edit_menu',
 		help: 'help_menu', settings: 'settings_menu', camera: 'camera_menu', trajectory: 'traj_menu',
-		world_settings: 'world_settings_men'}
+		world_settings: 'world_settings_menu'}
 
 	choise_restore('traj_mode', 'traj_mode2', 'radio');
 
@@ -110,8 +110,21 @@ window.onload = function(){
 	launchForce = new UserInput({type: 'range', id: 'launch_power', stateSaving: true, callback: (val)=>{lnch_pwr_span.innerHTML = Math.round(powerFunc(val)*1000)/1000; mouse.move = true;}, eventName: 'input'}), // Menu launch power value input
 	showDistanceFromCursorToMainObj = new UserInput({type: 'checkbox', id: 'vis_distance_check', stateSaving: true, callback: ()=>{ launchPowerLabel.style.display = 'none'; scene.camera.clearLayer2(); }}), // Menu visual distance
 	//
-	showNewObjTrajectory = new UserInput({type: 'checkbox', id: 'traj_prev_check', stateSaving: true, initState: true, callback: (val)=>{
-		additionalTrajectoryMenu.style.display = val ? 'initial' : 'none'; // Show or hide additional menu
+	showNewObjTrajectory = new UserInput({type: 'checkbox', id: 'traj_prev_check', stateSaving: true, initState: true, callback: (val, elem)=>{
+		// Show or hide additional menu
+		if (val){
+			additionalTrajectoryMenu.removeAttribute('closed');
+		} else {
+			additionalTrajectoryMenu.setAttribute('closed', '');
+		}
+		// Set option item style
+		// if (val){
+		// 	elem.element.parentNode.removeAttribute('single');
+		// 	elem.element.parentNode.style.marginBottom = '0';
+		// } else {
+		// 	elem.element.parentNode.setAttribute('single', '');
+		// 	elem.element.parentNode.style.marginBottom = '5px';
+		// }
 	}}), // Enable trajectory calculation before create object
 	newObjTrajLength = new UserInput({type: 'range', id: 'traj_calc_samples', stateSaving: true}), // Trajectory calutulation length input
 	newObjTrajAccuracity = new UserInput({type: 'range', id: 'traj_calc_accuracity', stateSaving: true }), // Trajectory accuracity input
@@ -178,14 +191,14 @@ window.onload = function(){
 			// scene.camera.ctx.putImageData(scene.camera.ctx3.getImageData(0,0,scene.camera.canv0.resolutionX,scene.camera.canv0.resolutionY),0,0);
 			scene.camera.ctx3.clearRect(0,0,scene.camera.resolutionX,scene.camera.resolutionY);
 			scene.camera.canv3.style.display = background_image.style.display = 'none';
-			traj_menu.children.additionalTrajectoryOptions1.setAttribute('disabled', '');
+			additionalTrajectoryOptions1.setAttribute('disabled', '');
 			scene.activCam.allowFrameRender = true; // Render
 			tracesMode.state = tracesMode.state; // Refresh trace mode menu
 		} else if (!elem.prevState) { // If backgroundDarkness previous state value = 0 then copy imageData from canvas layer 1 to canvas layer 3 and display canvas layer 3
 			// scene.camera.ctx3.putImageData(scene.camera.ctx.getImageData(0,0,scene.camera.canv0.resolutionX,scene.camera.canv0.resolutionY),0,0);
 			scene.camera.ctx.clearRect(0,0,scene.camera.resolutionX,scene.camera.resolutionY);
 			scene.camera.canv3.style.display = background_image.style.display = '';
-			traj_menu.children.additionalTrajectoryOptions1.removeAttribute('disabled');
+			additionalTrajectoryOptions1.removeAttribute('disabled');
 			scene.activCam.allowFrameRender = true; // Render
 			tracesMode.state = tracesMode.state; // Refresh trace mode menu
 		}
@@ -293,10 +306,6 @@ window.onload = function(){
 	function menu_open_restore(){
 		if (menu_state){
 			$('#'+menu_names[mbut]).css({display: 'inline-block'});
-			$('#close_button').css({display: 'flex'});
-		} else {
-			$('#close_button').css({display: 'none'});
-			$('#close_button').css({display: 'none'});
 		}
 	}
 	menu_open_restore();
@@ -312,53 +321,32 @@ window.onload = function(){
 		scene.camera.allowFrameRender = true;
 		adaptive();
 	}
-	//Touch events ======================================
+	// Touch events ======================================
+	// Touch START
 	$('.renderLayer').on('touchstart', function(event){
 		event.preventDefault();
 		prev_cam_x = scene.camera.x;
 		prev_cam_y = scene.camera.y;
 		$('#'+scene.activCam.canv2.id).trigger('mousedown', event);
 	});
-
+	// Touch END
 	$('.renderLayer').on('touchend', function(event){
 		$('#'+scene.activCam.canv2.id).trigger('mouseup', event);
 		zm_prev = scene.camera.animZoom;
 	});
-
+	// Touch MOVE
 	$('.renderLayer').on('touchmove', function(event){
 		event.preventDefault();
 		mouse.move = true;
 		// Touch point
 		event.clientX = event.targetTouches[0].clientX;// Touch X
 		event.clientY = event.targetTouches[0].clientY;// Touch Y
-		[mouse.x, mouse.y] = [event.targetTouches[0].clientX, event.targetTouches[0].clientY]; // Set cursor position
+		[mouse.x, mouse.y] = [event.clientX, event.clientY]; // Set cursor position
 		// Averrage point of touchs
 		let av_touch_x = [];
 		let av_touch_y = [];
-
-		if (mouse.leftDown && mbut == 'move' && mov_obj !== null){ // Moving object
-			// Draw trace while user moving object
-			if (scene.objArr[mov_obj]){
-				let dcanv = backgroundDarkness.state != 0 ? scene.camera.ctx3 : scene.camera.ctx;
-				dcanv.strokeStyle = scene.objArr[mov_obj].color;
-				dcanv.fillStyle = scene.objArr[mov_obj].color;
-				dcanv.lineWidth = Math.sqrt(scene.objArr[mov_obj].m)*2*scene.camera.animZoom < 0.5 ? 0.5 : Math.sqrt(scene.objArr[mov_obj].m)*2*scene.camera.animZoom;
-				// Circle
-				dcanv.beginPath();
-				dcanv.arc(scene.camera.crd(scene.objArr[mov_obj].x, 'x'), scene.camera.crd(scene.objArr[mov_obj].y, 'y'), Math.sqrt(Math.abs(scene.objArr[mov_obj].m))*scene.camera.animZoom, 0, 7);
-				dcanv.fill();
-				// Line start
-				dcanv.beginPath();
-				dcanv.moveTo(scene.camera.crd(scene.objArr[mov_obj].x, 'x'), scene.camera.crd(scene.objArr[mov_obj].y, 'y'));
-				// New position
-				scene.objArr[mov_obj].x = scene.camera.x+(event.clientX-window.innerWidth/2)/scene.camera.animZoom;
-				scene.objArr[mov_obj].y = scene.camera.y+(event.clientY-window.innerHeight/2)/scene.camera.animZoom;
-				// Line end
-				dcanv.lineTo(scene.camera.crd(scene.objArr[mov_obj].x, 'x'), scene.camera.crd(scene.objArr[mov_obj].y, 'y'));
-				dcanv.stroke();
-			}
-		}
-		if (event.changedTouches.length == 2){
+		movingObject(); // Moving object if mouse down && mbut == "move"
+		if (event.changedTouches.length == 2){ // If multitouch
 			//All touch points array
 			for (let i = 0; i < event.changedTouches.length; i++){
 				av_touch_x.push(event.changedTouches[i].clientX);
@@ -397,7 +385,8 @@ window.onload = function(){
 			swch.t_object = false; // Track object disable
 		}
 	})
-	//Mouse events =========================================================
+	// Mouse events =========================================================
+	// Mouse DOWN
 	$('.renderLayer').mousedown(function(event, touch){
 		// Touch
 		if (touch){
@@ -473,7 +462,7 @@ window.onload = function(){
 			}
 		}
 	});
-
+	// Mouse UP
 	$('.renderLayer').mouseup(function(event, touch){
 		if (touch){
 			console.log('touchend');
@@ -544,40 +533,13 @@ window.onload = function(){
 			mscam = multiTouch != 0 ? false : true;
 		}
 	});	
-
+	// Mouse MOVE
 	document.onmousemove = function(event){
 		mouse.move = true;
 		if (backgroundFollowsMouse.state && backgroundDarkness.state){
 			$('.bg_image').css({top: -event.clientY/25, left: -event.clientX/25})	
-		}
-		// Moving object while mouse moves
-		if (mouse.leftDown && mbut == 'move' && typeof mov_obj !== null){
-			if (scene.objArr[mov_obj]){
-				if (tracesMode.state == 1){ // If traces mode == 1
-					let dCanv = backgroundDarkness.state != 0 ? scene.camera.ctx3 : scene.camera.ctx;
-					dCanv.strokeStyle = scene.objArr[mov_obj].color;
-					dCanv.fillStyle = scene.objArr[mov_obj].color;
-					dCanv.lineWidth = Math.sqrt(scene.objArr[mov_obj].m)*2*scene.camera.animZoom < 0.5 ? 0.5 : Math.sqrt(scene.objArr[mov_obj].m)*2*scene.camera.animZoom;
-					// Circle
-					dCanv.beginPath();
-					dCanv.arc(scene.camera.crd(scene.objArr[mov_obj].x, 'x'), scene.camera.crd(scene.objArr[mov_obj].y, 'y'), Math.sqrt(Math.abs(scene.objArr[mov_obj].m))*scene.camera.animZoom, 0, 7);
-					dCanv.fill();
-					// Line
-					dCanv.beginPath();
-					dCanv.moveTo(scene.camera.crd(scene.objArr[mov_obj].x, 'x'), scene.camera.crd(scene.objArr[mov_obj].y, 'y'));
-					// Set position to user's moving objec
-					scene.objArr[mov_obj].x = (event.clientX - scene.mpos[0])/scene.camera.animZoom + scene.mpos[2]; // New position X
-					scene.objArr[mov_obj].y = (event.clientY - scene.mpos[1])/scene.camera.animZoom + scene.mpos[3]; // New position Y
-
-					dCanv.lineTo(scene.camera.crd(scene.objArr[mov_obj].x, 'x'), scene.camera.crd(scene.objArr[mov_obj].y, 'y'));
-					dCanv.stroke();			
-				} else {
-					scene.objArr[mov_obj].x = (event.clientX - scene.mpos[0])/scene.camera.animZoom + scene.mpos[2]; // New position X
-					scene.objArr[mov_obj].y = (event.clientY - scene.mpos[1])/scene.camera.animZoom + scene.mpos[3]; // New position Y					
-				}
-				scene.activCam.allowFrameRender = true;
-			}
-		}
+		}	
+		movingObject(); // Moving object if mouse down && mbut == "move"
 		if (mouse.middleDown){
 			scene.camera.x += (mouse.x - event.clientX)/scene.camera.animZoom;
 			scene.camera.y += (mouse.y - event.clientY)/scene.camera.animZoom;
@@ -649,8 +611,9 @@ window.onload = function(){
 				}
 			}
 		}
+		// Measure FPS
 		fpsIndicator.measure();
-
+		// Frame rendering
 		if (scene.activCam.allowFrameRender){
 			scene.camera.renderObjects(scene.world);
 			renderStopLatency = 125; // Count of frames to render after render is disabled
@@ -794,6 +757,39 @@ window.onload = function(){
 		
 		}
 	});
+	// Moving object function
+	function movingObject(){
+		if (mouse.leftDown && mbut == 'move' && mov_obj !== null){ // Moving object
+			let newX = (mouse.x - scene.mpos[0])/scene.camera.animZoom + scene.mpos[2]; // New object X
+			let newY = (mouse.y - scene.mpos[1])/scene.camera.animZoom + scene.mpos[3]; // New object Y
+			// Draw trace while user moving object
+			if (scene.objArr[mov_obj]){
+				if (tracesMode.state == 1){ // If traces mode == 1
+					let dCanv = backgroundDarkness.state != 0 ? scene.camera.ctx3 : scene.camera.ctx;
+					dCanv.strokeStyle = scene.objArr[mov_obj].color;
+					dCanv.fillStyle = scene.objArr[mov_obj].color;
+					dCanv.lineWidth = Math.sqrt(scene.objArr[mov_obj].m)*2*scene.camera.animZoom < 0.5 ? 0.5 : Math.sqrt(scene.objArr[mov_obj].m)*2*scene.camera.animZoom;
+					// Circle
+					dCanv.beginPath();
+					dCanv.arc(scene.camera.crd(scene.objArr[mov_obj].x, 'x'), scene.camera.crd(scene.objArr[mov_obj].y, 'y'), Math.sqrt(Math.abs(scene.objArr[mov_obj].m))*scene.camera.animZoom, 0, 7);
+					dCanv.fill();
+					// Line
+					dCanv.beginPath();
+					dCanv.moveTo(scene.camera.crd(scene.objArr[mov_obj].x, 'x'), scene.camera.crd(scene.objArr[mov_obj].y, 'y'));
+					// Set position to user's moving objec
+					scene.objArr[mov_obj].x = newX; // New position X
+					scene.objArr[mov_obj].y = newY; // New position Y
+
+					dCanv.lineTo(scene.camera.crd(scene.objArr[mov_obj].x, 'x'), scene.camera.crd(scene.objArr[mov_obj].y, 'y'));
+					dCanv.stroke();			
+				} else {
+					scene.objArr[mov_obj].x = newX; // New position X
+					scene.objArr[mov_obj].y = newY; // New position Y
+				}
+				scene.activCam.allowFrameRender = true;
+			}
+		}	
+	}
 	//События клавиатуры
 	document.addEventListener('keydown', function(e){
 		//console.log(e.keyCode);
@@ -880,159 +876,60 @@ window.onload = function(){
 	});
 
 	let noMenuBtns = ['timedown', 'play', 'pause', 'timeup'];
-
+	// Menu buttons handler
 	$('.btn').mousedown(function(){
 		//alert($(this).attr('id'));
-		pfb = mbut;
-		mbut = $(this).attr('id');
+		pfb = mbut; // Prev clicked menu button
+		mbut = $(this).attr('id'); // Clicked menu
 		let btn_id = mbut;
-		if (mbut == 'create'){
+		// Menu buttons
+		if (!noMenuBtns.includes(btn_id)){
 			if (menu_state && btn_id == pfb){
-				$('.menu_options').css('display', 'none');
-				menu_state = false;
+				$('.'+menu_names[mbut]).css('display', 'none');
 			}else{
 				close_all_menus();
-				menu_state = true;
-				$('.menu_options').fadeIn(0);
+				$('.'+menu_names[mbut]).fadeIn(0);
 			}
-			change_state('create');
+			menu_state = !menu_state;
+			change_state(mbut);
+		} else { // Time controls
+			// Change time speed
+			if (mbut == 'timedown' || mbut == 'timeup'){
+				timeSpeed.state *= mbut == 'timedown' ? 0.5 : 2;
+			} else
+			// Pause
+			if (mbut == 'pause'){
+				let img_name = pauseState ? 'pause' : 'play';
+				if (pauseState){
+					change_state('play');
+					setTimeout(function(){change_state(pfb);}, 500);			
+				} else {
+					change_state('pause');	
+				}
+				pauseState = !pauseState;
+				$('img',this).attr('src', 'ico/'+img_name+'.png');
+			} else
+			// Play
+			if (mbut == 'play'){
+				if (timeSpeed.state != 1 || pauseState){ // If time speed == 1 or pause == true
+					simulationSpeed = 1;
+					pauseState = false;
+					timeSpeed.state = 1;
+					$('#pause img').attr('src', 'ico/pause.png');
+					change_state('restore');
+					setTimeout(function(){change_state(pfb);}, 500);
+				}
+			}		
 		}
-		if (mbut == 'edit'){
-			if (menu_state && btn_id == pfb){
-				$('.edit_menu').css('display', 'none');
-				menu_state = false;
-			}else{
-				close_all_menus();
-				menu_state = true;
-				$('.edit_menu').fadeIn(0);
-			}
-			change_state('edit');
-		}
-		if (mbut == 'trajectory'){
-			if (menu_state && btn_id == pfb){
-				$('.traj_menu').css('display', 'none');
-				menu_state = false;
-			}else{
-				close_all_menus();
-				menu_state = true;	
-				$('.traj_menu').fadeIn(0);
-			}
-			change_state('trajectory');
-		}
-		if (mbut == 'camera'){
-			if (menu_state && btn_id == pfb){
-				$('.camera_menu').css('display', 'none');
-				menu_state = false;
-			}else{
-				close_all_menus();
-				menu_state = true;
-				$('.camera_menu').fadeIn(0);
-			}
-			change_state('camera');
-		}
-		if (mbut == 'timedown'){
-			timeSpeed.state /= 2;
-		} else
-		if (mbut == 'pause'){
-			let img_name;
-			if (pauseState){
-				img_name = 'pause';
-				change_state('play');
-				let change_state_play = setTimeout(function(){change_state(pfb);}, 1000);			
-			} else {
-				img_name = 'play';
-				change_state('pause');	
-				try{clearTimeout(change_state_play)}catch(err){};
-			}
-			pauseState = !pauseState;
-			$('img',this).attr('src', 'ico/'+img_name+'.png');
-			//$('.time_speed h2').html('T - X0');
-		} else
-		if (mbut == 'play'){
-			simulationSpeed = 1;
-			pauseState = false;
-			timeSpeed.state = 1;
-			$('#pause img').attr('src', 'ico/pause.png');
-			change_state('restore');
-			try{clearTimeout(change_state_play);}catch(err){};
-			let change_state_play = setTimeout(function(){change_state(pfb);}, 1000);
-		} else
-		if (mbut == 'timeup'){
-			timeSpeed.state *= 2;
-		} else
-		if (mbut == 'delete'){
-			change_state('delete');
-			
-			if (menu_state && btn_id == pfb){
-				$('.del_menu_options').css('display', 'none');
-				menu_state = false;
-			}else{
-				close_all_menus();
-				$('.del_menu_options').fadeIn(0); 				
-				menu_state = true;
-			}
-		}
-		if (mbut == 'move'){
-			close_all_menus();
-			change_state('move');
-		}else
-		if (mbut == 'help'){
-			if (menu_state && btn_id == pfb){
-				$('.help_menu').css('display', 'none');
-				menu_state = false;
-			}else{
-				close_all_menus();
-				menu_state = true;
-				$('.help_menu').fadeIn(0);
-			}
-			change_state('help');
-		} else
-		if (mbut == 'settings'){
-			if (menu_state && btn_id == pfb){
-				$('.settings').css('display', 'none');
-				menu_state = false;	
-			} else {
-				close_all_menus();
-				$('.settings').fadeIn(0);
-				menu_state = true;
-			}
-			change_state('settings');
-		} else
-		if (mbut == 'world_settings'){
-			if (menu_state && btn_id == pfb){
-				$('.world_settings_menu').css('display', 'none');
-				menu_state = false;	
-			} else {
-				close_all_menus();
-				$('.world_settings_menu').fadeIn(0);
-				menu_state = true;
-			}
-			change_state('functionX');
-		}
-		if (noMenuBtns.includes(mbut)){
-			mbut = pfb;
-		}
-		
-		$('#'+pfb).css({'background': ''});
-		$('#'+mbut).css({'background-color': 'rgba(255,255,255,0.15)'});
-		if (menu_state){
-			$('#'+mbut).css({'background-color': 'rgba(255,255,255,0.35)'});
-			$('#close_button').css({display: 'flex'});
-		} else {
-			$('#close_button').css({display: 'none'});
-		}
+		if (noMenuBtns.includes(mbut)) mbut = pfb;
+
 		sessionStorage['mbut'] = mbut;
 		sessionStorage['menu_state'] = menu_state;
 	});
-	if (menu_state){
-		$('#'+mbut).css({background: 'rgba(255,255,255,0.35)'});
-	} else {
-		$('#'+mbut).css({background: 'rgba(255,255,255,0.15)'});
-	}
 
 	background_image.onerror = function(){
 		this.src = 'background/background.jpg';
-		 $('#url_err_message').slideDown()
+		$('#url_err_message').slideDown();
 		setTimeout(function(){ $('#url_err_message').slideUp() }, 2000);
 	}
 
@@ -1089,17 +986,15 @@ window.onload = function(){
 					g: g.state,
 				};
 				my_data = JSON.stringify(my_data);
-				writeFile("Orbit Simulator - Мой мир.osw", my_data);
+				writeFile("Orbit Simulator - "+lanwich.getTranslatedText("my_world")+".json", my_data);
 				objArrWrite = null;
 				//saveFile(name, forat, value, event);
 				break;
 			case 'sel_file_but': // Load button
 				$('#select_file').click();
 				break;
-			case 'clear_trace_mode_1': // Clear traces in mode 1
+			case 'clear_traces': // Clear traces
 				scene.camera.clearLayer3();			
-				break;
-			case 'clear_trace_mode_3': // Clear traces in mode 3
 				for (let i in scene.objArr){
 					scene.objArr[i].trace = [];
 				}
@@ -1107,8 +1002,8 @@ window.onload = function(){
 		}
 
 	});
+
 	$('.close_button').mouseup(function(){
-		$(this).css({display: 'none'});
 		close_all_menus();
 		sessionStorage['mbut'] = mbut;
 		sessionStorage['menu_state'] = menu_state;
@@ -1142,10 +1037,12 @@ window.onload = function(){
 		for (let name in menu_names){
 			$('#'+menu_names[name]).css('display', 'none');
 		}
-		$('#'+mbut).css({background: '#fff2'});
-		$('#close_button').css({display: 'none'});
+		document.getElementById(pfb).removeAttribute('selected');
+		document.getElementById(mbut).setAttribute('selected', '');
 		menu_state = false;
 	}
+	document.getElementById(mbut).setAttribute('selected', '');
+	
 	function change_state(img, format = "png", path = "ico/"){
 		if (img == 'world_settings'){ img = 'functionX'; }
 		$('.state').html('<img src="'+path+img+'.'+format+'" alt="">');
@@ -1184,23 +1081,20 @@ window.onload = function(){
 				$('.checkbox').css({width: 75, height: 75});
 				$('.radius_select').css({'font-size': 50, width: 200, 'border-radius': 10});
 				$('#col_select').css({width: 200, height: 60, 'border-radius': 10});
-				$('.menu_pos_size').css({maxHeight: '80vh'});
 			} else {
 				$('.time_panel').css({border: 'none', borderLeft: '3px solid #fff7', borderRight: '3px solid #fff7', borderRadius: '10px'});
 				$('body').css({fontSize: '2vmax'});
 				$('.btn').css({'height': 50, 'width': 50});
 				$('.btn img').css({'max-width': '65%', 'max-height': '65%'});
-				$('.menu_pos').css({top: 54 , left: 0});
+				$('.menu_pos').css({top: 56 , left: 0});
 				$('.menu').css({'flex-direction': 'row'});
 				$('.time_speed').css({right: 10, top: 130, left: 'initial', bottom: 'initial'});
 				$('.checkbox').css({width: 20, height: 20});
 				$('.radius_select').css({'font-size': 50, width: 200, 'border-radius': 10});
 				$('#col_select').css({width: '20vmin', height: '7vmin', 'border-radius': 10});
-				$('.menu_pos_size').css({maxHeight: '70vh'});
 			}
 			$('.input_num').css({width: '20vmin'});
-			$('#launchPowerLabel').css({fontSize: '5vmin'})
-			$('.close_button').css({width: '5vmin', height: '5vmin', padding: '0 0 0.5vh 0', fontSize: '5vmin'});
+			$('#launchPowerLabel').css({fontSize: '5vmin'});
 		} else {
 			switcher.device = 'desktop';
 			if (window.innerHeight > window.innerWidth){
@@ -1212,14 +1106,21 @@ window.onload = function(){
 				$('.menu_pos').css({top: $('.menu').outerHeight() , left: 0});
 				$('.menu').css({'flex-direction': 'row'});
 			}
-			$('.menu_pos_size').css({maxHeight: '80vh'});
+			// $('.menu_pos_size').css({maxHeight: '80vh'});
 			$('.input_num').css({width: '10vmin'});
 			$('#launchPowerLabel').css({fontSize: '20px'})
 			$('body').css({fontSize: 'inherit'});
-			$('.close_button').css({width: '30px', height: '30px', padding: '0 0 7px 0', fontSize: '30px', right: '-37px'});
+			// $('.close_button').css({width: '30px', height: '30px', padding: '0 0 7px 0', fontSize: '30px', right: '-37px'});
 			$('.time_speed').css({right: 10, top: 130});
 		}	
 	}
+	// Language
+	lanwich.onLanguageChange = function (language) {
+		language_selector.value = language;
+	}
+	language_selector.addEventListener('change', function(event){
+		lanwich.setLanguage(event.target.value);
+	});
 	// File select listener
 	document.getElementById('select_file').addEventListener('change', function(e){
 		let selectedFile = $('#select_file')[0].files[0];

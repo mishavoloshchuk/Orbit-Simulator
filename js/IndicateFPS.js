@@ -22,7 +22,8 @@ export default class IndicateFPS{
 			opacity: 0.7,
 			fontFamily: 'arial',
 			fontWeight: 'bold',
-			transition: '0.3s'
+			transition: '0.3s',
+			zIndex: 1
 		});
 		this.element.className = 'canvas';
 		this.element.id = 'FPS_Indicator_' + IndicateFPS.indicatorId;

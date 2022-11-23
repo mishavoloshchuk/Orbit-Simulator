@@ -295,7 +295,7 @@ export default class Scene {
 	}
 	// Show number of objects
 	show_obj_count(){
-		document.querySelector('#object_count h2').innerHTML = 'Количество обьектов: ' + this.objArr.length;
+		document.querySelector('#object_count_value').innerHTML = this.objArr.length;
 	}
 	//Необходимая скорость для круговой орбиты
 	forceToCircularOrbit(px, py, objId){

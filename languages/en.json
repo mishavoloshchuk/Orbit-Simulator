@@ -1,0 +1,133 @@
+{
+	"document_title": "Orbit Simulator - Create your own world!",
+
+	"object_creation_menu": "Object creation menu",
+	"object_creation_menu_and_hotkey": "Object creation menu - «C»",
+	"delete_menu": "Object deletion menu",
+	"delete_object_menu_and_hotkey": "Object deletion menu - «D»",
+	"edit_menu": "Object editing menu",
+	"edit_object_menu_and_hotkey": "Object editing menu - «E»",
+	"slow_down_time": "Slow down time",
+	"slow_down_time_and_hotkey": "Slow down time - «,»",
+	"pause_on/off": "Pause on/off",
+	"pause_on/off_and_hotkey": "Pause on/off - «P»",
+	"normal_speed_of_time": "Normal speed of time",
+	"normal_speed_of_time_and_hotkey": "Normal speed of time - «/»",
+	"time_speed_up": "Speed up time",
+	"time_speed_up_and_hotkey": "Speed up time - «.»",
+	"move_object": "Moving objects",
+	"move_object_and_hotkey": "Moving objects - «M»",
+	"traces_menu": "Traces menu",
+	"traces_menu_and_hotkey": "Traces menu - «T»",
+	"camera_menu": "Camera menu",
+	"camera_menu_and_hotkey": "Camera menu - «V»",
+	"interaction_menu": "Physics properties menu",
+	"interaction_menu_and_hotkey": "Physics properties menu - «F»",
+	"settings_menu": "Settings menu",
+	"settings_menu_and_hotkey": "Settings menu - «S»",
+	"help_menu": "Help menu",
+	"help_menu_and_hotkey": "Help menu - «H»",
+	"create_a_new_object_at_the_cursor_position": "Create a new object at the cursor position - «Space»",
+	"create_object_and_hotkey": "Create object - left click",
+	"toggle_fps": "Toggle FPS indicator - «F9»",
+	"hotkeys": "Hot keys",
+
+	"new_object_options": "Parameters of the new object",
+	"color_input": "Color:",
+	"random_color_checkbox": "Random",
+	"mass_input": "Mass:",
+	"circular_orbit_on_click": "Circular orbit on left click:",
+	"clockwise_input": "Clockwise:",
+	"fixed_object_checkbox": "Fixed:",
+	"pause_while_new_object_creates": "Pause when creating an object:",
+	"select_main_object_button": "Select main object:",
+	"changed_with_the_mouse_wheel_when_creating_an_object": "Changed by the mouse wheel when creating an object",
+	"launch_speed": "Launch speed:",
+	"show_distance_checkbox": "Show distance:",
+
+	"trajectory_calculate_checkbox": "Calculate trajectories:",
+	"affects_the_performance_when_calculating_the_trajectory": "Affects the performance when calculating trajectories",
+	"trajectory_calculate_length": "Trajectory calculation length:",
+	"trajectory_calculate_accuracity": "Trajectory calculation accuracity:",
+
+	"deleting_objects_options": "Object deletion options",
+	"delete_nearest_to_cursor_object": "Delete the object closest to the cursor:",
+	"delete_further_from_cursor_object": "Delete the object farthest from the cursor:",
+	"delete_last_added_object": "Delete the last added object:",
+
+	"select_object_button": "Select object",
+
+	"editing_object_properties": "Edit object properties",
+	"zero_speed_button": "Reset speed",
+
+	"traces_settings": "Traces options",
+	"no_traces": "Without traces:",
+	"traces_mode_1": "Trace mode - 1:",
+	"traces_mode_2": "Trace mode - 2:",
+	"traces_mode_3": "Trace mode - 3:",
+	"affects_performance": "Affects performance",
+
+	"extra_options": "Extra options",
+
+	"trace_opacity": "Opacity:",
+	"trace_blur": "Blur:",
+	"clear_traces": "Clear traces",
+
+	"trace_particles": "Particles:",
+	"trace_trembling": "Trembling:",
+
+	"trace_length": "Traces length:",
+
+	"trace_thickness": "Traces thickness:",
+	"trace_quality": "Traces quality:",
+
+	"camera_options": "Camera settings",
+	"follow_object": "Follow the object:",
+	"zoom_to_cursor": "Zoom to cursor:",
+	"camera_reset": "Reset camera settings",
+
+	"gravity_force_modes": "Gravity modes",
+	"inversely_proportional_to_the_cube_of_the_distance": "Inversely_proportional_to_the_cube_of_the_distance:",
+	"inversely_proportional_to_the_square_of_the_distance_(usually)": "Inversely proportional to the square of the distance (usually):",
+	"inversely_proportional_to_distance": "Inversely proportional to distance:",
+	"constant_attraction": "Constant attraction:",
+	"proportional_to_distance": "Proportional to distance:",
+
+	"force_of_gravity": "Gravity:",
+
+	"interaction_modes": "Interaction modes",
+	"between_all_objects": "Between all objects:",
+	"only_with_parent_object": "Only with parent object:",
+	"no_interactions": "No interactions:",
+
+	"turn_back_time": "Turn back time",
+
+	"collision_modes": "Collision modes",
+	"collision_merge": "Merge:",
+	"collision_rebound": "Rebound:",
+	"no_collision": "No collisions:",
+
+	"view": "View",
+	"background_image": "Backgroud image:",
+	"no_image_found_at_this_address": "*No image found for this URL",
+	"image_url": "Image URL",
+	"setting_this_parameter_to_zero_improves_performance": "A zero value for this parameter may improve performance",
+	"background_intensity": "Background intensity:",
+	"background_movement_on_mouse_movement": "Background movement on mouse movement:",
+
+	"performance": "Performance",
+	"show_fps": "Show FPS:",
+	"multithreading": "Multithreaded processing:",
+
+	"language": "Language",
+	"select_language": "Select language:",
+	"load/save_world": "Load/save world",
+	"load": "Load",
+	"save": "Save",
+
+	"contacts": "Contacts",
+	"mail": "Mail",
+	"number_of_objects": "Number of objects",
+	"deleted": "Deleted!",
+	"my_world": "My world"
+}

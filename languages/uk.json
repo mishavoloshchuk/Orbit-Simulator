@@ -1,0 +1,134 @@
+{
+	"document_title": "Orbit Simulator - Створи свій світ!",
+
+	"object_creation_menu": "Меню створення об'єктів",
+	"object_creation_menu_and_hotkey": "Меню створення об'єктів - «C»",
+	"delete_menu": "Меню видалення об'єктів",
+	"delete_object_menu_and_hotkey": "Меню видалення об'єктів - «В»",
+	"edit_menu": "Меню редагування об'єктів",
+	"edit_object_menu_and_hotkey": "Меню редагування об'єктів - «У»",
+	"slow_down_time": "Уповільнити час",
+	"slow_down_time_and_hotkey": "Уповільнити час - «Б»",
+	"pause_on/off": "Пауза вкл/викл",
+	"pause_on/off_and_hotkey": "Пауза вкл/викл - «З»",
+	"normal_speed_of_time": "Звичайна швидкість часу",
+	"normal_speed_of_time_and_hotkey": "Звичайна швидкість часу - «.»",
+	"time_speed_up": "Пришвидшити час",
+	"time_speed_up_and_hotkey": "Пришвидшити час - «Ю»",
+	"move_object": "Переміщення об'єктів",
+	"move_object_and_hotkey": "Переміщення об'єктів - «Ь»",
+	"traces_menu": "Меню слідів",
+	"traces_menu_and_hotkey": "Меню слідів - «Е»",
+	"camera_menu": "Меню камери",
+	"camera_menu_and_hotkey": "Меню камери - «М»",
+	"interaction_menu": "Меню властивостей фізики",
+	"interaction_menu_and_hotkey": "Меню властивостей фізики - «А»",
+	"settings_menu": "Меню налаштувань",
+	"settings_menu_and_hotkey": "Меню налаштувань - «І»",
+	"help_menu": "Меню допомоги",
+	"help_menu_and_hotkey": "Меню допомоги - «Р»",
+	"create_a_new_object_at_the_cursor_position": "Створити новий об'єкт на позиції курсора - «Пробіл»",
+	"create_object_and_hotkey": "Створити об'єкт - клік лівою кнопкою миші",
+	"toggle_fps": "Вкл/Викл лічильник FPS - «F9»",
+	"hotkeys": "Гарячі клавіші",
+
+	"new_object_options": "Параметри нового об'єкта",
+	"color_input": "Колір:",
+	"random_color_checkbox": "Випадковий",
+	"mass_input": "Маса:",
+	"circular_orbit_on_click": "Клік - кругова орбіта:",
+	"clockwise_input": "По часовій:",
+	"fixed_object_checkbox": "Нерухомий:",
+	"pause_while_new_object_creates": "Пауза при створенні об'єкта:",
+	"select_main_object_button": "Вибрати головний об'єкт:",
+	"changed_with_the_mouse_wheel_when_creating_an_object": "Змінюється колесом миші, при створенні об'єкта",
+	"launch_speed": "Швидкість запуску:",
+	"show_distance_checkbox": "Показувати відстань:",
+
+	"trajectory_calculate_checkbox": "Прорахунок траєкторій:",
+	"affects_the_performance_when_calculating_the_trajectory": "Впливає на швидкодію, при розразунку траєкторій",
+	"trajectory_calculate_length": "Дальність прорахунку траєкторій:",
+	"trajectory_calculate_accuracity": "Точність прорахунку траєкторій:",
+
+	"deleting_objects_options": "Параметри видалення об'єкта",
+	"delete_nearest_to_cursor_object": "Видалити найближчий до курсора об'єкт:",
+	"delete_further_from_cursor_object": "Видалити найдальший від курсора об'єкт:",
+	"delete_last_added_object": "Видалити останній доданий об'єкт:",
+
+	"select_object_button": "Вибрати об'єкт",
+
+	"editing_object_properties": "Редагування властивостей об'єкта",
+	"zero_speed_button": "Обнулити швидкість",
+
+	"traces_settings": "Параметри слідів",
+	"no_traces": "Без слідів:",
+	"traces_mode_1": "Режим слідів - 1:",
+	"traces_mode_2": "Режим слідів - 2:",
+	"traces_mode_3": "Режим слідів - 3:",
+	"affects_performance": "Впливає на швидкодію",
+
+	"extra_options": "Додаткові параметри",
+
+	"trace_opacity": "Нерозрачність:",
+	"trace_blur": "Розмивання:",
+	"clear_traces": "Очистити сліди",
+
+	"trace_particles": "Частинки:",
+	"trace_trembling": "Тремтіння:",
+
+	"trace_length": "Довжина слідів:",
+
+	"trace_thickness": "Товщина слідів:",
+	"trace_quality": "Якість слідів:",
+
+	"camera_options": "Параметри камери",
+	"follow_object": "Слідувати за об'єктом:",
+	"zoom_to_cursor": "Масштабувати до курсора:",
+	"camera_reset": "Скинути налаштування камери",
+
+	"gravity_force_modes": "Режими сили тяжіння",
+	"inversely_proportional_to_the_cube_of_the_distance": "Зворотньо-пропорційно кубу відстані:",
+	"inversely_proportional_to_the_square_of_the_distance_(usually)": "Зворотньо-пропорційно квадрату відстані (зазвичай):",
+	"inversely_proportional_to_distance": "Зворотньо-пропорційно відстані:",
+	"constant_attraction": "Постійне тяжіння:",
+	"proportional_to_distance": "Пропорційно відстані:",
+
+	"force_of_gravity": "Сила тяжіння:",
+
+	"interaction_modes": "Режими взаємодій",
+	"between_all_objects": "Між всіма об'єктами:",
+	"only_with_parent_object": "Тільки з головним об'єктом:",
+	"no_interactions": "Без взаємодій:",
+
+	"turn_back_time": "Повернути час назад",
+
+	"collision_modes": "Режими зіткнень",
+	"collision_merge": "Злиття:",
+	"collision_rebound": "Відскакування:",
+	"no_collision": "Без зіткнень:",
+
+	"language": "Мова",
+	"select_language": "Виберіть мову:",
+
+	"view": "Вигляд",
+	"background_image": "Фонове зображення:",
+	"no_image_found_at_this_address": "*Не знайдено зображення за цією адресою",
+	"image_url": "URL зображення",
+	"setting_this_parameter_to_zero_improves_performance": "Нульове значення цього параметра іноді підвищує продуктивність",
+	"background_intensity": "Інтенсивність фону:",
+	"background_movement_on_mouse_movement": "Рух фону під час руху миші:",
+
+	"performance": "Продуктивність",
+	"show_fps": "Показувати FPS:",
+	"multithreading": "Багатопотокова обробка:",
+	
+	"load/save_world": "Завантажити/зберегти світ",
+	"load": "Завантажити",
+	"save": "Зберегти",
+
+	"contacts": "Контакти",
+	"mail": "Пошта",
+	"number_of_objects": "Кількість об'єктів",
+	"deleted": "Видалений!",
+	"my_world": "Мій світ"
+}
