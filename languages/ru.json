@@ -88,7 +88,7 @@
 
 	"gravity_force_modes": "Режимы силы притяжения",
 	"inversely_proportional_to_the_cube_of_the_distance": "Обратно-пропорционально кубу расстояния:",
-	"inversely_proportional_to_the_square_of_the_distance_": "Обратно-пропорционально квадрату расстояния (обычно):",
+	"inversely_proportional_to_the_square_of_the_distance_(usually)": "Обратно-пропорционально квадрату расстояния (обычно):",
 	"inversely_proportional_to_distance": "Обратно-пропорционально расстоянию:",
 	"constant_attraction": "Постоянное притяжение:",
 	"proportional_to_distance": "Пропорционально расстоянию:",
@@ -109,7 +109,7 @@
 
 	"language": "Язык",
 	"select_language": "Выберите язык:",
-	
+
 	"view": "Вид",
 	"background_image": "Фоновое изображение:",
 	"no_image_found_at_this_address": "*Не найдено изображения по этому адресу",
