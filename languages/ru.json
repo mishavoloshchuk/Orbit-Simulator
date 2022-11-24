@@ -1,12 +1,12 @@
 {
 	"document_title": "Orbit Simulator - Создай свой мир!",
 
-	"object_creation_menu": "Меню создания обьектов",
-	"object_creation_menu_and_hotkey": "Меню создания обьектов - «C»",
-	"delete_menu": "Меню удаления обьектов",
-	"delete_object_menu_and_hotkey": "Меню удаления обьектов - «В»",
-	"edit_menu": "Меню редактирования обьектов",
-	"edit_object_menu_and_hotkey": "Меню редактирования обьектов - «У»",
+	"object_creation_menu": "Меню создания объектов",
+	"object_creation_menu_and_hotkey": "Меню создания объектов - «C»",
+	"delete_menu": "Меню удаления объектов",
+	"delete_object_menu_and_hotkey": "Меню удаления объектов - «В»",
+	"edit_menu": "Меню редактирования объектов",
+	"edit_object_menu_and_hotkey": "Меню редактирования объектов - «У»",
 	"slow_down_time": "Замедлить время",
 	"slow_down_time_and_hotkey": "Замедлить время - «Б»",
 	"pause_on/off": "Пауза вкл/выкл",
@@ -15,8 +15,8 @@
 	"normal_speed_of_time_and_hotkey": "Обычная скорость времени - «.»",
 	"time_speed_up": "Ускорить время",
 	"time_speed_up_and_hotkey": "Ускорить время - «Ю»",
-	"move_object": "Перемещение обьектов",
-	"move_object_and_hotkey": "Перемещение обьектов - «Ь»",
+	"move_object": "Перемещение объектов",
+	"move_object_and_hotkey": "Перемещение объектов - «Ь»",
 	"traces_menu": "Меню следов",
 	"traces_menu_and_hotkey": "Меню следов - «Е»",
 	"camera_menu": "Меню камеры",
@@ -27,12 +27,12 @@
 	"settings_menu_and_hotkey": "Меню настроек - «Ы»",
 	"help_menu": "Меню помощи",
 	"help_menu_and_hotkey": "Меню помощи - «Р»",
-	"create_a_new_object_at_the_cursor_position": "Создать новый обьект с круговой орбитой на позиции курсора - «Пробел»",
-	"create_object_and_hotkey": "Создать обьект - клик левой кнопкой мыши",
+	"create_a_new_object_at_the_cursor_position": "Создать новый объект с круговой орбитой на позиции курсора - «Пробел»",
+	"create_object_and_hotkey": "Создать объект - клик левой кнопкой мыши",
 	"toggle_fps": "Вкл/Выкл счетчик FPS - «F9»",
 	"hotkeys": "Горячие клавиши",
 
-	"new_object_options": "Параметры нового обьекта",
+	"new_object_options": "Параметры нового объекта",
 	"color_input": "Цвет:",
 	"random_color_checkbox": "Cлучайный",
 	"mass_input": "Масса:",
@@ -40,7 +40,7 @@
 	"clockwise_input": "По часовой:",
 	"fixed_object_checkbox": "Неподвижный:",
 	"pause_while_new_object_creates": "Пауза при создании объекта:",
-	"select_main_object_button": "Выбрать родительский обьект",
+	"select_main_object_button": "Выбрать родительский объект",
 	"changed_with_the_mouse_wheel_when_creating_an_object": "Изменяется колесом мыши при создании объекта",
 	"launch_speed": "Скорость запуска:",
 	"show_distance_checkbox": "Показывать расстояние:",
@@ -50,14 +50,15 @@
 	"trajectory_calculate_length": "Дальность прощета траектории:",
 	"trajectory_calculate_accuracity": "Точность прощета траектории:",
 
-	"deleting_objects_options": "Параметры удаления обьекта",
-	"delete_nearest_to_cursor_object": "Удалить ближайший к курсору обьект:",
-	"delete_further_from_cursor_object": "Удалить дальний от курсора обьект:",
-	"delete_last_added_object": "Удалить последний добавленный обьект:",
+	"deleting_objects_options": "Параметры удаления объекта",
+	"delete_nearest_to_cursor_object": "Удалить ближайший к курсору объект:",
+	"delete_further_from_cursor_object": "Удалить дальний от курсора объект:",
+	"delete_the_biggest_object": "Удалить наибольший объект:",
+	"delete_last_added_object": "Удалить последний добавленный объект:",
 
-	"select_object_button": "Выбрать обьект",
+	"select_object_button": "Выбрать объект",
 
-	"editing_object_properties": "Редактирование свойств обьекта",
+	"editing_object_properties": "Редактирование свойств объекта",
 	"zero_speed_button": "Обнулить скорость",
 
 	"traces_settings": "Параметры следа",
@@ -83,7 +84,7 @@
 
 	"camera_options": "Параметры камеры",
 	"follow_object": "Следить за объектом:",
-	"zoom_to_cursor": "Масштабировать к курсору:",
+	"zoom_to_screen_center": "Масштабировать к центру экрана:",
 	"camera_reset": "Сбросить настройки камеры",
 
 	"gravity_force_modes": "Режимы силы притяжения",
@@ -128,7 +129,7 @@
 
 	"contacts": "Контакты",
 	"mail": "Почта",
-	"number_of_objects": "Количество обьектов",
+	"number_of_objects": "Количество объектов",
 	"deleted": "Удален!",
 	"my_world": "Мой мир"
 }

@@ -345,6 +345,19 @@ window.onload = function(){
 		// Averrage point of touchs
 		let av_touch_x = [];
 		let av_touch_y = [];
+		// Object move start/end
+		if (mbut == 'move'){
+			if (multiTouch == 1 && allowClick) {
+				movingObjectBegin(); // Object move start
+			} else {
+				// Object move end
+				if (scene.objArr[mov_obj]){
+					scene.objArr[mov_obj].vx = scene.mpos[2];
+					scene.objArr[mov_obj].vy = scene.mpos[3];
+					mov_obj = null;
+				}
+			}
+		}
 		movingObject(); // Moving object if mouse down && mbut == "move"
 		if (event.changedTouches.length == 2){ // If multitouch
 			//All touch points array
@@ -394,15 +407,13 @@ window.onload = function(){
 			multiTouch ++;
 			event.clientX = touch.targetTouches[0].clientX;
 			event.clientY = touch.targetTouches[0].clientY;
-			allowClick = multiTouch > 1 ? false : true  // If touches > 1 cancel click event
+			allowClick = multiTouch == 1; // If touches > 1 cancel click event (mouse up event)
 			console.log('touchstart');
 		} else {
 			[mouse.leftDownX, mouse.leftDownY] = [event.clientX, event.clientY];
 		}
-
 		// Set cursor position
 		[mouse.x, mouse.y] = [event.clientX, event.clientY];
-		scene.mpos[0] = event.clientX; scene.mpos[1] = event.clientY;
 
 		// Left mouse down
 		if (event.which == 1 || touch){
@@ -427,31 +438,10 @@ window.onload = function(){
 					scene.mouse_coords[1] = mouse.y;
 				}
 			};
-			//Перемещение ближайшео объекта
-			if (mbut == 'move'){
-				mov_obj = scene.objectSelect();
-			}
-
-			if (scene.objArr[mov_obj]){
-				scene.mpos[2] = scene.objArr[mov_obj].x; scene.mpos[3] = scene.objArr[mov_obj].y; //Координаты перемещяемого объекта
-				scene.mpos[4] = scene.objArr[mov_obj].vx; scene.mpos[5] = scene.objArr[mov_obj].vy;	// Вектор перемещяемого объекта
-				scene.objArr[mov_obj].vx = 0; scene.objArr[mov_obj].vy = 0;
-			}
-			//Выбор объекта для редактирования
-			if (mbut == 'edit' && swch.s_edit){
-				swch.edit_obj = scene.objectSelect();
-				swch.s_edit = false;
-				if (scene.objArr[swch.edit_obj]){
-					editColor.state = scene.objArr[swch.edit_obj].color;
-					editMass.state = scene.objArr[swch.edit_obj].m;
-					document.getElementById('lck_edit_chbox').checked = scene.objArr[swch.edit_obj].lock;
-				}
-			}
 		}
 		// Middle mouse down
 		if (event.which == 2){
 			mouse.middleDown = true;
-			scene.mpos[0] = event.clientX; scene.mpos[1] = event.clientY;
 		}
 		// Right mouse down
 		if (event.which == 3){
@@ -477,16 +467,28 @@ window.onload = function(){
 			mouse.leftDown = false;
 			[mouse.leftUpX, mouse.leftUpY] = [event.clientX, event.clientY] // Set cursor mouseUp position
 			launchPowerLabel.style.display = 'none';
+			// Object delete
 			if (mbut == 'delete' && scene.objArr.length){
 				addFrameBeginTask( () => scene.deleteObject(scene.objectSelect(deletingMode.state)) );
 				deleted();
 			}
-			if (mbut == 'move' && scene.objArr[mov_obj]){
-				scene.objArr[mov_obj].vx = scene.mpos[4];
-				scene.objArr[mov_obj].vy = scene.mpos[5];
+			// Object edit select
+			if (mbut == 'edit' && swch.s_edit){
+				swch.edit_obj = scene.objectSelect();
+				swch.s_edit = false;
+				if (scene.objArr[swch.edit_obj]){
+					editColor.state = scene.objArr[swch.edit_obj].color;
+					editMass.state = scene.objArr[swch.edit_obj].m;
+					document.getElementById('lck_edit_chbox').checked = scene.objArr[swch.edit_obj].lock;
+				}
+			}
+			// // Object move end
+			if (mbut == 'move' && scene.objArr[mov_obj] && mov_obj !== null){
+				scene.objArr[mov_obj].vx = scene.mpos[2];
+				scene.objArr[mov_obj].vy = scene.mpos[3];
 				mov_obj = null;
 			}
-
+			// Create object
 			if (mbut == 'create' && mscam && !mouse.rightDown){
 				addFrameBeginTask(()=>{
 					scene.addNewObject({
@@ -538,7 +540,8 @@ window.onload = function(){
 		mouse.move = true;
 		if (backgroundFollowsMouse.state && backgroundDarkness.state){
 			$('.bg_image').css({top: -event.clientY/25, left: -event.clientX/25})	
-		}	
+		}
+		if (mouse.leftDown) movingObjectBegin();
 		movingObject(); // Moving object if mouse down && mbut == "move"
 		if (mouse.middleDown){
 			scene.camera.x += (mouse.x - event.clientX)/scene.camera.animZoom;
@@ -757,11 +760,23 @@ window.onload = function(){
 		
 		}
 	});
+	// Start moving object
+	function movingObjectBegin(){
+		// Перемещение ближайшео объекта
+		if (mbut == 'move' && mov_obj === null){
+			mov_obj = scene.objectSelect();
+			if (scene.objArr[mov_obj]){
+				scene.mpos[0] = scene.objArr[mov_obj].x; scene.mpos[1] = scene.objArr[mov_obj].y; //Координаты перемещяемого объекта
+				scene.mpos[2] = scene.objArr[mov_obj].vx; scene.mpos[3] = scene.objArr[mov_obj].vy;	// Вектор перемещяемого объекта
+				scene.objArr[mov_obj].vx = 0; scene.objArr[mov_obj].vy = 0;
+			}
+		}
+	}
 	// Moving object function
 	function movingObject(){
 		if (mouse.leftDown && mbut == 'move' && mov_obj !== null){ // Moving object
-			let newX = (mouse.x - scene.mpos[0])/scene.camera.animZoom + scene.mpos[2]; // New object X
-			let newY = (mouse.y - scene.mpos[1])/scene.camera.animZoom + scene.mpos[3]; // New object Y
+			let newX = (mouse.x - mouse.leftDownX)/scene.camera.animZoom + scene.mpos[0]; // New object X
+			let newY = (mouse.y - mouse.leftDownY)/scene.camera.animZoom + scene.mpos[1]; // New object Y
 			// Draw trace while user moving object
 			if (scene.objArr[mov_obj]){
 				if (tracesMode.state == 1){ // If traces mode == 1
@@ -876,6 +891,7 @@ window.onload = function(){
 	});
 
 	let noMenuBtns = ['timedown', 'play', 'pause', 'timeup'];
+	let createMenuSavedState = menu_state;
 	// Menu buttons handler
 	$('.btn').mousedown(function(){
 		//alert($(this).attr('id'));
@@ -959,9 +975,11 @@ window.onload = function(){
 					swch.s_edit = true;
 				}				
 				break;
-			case 'reset_speed_btn' && scene.objArr[swch.edit_obj]: // Edit menu, set object velocity to 0
-				scene.objArr[swch.edit_obj].vx = 0;
-				scene.objArr[swch.edit_obj].vy = 0;
+			case 'reset_speed_btn': // Edit menu, set object velocity to 0
+				if (scene.objArr[swch.edit_obj]){
+					scene.objArr[swch.edit_obj].vx = 0;
+					scene.objArr[swch.edit_obj].vy = 0;	
+				}
 				break;
 			case 'select_main_obj': // Visual select object to select main object
 				switcher.sel_orb_obj = switcher.sel_orb_obj?false:true;

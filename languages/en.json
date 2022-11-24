@@ -53,6 +53,7 @@
 	"deleting_objects_options": "Object deletion options",
 	"delete_nearest_to_cursor_object": "Delete the object closest to the cursor:",
 	"delete_further_from_cursor_object": "Delete the object farthest from the cursor:",
+	"delete_the_biggest_object": "Delete the biggest object:",
 	"delete_last_added_object": "Delete the last added object:",
 
 	"select_object_button": "Select object",
@@ -83,7 +84,7 @@
 
 	"camera_options": "Camera settings",
 	"follow_object": "Follow the object:",
-	"zoom_to_cursor": "Zoom to cursor:",
+	"zoom_to_screen_center": "Zoom to screen center:",
 	"camera_reset": "Reset camera settings",
 
 	"gravity_force_modes": "Gravity modes",

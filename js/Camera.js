@@ -1,4 +1,3 @@
-import UserInput from '/js/UserInput.js';
 export default class Camera{
 	static cameraId = 0;
 	#resolutionX = window.innerWidth;
@@ -574,7 +573,7 @@ export default class Camera{
 
 		this.ctx2.beginPath();
 		this.ctx2.fillStyle = this.scene.newObjColor.state;
-		this.ctx2.arc(scene.mpos[0], scene.mpos[1], D/2, 0, 7);
+		this.ctx2.arc(mouse.leftDownX, mouse.leftDownY, D/2, 0, 7);
 		this.ctx2.fill();
 	}
 

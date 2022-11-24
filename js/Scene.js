@@ -201,7 +201,7 @@ export default class Scene {
 				} else {// If object not locked
 					object.x += object.vx*timeSpeed;
 					object.y += object.vy*timeSpeed;
-					this.activCam.allowFrameRender = objArr === this.objArr && (object.vx || object.vy) ? true : false;
+					if (objArr === this.objArr && (object.vx || object.vy)) this.activCam.allowFrameRender = true;
 				}
 			} else {
 				object.vx = object.vy = 0;
@@ -284,13 +284,13 @@ export default class Scene {
 			eachObjectCallback && eachObjectCallback(objectId);
 			deletedObjectsList = deletedObjectsList.concat(objArr.splice(objectId, 1));
 		}
+		this.show_obj_count(); // Set objects counter indicator value
 		return deletedObjectsList;
 	}
 	delObjectCallback(objectId){
 		if (objectId == mov_obj) mov_obj = NaN;
 		if (objectId < this.camera.Target) this.camera.Target --;
 		if (objectId < mov_obj) mov_obj --;
-		this.show_obj_count();
 		this.activCam.allowFrameRender = true;
 	}
 	// Show number of objects

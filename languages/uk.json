@@ -53,6 +53,7 @@
 	"deleting_objects_options": "Параметри видалення об'єкта",
 	"delete_nearest_to_cursor_object": "Видалити найближчий до курсора об'єкт:",
 	"delete_further_from_cursor_object": "Видалити найдальший від курсора об'єкт:",
+	"delete_the_biggest_object": "Видалити найбільший об'єкт:",
 	"delete_last_added_object": "Видалити останній доданий об'єкт:",
 
 	"select_object_button": "Вибрати об'єкт",
@@ -83,7 +84,7 @@
 
 	"camera_options": "Параметри камери",
 	"follow_object": "Слідувати за об'єктом:",
-	"zoom_to_cursor": "Масштабувати до курсора:",
+	"zoom_to_screen_center": "Масштабувати до центру екрану:",
 	"camera_reset": "Скинути налаштування камери",
 
 	"gravity_force_modes": "Режими сили тяжіння",

@@ -8,10 +8,8 @@
 	<title>Orbit Simulator - Создай свой мир!</title>
 	<meta name="viewport" content="user-scalable=no">
 	<link rel="stylesheet" type="text/css" href="css/main.css">
-	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,700,0,0" />
-
-	<script type="text/javascript" src="lib/jquery.js"></script>
 	<script type="text/javascript" src="lib/languageManager.js"></script>
+	<script type="text/javascript" src="lib/jquery.js"></script>
 	<script type="text/javascript" src="js/physics.js"></script>
 	<script type="module" src="js/main.js"></script>
 </head>
@@ -238,9 +236,14 @@
 								<input class="checkbox" type="radio" name="del_method" value="furthest">
 							</div>
 							<div class="radio_button_menu">
+								<l-text>delete_the_biggest_object</l-text>
+								<span>Удалить наибольший обьект: </span>
+								<input class="checkbox" type="radio" name="del_method" value="biggest">
+							</div>
+							<div class="radio_button_menu">
 								<l-text>delete_last_added_object</l-text>
 								<span title="Ctrl+Z">Удалить последний добавленный обьект: </span>
-								<input class="checkbox" type="radio" name="del_method" value="biggest">
+								<input class="checkbox" type="radio" name="del_method" value="last_created">
 							</div>
 						</form>	
 					</div>
@@ -437,7 +440,7 @@
 					</div>
 
 					<div class='option_item'>
-						<l-text>zoom_to_cursor</l-text>
+						<l-text>zoom_to_screen_center</l-text>
 						<span>Масштабировать к курсору: </span>
 						<input type="checkbox" class="checkbox" id="chck_zoomToScreenCenter">		
 					</div>
@@ -588,10 +591,10 @@
 				<section>
 					<div class="option_item">
 						<l-text>select_language</l-text>
-						<label></label>
+						<label>Выберите язык:</label>
 						<select id="language_selector">
 							<option value="en">English</option>
-							<option value="ru">Русский</option>
+							<option value="ru" selected>Русский</option>
 							<option value="uk">Українська</option>
 						</select>
 					</div>
@@ -690,38 +693,38 @@
 				<section>
 					<ul class='list'>
 						<l-text>help_menu_and_hotkey</l-text>
-						<li>H - Меню помощи.</li>
+						<li></li>
 
 						<l-text>object_creation_menu_and_hotkey</l-text>
-						<li>С - Перейти в меню создания обьектов.</li>
+						<li></li>
 						<l-text>delete_object_menu_and_hotkey</l-text>
-						<li>D - Перейти в меню удаления обьектов.</li>
+						<li></li>
 						<l-text>edit_object_menu_and_hotkey</l-text>
-						<li>E - Перейти в меню редактирования объектов.</li>
+						<li></li>
 						<l-text>slow_down_time_and_hotkey</l-text>
-						<li>"<" - Замедлить время.</li>
+						<li></li>
 						<l-text>pause_on/off_and_hotkey</l-text>
-						<li>P - Пауза\Старт.</li>
+						<li></li>
 						<l-text>normal_speed_of_time_and_hotkey</l-text>
-						<li>"/" - Восстановить течение времени по умолчанию.</li>
+						<li></li>
 						<l-text>time_speed_up_and_hotkey</l-text>
-						<li>">" - Ускорить время.</li>
+						<li></li>
 						<l-text>move_object_and_hotkey</l-text>
-						<li>M - Переместить обьект.</li>
+						<li></li>
 						<l-text>traces_menu_and_hotkey</l-text>
-						<li>T - Перейти в меню вида траекторий.</li>
+						<li></li>
 						<l-text>camera_menu_and_hotkey</l-text>
-						<li>V - Перейти в меню камеры.</li>
+						<li></li>
 						<l-text>interaction_menu_and_hotkey</l-text>
-						<li>S - Перейти в меню настроек.</li>
+						<li></li>
 						<l-text>settings_menu_and_hotkey</l-text>
-						<li>F - Перейти в меню настроек взаемодействий.</li>
+						<li></li>
 						<l-text>create_a_new_object_at_the_cursor_position</l-text>
-						<li>Space (Пробел) - Создать новый обьект с круговой орбитой на позиции курсора.</li>
+						<li></li>
 						<l-text>create_object_and_hotkey</l-text>
-						<li>Клик - Создать обьект.</li>
+						<li></li>
 						<l-text>toggle_fps</l-text>
-						<li>F9 - Вкл/Выкл счетчик FPS.</li>
+						<li></li>
 					</ul>
 				</section>
 			</section>
