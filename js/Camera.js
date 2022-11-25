@@ -188,6 +188,9 @@ export default class Camera{
 		}
 		if (scn.backgroundDarkness.state !== 0) this.clearLayer1();
 		this.animFunc();
+		// Camera target velocity
+		const targetVx = scn.objArr[this.Target] ? scn.objArr[this.Target].vx : 0;
+		const targetVy = scn.objArr[this.Target] ? scn.objArr[this.Target].vy : 0;
 		for (let objectId in scn.objArr){
 			let obj = scn.objArr[objectId]; // Object to draw
 			const obCol = obj.color; // Object draw color
@@ -195,10 +198,8 @@ export default class Camera{
 			let drawRadius = Math.sqrt(Math.abs(obj.m))*this.animZoom; // Object draw radius
 			drawRadius = drawRadius < 0.5 ? 0.5 : drawRadius; // Minimal draw radius
 			// If object screen speed is enough to render or anyhting else 
-			const enoughObjMove = Math.sqrt(Math.pow(obj.vx, 2) + Math.pow(obj.vy, 2))*scn.timeSpeed.state*this.animZoom > 0.1 ? true : false;
-			// Camera target velocity
-			const targetVx = scn.objArr[this.Target] ? scn.objArr[this.Target].vx : 0;
-			const targetVy = scn.objArr[this.Target] ? scn.objArr[this.Target].vy : 0;
+			const enoughObjMove = Math.sqrt(Math.pow(obj.vx - targetVx, 2) + Math.pow(obj.vy - targetVy, 2))*scn.timeSpeed.state*this.animZoom > 0.1 ? true : false;
+			console.log(enoughObjMove)
 			// Fix object anti-aliasing when backgroundDarkness = 0
 			if (scn.tracesMode.state == 1 && scn.backgroundDarkness.state == 0){	
 				if (// Smooth object edges if true
@@ -230,7 +231,7 @@ export default class Camera{
 			){
 				let canv = scn.backgroundDarkness.state != 0 ? this.ctx3 : this.ctx;
 				canv.strokeStyle = obCol;
-				canv.lineWidth = drawRadius * 2 - (enoughObjMove ? 0 : 1);
+				canv.lineWidth = drawRadius * 2 - (enoughObjMove ? 0 : 1.5);
 				canv.lineCap = drawRadius > 1 ? 'round' : 'butt';
 				canv.beginPath();
 				canv.moveTo(this.crd(obj.x - obj.vx*scn.timeSpeed.state + targetVx * scn.timeSpeed.state, 'x'), this.crd(obj.y - obj.vy*scn.timeSpeed.state + targetVy * scn.timeSpeed.state, 'y'));
