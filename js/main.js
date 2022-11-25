@@ -586,7 +586,6 @@ window.onload = function(){
 		}
 	}
 	function frame(){
-		scene.camera.frame();
 		// Run all functions from frameTasks array
 		if (!scene.workersJobDone){
 			frameTasks.forEach((task)=>{
@@ -612,6 +611,7 @@ window.onload = function(){
 				}
 			}
 		}
+		scene.camera.frame(); // Trigger camera frame
 		// Measure FPS
 		fpsIndicator.measure();
 		// Frame rendering
