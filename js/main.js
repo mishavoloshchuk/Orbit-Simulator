@@ -388,8 +388,9 @@ window.onload = function(){
 				avTouchPoint.yd = avTouchPoint.y;
 				zm_cff = touchZoom;
 			}
-			if (scene.camera.zoom < 10000 && scene.camera.zoom > 1.0e-12){
-				scene.camera.zoom = scene.camera.animZoom = zm_prev / Math.pow(Math.sqrt(zm_cff) / Math.sqrt(touchZoom), 2); // Zoom
+			let newZoom = zm_prev / Math.pow(Math.sqrt(zm_cff) / Math.sqrt(touchZoom), 2); // Zoom
+			if (newZoom < 10000 && newZoom > 1.0e-12){
+				scene.camera.zoom = scene.camera.animZoom = newZoom;
 			}
 			if (zoomToCursor.state){ // If no zoom to center
 				scene.camera.ax = scene.camera.x = prev_cam_x - (avTouchPoint.x - avTouchPoint.xd)/scene.camera.animZoom + (((window.innerWidth/2 - avTouchPoint.xd)/zm_prev)*Math.pow(Math.sqrt(zm_cff) / Math.sqrt(touchZoom), 2) - ((window.innerWidth/2 - avTouchPoint.xd)/zm_prev));
