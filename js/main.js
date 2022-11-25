@@ -388,8 +388,9 @@ window.onload = function(){
 				avTouchPoint.yd = avTouchPoint.y;
 				zm_cff = touchZoom;
 			}
-
-			scene.camera.zoom = scene.camera.animZoom = zm_prev / Math.pow(Math.sqrt(zm_cff) / Math.sqrt(touchZoom), 2); // Zoom
+			if (scene.camera.zoom < 10000 && scene.camera.zoom > 1.0e-12){
+				scene.camera.zoom = scene.camera.animZoom = zm_prev / Math.pow(Math.sqrt(zm_cff) / Math.sqrt(touchZoom), 2); // Zoom
+			}
 			if (zoomToCursor.state){ // If no zoom to center
 				scene.camera.ax = scene.camera.x = prev_cam_x - (avTouchPoint.x - avTouchPoint.xd)/scene.camera.animZoom + (((window.innerWidth/2 - avTouchPoint.xd)/zm_prev)*Math.pow(Math.sqrt(zm_cff) / Math.sqrt(touchZoom), 2) - ((window.innerWidth/2 - avTouchPoint.xd)/zm_prev));
 				scene.camera.ay = scene.camera.y = prev_cam_y - (avTouchPoint.y - avTouchPoint.yd)/scene.camera.animZoom + (((window.innerHeight/2 - avTouchPoint.yd)/zm_prev)*Math.pow(Math.sqrt(zm_cff) / Math.sqrt(touchZoom), 2) - ((window.innerHeight/2 - avTouchPoint.yd)/zm_prev));
@@ -562,9 +563,6 @@ window.onload = function(){
 		} else {
 			scene.mouse_coords[0] = scene.mouse_coords [1] = false;
 		}
-		if (showDistanceFromCursorToMainObj.state){
-			scene.camera.clearLayer2();
-		}
 	};
 	$('*').bind('contextmenu', function(e) {
 		return false;
@@ -649,7 +647,7 @@ window.onload = function(){
 			scene.camera.visualObjectSelect(nearObjId,'#bf0');
 		}
 		// Show distance
-		if ((mbut == 'create') && (!mouse.leftDown || (multiTouch > 0 && mbut != 'create')) && showDistanceFromCursorToMainObj.state && mouse.move){
+		if (mbut == 'create' && !mouse.leftDown && showDistanceFromCursorToMainObj.state){
 			vis_distance([mouse.x, mouse.y], '#888888');
 		}
 		// Hide launch power label
@@ -699,11 +697,12 @@ window.onload = function(){
 	}
 	//addObjects(100);
 
-	//Визуальная дистанция до главного объекта
+	// Show distance to main object
 	function vis_distance(obj_cord, col = '#888888', targ_obj = scene.objIdToOrbit){
 		if (scene.objArr[targ_obj]){
 			let obCoords = scene.objArr[swch.t_object] ? [scene.objArr[targ_obj].x - scene.objArr[targ_obj].vx, scene.objArr[targ_obj].y - scene.objArr[targ_obj].vy] : [scene.objArr[targ_obj].x, scene.objArr[targ_obj].y];
 			let size = rad(obj_cord[0], obj_cord[1], scene.camera.crd(obCoords[0], 'x'), scene.camera.crd(obCoords[1], 'y'));
+			scene.camera.clearLayer2();
 			if (size > Math.sqrt(Math.abs(scene.objArr[targ_obj].m))*scene.camera.animZoom){
 				scene.camera.ctx2.strokeStyle = col;
 				scene.camera.ctx2.lineWidth = 2;
