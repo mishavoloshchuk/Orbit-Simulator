@@ -130,7 +130,7 @@ export default class Camera{
 		if (this.zoom < 10000){
 			this.cameraChangedState();
 			this.zoom *= vl; // Set zoom value
-			if (this.scene.zoomToCursor.state){
+			if (!this.scene.zoomToScreenCenter.state){
 				this.x += (this.screenPix(mouse.x, 'x')-this.x)/(vl/(vl-1));
 				this.y += (this.screenPix(mouse.y, 'y')-this.y)/(vl/(vl-1));
 			}
@@ -141,7 +141,7 @@ export default class Camera{
 		if (this.zoom > 1.0e-12){
 			this.cameraChangedState();
 			this.zoom /= vl; // Set zoom value
-			if (this.scene.zoomToCursor.state){
+			if (!this.scene.zoomToScreenCenter.state){
 				this.x -= (this.screenPix(mouse.x, 'x')-this.x)/(1/(vl-1));
 				this.y -= (this.screenPix(mouse.y, 'y')-this.y)/(1/(vl-1));
 			}

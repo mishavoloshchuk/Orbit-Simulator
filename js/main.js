@@ -169,7 +169,7 @@ window.onload = function(){
 	traceMode3Length = new UserInput({type: 'range', id: 'trace3Lnth', stateSaving: true, eventName: 'input', callback: allowRender}),
 
 	// Camera menu ========================================================
-	zoomToCursor = new UserInput({type: 'checkbox', id: 'chck_zoomToScreenCenter', stateSaving: true, initState: true}), // Zoom to cursor as default. If enabled zoom, zooming to screen center
+	zoomToScreenCenter = new UserInput({type: 'checkbox', id: 'chck_zoomToScreenCenter', stateSaving: true, initState: false}), // Zoom to cursor as default. If enabled zoom, zooming to screen center
 
 	// Physics menu =======================
 	gravitationMode = new UserInput({type: 'radio', id: 'gravit_mode_radio_buttons', stateSaving: true}), // Select gravitation mode (radio)
@@ -246,7 +246,7 @@ window.onload = function(){
 		// Settings
 		showFPS: showFPS,
 		backgroundDarkness: backgroundDarkness,
-		zoomToCursor: zoomToCursor,
+		zoomToScreenCenter: zoomToScreenCenter,
 		// Physics
 		timeSpeed: timeSpeed,
 		g: g,
@@ -392,10 +392,9 @@ window.onload = function(){
 			if (newZoom < 10000 && newZoom > 1.0e-12){
 				scene.camera.zoom = scene.camera.animZoom = newZoom;
 			}
-			if (zoomToCursor.state){ // If no zoom to center
+			if (!zoomToScreenCenter.state){ // If zoom to screen center
 				scene.camera.ax = scene.camera.x = prev_cam_x - (avTouchPoint.x - avTouchPoint.xd)/scene.camera.animZoom + (((window.innerWidth/2 - avTouchPoint.xd)/zm_prev)*Math.pow(Math.sqrt(zm_cff) / Math.sqrt(touchZoom), 2) - ((window.innerWidth/2 - avTouchPoint.xd)/zm_prev));
 				scene.camera.ay = scene.camera.y = prev_cam_y - (avTouchPoint.y - avTouchPoint.yd)/scene.camera.animZoom + (((window.innerHeight/2 - avTouchPoint.yd)/zm_prev)*Math.pow(Math.sqrt(zm_cff) / Math.sqrt(touchZoom), 2) - ((window.innerHeight/2 - avTouchPoint.yd)/zm_prev));
-			} else { // If zoom to center
 			}
 			swch.t_object = false; // Track object disable
 		}
@@ -648,6 +647,7 @@ window.onload = function(){
 			scene.camera.visualObjectSelect(nearObjId,'#bf0');
 		}
 		// Show distance
+		if (showDistanceFromCursorToMainObj.state) scene.camera.clearLayer2();
 		if (mbut == 'create' && !mouse.leftDown && showDistanceFromCursorToMainObj.state){
 			vis_distance([mouse.x, mouse.y], '#888888');
 		}
@@ -703,7 +703,6 @@ window.onload = function(){
 		if (scene.objArr[targ_obj]){
 			let obCoords = scene.objArr[swch.t_object] ? [scene.objArr[targ_obj].x - scene.objArr[targ_obj].vx, scene.objArr[targ_obj].y - scene.objArr[targ_obj].vy] : [scene.objArr[targ_obj].x, scene.objArr[targ_obj].y];
 			let size = rad(obj_cord[0], obj_cord[1], scene.camera.crd(obCoords[0], 'x'), scene.camera.crd(obCoords[1], 'y'));
-			scene.camera.clearLayer2();
 			if (size > Math.sqrt(Math.abs(scene.objArr[targ_obj].m))*scene.camera.animZoom){
 				scene.camera.ctx2.strokeStyle = col;
 				scene.camera.ctx2.lineWidth = 2;
