@@ -119,6 +119,7 @@
 	"performance": "Performance",
 	"show_fps": "Show FPS:",
 	"multithreading": "Multithreaded processing:",
+	"max_performance": "Max performance:",
 
 	"language": "Language",
 	"select_language": "Select language:",

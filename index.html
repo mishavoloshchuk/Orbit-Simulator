@@ -579,10 +579,8 @@
 		<div class="settings_menu menu_pos_size menu_pos menu_max_s" id="settings_menu">
 			<section class="options_section">
 				<div class='option_item title_option_item' close_button>
-					<span>
-						<l-text>language</l-text>
-						<span>Язык</span>:
-					</span>
+					<l-text>language</l-text>
+					<span>Язык</span>
 					<!-- Close button -->
 					<div class="close_button">
 						<svg height="70%" width="70%" viewBox="0,0,48,48"><path d="m12.45 38.85-3.3-3.3L20.7 24 9.15 12.45l3.3-3.3L24 20.7 35.55 9.15l3.3 3.3L27.3 24l11.55 11.55-3.3 3.3L24 27.3Z"/></svg>
@@ -592,6 +590,8 @@
 					<div class="option_item">
 						<l-text>select_language</l-text>
 						<label>Выберите язык:</label>
+						<!-- Loading animation -->
+						<div class="loader" id="language_loader"></div>
 						<select id="language_selector">
 							<option value="en">English</option>
 							<option value="ru" selected>Русский</option>
@@ -601,7 +601,7 @@
 				</section>
 			</section>
 			
-			<section class="options_section">	
+			<section class="options_section" id="view_settings">	
 				<div class='option_item title_option_item'>
 					<span>
 						<l-text>view</l-text>
@@ -655,6 +655,11 @@
 						<l-text>multithreading</l-text>
 						<span>Многопоточная обработка: </span>
 						<input type="checkbox" class='checkbox' id='multithread_comput' onmouseout="this.blur();">	
+					</div>
+					<div class='option_item'>
+						<l-text>max_performance</l-text>
+						<span>Максимальная производительность: </span>
+						<input type="checkbox" class='checkbox' id='max_performance' onmouseout="this.blur();">	
 					</div>
 				</section>
 			</section>

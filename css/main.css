@@ -422,12 +422,38 @@ a:hover {
 	display: block;
 }
 
+.loader {
+	width: 1em;
+	margin: 0 0.5em;
+	height: 1em;
+	border: 0.15em dashed white;
+	border-radius: 50%;
+	animation-name: loader_animation;
+	animation-timing-function: linear;
+	animation-duration: 1s;
+	animation-iteration-count: infinite;
+	transition: .2s;
+}
+
+.disabled {
+	display: none;
+}
+
 select {
 	font-size: 1.1em;
 	padding: 0.2em;
 	border-radius: 0.5em;
 	text-align: center;
 }
+
+@keyframes loader_animation {
+	from {
+		transform: rotate(0);
+	} to {
+		transform: rotate(360deg);
+	}
+}
+
 @media screen and (orientation:portrait) and (max-width: 1000px) {
 	.menu_container {
 		max-height: 100%;

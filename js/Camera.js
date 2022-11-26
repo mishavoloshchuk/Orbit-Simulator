@@ -25,7 +25,8 @@ export default class Camera{
 	set y(pos) { this.#y = pos; if (this.Target === undefined) this.cameraChangedState(); } // Set y handler
 	ax = 0; ay = 0; // Actualy camera postiton with animation
 	lastX = 0; lastY = 0; // Last camera position
-	zoom = 1; // Target zoom
+	#zoom = 1; // Target zoom
+	set zoom(val) { this.#zoom = val; this.cameraChangedState(); }
 	animZoom = 1; // Actualy zoom with animation
 	zoomCff = 1.25; // Zoom coefficient
 	Target = undefined; // Follow target object
@@ -116,20 +117,20 @@ export default class Camera{
 			this.animTimeCorrect = this.animationDuration;
 		}
 		animSpeedCorrected = animSpeedCorrected < 1 ? 1 : animSpeedCorrected;
-		this.animZoom += ((this.zoom-this.animZoom)/animSpeedCorrected);
+		this.animZoom += ((this.#zoom-this.animZoom)/animSpeedCorrected);
 		this.lastX = this.ax; this.lastY = this.ay;
 		if (this.animation){
-			this.ax += (this.x-this.ax)/(animSpeedCorrected/(this.zoom/this.animZoom));
-			this.ay += (this.y-this.ay)/(animSpeedCorrected/(this.zoom/this.animZoom));
+			this.ax += (this.x-this.ax)/(animSpeedCorrected/(this.#zoom/this.animZoom));
+			this.ay += (this.y-this.ay)/(animSpeedCorrected/(this.#zoom/this.animZoom));
 		} else {
 			this.ax = this.x; this.ay = this.y;
 		}
 	}
 
 	zoomIn(vl = this.zoomCff){ // Zoom IN. vl is a zoom coefficient
-		if (this.zoom < 10000){
+		if (this.#zoom < 10000){
 			this.cameraChangedState();
-			this.zoom *= vl; // Set zoom value
+			this.#zoom *= vl; // Set zoom value
 			if (!this.scene.zoomToScreenCenter.state){
 				this.x += (this.screenPix(mouse.x, 'x')-this.x)/(vl/(vl-1));
 				this.y += (this.screenPix(mouse.y, 'y')-this.y)/(vl/(vl-1));
@@ -138,9 +139,9 @@ export default class Camera{
 	}
 
 	zoomOut(vl = this.zoomCff){ // Zoom OUT. vl is a zoom coefficient
-		if (this.zoom > 1.0e-12){
+		if (this.#zoom > 1.0e-12){
 			this.cameraChangedState();
-			this.zoom /= vl; // Set zoom value
+			this.#zoom /= vl; // Set zoom value
 			if (!this.scene.zoomToScreenCenter.state){
 				this.x -= (this.screenPix(mouse.x, 'x')-this.x)/(1/(vl-1));
 				this.y -= (this.screenPix(mouse.y, 'y')-this.y)/(1/(vl-1));
@@ -186,7 +187,7 @@ export default class Camera{
 		} else {
 			this.clearLayer3();
 		}
-		if (scn.backgroundDarkness.state !== 0) this.clearLayer1();
+		if (!scn.maxPerformance.state) this.clearLayer1();
 		this.animFunc();
 		// Camera target velocity
 		const targetVx = scn.objArr[this.Target] ? scn.objArr[this.Target].vx : 0;
@@ -199,9 +200,8 @@ export default class Camera{
 			drawRadius = drawRadius < 0.5 ? 0.5 : drawRadius; // Minimal draw radius
 			// If object screen speed is enough to render or anyhting else 
 			const enoughObjMove = Math.sqrt(Math.pow(obj.vx - targetVx, 2) + Math.pow(obj.vy - targetVy, 2))*scn.timeSpeed.state*this.animZoom > 0.1 ? true : false;
-			console.log(enoughObjMove)
-			// Fix object anti-aliasing when backgroundDarkness = 0
-			if (scn.tracesMode.state == 1 && scn.backgroundDarkness.state == 0){	
+			// Fix object anti-aliasing when maxPerformance is enabled
+			if (scn.tracesMode.state == 1 && scn.maxPerformance.state){	
 				if (// Smooth object edges if true
 					(!scn.objArr[this.Target] && !enoughObjMove) // If there is no camera target and object locked or
 					|| ( scn.objArr[this.Target] // If there is camera target
@@ -229,7 +229,7 @@ export default class Camera{
 				&& (!obj.lock || (scn.objArr[this.Target] && !scn.objArr[this.Target].lock)) // If object not locked or camera target not locked
 				&& this.Target !== objectId // If camera target != current object
 			){
-				let canv = scn.backgroundDarkness.state != 0 ? this.ctx3 : this.ctx;
+				let canv = scn.maxPerformance.state ? this.ctx : this.ctx3;
 				canv.strokeStyle = obCol;
 				canv.lineWidth = drawRadius * 2 - (enoughObjMove ? 0 : 1.5);
 				canv.lineCap = drawRadius > 1 ? 'round' : 'butt';
@@ -626,7 +626,7 @@ export default class Camera{
 
 	tracesMode1Wiping(){
 		//console.log('clear layer 1');
-		let canvas = this.scene.backgroundDarkness.state != 0 ? this.ctx3 : this.ctx;
+		let canvas = this.scene.maxPerformance.state ? this.ctx : this.ctx3;
 		canvas.globalAlpha = 0.01;
 		canvas.fillStyle = this.wipeColor;
 		canvas.fillRect(0, 0, this.resolutionX, this.resolutionY);
@@ -643,7 +643,7 @@ export default class Camera{
 	}
 	clearLayer3(){
 		//console.log('clear layer 3');
-		let canvas = this.scene.backgroundDarkness.state != 0 ? this.ctx3 : this.ctx;
+		let canvas = this.scene.maxPerformance.state ? this.ctx : this.ctx3;
 		canvas.clearRect(0, 0, this.resolutionX, this.resolutionY);
 	}
 	//Draw cross function

@@ -117,14 +117,6 @@ window.onload = function(){
 		} else {
 			additionalTrajectoryMenu.setAttribute('closed', '');
 		}
-		// Set option item style
-		// if (val){
-		// 	elem.element.parentNode.removeAttribute('single');
-		// 	elem.element.parentNode.style.marginBottom = '0';
-		// } else {
-		// 	elem.element.parentNode.setAttribute('single', '');
-		// 	elem.element.parentNode.style.marginBottom = '5px';
-		// }
 	}}), // Enable trajectory calculation before create object
 	newObjTrajLength = new UserInput({type: 'range', id: 'traj_calc_samples', stateSaving: true}), // Trajectory calutulation length input
 	newObjTrajAccuracity = new UserInput({type: 'range', id: 'traj_calc_accuracity', stateSaving: true }), // Trajectory accuracity input
@@ -187,21 +179,6 @@ window.onload = function(){
 	}, }),
 	// Set background darkness
 	backgroundDarkness = new UserInput({type: 'range', id: 'bg_darkness', stateSaving: true, eventName: 'input', callback: (state, elem)=>{
-		if (state == 0) { // If backgroundDarkness state value = 0 then copy imageData from canvas layer 3 to canvas layer 1 and hide canvas layer 3
-			// scene.camera.ctx.putImageData(scene.camera.ctx3.getImageData(0,0,scene.camera.canv0.resolutionX,scene.camera.canv0.resolutionY),0,0);
-			scene.camera.ctx3.clearRect(0,0,scene.camera.resolutionX,scene.camera.resolutionY);
-			scene.camera.canv3.style.display = background_image.style.display = 'none';
-			additionalTrajectoryOptions1.setAttribute('disabled', '');
-			scene.activCam.allowFrameRender = true; // Render
-			tracesMode.state = tracesMode.state; // Refresh trace mode menu
-		} else if (!elem.prevState) { // If backgroundDarkness previous state value = 0 then copy imageData from canvas layer 1 to canvas layer 3 and display canvas layer 3
-			// scene.camera.ctx3.putImageData(scene.camera.ctx.getImageData(0,0,scene.camera.canv0.resolutionX,scene.camera.canv0.resolutionY),0,0);
-			scene.camera.ctx.clearRect(0,0,scene.camera.resolutionX,scene.camera.resolutionY);
-			scene.camera.canv3.style.display = background_image.style.display = '';
-			additionalTrajectoryOptions1.removeAttribute('disabled');
-			scene.activCam.allowFrameRender = true; // Render
-			tracesMode.state = tracesMode.state; // Refresh trace mode menu
-		}
 		background_image.style.opacity = state;
 	}, }),
 	backgroundFollowsMouse = new UserInput({type: 'checkbox', id: 'mouse_move_bg', stateSaving: true, initState: true}), // If true, background follows the cursor
@@ -214,13 +191,25 @@ window.onload = function(){
 		if (window.navigator.hardwareConcurrency < 2) {
 			input.element.parentElement.style.display = 'none'; // Hide multithread option, if computer have only 1 thread
 		}
+	}}),
+	maxPerformance = new UserInput({type: 'checkbox', id: 'max_performance', stateSaving: true, callback: (state)=>{
+		if (state) {
+			scene.camera.ctx3.clearRect(0,0,scene.camera.resolutionX,scene.camera.resolutionY);
+			scene.camera.canv3.style.display = background_image.style.display = 'none';
+			additionalTrajectoryOptions1.setAttribute('disabled', '');
+			scene.activCam.allowFrameRender = true; // Render
+			tracesMode.state = tracesMode.state; // Refresh trace mode menu
+			view_settings.className += ' disabled'; // Hide view settings
+		} else {
+			scene.camera.ctx.clearRect(0,0,scene.camera.resolutionX,scene.camera.resolutionY);
+			scene.camera.canv3.style.display = background_image.style.display = '';
+			additionalTrajectoryOptions1.removeAttribute('disabled');
+			scene.activCam.allowFrameRender = true; // Render
+			tracesMode.state = tracesMode.state; // Refresh trace mode menu
+			view_settings.className = view_settings.className.replace('disabled', ''); // Hide view settings
+		}
 	}})
 	;
-	// { // Fix background darkness
-	// 	let state = backgroundDarkness.state;
-	// 	backgroundDarkness.state = 0;
-	// 	backgroundDarkness.state = state;
-	// }
 
 	let timeSpeed = new UserInput({type: 'manualInput', initState: 1, callback: (val, inpVar)=>{
 		document.querySelector('.time_speed h2').innerHTML = 'T - X'+val;
@@ -245,7 +234,7 @@ window.onload = function(){
 	Object.assign(scene, {
 		// Settings
 		showFPS: showFPS,
-		backgroundDarkness: backgroundDarkness,
+		maxPerformance: maxPerformance,
 		zoomToScreenCenter: zoomToScreenCenter,
 		// Physics
 		timeSpeed: timeSpeed,
@@ -388,11 +377,16 @@ window.onload = function(){
 				avTouchPoint.yd = avTouchPoint.y;
 				zm_cff = touchZoom;
 			}
+			// Cancel camera target if touch camera move
+			if (rad(avTouchPoint.xd, avTouchPoint.yd, avTouchPoint.x, avTouchPoint.y) > Math.min(innerWidth, innerHeight)/6){
+				scene.camera.setTarget();
+			}
+			// Limit zoom
 			let newZoom = zm_prev / Math.pow(Math.sqrt(zm_cff) / Math.sqrt(touchZoom), 2); // Zoom
 			if (newZoom < 10000 && newZoom > 1.0e-12){
 				scene.camera.zoom = scene.camera.animZoom = newZoom;
 			}
-			if (!zoomToScreenCenter.state){ // If zoom to screen center
+			if (!zoomToScreenCenter.state && scene.camera.Target === undefined){ // If zoom to screen center
 				scene.camera.ax = scene.camera.x = prev_cam_x - (avTouchPoint.x - avTouchPoint.xd)/scene.camera.animZoom + (((window.innerWidth/2 - avTouchPoint.xd)/zm_prev)*Math.pow(Math.sqrt(zm_cff) / Math.sqrt(touchZoom), 2) - ((window.innerWidth/2 - avTouchPoint.xd)/zm_prev));
 				scene.camera.ay = scene.camera.y = prev_cam_y - (avTouchPoint.y - avTouchPoint.yd)/scene.camera.animZoom + (((window.innerHeight/2 - avTouchPoint.yd)/zm_prev)*Math.pow(Math.sqrt(zm_cff) / Math.sqrt(touchZoom), 2) - ((window.innerHeight/2 - avTouchPoint.yd)/zm_prev));
 			}
@@ -539,7 +533,7 @@ window.onload = function(){
 	// Mouse MOVE
 	document.onmousemove = function(event){
 		mouse.move = true;
-		if (backgroundFollowsMouse.state && backgroundDarkness.state){
+		if (backgroundFollowsMouse.state && backgroundDarkness.state && !maxPerformance.state){
 			$('.bg_image').css({top: -event.clientY/25, left: -event.clientX/25})	
 		}
 		if (mouse.leftDown) movingObjectBegin();
@@ -779,7 +773,7 @@ window.onload = function(){
 			// Draw trace while user moving object
 			if (scene.objArr[mov_obj]){
 				if (tracesMode.state == 1){ // If traces mode == 1
-					let dCanv = backgroundDarkness.state != 0 ? scene.camera.ctx3 : scene.camera.ctx;
+					let dCanv = maxPerformance.state ? scene.camera.ctx3 : scene.camera.ctx;
 					dCanv.strokeStyle = scene.objArr[mov_obj].color;
 					dCanv.fillStyle = scene.objArr[mov_obj].color;
 					dCanv.lineWidth = Math.sqrt(scene.objArr[mov_obj].m)*2*scene.camera.animZoom < 0.5 ? 0.5 : Math.sqrt(scene.objArr[mov_obj].m)*2*scene.camera.animZoom;
@@ -1134,8 +1128,14 @@ window.onload = function(){
 	// Language
 	lanwich.onLanguageChange = function (language) {
 		language_selector.value = language;
+		let loader = document.getElementById('language_loader'); // Loader element
+		loader.style.opacity = 0;
+		setTimeout( () => loader.style.display = 'none', 200);
 	}
 	language_selector.addEventListener('change', function(event){
+		let loader = document.getElementById('language_loader'); // Loader element
+		loader.style.cssText = 'display: inline-block; opacity: 0;';
+		setTimeout(()=> loader.style.opacity = 1, 16);
 		lanwich.setLanguage(event.target.value);
 	});
 	// File select listener
