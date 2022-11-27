@@ -232,24 +232,44 @@ a:hover {
 	min-height: 2em;
 	background-color: #444444;
 	font-size: 1.2em;
-	padding: 0.2em 1em;
+	padding: 0.2em 2em;
 	text-shadow: none;
 	color: white;
 	justify-content: center;
 	position: relative;
 	overflow: hidden;
+	-moz-user-select: none; /* Mozilla Firefox */
+	-ms-user-select: none; /* Internet Explorer (не поддерживается) */
+	-o-user-select: none; /* Opera Presto (не поддерживается) */
+	-webkit-user-select: none; /* Google Chrome, Opera Next, Safari */
 }
 .title_option_item input {
 	margin: 0;
 }
-.title_option_item[closed] {
+.title_option_item:not([disabled]):hover {
+	cursor: pointer;
+	background-color: #555555;
+}
+.title_option_item * {
+	cursor: inherit;
+}
+.title_option_item[closed="true"], .title_option_item[disabled] {
 	border: none;
 }
-.title_option_item[closed] ~ * {
+.title_option_item[closed="true"] ~ * , .title_option_item[disabled] ~ * {
 	display: none;
 }
-.title_option_item[close_button] {
-	padding-right: 2em;
+.title_option_item::before {
+	content: "▲";
+	position: absolute;
+	left: 0.5em;
+	transition: 300ms;
+}
+.title_option_item[closed="true"]::before {
+	transform: rotate(180deg);
+}
+.title_option_item[disabled]::before {
+	content: '';
 }
 
 .options_section {

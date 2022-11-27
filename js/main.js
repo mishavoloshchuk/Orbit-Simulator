@@ -113,9 +113,9 @@ window.onload = function(){
 	showNewObjTrajectory = new UserInput({type: 'checkbox', id: 'traj_prev_check', stateSaving: true, initState: true, callback: (val, elem)=>{
 		// Show or hide additional menu
 		if (val){
-			additionalTrajectoryMenu.removeAttribute('closed');
+			additionalTrajectoryMenu.removeAttribute('disabled');
 		} else {
-			additionalTrajectoryMenu.setAttribute('closed', '');
+			additionalTrajectoryMenu.setAttribute('disabled', '');
 		}
 	}}), // Enable trajectory calculation before create object
 	newObjTrajLength = new UserInput({type: 'range', id: 'traj_calc_samples', stateSaving: true}), // Trajectory calutulation length input
@@ -1013,11 +1013,14 @@ window.onload = function(){
 		}
 
 	});
-
-	$('.close_button').mouseup(function(){
-		close_all_menus();
-		sessionStorage['mbut'] = mbut;
-		sessionStorage['menu_state'] = menu_state;
+	// Close menu button handler
+	document.querySelectorAll('.close_button').forEach(function(element){
+		element.addEventListener('click', (event) => {
+			close_all_menus();
+			event.stopPropagation();
+			sessionStorage['mbut'] = mbut;
+			sessionStorage['menu_state'] = menu_state;
+		})
 	});
 
 	$('.input_text').focus(function(){
@@ -1125,6 +1128,13 @@ window.onload = function(){
 			$('.time_speed').css({right: 10, top: 130});
 		}	
 	}
+	// Close\open options tabs handler
+	document.querySelectorAll('.title_option_item').forEach((element) => {
+		element.addEventListener('click', (e) => {
+			let tab = e.target.closest('.title_option_item');
+			tab.setAttribute('closed', (tab.getAttribute('closed') == 'true' ? 'false' : 'true'));
+		});
+	});
 	// Language
 	lanwich.onLanguageChange = function (language) {
 		language_selector.value = language;
