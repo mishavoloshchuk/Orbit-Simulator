@@ -36,11 +36,13 @@
 	"color_input": "Колір:",
 	"random_color_checkbox": "Випадковий",
 	"mass_input": "Маса:",
-	"circular_orbit_on_click": "Клік - кругова орбіта:",
 	"clockwise_input": "По часовій:",
 	"fixed_object_checkbox": "Нерухомий:",
-	"pause_while_new_object_creates": "Пауза при створенні об'єкта:",
 	"select_main_object_button": "Вибрати головний об'єкт:",
+
+	"creation_parameters": "Параметри створення",
+	"circular_orbit_on_click": "Клік - кругова орбіта:",
+	"pause_while_new_object_creates": "Пауза при створенні об'єкта:",
 	"changed_with_the_mouse_wheel_when_creating_an_object": "Змінюється колесом миші, при створенні об'єкта",
 	"launch_speed": "Швидкість запуску:",
 	"show_distance_checkbox": "Показувати відстань:",
@@ -115,7 +117,6 @@
 	"background_image": "Фонове зображення:",
 	"no_image_found_at_this_address": "*Не знайдено зображення за цією адресою",
 	"image_url": "URL зображення",
-	"setting_this_parameter_to_zero_improves_performance": "Нульове значення цього параметра іноді підвищує продуктивність",
 	"background_intensity": "Інтенсивність фону:",
 	"background_movement_on_mouse_movement": "Рух фону під час руху миші:",
 

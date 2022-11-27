@@ -284,7 +284,7 @@ export default class Scene {
 			eachObjectCallback && eachObjectCallback(objectId);
 			deletedObjectsList = deletedObjectsList.concat(objArr.splice(objectId, 1));
 		}
-		this.show_obj_count(); // Set objects counter indicator value
+		this.show_obj_count(); // Set objects counter indicator
 		return deletedObjectsList;
 	}
 	delObjectCallback(objectId){

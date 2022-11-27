@@ -36,11 +36,13 @@
 	"color_input": "Цвет:",
 	"random_color_checkbox": "Cлучайный",
 	"mass_input": "Масса:",
+	"fixed_object_checkbox": "Неподвижный:",
+	"select_main_object_button": "Выбрать родительский объект",
+
+	"creation_parameters": "Параметры создания",
 	"circular_orbit_on_click": "Клик - круговая орбита:",
 	"clockwise_input": "По часовой:",
-	"fixed_object_checkbox": "Неподвижный:",
 	"pause_while_new_object_creates": "Пауза при создании объекта:",
-	"select_main_object_button": "Выбрать родительский объект",
 	"changed_with_the_mouse_wheel_when_creating_an_object": "Изменяется колесом мыши при создании объекта",
 	"launch_speed": "Скорость запуска:",
 	"show_distance_checkbox": "Показывать расстояние:",
@@ -115,7 +117,6 @@
 	"background_image": "Фоновое изображение:",
 	"no_image_found_at_this_address": "*Не найдено изображения по этому адресу",
 	"image_url": "URL изображения",
-	"setting_this_parameter_to_zero_improves_performance": "Нулевое значение данного параметра повышает производительность",
 	"background_intensity": "Интенсивность фона:",
 	"background_movement_on_mouse_movement": "Движение фона при движении мыши:",
 

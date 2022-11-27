@@ -192,7 +192,7 @@ export default class Camera{
 		// Camera target velocity
 		const targetVx = scn.objArr[this.Target] ? scn.objArr[this.Target].vx : 0;
 		const targetVy = scn.objArr[this.Target] ? scn.objArr[this.Target].vy : 0;
-		for (let objectId in scn.objArr){
+		for (let objectId = scn.objArr.length; objectId--;){
 			let obj = scn.objArr[objectId]; // Object to draw
 			const obCol = obj.color; // Object draw color
 			if (obj.m < 0){ obj.color = obCol = this.scene.randomColor(true) } // Random color if object has negative mass
@@ -370,12 +370,15 @@ export default class Camera{
 			objArrCopy = JSON.parse(JSON.stringify(objects));
 		} else if (this.scene.interactMode.state === '2') { // Don't do any calculations, just draw the line
 			// Line
+			this.ctx2.save();
 			this.ctx2.beginPath();
 			this.ctx2.strokeStyle = this.scene.newObjColor.state;
 			this.ctx2.lineWidth = 1;
+			this.ctx2.setLineDash([2, 3]); // Dash line
 			this.ctx2.moveTo(mouse.leftDownX, mouse.leftDownY);
 			this.ctx2.lineTo(mouse.leftDownX+svx*trajLen*this.animZoom, mouse.leftDownY+svy*trajLen*this.animZoom);
 			this.ctx2.stroke();				
+			this.ctx2.restore();
 			return;
 		}
 
@@ -429,8 +432,7 @@ export default class Camera{
 					}
 				}
 				if (obj.lock !== true) trajectoryTraces[obj.initId].push([obj.x, obj.y]);
-			}
-				
+			}	
 			// if (!mouse.move && mouse.leftDown){
 			// 	this.scene.physicsMultiThreadCalculate(objArrCopy, afterPhysicsCallback);
 			// }
@@ -476,7 +478,7 @@ export default class Camera{
 			this.ctx2.moveTo(this.crd(distance[1].x, 'x'), this.crd(distance[1].y, 'y'));
 			this.ctx2.lineTo(this.crd(distance[1].x2, 'x'), this.crd(distance[1].y2, 'y'));
 			this.ctx2.stroke();
-			this.ctx2.globalAlpha = 1;		
+			this.ctx2.globalAlpha = 1;
 		}
 
 		// Draw trajectory lines

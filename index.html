@@ -135,6 +135,27 @@
 						<span>Масса: </span>
 						<input type="number" class='input_num' id='create_mass'>	
 					</div>
+					<!-- Fixed -->
+					<div class='option_item'>
+						<l-text>fixed_object_checkbox</l-text>
+						<span>Неподвижный: </span>
+						<input type="checkbox" class="checkbox" id="objLckCeck" onmouseout="this.blur();">		
+					</div>
+					<!-- Main object -->
+					<div class='option_item'>
+						<div class="button" id="select_main_obj">
+							<l-text>select_main_object_button</l-text>
+							<span>Выбрать главный обьект</span>
+						</div>
+					</div>
+				</section>
+			</section>
+			<section class="options_section">
+				<div class='option_item title_option_item'>
+					<l-text>creation_parameters</l-text>
+					<span>Параметры создания:</span>
+				</div>
+				<section>
 					<!-- Circular orbit -->
 					<div class='option_item'>
 						<l-text>circular_orbit_on_click</l-text>
@@ -149,12 +170,6 @@
 							<input type="checkbox" class="checkbox" id='objReverseCheck'>
 						</div>
 						<div></div>
-					</div>
-					<!-- Fixed -->
-					<div class='option_item'>
-						<l-text>fixed_object_checkbox</l-text>
-						<span>Неподвижный: </span>
-						<input type="checkbox" class="checkbox" id="objLckCeck" onmouseout="this.blur();">		
 					</div>
 					<!-- Pause while new object creates -->
 					<div class='option_item'>
@@ -176,13 +191,7 @@
 						<span>Показывать расстояние: </span>
 						<input type="checkbox" class='checkbox' id="vis_distance_check">	
 					</div>
-					<!-- Main object -->
-					<div class='option_item'>
-						<div class="button" id="select_main_obj">
-							<l-text>select_main_object_button</l-text>
-							<span>Выбрать главный обьект</span>
-						</div>
-					</div>
+					
 				</section>
 			</section>
 			<section class="options_section">
@@ -623,8 +632,7 @@
 							<input type="text" class='input_text' id="img_url_inp" placeholder="URL Изображения" style="margin: 0; margin-top: 10px;">				
 						</div>
 					</div>
-					<l-text title>setting_this_parameter_to_zero_improves_performance</l-text>
-					<div class='option_item' style="width: 100%" title="Нулевое значение данного параметра повышает производительность">
+					<div class='option_item' style="width: 100%">
 						<l-text>background_intensity</l-text>
 						<label>Интенсивность фона: </label>
 						<input type="range" id="bg_darkness" min="0" max="1" value="0.8" step="0.01" width="100%" oninput="background_image.style.opacity = this.value">

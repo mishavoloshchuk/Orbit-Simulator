@@ -36,11 +36,13 @@
 	"color_input": "Color:",
 	"random_color_checkbox": "Random",
 	"mass_input": "Mass:",
+	"fixed_object_checkbox": "Fixed:",
+	"select_main_object_button": "Select main object:",
+
+	"creation_parameters": "Creation options",
 	"circular_orbit_on_click": "Circular orbit on left click:",
 	"clockwise_input": "Clockwise:",
-	"fixed_object_checkbox": "Fixed:",
 	"pause_while_new_object_creates": "Pause when creating an object:",
-	"select_main_object_button": "Select main object:",
 	"changed_with_the_mouse_wheel_when_creating_an_object": "Changed by the mouse wheel when creating an object",
 	"launch_speed": "Launch speed:",
 	"show_distance_checkbox": "Show distance:",
@@ -112,7 +114,6 @@
 	"background_image": "Backgroud image:",
 	"no_image_found_at_this_address": "*No image found for this URL",
 	"image_url": "Image URL",
-	"setting_this_parameter_to_zero_improves_performance": "A zero value for this parameter may improve performance",
 	"background_intensity": "Background intensity:",
 	"background_movement_on_mouse_movement": "Background movement on mouse movement:",
 

@@ -773,7 +773,7 @@ window.onload = function(){
 			// Draw trace while user moving object
 			if (scene.objArr[mov_obj]){
 				if (tracesMode.state == 1){ // If traces mode == 1
-					let dCanv = maxPerformance.state ? scene.camera.ctx3 : scene.camera.ctx;
+					let dCanv = maxPerformance.state ? scene.camera.ctx : scene.camera.ctx3;
 					dCanv.strokeStyle = scene.objArr[mov_obj].color;
 					dCanv.fillStyle = scene.objArr[mov_obj].color;
 					dCanv.lineWidth = Math.sqrt(scene.objArr[mov_obj].m)*2*scene.camera.animZoom < 0.5 ? 0.5 : Math.sqrt(scene.objArr[mov_obj].m)*2*scene.camera.animZoom;
