@@ -104,7 +104,7 @@ a:hover {
 .menu {
 	top: 0;
 	max-height: 85%;
-	max-width: 80%;
+	max-width: calc(100% - 120px);
 	overflow: auto;
 	background-color: rgba(62,62,62,0.68);
 	border: 1px solid rgba(192,192,192,0.1);
@@ -133,6 +133,7 @@ a:hover {
 	border-radius: 0.9em;
 	background-color: none;
 	margin: 0.1em;
+	padding: 5px;
 }
 .btn[selected]{
 	background-color: #444444;
@@ -141,8 +142,8 @@ a:hover {
 	background-color: #555555;
 }
 .btn img{
-	max-width: 40px;
-	max-height: 40px;
+	max-width: 100%;
+	max-height: 100%;
 }
 .btn:hover {
 	background-color: rgba(192,192,192,0.1);
@@ -156,6 +157,8 @@ a:hover {
 .time_speed {
 	display: inline-block;
 	position: absolute;
+	right: 10px;
+	top: 130px;
 }
 
 .time_speed h2{
@@ -284,7 +287,6 @@ a:hover {
 	position: absolute;
 	right: 10px;
 	top: 10px;
-	right: : 10px;
 	opacity: 0.5;
 	width: 100px;
 	height: 100px;
@@ -409,6 +411,9 @@ a:hover {
 	flex-direction: inherit;
 	background-color: rgba(255,255,255,0.07);
 	border-radius: 10px;
+	border: 3px solid #FFFFFF77;
+	border-top: none;
+	border-bottom: none;
 }
 
 .dimmer {
@@ -459,6 +464,29 @@ a:hover {
 	display: none;
 }
 
+#toggle_fullscreen {
+	position: absolute;
+	bottom: 1vmin;
+	right: 1vmin;
+	fill: white;
+	width: 48px;
+	height: 48px;
+	opacity: 0.5;
+	cursor: pointer;
+}
+#toggle_fullscreen svg {
+	display: none;
+}
+#toggle_fullscreen[enabled="false"] svg:first-child {
+	display: initial;
+}
+#toggle_fullscreen[enabled="true"] svg:last-child {
+	display: initial;
+}
+#toggle_fullscreen:hover {
+	opacity: 0.8;
+}
+
 select {
 	font-size: 1.1em;
 	padding: 0.2em;
@@ -477,13 +505,44 @@ select {
 @media screen and (orientation:portrait) and (max-width: 1000px) {
 	.menu_container {
 		max-height: 100%;
-		width: calc(100% - 139px);
+		width: calc(100% - 55px);
 	}
+
 	.menu_pos_size {
 		width: 100%;
 	}
-}
-@media screen and (orientation:portrait) {
+
+	.menu {
+		flex-direction: column;
+	}
+
+	.menu_pos {
+		top: 0;
+		left: 55px;
+	}
+
+	.btn {
+		height: 40px;
+		padding: 5px;
+	}
+
+	.time_panel {
+		border: 3px solid #FFFFFF77;
+		border-left: none;
+		border-right: none;
+	}
+
+	.state {
+		top: 10px;
+		right: 10px;
+		width: 70px;
+		height: 70px;
+	}
+
+	.time_speed {
+		top: 90px;
+	}
+
 	.options_section:first-child {
 		margin-top: 0;
 	}

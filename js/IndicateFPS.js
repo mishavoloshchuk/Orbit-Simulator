@@ -14,8 +14,8 @@ export default class IndicateFPS{
 		this.element = document.createElement('div');
 		Object.assign(this.element.style, { // FPS element styles:
 			position: 'absolute',
-			right: '10px',
-			bottom: '10px',
+			left: '10px',
+			bottom: '2.5em',
 			display: 'none',
 			fontFamily: 'arial',
 			cursor: 'default',

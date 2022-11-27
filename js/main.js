@@ -1079,55 +1079,76 @@ window.onload = function(){
 	}
 	//=====================================================
 
-	adaptive();
-	function adaptive(){
-		if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-			switcher.device = 'mobile';
-			dis_zone = 20;
-			if (window.innerHeight > window.innerWidth){
-				$('.time_panel').css({border: 'none', borderTop: '6px solid #fff7', borderBottom: '6px solid #fff7', borderRadius: '20px'});
-				$('body').css({'font-size': 40});
-				$('.btn').css({'height': 100, 'width': 130});
-				$('.btn img').css({'max-width': 65, 'max-height': 65});
-				$('.menu_pos').css({top: 0, left: 139});
-				$('.menu').css({'flex-direction': 'column'});
-				$('.time_speed').css({left: 10, bottom: 80, right: 'initial', top: 'initial'});
-				$('.checkbox').css({width: 75, height: 75});
-				$('.radius_select').css({'font-size': 50, width: 200, 'border-radius': 10});
-				$('#col_select').css({width: 200, height: 60, 'border-radius': 10});
-			} else {
-				$('.time_panel').css({border: 'none', borderLeft: '3px solid #fff7', borderRight: '3px solid #fff7', borderRadius: '10px'});
-				$('body').css({fontSize: '2vmax'});
-				$('.btn').css({'height': 50, 'width': 50});
-				$('.btn img').css({'max-width': '65%', 'max-height': '65%'});
-				$('.menu_pos').css({top: 56 , left: 0});
-				$('.menu').css({'flex-direction': 'row'});
-				$('.time_speed').css({right: 10, top: 130, left: 'initial', bottom: 'initial'});
-				$('.checkbox').css({width: 20, height: 20});
-				$('.radius_select').css({'font-size': 50, width: 200, 'border-radius': 10});
-				$('#col_select').css({width: '20vmin', height: '7vmin', 'border-radius': 10});
-			}
-			$('.input_num').css({width: '20vmin'});
-			$('#launchPowerLabel').css({fontSize: '5vmin'});
+	// adaptive();
+	// function adaptive(){
+	// 	if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+	// 		switcher.device = 'mobile';
+	// 		dis_zone = 20;
+	// 		if (window.innerHeight > window.innerWidth){
+	// 			$('.time_panel').css({border: 'none', borderTop: '6px solid #fff7', borderBottom: '6px solid #fff7', borderRadius: '20px'});
+	// 			$('body').css({'font-size': 40});
+	// 			$('.btn').css({'height': 100, 'width': 130});
+	// 			$('.btn img').css({'max-width': 65, 'max-height': 65});
+	// 			$('.menu_pos').css({top: 0, left: 139});
+	// 			$('.menu').css({'flex-direction': 'column'});
+	// 			$('.time_speed').css({left: 10, bottom: 80, right: 'initial', top: 'initial'});
+	// 			$('.checkbox').css({width: 75, height: 75});
+	// 			$('.radius_select').css({'font-size': 50, width: 200, 'border-radius': 10});
+	// 			$('#col_select').css({width: 200, height: 60, 'border-radius': 10});
+	// 		} else {
+	// 			$('.time_panel').css({border: 'none', borderLeft: '3px solid #fff7', borderRight: '3px solid #fff7', borderRadius: '10px'});
+	// 			$('body').css({fontSize: '2vmax'});
+	// 			$('.btn').css({'height': 50, 'width': 50});
+	// 			$('.btn img').css({'max-width': '65%', 'max-height': '65%'});
+	// 			$('.menu_pos').css({top: 56 , left: 0});
+	// 			$('.menu').css({'flex-direction': 'row'});
+	// 			$('.time_speed').css({right: 10, top: 130, left: 'initial', bottom: 'initial'});
+	// 			$('.checkbox').css({width: 20, height: 20});
+	// 			$('.radius_select').css({'font-size': 50, width: 200, 'border-radius': 10});
+	// 			$('#col_select').css({width: '20vmin', height: '7vmin', 'border-radius': 10});
+	// 		}
+	// 		$('.input_num').css({width: '20vmin'});
+	// 		$('#launchPowerLabel').css({fontSize: '5vmin'});
+	// 	} else {
+	// 		switcher.device = 'desktop';
+	// 		if (window.innerHeight > window.innerWidth){
+	// 			$('.menu').css({'flex-direction': 'column'});
+	// 			$('.menu_pos').css({top: 0, left: $('.menu').outerWidth()});
+	// 			$('.time_panel').css({border: 'none', borderTop: '3px solid rgba(255,255,255,0.5)', borderBottom: '3px solid rgba(255,255,255,0.5)'});
+	// 		} else {
+	// 			$('.time_panel').css({border: 'none', borderLeft: '3px solid rgba(255,255,255,0.5)', borderRight: '3px solid rgba(255,255,255,0.5)'});
+	// 			$('.menu_pos').css({top: $('.menu').outerHeight() , left: 0});
+	// 			$('.menu').css({'flex-direction': 'row'});
+	// 		}
+	// 		// $('.menu_pos_size').css({maxHeight: '80vh'});
+	// 		$('.input_num').css({width: '10vmin'});
+	// 		$('#launchPowerLabel').css({fontSize: '20px'})
+	// 		$('body').css({fontSize: 'inherit'});
+	// 		// $('.close_button').css({width: '30px', height: '30px', padding: '0 0 7px 0', fontSize: '30px', right: '-37px'});
+	// 		$('.time_speed').css({right: 10, top: 130});
+	// 	}	
+	// }
+	// Toggle full screen
+	document.getElementById('toggle_fullscreen').addEventListener('click', toggleFullScreen);
+	function toggleFullScreen() {
+		let fullScreenBtn = document.getElementById("toggle_fullscreen");
+		if (!document.fullscreenElement) {
+			document.documentElement.requestFullscreen();
+			fullScreenBtn.setAttribute('enabled', 'true');
 		} else {
-			switcher.device = 'desktop';
-			if (window.innerHeight > window.innerWidth){
-				$('.menu').css({'flex-direction': 'column'});
-				$('.menu_pos').css({top: 0, left: $('.menu').outerWidth()});
-				$('.time_panel').css({border: 'none', borderTop: '3px solid rgba(255,255,255,0.5)', borderBottom: '3px solid rgba(255,255,255,0.5)'});
-			} else {
-				$('.time_panel').css({border: 'none', borderLeft: '3px solid rgba(255,255,255,0.5)', borderRight: '3px solid rgba(255,255,255,0.5)'});
-				$('.menu_pos').css({top: $('.menu').outerHeight() , left: 0});
-				$('.menu').css({'flex-direction': 'row'});
+			if (document.exitFullscreen) {
+				document.exitFullscreen();
+				fullScreenBtn.setAttribute('enabled', 'false');
 			}
-			// $('.menu_pos_size').css({maxHeight: '80vh'});
-			$('.input_num').css({width: '10vmin'});
-			$('#launchPowerLabel').css({fontSize: '20px'})
-			$('body').css({fontSize: 'inherit'});
-			// $('.close_button').css({width: '30px', height: '30px', padding: '0 0 7px 0', fontSize: '30px', right: '-37px'});
-			$('.time_speed').css({right: 10, top: 130});
-		}	
+		}
 	}
+	document.addEventListener('fullscreenchange', (e) => {
+		if (!document.fullscreenElement) {
+			e.target.setAttribute('enabled', 'true');
+		} else {
+			e.target.setAttribute('enabled', 'false');
+		}
+	});
 	// Close\open options tabs handler
 	document.querySelectorAll('.title_option_item').forEach((element) => {
 		element.addEventListener('click', (e) => {
