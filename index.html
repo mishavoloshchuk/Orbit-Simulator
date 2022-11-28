@@ -186,9 +186,11 @@
 					</div>
 					<!-- Launch speed -->
 					<l-text title>changed_with_the_mouse_wheel_when_creating_an_object</l-text>
-					<div class='option_item' title="Изменяется колесом мыши при создании объекта">
-						<l-text>launch_speed</l-text>
-						<span>Скорость запуска: </span><span id='lnch_pwr_span' class="rangeValue"></span>
+					<div class='option_item option_item_range' title="Изменяется колесом мыши при создании объекта">
+						<div>
+							<l-text>launch_speed</l-text>
+							<span>Скорость запуска: </span><span id='lnch_pwr_span' class="rangeValue"></span>
+						</div>
 						<input type="range" list='dPwrInpVal' id="launch_power" min="0" max="2" value="1" step="0.01" width="100%">
 						<datalist id='dPwrInpVal'><option value="1"></datalist>
 					</div>
@@ -219,7 +221,7 @@
 					</div>
 					<!-- Trajectory calculate accuracity -->
 					<l-text title>affects_the_performance_when_calculating_the_trajectory</l-text>
-					<div class='option_item' title="Влияет на быстродействие, при прощете траектории">
+					<div class='option_item option_item_range' title="Влияет на быстродействие, при прощете траектории">
 						<l-text>trajectory_calculate_accuracity</l-text>
 						<span>Точность прощета траектории:</span>
 						<input type="range" id="traj_calc_accuracity" min="0.05" max="1" value="1" step="0.05" width="100%">
@@ -304,10 +306,7 @@
 					<div class='option_item'>
 						<l-text>fixed_object_checkbox</l-text>
 						<span>Неподвижный: </span>
-						<div class="lck_edit_div">
-							<input type="checkbox" class='checkbox' id='lck_edit_chbox' onchange="" onmouseout="this.blur();">
-						</div>
-						
+						<input type="checkbox" class='checkbox' id='lck_edit_chbox' onmouseout="this.blur();">
 					</div>
 
 					<div class='option_item'>
@@ -368,12 +367,12 @@
 				<section>
 					<!--Extra options 1-->
 					<div id="additionalTrajectoryOptions1" class="additionalOption">
-						<div class='option_item'>
+						<div class='option_item option_item_range'>
 							<l-text>trace_opacity</l-text>
 							<label>Нерозрачность: </label>
 							<input type="range" id="trace_opacity" min="0" max="1" value="0.8" step="0.01" width="100%">
 						</div>
-						<div class='option_item'>
+						<div class='option_item option_item_range'>
 							<l-text>trace_blur</l-text>
 							<span>Размытие: </span>
 							<input type="range" id='trace_blur' min="0" step="0.1" value="0" max="5">
@@ -394,7 +393,7 @@
 							<input type="checkbox" id="trc2TrembChck" class='checkbox'>
 						</div>
 
-						<div class='option_item'>
+						<div class='option_item option_item_range'>
 							<l-text>trace_length</l-text>
 							<label>Длинна следа: </label>	
 							<input type="range" id="trace2Lnth" min="0.8" max="3" value="2.2" step="any">
@@ -403,20 +402,20 @@
 					</div>
 					<!--Extra options 3-->
 					<div id="additionalTrajectoryOptions3" class="additionalOption">					
-						<div class='option_item'>
+						<div class='option_item option_item_range'>
 							<l-text>trace_thickness</l-text>
 							<label>Толщина следа: </label>
 							<input type="range" id="trace3WdInp" list="T3WdInpDL" min="0.8" max="2" value="1.1" step="any" width="100%">
 							<datalist id='T3WdInpDL'><option value="1.1"></datalist>
 						</div>
 
-						<div class='option_item'>
+						<div class='option_item option_item_range'>
 							<l-text>trace_quality</l-text>
 							<label>Качество следа: </label>
 							<input type="range" id="trace3Qu" min="1" max="60" value="57" step="1">
 						</div>
 
-						<div class='option_item'>
+						<div class='option_item option_item_range'>
 							<l-text>trace_length</l-text>
 							<label>Длинна следа: </label>	
 							<input type="range" id="trace3Lnth" min="1.5" max="3" value="2" step="any">
@@ -515,7 +514,7 @@
 						</form>			
 					</div>
 
-					<div class='option_item'>
+					<div class='option_item option_item_range'>
 						<l-text>force_of_gravity</l-text>
 						<span>Сила притяжения: </span><span id='g_value_title'></span>
 						<input type="range" list='gravitationValue' id="g_value" min="0" max="2" value="1" step="0.01" width="100%">
@@ -639,7 +638,7 @@
 							<input type="text" class='input_text' id="img_url_inp" placeholder="URL Изображения" style="margin: 0; margin-top: 10px;">				
 						</div>
 					</div>
-					<div class='option_item' style="width: 100%">
+					<div class='option_item option_item_range' style="width: 100%">
 						<l-text>background_intensity</l-text>
 						<label>Интенсивность фона: </label>
 						<input type="range" id="bg_darkness" min="0" max="1" value="0.8" step="0.01" width="100%" oninput="background_image.style.opacity = this.value">
@@ -662,9 +661,7 @@
 					<div class='option_item' title="F9">
 						<l-text>show_fps</l-text>
 						<span>Показывать FPS: </span>
-						<div class="lck_edit_div">
-							<input type="checkbox" class='checkbox' id='check_fps_swch' onmouseout="this.blur();">
-						</div>	
+						<input type="checkbox" class='checkbox' id='check_fps_swch' onmouseout="this.blur();">
 					</div>
 					<div class='option_item'>
 						<l-text>multithreading</l-text>

@@ -28,8 +28,8 @@ html {
 }
 
 .checkbox {
-	width: 20px;
-	height: 20px;
+	width: 25px;
+	height: 25px;
 }
 
 input {
@@ -65,7 +65,7 @@ a:hover {
 }
 
 .input_num {
-	width: 10vmin;
+	width: 5em;
 	margin-left: 10px;
 	background-color: rgba(255,255,255,0.16);
 	border: 2px solid rgba(255,255,255,0.16);
@@ -74,6 +74,7 @@ a:hover {
 	color: #ddd;
 	text-shadow: 1px 1px 1px black;
 	font-size: inherit;
+	text-align: center;
 }
 
 .input_text {
@@ -116,11 +117,10 @@ a:hover {
 	display: flex;
 	flex-shrink: 0;
 	flex-direction: row;
-	/*backdrop-filter: blur(5px);*/
-	-moz-user-select: none; /* Mozilla Firefox */
-	-ms-user-select: none; /* Internet Explorer (не поддерживается) */
-	-o-user-select: none; /* Opera Presto (не поддерживается) */
-	-webkit-user-select: none; /* Google Chrome, Opera Next, Safari */
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-o-user-select: none;
+	-webkit-user-select: none;
 }
 
 .btn {
@@ -217,11 +217,13 @@ a:hover {
 }
 
 .option_item {
-	padding: 0.5em;
+	padding: 0.3em;
 	border-bottom: 1px solid rgba(255,255,255,0.3);
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
+	font-size: 1.05em;
+	text-shadow: none;
 }
 .option_item input {
 	margin: 0;
@@ -229,6 +231,14 @@ a:hover {
 }
 .option_item:last-child {
 	border: none;
+}
+
+.option_item_range {
+	flex-direction: column;
+}
+.option_item_range input {
+	width: 100%;
+	margin: .5em 0 0em 0;
 }
 
 .title_option_item {
@@ -241,10 +251,10 @@ a:hover {
 	justify-content: center;
 	position: relative;
 	overflow: hidden;
-	-moz-user-select: none; /* Mozilla Firefox */
-	-ms-user-select: none; /* Internet Explorer (не поддерживается) */
-	-o-user-select: none; /* Opera Presto (не поддерживается) */
-	-webkit-user-select: none; /* Google Chrome, Opera Next, Safari */
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-o-user-select: none;
+	-webkit-user-select: none;
 }
 .title_option_item input {
 	margin: 0;
@@ -308,10 +318,10 @@ a:hover {
 }
 
 #launchPowerLabel {
-	-moz-user-select: none; /* Mozilla Firefox */
-	-ms-user-select: none; /* Internet Explorer (не поддерживается) */
-	-o-user-select: none; /* Opera Presto (не поддерживается) */
-	-webkit-user-select: none; /* Google Chrome, Opera Next, Safari */
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-o-user-select: none;
+	-webkit-user-select: none;
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -330,14 +340,14 @@ a:hover {
 	min-height: 10px;
 	width: 100%;
 	background-color: rgba(255,255,255,0.08);
-	border-radius: 0.5em;
+	border-radius: 0.7em;
 	padding: 0.5em 0;
 	text-shadow: none;
 	margin: 0 0.25em;
-	-moz-user-select: none; /* Mozilla Firefox */
-	-ms-user-select: none; /* Internet Explorer (не поддерживается) */
-	-o-user-select: none; /* Opera Presto (не поддерживается) */
-	-webkit-user-select: none; /* Google Chrome, Opera Next, Safari */
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-o-user-select: none;
+	-webkit-user-select: none;
 }
 
 .button:hover {
@@ -471,7 +481,7 @@ a:hover {
 	fill: white;
 	width: 48px;
 	height: 48px;
-	opacity: 0.5;
+	opacity: 0.4;
 	cursor: pointer;
 }
 #toggle_fullscreen svg {
@@ -482,9 +492,6 @@ a:hover {
 }
 #toggle_fullscreen[enabled="true"] svg:last-child {
 	display: initial;
-}
-#toggle_fullscreen:hover {
-	opacity: 0.8;
 }
 
 select {
@@ -505,7 +512,7 @@ select {
 @media screen and (orientation:portrait) and (max-width: 1000px) {
 	.menu_container {
 		max-height: 100%;
-		width: calc(100% - 55px);
+		width: calc(100% - 50px);
 	}
 
 	.menu_pos_size {
@@ -518,12 +525,16 @@ select {
 
 	.menu_pos {
 		top: 0;
-		left: 55px;
+		left: 50px;
+	}
+
+	.option_item {
+		font-size: 1.2em;
 	}
 
 	.btn {
 		height: 40px;
-		padding: 5px;
+		width: 45px;
 	}
 
 	.time_panel {
@@ -545,5 +556,10 @@ select {
 
 	.options_section:first-child {
 		margin-top: 0;
+	}
+
+	.checkbox {
+		width: 30px;
+		height: 30px;
 	}
 }
