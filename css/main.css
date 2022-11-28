@@ -31,6 +31,17 @@ html {
 	width: 25px;
 	height: 25px;
 }
+.checkbox::after {
+	border-radius: 50%;
+}
+
+.color_select {
+	padding: 0;
+	border: none;
+	width: 76px;
+	height: 30px;
+	border-radius: 3px;
+}
 
 input {
 	flex-shrink: 0;
@@ -217,7 +228,7 @@ a:hover {
 }
 
 .option_item {
-	padding: 0.3em;
+	padding: .3em .5em;
 	border-bottom: 1px solid rgba(255,255,255,0.3);
 	display: flex;
 	justify-content: space-between;
@@ -231,14 +242,18 @@ a:hover {
 }
 .option_item:last-child {
 	border: none;
+	padding-bottom: .5em;
 }
 
 .option_item_range {
 	flex-direction: column;
 }
 .option_item_range input {
-	width: 100%;
-	margin: .5em 0 0em 0;
+	width: calc(100% - .7em);
+	margin: .5em 0 .2em 0;
+}
+.option_item_range label {
+	align-self: flex-start;
 }
 
 .title_option_item {
@@ -288,7 +303,7 @@ a:hover {
 .options_section {
 	border-radius: 1em;
 	overflow: hidden;
-	margin: 0.3em 0;
+	margin: 8px 0;
 	background-color: rgba(62,62,62,0.68);
 }
 
@@ -331,7 +346,7 @@ a:hover {
 }
 
 .menu_pos {
-	top: 56px;
+	top: 55px;
 	left: 0;
 }
 

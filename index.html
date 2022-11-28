@@ -133,7 +133,7 @@
 						<span>Cлучайный</span>
 						<input type="checkbox" class='checkbox' id="randColorCheck">
 						<div class="div_col_select">
-							<input type="color" value="#ffffff" id="newObjeColorSelect" style="padding: 0; border: none; width: 76px; height: 30px;">			
+							<input class="color_select" type="color" value="#ffffff" id="newObjeColorSelect">
 						</div>
 					</div>
 					<!-- Mass -->
@@ -187,11 +187,11 @@
 					<!-- Launch speed -->
 					<l-text title>changed_with_the_mouse_wheel_when_creating_an_object</l-text>
 					<div class='option_item option_item_range' title="Изменяется колесом мыши при создании объекта">
-						<div>
+						<label>
 							<l-text>launch_speed</l-text>
-							<span>Скорость запуска: </span><span id='lnch_pwr_span' class="rangeValue"></span>
-						</div>
-						<input type="range" list='dPwrInpVal' id="launch_power" min="0" max="2" value="1" step="0.01" width="100%">
+							<span>Скорость запуска: </span> <span id='lnch_pwr_span' class="rangeValue"></span>
+						</label>
+						<input type="range" list='dPwrInpVal' id="launch_power" min="0" max="2" value="1" step="0.01">
 						<datalist id='dPwrInpVal'><option value="1"></datalist>
 					</div>
 					<!-- Show distance -->
@@ -223,7 +223,7 @@
 					<l-text title>affects_the_performance_when_calculating_the_trajectory</l-text>
 					<div class='option_item option_item_range' title="Влияет на быстродействие, при прощете траектории">
 						<l-text>trajectory_calculate_accuracity</l-text>
-						<span>Точность прощета траектории:</span>
+						<label>Точность прощета траектории:</label>
 						<input type="range" id="traj_calc_accuracity" min="0.05" max="1" value="1" step="0.05" width="100%">
 					</div>				
 				</section>
@@ -291,7 +291,7 @@
 						<l-text>color_input</l-text>
 						<span>Цвет: </span>
 						<div class="div_col_edit">
-							<input type="color" id="col_edit" value="#ffffff" style="padding: 0; border: none; width: 76px; height: 30px;">	
+							<input class="color_select" type="color" id="col_edit" value="#ffffff">	
 						</div>
 					</div>
 
@@ -374,7 +374,7 @@
 						</div>
 						<div class='option_item option_item_range'>
 							<l-text>trace_blur</l-text>
-							<span>Размытие: </span>
+							<label>Размытие: </label>
 							<input type="range" id='trace_blur' min="0" step="0.1" value="0" max="5">
 						</div>
 					</div>
@@ -515,8 +515,10 @@
 					</div>
 
 					<div class='option_item option_item_range'>
-						<l-text>force_of_gravity</l-text>
-						<span>Сила притяжения: </span><span id='g_value_title'></span>
+						<label>
+							<l-text>force_of_gravity</l-text>
+							<span>Сила притяжения: </span> <span id='g_value_title'></span>
+						</label>
 						<input type="range" list='gravitationValue' id="g_value" min="0" max="2" value="1" step="0.01" width="100%">
 						<datalist id='gravitationValue'><option value="1"></datalist>
 					</div>

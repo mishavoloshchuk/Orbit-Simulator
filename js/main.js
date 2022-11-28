@@ -78,10 +78,9 @@ window.onload = function(){
 	this.pauseState = false; // Global pause state
 
 	var switcher = {device: 'desktop',
-		sel_orb_obj: false,
 		visT: false}; // Collisions: repulsion merge none
 
-	this.swch = {s_track: true, t_object: false,
+	this.swch = {s_track: true,
 		s_edit: true, edit_obj: false};
 
 	var menu_names = {create: 'menu_options', delete: 'del_menu_options', edit: 'edit_menu',
@@ -308,6 +307,7 @@ window.onload = function(){
 		scene.camera.resolutionX = window.innerWidth;
 		scene.camera.resolutionY = window.innerHeight;
 		scene.camera.allowFrameRender = true;
+		setFullScreenIcon(); // Check full screen mode and set the button icon
 	}
 	// Touch events ======================================
 	// Touch START
@@ -378,7 +378,14 @@ window.onload = function(){
 			}
 			// Cancel camera target if touch camera move
 			if (rad(avTouchPoint.xd, avTouchPoint.yd, avTouchPoint.x, avTouchPoint.y) > Math.min(innerWidth, innerHeight)/6){
-				scene.camera.setTarget();
+				if (scene.camera.Target){
+					avTouchPoint.xd = avTouchPoint.x;
+					avTouchPoint.yd = avTouchPoint.y;
+					prev_cam_x = scene.camera.x;
+					prev_cam_y = scene.camera.y;
+					scene.camera.setTarget();
+					console.log(1)
+				}
 			}
 			// Limit zoom
 			let newZoom = zm_prev / Math.pow(Math.sqrt(zm_cff) / Math.sqrt(touchZoom), 2); // Zoom
@@ -389,7 +396,6 @@ window.onload = function(){
 				scene.camera.ax = scene.camera.x = prev_cam_x - (avTouchPoint.x - avTouchPoint.xd)/scene.camera.animZoom + (((window.innerWidth/2 - avTouchPoint.xd)/zm_prev)*Math.pow(Math.sqrt(zm_cff) / Math.sqrt(touchZoom), 2) - ((window.innerWidth/2 - avTouchPoint.xd)/zm_prev));
 				scene.camera.ay = scene.camera.y = prev_cam_y - (avTouchPoint.y - avTouchPoint.yd)/scene.camera.animZoom + (((window.innerHeight/2 - avTouchPoint.yd)/zm_prev)*Math.pow(Math.sqrt(zm_cff) / Math.sqrt(touchZoom), 2) - ((window.innerHeight/2 - avTouchPoint.yd)/zm_prev));
 			}
-			swch.t_object = false; // Track object disable
 		}
 	})
 	// Mouse events =========================================================
@@ -505,9 +511,10 @@ window.onload = function(){
 				scene.camera.setTarget(scene.objectSelect('nearest', scene.camera.Target));
 			}
 			if (mbut == 'sel_orb_obj'){
-				scene.objIdToOrbit = scene.objectSelect();
-				switcher.sel_orb_obj = false;
-				mbut = 'create';
+				if (allowClick){
+					scene.objIdToOrbit = scene.objectSelect();
+					mbut = 'create';
+				}
 			}
 		}
 		// Middle mouse up
@@ -636,12 +643,12 @@ window.onload = function(){
 		if (mbut == 'edit' && swch.s_edit){
 			scene.camera.visualObjectSelect(nearObjId, '#f81', 0);
 		} else
-		if (mbut == 'sel_orb_obj' && switcher.sel_orb_obj){
+		if (mbut == 'sel_orb_obj'){
 			scene.camera.visualObjectSelect(nearObjId,'#bf0');
 		}
 		// Show distance
-		if (showDistanceFromCursorToMainObj.state) scene.camera.clearLayer2();
 		if (mbut == 'create' && !mouse.leftDown && showDistanceFromCursorToMainObj.state){
+			scene.camera.clearLayer2();
 			vis_distance([mouse.x, mouse.y], '#888888');
 		}
 		// Hide launch power label
@@ -694,7 +701,7 @@ window.onload = function(){
 	// Show distance to main object
 	function vis_distance(obj_cord, col = '#888888', targ_obj = scene.objIdToOrbit){
 		if (scene.objArr[targ_obj]){
-			let obCoords = scene.objArr[swch.t_object] ? [scene.objArr[targ_obj].x - scene.objArr[targ_obj].vx, scene.objArr[targ_obj].y - scene.objArr[targ_obj].vy] : [scene.objArr[targ_obj].x, scene.objArr[targ_obj].y];
+			let obCoords = [scene.objArr[targ_obj].x, scene.objArr[targ_obj].y];
 			let size = rad(obj_cord[0], obj_cord[1], scene.camera.crd(obCoords[0], 'x'), scene.camera.crd(obCoords[1], 'y'));
 			if (size > Math.sqrt(Math.abs(scene.objArr[targ_obj].m))*scene.camera.animZoom){
 				scene.camera.ctx2.strokeStyle = col;
@@ -953,12 +960,10 @@ window.onload = function(){
 				}
 				break;
 			case 'clear_camera_settings': // Restore camera defaults
-				swch.t_object = false;
-				scene.camera.animation = true;
-				scene.camera.setTarget();
-				scene.camera.x = 0; scene.camera.y = 0;
-				scene.camera.zoom = 1;
-				zm_prev = scene.camera.zoom;
+				scene.camera.setTarget(); // Unset camera target
+				scene.camera.x = 0; scene.camera.y = 0; // Set default camera position
+				scene.camera.zoom = 1; // Set default camera zoom value
+				zm_prev = 1;
 				break;
 			case 'select_edit_obj': // Visual select object to select edit object
 				if (swch.s_edit){
@@ -974,8 +979,7 @@ window.onload = function(){
 				}
 				break;
 			case 'select_main_obj': // Visual select object to select main object
-				switcher.sel_orb_obj = switcher.sel_orb_obj?false:true;
-				mbut = switcher.sel_orb_obj?'sel_orb_obj':'create';
+				mbut = mbut !== 'sel_orb_obj'?'sel_orb_obj':'create';
 				break;
 			case 'wrap_time': // Wrap time
 				timeSpeed.state = -timeSpeed.state;
@@ -1080,13 +1084,20 @@ window.onload = function(){
 	// Toggle full screen
 	document.getElementById('toggle_fullscreen').addEventListener('click', toggleFullScreen);
 	function toggleFullScreen() {
-		let fullScreenBtn = document.getElementById("toggle_fullscreen");
 		if (!document.fullscreenElement) {
 			document.documentElement.requestFullscreen();
-			fullScreenBtn.setAttribute('enabled', 'true');
 		} else {
 			if (document.exitFullscreen) {
 				document.exitFullscreen();
+			}
+		}
+	}
+	function setFullScreenIcon() {
+		let fullScreenBtn = document.getElementById("toggle_fullscreen");
+		if (document.fullscreenElement) {
+			fullScreenBtn.setAttribute('enabled', 'true');
+		} else {
+			if (document.exitFullscreen) {
 				fullScreenBtn.setAttribute('enabled', 'false');
 			}
 		}

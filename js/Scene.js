@@ -291,6 +291,8 @@ export default class Scene {
 		if (objectId == mov_obj) mov_obj = NaN;
 		if (objectId < this.camera.Target) this.camera.Target --;
 		if (objectId < mov_obj) mov_obj --;
+		if (objectId < this.objIdToOrbit) this.objIdToOrbit --;
+		if (objectId == this.objIdToOrbit) this.objIdToOrbit = this.objectSelect('biggest');
 		this.activCam.allowFrameRender = true;
 	}
 	// Show number of objects
@@ -300,13 +302,14 @@ export default class Scene {
 	//Необходимая скорость для круговой орбиты
 	forceToCircularOrbit(px, py, objId){
 		if (this.objArr[objId]){
+			const objToOrbMass = Math.abs(this.objArr[objId].m);
 			let R = this.rad(this.camera.screenPix(px, 'x'), this.camera.screenPix(py, 'y'), this.camera.screenPix(this.objArr[objId].x, 'x'), this.camera.screenPix(this.objArr[objId].y, 'y'))*this.camera.animZoom;
-			let V = Math.sqrt((this.objArr[objId].m*5)*(R)/this.g.state);
+			let V = Math.sqrt((objToOrbMass*5)*(R)/this.g.state);
 			let a = this.objArr[objId].x - px;
 			let b = this.objArr[objId].y - py;
 			let sin = b/R, cos = a/R;
-			let svx = -(sin/V)*this.objArr[objId].m*5;
-			let svy = (cos/V)*this.objArr[objId].m*5;
+			let svx = -(sin/V)*objToOrbMass*5;
+			let svy = (cos/V)*objToOrbMass*5;
 			//if (this.objArr[objId].main_obj){
 			//	let object = this.objArr[objId].main_obj;
 			//	while (this.objArr[object].main_obj){

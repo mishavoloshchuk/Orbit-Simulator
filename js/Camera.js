@@ -195,7 +195,6 @@ export default class Camera{
 		for (let objectId = scn.objArr.length; objectId--;){
 			let obj = scn.objArr[objectId]; // Object to draw
 			const obCol = obj.color; // Object draw color
-			if (obj.m < 0){ obj.color = obCol = this.scene.randomColor(true) } // Random color if object has negative mass
 			let drawRadius = Math.sqrt(Math.abs(obj.m))*this.animZoom; // Object draw radius
 			drawRadius = drawRadius < 0.5 ? 0.5 : drawRadius; // Minimal draw radius
 			// If object screen speed is enough to render or anyhting else 
@@ -335,6 +334,16 @@ export default class Camera{
 			this.ctx.beginPath();
 			this.ctx.arc(this.crd(obj.x, 'x'), this.crd(obj.y, 'y'), drawRadius, 0, 7);
 			this.ctx.fill();
+			if (obj.m < 0){
+				this.ctx.strokeStyle = "#000";
+				this.ctx.lineWidth = drawRadius/10;
+				this.ctx.beginPath();
+				this.ctx.arc(this.crd(obj.x, 'x'), this.crd(obj.y, 'y'), drawRadius*0.6, 0, 7);
+
+				this.ctx.moveTo(this.crd(obj.x, 'x')-drawRadius*0.4, this.crd(obj.y, 'y'));
+				this.ctx.lineTo(this.crd(obj.x, 'x')+drawRadius*0.4, this.crd(obj.y, 'y'))
+				this.ctx.stroke();
+			}
 
 			if (!obj.lock && !pauseState && this.renderedSceneFrames % traceResolution === 0){
 				obj.trace.unshift([obj.x, obj.y]);
@@ -559,15 +568,24 @@ export default class Camera{
 		let mcx = this.scene.mouse_coords[0] ? this.scene.mouse_coords[0] - (this.scene.mouse_coords[0] - mouse.x)/10 : mouse.x;
 		let mcy = this.scene.mouse_coords[1] ? this.scene.mouse_coords[1] - (this.scene.mouse_coords[1] - mouse.y)/10 : mouse.y;
 
-		let offsX = -10;
+		let offsX = 0;
 		let offsY = -30;
-		if (['mobile', 'tablet'].includes( getDeviceType() ) ){ offsX = -25; offsY = -140; } // If device is mobile or tablet
+		if (['mobile', 'tablet'].includes(getDeviceType()) ){ offsX = -25; offsY = -70; } // If device is mobile or tablet
 		Object.assign(launchPowerLabel.style, {left: (mouse.x+offsX)+'px', top: (mouse.y+offsY)+'px', display: 'block', color: this.scene.newObjColor.state});
 		launchPowerLabel.innerHTML = Math.round(this.scene.rad(mouse.leftDownX, mouse.leftDownY, mouse.x, mouse.y) * this.scene.powerFunc(this.scene.launchForce.state) * 100)/100;
 		let D = Math.sqrt(Math.abs(this.scene.newObjMass.state))*this.animZoom*2;
-		this.ctx2.globalAlpha = 0.5;
-		this.ctx2.strokeStyle = this.scene.newObjColor.state;
-		this.ctx2.lineWidth = D < 0.5 ? 0.5 : Math.sqrt(Math.abs(this.scene.newObjMass.state))*this.animZoom*2;
+
+		// Gradient
+		let gradient = this.ctx2.createLinearGradient(
+			mouse.leftDownX,//   X1
+			mouse.leftDownY,//   Y1
+			mcx,//  X2
+			mcy);// Y2
+		gradient.addColorStop(0, this.scene.newObjColor.state); // New object color
+		gradient.addColorStop(1, "#0000"); // Alpha
+		this.ctx2.strokeStyle = gradient;
+
+		this.ctx2.lineWidth = D < 1 ? 1 : Math.sqrt(Math.abs(this.scene.newObjMass.state))*this.animZoom*2;
 		this.ctx2.beginPath();
 		this.ctx2.moveTo(mouse.leftDownX, mouse.leftDownY);
 		this.ctx2.lineTo(mcx, mcy);
@@ -578,6 +596,17 @@ export default class Camera{
 		this.ctx2.fillStyle = this.scene.newObjColor.state;
 		this.ctx2.arc(mouse.leftDownX, mouse.leftDownY, D/2, 0, 7);
 		this.ctx2.fill();
+
+		if (this.scene.newObjMass.state < 0){
+			this.ctx2.strokeStyle = "#000";
+			this.ctx2.lineWidth = D/2/10;
+			this.ctx2.beginPath();
+			this.ctx2.arc(mouse.leftDownX, mouse.leftDownY, D/2*0.6, 0, 7);
+
+			this.ctx2.moveTo(mouse.leftDownX-D/2*0.4, mouse.leftDownY);
+			this.ctx2.lineTo(mouse.leftDownX+D/2*0.4, mouse.leftDownY)
+			this.ctx2.stroke();
+		}
 	}
 
 	//Визуальное выделение объекта
