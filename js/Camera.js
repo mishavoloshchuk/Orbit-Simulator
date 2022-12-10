@@ -99,6 +99,13 @@ export default class Camera{
 		}		
 	}
 
+	crd2 (xpos, ypos){ // Get object screen position
+		let sCtrX = this.#resolutionX/2 - this.ax;
+		let sCtrY = this.#resolutionY/2 - this.ay;
+
+		return [xpos*this.animZoom + sCtrX - this.ax*(this.animZoom-1), ypos*this.animZoom + sCtrY - this.ay*(this.animZoom-1)];		
+	}
+
 	screenPix(coord, axis){ // Cursor position in world
 		let sCtrX = window.innerWidth/2 - this.ax;
 		let sCtrY = window.innerHeight/2 - this.ay;
@@ -230,7 +237,7 @@ export default class Camera{
 			){
 				let canv = scn.maxPerformance.state ? this.ctx : this.ctx3;
 				canv.strokeStyle = obCol;
-				canv.lineWidth = drawRadius * 2 - (enoughObjMove ? 0 : 1.5);
+				canv.lineWidth = drawRadius * 2 - (enoughObjMove ? 0 : (drawRadius * 2 > 1.5) ? 1.5 : 0);
 				canv.lineCap = drawRadius > 1 ? 'round' : 'butt';
 				canv.beginPath();
 				canv.moveTo(this.crd(obj.x - obj.vx*scn.timeSpeed.state + targetVx * scn.timeSpeed.state, 'x'), this.crd(obj.y - obj.vy*scn.timeSpeed.state + targetVy * scn.timeSpeed.state, 'y'));
@@ -461,14 +468,14 @@ export default class Camera{
 			this.ctx2.globalAlpha = 0.5;
 			this.ctx2.fillStyle = this.scene.newObjColor.state;
 			this.ctx2.beginPath();
-			let mass = Math.sqrt(Math.abs(this.scene.newObjMass.state))*this.animZoom;
+			let mass = this.getScreenRad(this.scene.newObjMass.state);
 			mass = mass < 2 ? 2 : mass;
 			this.ctx2.arc(this.crd(distance[1].x, 'x'), this.crd(distance[1].y, 'y'), mass, 0, 7);
 			this.ctx2.fill();
 			// Second object arc
 			this.ctx2.beginPath();
 			this.ctx2.fillStyle = this.scene.objArr[distance[1].obj2Id].color;
-			mass = Math.sqrt(Math.abs(this.scene.objArr[distance[1].obj2Id].m))*this.animZoom;
+			mass = this.getScreenRad(this.scene.objArr[distance[1].obj2Id].m);
 			mass = mass < 2 ? 2 : mass;
 			this.ctx2.arc(this.crd(distance[1].x2, 'x'), this.crd(distance[1].y2, 'y'), mass, 0, 7);
 			this.ctx2.fill();
@@ -552,7 +559,7 @@ export default class Camera{
 		}
 		// Draw the cross if object deleted after collision
 		for (let deletedObj of deletedObjectsList){
-			const size = Math.sqrt(Math.abs(deletedObj.m))*0.7 < 5? 5 : Math.sqrt(Math.abs(deletedObj.m))*0.7;
+			const size = this.getScreenRad(deletedObj.m)*0.7 < 3? 3 : this.getScreenRad(deletedObj.m)*0.7;
 			this.drawCross(
 				this.crd(deletedObj.x - deletedObj.vx, 'x'), 
 				this.crd(deletedObj.y - deletedObj.vy, 'y'), 
@@ -573,7 +580,7 @@ export default class Camera{
 		if (['mobile', 'tablet'].includes(getDeviceType()) ){ offsX = -25; offsY = -70; } // If device is mobile or tablet
 		Object.assign(launchPowerLabel.style, {left: (mouse.x+offsX)+'px', top: (mouse.y+offsY)+'px', display: 'block', color: this.scene.newObjColor.state});
 		launchPowerLabel.innerHTML = Math.round(this.scene.rad(mouse.leftDownX, mouse.leftDownY, mouse.x, mouse.y) * this.scene.powerFunc(this.scene.launchForce.state) * 100)/100;
-		let D = Math.sqrt(Math.abs(this.scene.newObjMass.state))*this.animZoom*2;
+		let D = this.getScreenRad(this.scene.newObjMass.state)*2;
 
 		// Gradient
 		let gradient = this.ctx2.createLinearGradient(
@@ -585,7 +592,7 @@ export default class Camera{
 		gradient.addColorStop(1, "#0000"); // Alpha
 		this.ctx2.strokeStyle = gradient;
 
-		this.ctx2.lineWidth = D < 1 ? 1 : Math.sqrt(Math.abs(this.scene.newObjMass.state))*this.animZoom*2;
+		this.ctx2.lineWidth = D < 1 ? 1 : D;
 		this.ctx2.beginPath();
 		this.ctx2.moveTo(mouse.leftDownX, mouse.leftDownY);
 		this.ctx2.lineTo(mcx, mcy);
@@ -649,10 +656,45 @@ export default class Camera{
 			this.ctx2.arc(
 				(this.crd(this.scene.objArr[selectObjId].x, 'x')), 
 				(this.crd(this.scene.objArr[selectObjId].y, 'y')), 
-				Math.sqrt(Math.abs(this.scene.objArr[selectObjId].m)) * this.animZoom + this.#visualObjectSelectAnimation, 
+				this.getScreenRad(this.scene.objArr[selectObjId].m) + this.#visualObjectSelectAnimation, 
 				0, 7);
 			this.ctx2.stroke();	
 		}
+	}
+
+	// Visualize new object mass
+	visObjMass(mass, color, posX = innerWidth/2, posY = innerHeight/2){
+		// Fill circle
+		let drawRadius = scene.camera.getScreenRad(mass);
+		this.canv2.visualSelect = true;
+		this.clearLayer2();
+		this.ctx2.beginPath();
+		this.ctx2.globalAlpha = 0.5;
+		this.ctx2.fillStyle = color;
+		this.ctx2.arc(
+			posX, 
+			posY, 
+			scene.camera.getScreenRad(mass),
+			0, 7);
+		this.ctx2.fill();	
+		this.ctx2.strokeStyle = "#000";
+		this.ctx2.lineWidth = drawRadius/20;
+		this.ctx2.beginPath();
+		this.ctx2.arc(
+			posX, 
+			posY, 
+			scene.camera.getScreenRad(mass),
+			0, 7);
+		this.ctx2.stroke();
+		if (mass < 0){
+			this.ctx2.beginPath();
+			this.ctx2.arc(posX, posY, drawRadius*0.6, 0, 7);
+
+			this.ctx2.moveTo(posX-drawRadius*0.4, posY);
+			this.ctx2.lineTo(posX+drawRadius*0.4, posY)
+			this.ctx2.stroke();
+		}
+		this.ctx2.globalAlpha = 1;
 	}
 
 	tracesMode1Wiping(){
@@ -694,5 +736,14 @@ export default class Camera{
 		}
 		canvObj.lineCap = 'butt';
 	}
-
+	// Get object radius
+	getRadius(mass){
+		let rad = Math.sqrt(Math.abs(mass));
+		return rad < 0.25 ? 0.25 : rad;
+	}
+	// Get object screen radius
+	getScreenRad(mass){
+		let screenRad = Math.sqrt(Math.abs(mass)) * this.animZoom;
+		return screenRad < 0.25 ? 0.25 : screenRad;
+	}
 }

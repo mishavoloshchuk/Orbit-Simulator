@@ -36,27 +36,28 @@
 	"color_input": "Цвет:",
 	"random_color_checkbox": "Cлучайный",
 	"mass_input": "Масса:",
-	"fixed_object_checkbox": "Неподвижный:",
+	"negative_mass": "Отрицательная",
+	"fixed_object_checkbox": "Неподвижный",
 	"select_main_object_button": "Выбрать родительский объект",
 
 	"creation_parameters": "Параметры создания",
-	"circular_orbit_on_click": "Клик - круговая орбита:",
-	"clockwise_input": "По часовой:",
-	"pause_while_new_object_creates": "Пауза при создании объекта:",
+	"circular_orbit_on_click": "Клик - круговая орбита",
+	"clockwise_input": "По часовой",
+	"pause_while_new_object_creates": "Пауза при создании объекта",
 	"changed_with_the_mouse_wheel_when_creating_an_object": "Изменяется колесом мыши при создании объекта",
 	"launch_speed": "Скорость запуска:",
-	"show_distance_checkbox": "Показывать расстояние:",
+	"show_distance_checkbox": "Показывать расстояние",
 
-	"trajectory_calculate_checkbox": "Прощет траекторий:",
+	"trajectory_calculate_checkbox": "Прощет траекторий",
 	"affects_the_performance_when_calculating_the_trajectory": "Влияет на быстродействие, при расчете траектории",
 	"trajectory_calculate_length": "Дальность прощета траектории:",
 	"trajectory_calculate_accuracity": "Точность прощета траектории:",
 
 	"deleting_objects_options": "Параметры удаления объекта",
-	"delete_nearest_to_cursor_object": "Удалить ближайший к курсору объект:",
-	"delete_further_from_cursor_object": "Удалить дальний от курсора объект:",
-	"delete_the_biggest_object": "Удалить наибольший объект:",
-	"delete_last_added_object": "Удалить последний добавленный объект:",
+	"delete_nearest_to_cursor_object": "Удалить ближайший к курсору объект",
+	"delete_further_from_cursor_object": "Удалить дальний от курсора объект",
+	"delete_the_biggest_object": "Удалить наибольший объект",
+	"delete_last_added_object": "Удалить последний добавленный объект",
 
 	"select_object_button": "Выбрать объект",
 
@@ -64,10 +65,10 @@
 	"zero_speed_button": "Обнулить скорость",
 
 	"traces_settings": "Параметры следа",
-	"no_traces": "Нет следов:",
-	"traces_mode_1": "Режим следа - 1:",
-	"traces_mode_2": "Режим следа - 2:",
-	"traces_mode_3": "Режим следа - 3:",
+	"no_traces": "Нет следов",
+	"traces_mode_1": "Режим следа - 1",
+	"traces_mode_2": "Режим следа - 2",
+	"traces_mode_3": "Режим следа - 3",
 	"affects_performance": "Влияет на быстродействие",
 
 	"extra_options": "Дополнительные параметры",
@@ -76,8 +77,8 @@
 	"trace_blur": "Размытие:",
 	"clear_traces": "Очистить следы",
 
-	"trace_particles": "Частицы:",
-	"trace_trembling": "Дрожание:",
+	"trace_particles": "Частицы",
+	"trace_trembling": "Дрожание",
 
 	"trace_length": "Длинна следа:",
 
@@ -86,29 +87,29 @@
 
 	"camera_options": "Параметры камеры",
 	"follow_object": "Следить за объектом:",
-	"zoom_to_screen_center": "Масштабировать к центру экрана:",
+	"zoom_to_screen_center": "Масштабировать к центру экрана",
 	"camera_reset": "Сбросить настройки камеры",
 
 	"gravity_force_modes": "Режимы силы притяжения",
-	"inversely_proportional_to_the_cube_of_the_distance": "Обратно-пропорционально кубу расстояния:",
-	"inversely_proportional_to_the_square_of_the_distance_(usually)": "Обратно-пропорционально квадрату расстояния (обычно):",
-	"inversely_proportional_to_distance": "Обратно-пропорционально расстоянию:",
-	"constant_attraction": "Постоянное притяжение:",
-	"proportional_to_distance": "Пропорционально расстоянию:",
+	"inversely_proportional_to_the_cube_of_the_distance": "Обратно-пропорционально кубу расстояния",
+	"inversely_proportional_to_the_square_of_the_distance_(usually)": "Обратно-пропорционально квадрату расстояния (обычно)",
+	"inversely_proportional_to_distance": "Обратно-пропорционально расстоянию",
+	"constant_attraction": "Постоянное притяжение",
+	"proportional_to_distance": "Пропорционально расстоянию",
 
 	"force_of_gravity": "Сила притяжения:",
 
 	"interaction_modes": "Режимы взаимодействия",
-	"between_all_objects": "Между всеми объектами:",
-	"only_with_parent_object": "Только с родительским объектом:",
-	"no_interactions": "Без взаимодействий:",
+	"between_all_objects": "Между всеми объектами",
+	"only_with_parent_object": "Только с родительским объектом",
+	"no_interactions": "Без взаимодействий",
 
 	"turn_back_time": "Повернуть время вспять",
 
 	"collision_modes": "Режимы столкновений",
-	"collision_merge": "Слияние:",
-	"collision_rebound": "Отскасивание:",
-	"no_collision": "Без столкновений:",
+	"collision_merge": "Слияние",
+	"collision_rebound": "Отскасивание",
+	"no_collision": "Без столкновений",
 
 	"language": "Язык",
 	"select_language": "Выберите язык:",
@@ -118,12 +119,12 @@
 	"no_image_found_at_this_address": "*Не найдено изображения по этому адресу",
 	"image_url": "URL изображения",
 	"background_intensity": "Интенсивность фона:",
-	"background_movement_on_mouse_movement": "Движение фона при движении мыши:",
+	"background_movement_on_mouse_movement": "Движение фона при движении мыши",
 
 	"performance": "Производительность",
-	"show_fps": "Показывать FPS:",
-	"multithreading": "Многопоточная обработка:",
-	"max_performance": "Максимальная производительность:",
+	"show_fps": "Показывать FPS",
+	"multithreading": "Многопоточная обработка",
+	"max_performance": "Максимальная производительность",
 
 	"load/save_world": "Загрузить/сохранить мир:",
 	"load": "Загрузить",

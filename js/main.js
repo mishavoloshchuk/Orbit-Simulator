@@ -99,12 +99,14 @@ window.onload = function(){
 	let 
 	newObjColor = new UserInput({type: 'color', id: 'newObjeColorSelect', stateSaving: true, initState: scene.randomColor()}), // Menu color select input
 	newObjRandColor = new UserInput({type: 'checkbox', id: 'randColorCheck', stateSaving: true, initState: true}), // Menu new object random color input
-	newObjMass = new UserInput({type: 'number', id: 'create_mass', stateSaving: true, initState: Math.round(getRandomArbitrary(0.5, 100)*10)/10}), // Menu new object's mass input
-	newObjCircularOrbit = new UserInput({type: 'checkbox', id: 'circleOrbitCheck', stateSaving: true, initState: true, callback: (state)=>{
-		circleOrbitCheckMenu.style.display = state ? 'initial' : 'none';
-	}}), // Menu circle orbit on click input
-	newObjCreateReverseOrbit = new UserInput({type: 'checkbox', id: 'objReverseCheck', stateSaving: true, initState: false}), // Menu reverse ordit direction input
+	newObjMass = new UserInput({type: 'manualInput', id: 'new_object_mass_input', stateSaving: true, initState: Math.round(getRandomArbitrary(0.5, 100)*10)/10, callback: (state)=>{
+		document.getElementById('newObjMassSpan').innerHTML = Math.round(state*1000)/1000;
+	}}), // Menu new object's mass input
+	newObjNegativeMass = new UserInput({type: 'checkbox', id: 'new_obj_negative_mass', stateSaving: true, callback: (state) => {newObjMass.state = state ? -Math.abs(newObjMass.state) : Math.abs(newObjMass.state)} }), // Menu new object negative mass
 	newObjLock = new UserInput({type: 'checkbox', id: 'objLckCeck', initState: false}), // Menu lock created object input
+	//
+	newObjCircularOrbit = new UserInput({type: 'checkbox', id: 'circleOrbitCheck', stateSaving: true, initState: true}), // Menu circle orbit on click input
+	newObjCreateReverseOrbit = new UserInput({type: 'checkbox', id: 'objReverseCheck', stateSaving: true, initState: false}), // Menu reverse ordit direction input
 	pauseWhenCreatingObject = new UserInput({type: 'checkbox', id: 'new_obj_pause', stateSaving: true, initState: true, callback: (val, elem)=>{elem.prevPauseState = false}}), // Menu pause when user add object input
 	launchForce = new UserInput({type: 'range', id: 'launch_power', stateSaving: true, callback: (val)=>{lnch_pwr_span.innerHTML = Math.round(powerFunc(val)*1000)/1000; mouse.move = true;}, eventName: 'input'}), // Menu launch power value input
 	showDistanceFromCursorToMainObj = new UserInput({type: 'checkbox', id: 'vis_distance_check', stateSaving: true, callback: ()=>{ launchPowerLabel.style.display = 'none'; scene.camera.clearLayer2(); }}), // Menu visual distance
@@ -124,9 +126,15 @@ window.onload = function(){
 	deletingMode = new UserInput({type: 'radio', id: 'dellMethodRadio'}), // Deleting method
 
 	// Edit object menu ===================================================
-	editMass = new UserInput({type: 'number', id: 'mass_edit', callback: (state) => addFrameBeginTask(() => {
-		if (scene.objArr[swch.edit_obj]){ scene.objArr[swch.edit_obj].m = state; allowRender();}
-	}), }),
+	editMass = new UserInput({type: 'manualInput', id: 'mass_edit', initState: 1000, callback: (state) => {
+			document.getElementById('editObjMassSpan').innerHTML = Math.round(state*1000)/1000;
+		}
+	}),
+	editObjNegativeMass = new UserInput({type: 'checkbox', id: 'edit_obj_negative_mass', callback: (state) => {
+	editMass.state = state ? -Math.abs(editMass.state) : Math.abs(editMass.state);
+	if (scene.objArr[swch.edit_obj]) scene.objArr[swch.edit_obj].m = editMass.state;
+	} }), // Menu edit object negative mass
+
 	editColor = new UserInput({type: 'color', id: 'col_edit', eventName: 'input', callback: (state) => addFrameBeginTask(() => {
 		if (scene.objArr[swch.edit_obj]){ scene.objArr[swch.edit_obj].color = state; allowRender();}
 	}), }),
@@ -308,7 +316,54 @@ window.onload = function(){
 		scene.camera.resolutionY = window.innerHeight;
 		scene.camera.allowFrameRender = true;
 		setFullScreenIcon(); // Check full screen mode and set the button icon
+		setMassRange();
 	}
+
+	setMassRange();
+	function setMassRange() {
+		let element = document.querySelector('#create_mass');
+		if (!newObjMass.event){
+			element.value = Math.pow(Math.abs(newObjMass.state) / Math.pow(Math.max(innerWidth, innerHeight)/2/scene.camera.animZoom, 2), 1/3);
+		}
+		element = document.querySelector('#mass_edit');
+		if (!editMass.event){
+			element.value = Math.pow(Math.abs(editMass.state) / Math.pow(Math.max(innerWidth, innerHeight)/2/scene.camera.animZoom, 2), 1/3);
+		}
+	}
+	// New object mass edit input events
+	document.getElementById('create_mass').addEventListener('input', (e)=>{
+		newObjMass.event = true;
+		newObjMass.state = ( Math.pow(e.target.value, 3) * Math.pow(Math.max(innerWidth, innerHeight)/2/scene.camera.animZoom, 2) ) * (newObjNegativeMass.state ? -1 : 1);
+		let menuContainer = document.getElementById('options_menu_container');
+		if (!menuContainer.className.includes(" zero_opacity")){
+			e.target.closest('.option_item').className += " nozeroopacity";
+			menuContainer.className += " zero_opacity";
+		}
+	});
+	document.getElementById('create_mass').addEventListener('change', (e)=>{
+		newObjMass.event = false;
+		let menuContainer = document.getElementById('options_menu_container');
+		menuContainer.className = menuContainer.className.replace(" zero_opacity", "");
+		e.target.closest('.option_item').className = e.target.closest('.option_item').className.replace(" nozeroopacity", "");
+	});
+	document.querySelector('#mass_edit').addEventListener('input', (e)=>{
+		editMass.event = true;
+		editMass.state = ( Math.pow(e.target.value, 3) * Math.pow(Math.max(innerWidth, innerHeight)/2/scene.camera.animZoom, 2) ) * (editObjNegativeMass.state ? -1 : 1);
+		let menuContainer = document.getElementById('options_menu_container');
+		if (!menuContainer.className.includes(" zero_opacity")){
+			e.target.closest('.option_item').className += " nozeroopacity";
+			menuContainer.className += " zero_opacity";
+		}
+	});
+	document.querySelector('#mass_edit').addEventListener('change', (e)=>{
+		editMass.event = false;
+		let menuContainer = document.getElementById('options_menu_container');
+		menuContainer.className = menuContainer.className.replace(" zero_opacity", "");
+		e.target.closest('.option_item').className = e.target.closest('.option_item').className.replace(" nozeroopacity", "");
+		addFrameBeginTask(() => {
+			if (scene.objArr[swch.edit_obj]){ scene.objArr[swch.edit_obj].m = editMass.state; allowRender();}
+		});
+	});
 	// Touch events ======================================
 	// Touch START
 	$('.renderLayer').on('touchstart', function(event){
@@ -397,6 +452,7 @@ window.onload = function(){
 				scene.camera.ay = scene.camera.y = prev_cam_y - (avTouchPoint.y - avTouchPoint.yd)/scene.camera.animZoom + (((window.innerHeight/2 - avTouchPoint.yd)/zm_prev)*Math.pow(Math.sqrt(zm_cff) / Math.sqrt(touchZoom), 2) - ((window.innerHeight/2 - avTouchPoint.yd)/zm_prev));
 			}
 		}
+		bgMoving();
 	})
 	// Mouse events =========================================================
 	// Mouse DOWN
@@ -539,9 +595,6 @@ window.onload = function(){
 	// Mouse MOVE
 	document.onmousemove = function(event){
 		mouse.move = true;
-		if (backgroundFollowsMouse.state && backgroundDarkness.state && !maxPerformance.state){
-			$('.bg_image').css({top: -event.clientY/25, left: -event.clientX/25})	
-		}
 		if (mouse.leftDown) movingObjectBegin();
 		movingObject(); // Moving object if mouse down && mbut == "move"
 		if (mouse.middleDown){
@@ -563,7 +616,14 @@ window.onload = function(){
 		} else {
 			scene.mouse_coords[0] = scene.mouse_coords [1] = false;
 		}
+		bgMoving();
 	};
+	// Background movement
+	function bgMoving(){
+		if (backgroundFollowsMouse.state && backgroundDarkness.state && !maxPerformance.state){
+			$('.bg_image').css({top: -mouse.y/25, left: -mouse.x/25})	
+		}
+	}
 	$('*').bind('contextmenu', function(e) {
 		return false;
 	}); //===================================================================================
@@ -617,11 +677,13 @@ window.onload = function(){
 		// Frame rendering
 		if (scene.activCam.allowFrameRender){
 			scene.camera.renderObjects(scene.world);
+			setMassRange();
 			renderStopLatency = 125; // Count of frames to render after render is disabled
 		} else {
 			// If traces mode is 1 render ${renderStopLatency} frames after render disabled
 			if (renderStopLatency && tracesMode.state == 1 && !pauseState){
 				renderStopLatency --;
+				setMassRange();
 				scene.camera.renderObjects(scene.world);
 			}
 		}
@@ -677,6 +739,15 @@ window.onload = function(){
 			}
 		}
 
+		// Visualize new object mass
+		if (newObjMass.event){
+			scene.camera.visObjMass(newObjMass.state, newObjColor.state);
+		}
+		// Visualize edit object mass
+		if (editMass.event && scene.objArr[swch.edit_obj]){
+			scene.camera.visObjMass(editMass.state, editColor.state, ...scene.camera.crd2(scene.objArr[swch.edit_obj].x, scene.objArr[swch.edit_obj].y));
+		}
+
 		scene.activCam.allowFrameRender = false;
 		mouse.move = false;
 		return true;
@@ -702,24 +773,24 @@ window.onload = function(){
 	function vis_distance(obj_cord, col = '#888888', targ_obj = scene.objIdToOrbit){
 		if (scene.objArr[targ_obj]){
 			let obCoords = [scene.objArr[targ_obj].x, scene.objArr[targ_obj].y];
-			let size = rad(obj_cord[0], obj_cord[1], scene.camera.crd(obCoords[0], 'x'), scene.camera.crd(obCoords[1], 'y'));
-			if (size > Math.sqrt(Math.abs(scene.objArr[targ_obj].m))*scene.camera.animZoom){
+			let size = rad(obj_cord[0], obj_cord[1], ...scene.camera.crd2(obCoords[0], obCoords[1]));
+			if (size > scene.camera.getScreenRad(scene.objArr[targ_obj].m)){
 				scene.camera.ctx2.strokeStyle = col;
 				scene.camera.ctx2.lineWidth = 2;
 				// Line
 				scene.camera.ctx2.beginPath();
 				scene.camera.ctx2.moveTo(obj_cord[0], obj_cord[1]);
-				scene.camera.ctx2.lineTo(scene.camera.crd(obCoords[0], 'x'), scene.camera.crd(obCoords[1], 'y'));
+				scene.camera.ctx2.lineTo(...scene.camera.crd2(obCoords[0], obCoords[1]));
 				scene.camera.ctx2.stroke();
 				// Circle
 				scene.camera.ctx2.lineWidth = 0.5;
 				scene.camera.ctx2.beginPath();
-				scene.camera.ctx2.arc(scene.camera.crd(obCoords[0], 'x'), scene.camera.crd(obCoords[1], 'y'), size, 0, 7);
+				scene.camera.ctx2.arc(...scene.camera.crd2(obCoords[0], obCoords[1]), size, 0, 7);
 				scene.camera.ctx2.stroke();
 				// Points
 				scene.camera.ctx2.beginPath();
 				scene.camera.ctx2.fillStyle = col;
-				scene.camera.ctx2.arc(scene.camera.crd(obCoords[0], 'x'), scene.camera.crd(obCoords[1], 'y'), 3, 0, 7);
+				scene.camera.ctx2.arc(...scene.camera.crd2(obCoords[0], obCoords[1]), 3, 0, 7);
 				scene.camera.ctx2.arc(obj_cord[0], obj_cord[1], 3, 0, 7);
 				scene.camera.ctx2.fill();
 				scene.camera.ctx2.beginPath();
@@ -781,21 +852,19 @@ window.onload = function(){
 				if (tracesMode.state == 1){ // If traces mode == 1
 					let dCanv = maxPerformance.state ? scene.camera.ctx : scene.camera.ctx3;
 					dCanv.strokeStyle = scene.objArr[mov_obj].color;
-					dCanv.fillStyle = scene.objArr[mov_obj].color;
-					dCanv.lineWidth = Math.sqrt(scene.objArr[mov_obj].m)*2*scene.camera.animZoom < 0.5 ? 0.5 : Math.sqrt(scene.objArr[mov_obj].m)*2*scene.camera.animZoom;
-					// Circle
-					dCanv.beginPath();
-					dCanv.arc(scene.camera.crd(scene.objArr[mov_obj].x, 'x'), scene.camera.crd(scene.objArr[mov_obj].y, 'y'), Math.sqrt(Math.abs(scene.objArr[mov_obj].m))*scene.camera.animZoom, 0, 7);
-					dCanv.fill();
+					dCanv.fillStyle = scene.objArr[mov_obj].color;	
+					dCanv.lineWidth = scene.camera.getScreenRad(scene.objArr[mov_obj].m)*2;
 					// Line
 					dCanv.beginPath();
-					dCanv.moveTo(scene.camera.crd(scene.objArr[mov_obj].x, 'x'), scene.camera.crd(scene.objArr[mov_obj].y, 'y'));
+					dCanv.lineCap = 'round';
+					dCanv.moveTo(...scene.camera.crd2(scene.objArr[mov_obj].x, scene.objArr[mov_obj].y));
 					// Set position to user's moving objec
 					scene.objArr[mov_obj].x = newX; // New position X
 					scene.objArr[mov_obj].y = newY; // New position Y
 
-					dCanv.lineTo(scene.camera.crd(scene.objArr[mov_obj].x, 'x'), scene.camera.crd(scene.objArr[mov_obj].y, 'y'));
-					dCanv.stroke();			
+					dCanv.lineTo(...scene.camera.crd2(scene.objArr[mov_obj].x, scene.objArr[mov_obj].y));
+					dCanv.stroke();
+					dCanv.lineCap = 'butt';
 				} else {
 					scene.objArr[mov_obj].x = newX; // New position X
 					scene.objArr[mov_obj].y = newY; // New position Y
@@ -834,9 +903,7 @@ window.onload = function(){
 								main_obj: scene.objIdToOrbit
 							});
 							if (newObjRandColor.state) newObjColor.state = scene.randomColor();
-						});
-						let obj_rad = Math.sqrt(Math.abs(newObjMass.state))*scene.camera.animZoom;
-						obj_rad = obj_rad < 0.5 ? 0.5 : obj_rad;		
+						});		
 					}
 					if (mbut == 'delete' && scene.objArr.length){
 						//$('.renderLayer').mousedown();

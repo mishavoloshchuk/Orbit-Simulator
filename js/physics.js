@@ -52,6 +52,10 @@ function calculate({
 			const vector = gravity_func(sin, cos, S, gravitMode, obj2.m, timeSpeed, g);
 			obj.vx += vector[0];
 			obj.vy += vector[1];
+			if (obj.main_obj){
+				obj.vx += objectsArray[obj.main_obj].vx;
+				obj.vy += objectsArray[obj.main_obj].vy;
+			}
 		}
 	}
 };

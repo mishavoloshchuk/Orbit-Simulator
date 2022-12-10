@@ -119,6 +119,10 @@ export default class UserInput {
 						if ( stateSaving ) sessionStorage[id] = this.#localState; // Save the value to 'sessionStorage'
 						callback && callback(this.#localState, this); // Run the callback function if given
 					}				
+					if (stateSaving){ // Set saved value if saving is true
+						// Set input value to saved
+						this.state = sessionStorage[id] !== undefined ? (isNaN(sessionStorage[id]) ? sessionStorage[id] : +sessionStorage[id]) : initState || 1;
+					}
 				break;
 			default: console.error("UserInput type: '" + type + "' was not found!");
 		}
