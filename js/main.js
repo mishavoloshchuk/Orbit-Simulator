@@ -131,8 +131,11 @@ window.onload = function(){
 		}
 	}),
 	editObjNegativeMass = new UserInput({type: 'checkbox', id: 'edit_obj_negative_mass', callback: (state) => {
-	editMass.state = state ? -Math.abs(editMass.state) : Math.abs(editMass.state);
-	if (scene.objArr[swch.edit_obj]) scene.objArr[swch.edit_obj].m = editMass.state;
+		editMass.state = state ? -Math.abs(editMass.state) : Math.abs(editMass.state);
+		allowRender();
+		addFrameBeginTask(()=>{
+			if (scene.objArr[swch.edit_obj]) scene.objArr[swch.edit_obj].m = editMass.state;
+		});
 	} }), // Menu edit object negative mass
 
 	editColor = new UserInput({type: 'color', id: 'col_edit', eventName: 'input', callback: (state) => addFrameBeginTask(() => {
@@ -319,21 +322,22 @@ window.onload = function(){
 		setMassRange();
 	}
 
+	// Mass range inputs =======
 	setMassRange();
 	function setMassRange() {
 		let element = document.querySelector('#create_mass');
 		if (!newObjMass.event){
-			element.value = Math.pow(Math.abs(newObjMass.state) / Math.pow(Math.max(innerWidth, innerHeight)/2/scene.camera.animZoom, 2), 1/3);
+			element.value = Math.pow(Math.abs(newObjMass.state) / Math.pow((innerWidth + innerHeight)/4/scene.camera.animZoom, 2), 1/3);
 		}
 		element = document.querySelector('#mass_edit');
 		if (!editMass.event){
-			element.value = Math.pow(Math.abs(editMass.state) / Math.pow(Math.max(innerWidth, innerHeight)/2/scene.camera.animZoom, 2), 1/3);
+			element.value = Math.pow(Math.abs(editMass.state) / Math.pow((innerWidth + innerHeight)/4/scene.camera.animZoom, 2), 1/3);
 		}
 	}
 	// New object mass edit input events
 	document.getElementById('create_mass').addEventListener('input', (e)=>{
 		newObjMass.event = true;
-		newObjMass.state = ( Math.pow(e.target.value, 3) * Math.pow(Math.max(innerWidth, innerHeight)/2/scene.camera.animZoom, 2) ) * (newObjNegativeMass.state ? -1 : 1);
+		newObjMass.state = ( Math.pow(e.target.value, 3) * Math.pow((innerWidth + innerHeight)/4/scene.camera.animZoom, 2) ) * (newObjNegativeMass.state ? -1 : 1);
 		let menuContainer = document.getElementById('options_menu_container');
 		if (!menuContainer.className.includes(" zero_opacity")){
 			e.target.closest('.option_item').className += " nozeroopacity";
@@ -348,7 +352,7 @@ window.onload = function(){
 	});
 	document.querySelector('#mass_edit').addEventListener('input', (e)=>{
 		editMass.event = true;
-		editMass.state = ( Math.pow(e.target.value, 3) * Math.pow(Math.max(innerWidth, innerHeight)/2/scene.camera.animZoom, 2) ) * (editObjNegativeMass.state ? -1 : 1);
+		editMass.state = ( Math.pow(e.target.value, 3) * Math.pow((innerWidth + innerHeight)/4/scene.camera.animZoom, 2) ) * (editObjNegativeMass.state ? -1 : 1);
 		let menuContainer = document.getElementById('options_menu_container');
 		if (!menuContainer.className.includes(" zero_opacity")){
 			e.target.closest('.option_item').className += " nozeroopacity";
@@ -535,6 +539,7 @@ window.onload = function(){
 				if (scene.objArr[swch.edit_obj]){
 					editColor.state = scene.objArr[swch.edit_obj].color;
 					editMass.state = scene.objArr[swch.edit_obj].m;
+					editObjNegativeMass.state = scene.objArr[swch.edit_obj].m < 0;
 					document.getElementById('lck_edit_chbox').checked = scene.objArr[swch.edit_obj].lock;
 				}
 			}
@@ -957,7 +962,6 @@ window.onload = function(){
 	});
 
 	let noMenuBtns = ['timedown', 'play', 'pause', 'timeup'];
-	let createMenuSavedState = menu_state;
 	// Menu buttons handler
 	$('.btn').mousedown(function(){
 		//alert($(this).attr('id'));

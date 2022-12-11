@@ -255,7 +255,7 @@ a:hover {
 }
 .option_item_range input[type="range"] {
 	width: calc(100% - .7em);
-	margin: .5em 0 .2em 0;
+	height: 1.5em;
 }
 .option_item_range label {
 	align-self: flex-start;

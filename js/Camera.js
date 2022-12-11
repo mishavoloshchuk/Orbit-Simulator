@@ -434,7 +434,7 @@ export default class Camera{
 			});
 
 			// Delete objects after collide and return the deleted objects to the deletedObjectsList array
-			deletedObjectsList = deletedObjectsList.concat(this.scene.deleteObject(toDeleteObjectsList, objArrCopy, null));
+			if (toDeleteObjectsList.length > 0) deletedObjectsList = deletedObjectsList.concat(this.scene.deleteObject(toDeleteObjectsList, objArrCopy, null));
 
 			// Add points to trajectory trace array
 			for (let objectId = objArrCopy.length; objectId--;){
@@ -687,6 +687,7 @@ export default class Camera{
 			0, 7);
 		this.ctx2.stroke();
 		if (mass < 0){
+			this.ctx2.lineWidth = drawRadius/10;
 			this.ctx2.beginPath();
 			this.ctx2.arc(posX, posY, drawRadius*0.6, 0, 7);
 

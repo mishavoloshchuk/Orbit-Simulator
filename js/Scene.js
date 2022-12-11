@@ -284,7 +284,6 @@ export default class Scene {
 			eachObjectCallback && eachObjectCallback(objectId);
 			deletedObjectsList = deletedObjectsList.concat(objArr.splice(objectId, 1));
 		}
-		this.show_obj_count(); // Set objects counter indicator
 		return deletedObjectsList;
 	}
 	delObjectCallback(objectId){
@@ -294,6 +293,7 @@ export default class Scene {
 		if (objectId < this.objIdToOrbit) this.objIdToOrbit --;
 		if (objectId == this.objIdToOrbit) this.objIdToOrbit = this.objectSelect('biggest');
 		this.activCam.allowFrameRender = true;
+		this.show_obj_count(); // Set objects counter indicator
 	}
 	// Show number of objects
 	show_obj_count(){
