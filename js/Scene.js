@@ -120,14 +120,14 @@ export default class Scene {
 		this.deleteObject(deleteObjectList, objArr);
 
 		this.addSelfVectors(objArr, timeSpeed);
-		if (0&&(simulationDone > 1)){
-			simulationDone --;
-			if (func === 'multiThread'){
-				this.physicsMultiThreadCalculate();
-			} else if (func === 'singleThread') {
-				this.physicsCalculate();
-			}
-		}
+		// if (0&&(simulationDone > 1)){
+		// 	simulationDone --;
+		// 	if (func === 'multiThread'){
+		// 		this.physicsMultiThreadCalculate();
+		// 	} else if (func === 'singleThread') {
+		// 		this.physicsCalculate();
+		// 	}
+		// }
 	}
 	// Collision handler
 	collision(objArr, collidedObjectsIdList, interactMode, collisionType){
@@ -157,7 +157,7 @@ export default class Scene {
 				deleteObjectList.push(collidedObjectsId[1]);
 			} else if (collisionType == 1){ // Repulsion
 				// let R = collidedObjectsId[2]; // The distance between objects
-				let R = rad(objA.x, objA.y, objB.x, objB.y); // The distance between objects
+				let D = rad(objA.x, objA.y, objB.x, objB.y); // The distance between objects
 				let v1 = this.gipot(objB.vx, objB.vy); // Scallar velocity
 				let v2 = this.gipot(objA.vx, objA.vy); // Scallar velocity
 				let vcos1 = v1 == 0?0:objB.vx/v1; // cos vx 1
@@ -167,22 +167,35 @@ export default class Scene {
 				let ag1 = Math.atan2(vsin1, vcos1);
 				let ag2 = Math.atan2(vsin2, vcos2);
 
-				let cos = (objA.x - objB.x)/R;
-				let sin = (objA.y - objB.y)/R;
+				let cos = (objA.x - objB.x)/D;
+				let sin = (objA.y - objB.y)/D;
 				let fi = Math.atan2(sin, cos);
 
 				let m1 = objB.m;
 				let m2 = objA.m;
-
-				if (!objB.lock && interactMode != 1){
-					if (!objA.lock){
-						objA.vx = (( v2*Math.cos(ag2 - fi)*(m2-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1+m2) ) * Math.cos(fi) + v2*Math.sin(ag2 - fi)*Math.cos(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
-						objA.vy = (( v2*Math.cos(ag2 - fi)*(m2-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1+m2) ) * Math.sin(fi) + v2*Math.sin(ag2 - fi)*Math.sin(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
-					}
-				} else {
-						objA.vx = (( v2*Math.cos(ag2 - fi)*(-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1) ) * Math.cos(fi) + v2*Math.sin(ag2 - fi)*Math.cos(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
-						objA.vy = (( v2*Math.cos(ag2 - fi)*(-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1) ) * Math.sin(fi) + v2*Math.sin(ag2 - fi)*Math.sin(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
-				}		
+				// Object A new velocity
+				if (!objA.lock){
+					if (objB.lock) { m2 = 0; }
+					objA.vx = (( v2*Math.cos(ag2 - fi)*(m2-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1+m2) ) * Math.cos(fi) + v2*Math.sin(ag2 - fi)*Math.cos(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
+					objA.vy = (( v2*Math.cos(ag2 - fi)*(m2-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1+m2) ) * Math.sin(fi) + v2*Math.sin(ag2 - fi)*Math.sin(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
+				}
+				// Object B new velocity
+				if (!objB.lock){
+					if (objA.lock) { m1 = 0; }
+					objB.vx = (( v1*Math.cos(ag1 - fi)*(m1-m2) + 2*m2*v2*Math.cos(ag2 - fi) ) / (m2+m1) ) * Math.cos(fi) + v1*Math.sin(ag1 - fi)*Math.cos(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
+					objB.vy = (( v1*Math.cos(ag1 - fi)*(m1-m2) + 2*m2*v2*Math.cos(ag2 - fi) ) / (m2+m1) ) * Math.sin(fi) + v1*Math.sin(ag1 - fi)*Math.sin(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
+				}
+				const objARadius = Math.sqrt(Math.abs(objA.m)); // Object A radius
+				const objBRadius = Math.sqrt(Math.abs(objB.m)); // Object B radius
+				const rS = objARadius + objBRadius; // Both objects radiuses sum
+				let newD = rad(objA.x + objA.vx, objA.y + objA.vy, objB.x + objB.vx, objB.y + objB.vy); // The distance between objects with new position
+				if (newD - rS <= 0){
+					const rD = rS - D; // Total move
+					const objAMov = objA.lock ? 0 : rD * (objBRadius / rS); // Object A move
+					const objBMov = rD - objAMov; // Object B move
+					objA.x += objAMov * cos; objA.y += objAMov * sin;
+					objB.x -= objBMov * cos; objB.y -= objBMov * sin;
+				}
 			} else if (collisionType == 2){ // None
 
 			}

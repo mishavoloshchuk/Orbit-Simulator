@@ -913,7 +913,7 @@ window.onload = function(){
 					if (mbut == 'delete' && scene.objArr.length){
 						//$('.renderLayer').mousedown();
 						//$('.renderLayer').mouseup();
-						let delete_obj = scene.objectSelect(switcher.del_radio);
+						let delete_obj = scene.objectSelect(deletingMode.state);
 						addFrameBeginTask( () => scene.deleteObject(delete_obj) );
 						deleted();
 					}

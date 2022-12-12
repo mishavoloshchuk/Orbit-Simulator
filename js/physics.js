@@ -10,8 +10,7 @@ function calculate({
 	collidedObjectsIdList
 }){
 	const obj = objectsArray[objectId];
-	//obj.vx = obj.vy = 0;
-	if (interactMode === '0'){//(switcher.ref_Interact == 0 && !switcher.pause2 && !bodyEmpty){
+	if (interactMode === '0'){
 		for (let object2Id = objectsArray.length; object2Id--;){
 			if (object2Id === objectId){ continue; } // Skip itself
 			const obj2 = objectsArray[object2Id];
@@ -66,10 +65,8 @@ function collision(objA, objB, objAId, objBId, S, collisionType, interactMode, c
 		if (collisionType == 0){ // Collision type: merge
 			if (interactMode === '0'){
 				if (objA.m >= objB.m){
-					if (objA.m != objB.m || objAId < objBId){ // Fix the same mass bug (only multithread bug)
-						
+					if (objA.m != objB.m || objAId < objBId){ // Fix the same mass bug (only multithread bug)		
 						collidedObjectsIdList.push([objAId, objBId]); // Send the collised objects
-
 						return 1;
 					}
 				}				
@@ -78,7 +75,9 @@ function collision(objA, objB, objAId, objBId, S, collisionType, interactMode, c
 			}
 		} else
 		if (collisionType == 1){ // Collision type: repulsion
-			collidedObjectsIdList.push([objAId, objBId]); // Send the collised objects and distance between them
+			if (objAId < objBId){
+				collidedObjectsIdList.push([objAId, objBId]); // Send the collised objects
+			}
 			return 1;
 		} else
 		if (collisionType == 2){ // Collision type: none
