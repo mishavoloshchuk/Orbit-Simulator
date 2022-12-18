@@ -437,7 +437,7 @@ window.onload = function(){
 			}
 			// Cancel camera target if touch camera move
 			if (rad(avTouchPoint.xd, avTouchPoint.yd, avTouchPoint.x, avTouchPoint.y) > Math.min(innerWidth, innerHeight)/6){
-				if (scene.camera.Target){
+				if (scene.camera.Target !== undefined){
 					avTouchPoint.xd = avTouchPoint.x;
 					avTouchPoint.yd = avTouchPoint.y;
 					prev_cam_x = scene.camera.x;

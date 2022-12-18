@@ -297,7 +297,7 @@ export default class Camera{
 			} else
 			// Traces mode 3 =====
 			if (scn.tracesMode.state == 3 && !obj.lock){
-				traceResolution = +scn.traceMode3Quality.element.getAttribute('max') + 1 - Math.round(scn.traceMode3Quality.state);
+				traceResolution = 61 - Math.round(Math.pow(scn.traceMode3Quality.state, 1/8)*60);
 				traceLength = Math.ceil(scn.powerFunc(scn.traceMode3Length.state) / traceResolution);
 				this.ctx.strokeStyle = obCol;
 				this.ctx.lineWidth = Math.min(drawRadius*1.7, Math.pow(scn.traceMode3Width.state, 10));
