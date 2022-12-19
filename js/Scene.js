@@ -97,22 +97,20 @@ export default class Scene {
 		gravitMode = this.gravitationMode.state, 
 		collisionType = this.collisionMode.state
 	){
-		for (let i = 10; i--;){
-			for (let objectId in objectsArray){
-				calculate({
-					objectsArray: objectsArray,
-					objectId: +objectId,
-					interactMode: interactMode,
-					gravitMode: +gravitMode,
-					g: g,
-					timeSpeed: timeSpeed,
-					collisionType: collisionType,
-					collidedObjectsIdList: this.collidedObjectsIdList
-				});
-			}
-			callback && callback(objectsArray, this.collidedObjectsIdList, interactMode, collisionType, timeSpeed, 'singleThread');
-			this.collidedObjectsIdList = [];
+		for (let objectId in objectsArray){
+			calculate({
+				objectsArray: objectsArray,
+				objectId: +objectId,
+				interactMode: interactMode,
+				gravitMode: +gravitMode,
+				g: g,
+				timeSpeed: timeSpeed,
+				collisionType: collisionType,
+				collidedObjectsIdList: this.collidedObjectsIdList
+			});
 		}
+		callback && callback(objectsArray, this.collidedObjectsIdList, interactMode, collisionType, timeSpeed, 'singleThread');
+		this.collidedObjectsIdList = [];
 	}
 	// Runs after finish computing physics
 	afterPhysics = (objArr, collidedObjectsIdList, interactMode, collisionType, timeSpeed, func) => {
