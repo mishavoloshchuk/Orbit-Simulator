@@ -1,4 +1,3 @@
-import UserInput from '/js/UserInput.js';
 export default class Scene {
 	mouse_coords = [false, false]; // Used for accuracity mode when object creating (Press CTRL while creating object)
 	mpos = []; // Move object position

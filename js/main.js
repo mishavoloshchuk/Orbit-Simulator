@@ -1,7 +1,7 @@
-import Scene from '/js/Scene.js';
-import Camera from '/js/Camera.js';
-import UserInput from '/js/UserInput.js';
-import IndicateFPS from '/js/IndicateFPS.js';
+import Scene from './Scene.js';
+import Camera from './Camera.js';
+import UserInput from './UserInput.js';
+import IndicateFPS from './IndicateFPS.js';
 window.onload = function(){
 	//Mouse
 	this.mouse = {
