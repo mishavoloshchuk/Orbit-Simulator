@@ -8,6 +8,7 @@ export default class Scene {
 
 	constructor() {
 		this.dis_zone = 5;
+		this.simulationsPerFrame = 1;
 
 		//Worker 
 		if (window.Worker){
@@ -80,6 +81,10 @@ export default class Scene {
 									this.frame();
 								}
 								this.collidedObjectsIdList = [];
+								// if (this.simulationsPerFrame > 0){
+								// 	this.simulationsPerFrame --;
+								// 	this.physicsMultiThreadCalculate(this.objArr, this.afterPhysics,this.interactMode.state, this.timeSpeed.state, this.g.state, this.gravitationMode.state, this.collisionMode.state);
+								// }
 							}
 						}
 					}
@@ -187,10 +192,11 @@ export default class Scene {
 				const objARadius = Math.sqrt(Math.abs(objA.m)); // Object A radius
 				const objBRadius = Math.sqrt(Math.abs(objB.m)); // Object B radius
 				const rS = objARadius + objBRadius; // Both objects radiuses sum
+				const mS = objA.m + objB.m; // Both objects mass sum
 				let newD = rad(objA.x + objA.vx, objA.y + objA.vy, objB.x + objB.vx, objB.y + objB.vy); // The distance between objects with new position
 				if (newD - rS <= 0){
 					const rD = rS - D; // Total move
-					const objAMov = objA.lock ? 0 : rD * (objBRadius / rS); // Object A move
+					const objAMov = objA.lock ? 0 : rD * (Math.pow(objBRadius, 2) / mS); // Object A move
 					const objBMov = rD - objAMov; // Object B move
 					objA.x += objAMov * cos; objA.y += objAMov * sin;
 					objB.x -= objBMov * cos; objB.y -= objBMov * sin;

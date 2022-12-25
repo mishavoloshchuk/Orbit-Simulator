@@ -676,6 +676,7 @@ window.onload = function(){
 		simulationDone = simulationSpeed;
 		if (scene.objArr.length){
 			if (!pauseState){
+				// scene.simulationsPerFrame = 100; // Simulations per frame (only multithread)
 				if (window.Worker && window.navigator.hardwareConcurrency > 1 && multitreadCompute.state){
 					scene.physicsMultiThreadCalculate();
 				} else {
@@ -975,7 +976,6 @@ window.onload = function(){
 		//alert($(this).attr('id'));
 		pfb = mbut; // Prev clicked menu button
 		mbut = $(this).attr('id'); // Clicked menu
-		swch.objCreating = mbut === 'create'; // Allow object creating if menu is "Creation menu"
 		let btn_id = mbut;
 		// Menu buttons
 		if (!noMenuBtns.includes(btn_id)){
@@ -1017,6 +1017,7 @@ window.onload = function(){
 			}		
 		}
 		if (noMenuBtns.includes(mbut)) mbut = pfb;
+		swch.objCreating = mbut === 'create' && !scene.camera.canv2.visualSelect; // Allow object creating if menu is "Creation menu"
 
 		sessionStorage['mbut'] = mbut;
 		sessionStorage['menu_state'] = menu_state;
