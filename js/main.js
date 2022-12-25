@@ -80,8 +80,13 @@ window.onload = function(){
 	var switcher = {device: 'desktop',
 		visT: false}; // Collisions: repulsion merge none
 
-	this.swch = {s_track: true,
-		s_edit: true, edit_obj: false};
+	this.swch = {
+		s_track: true,
+		s_edit: true,
+		edit_obj: false,
+		s_mainObj: false,
+		objCreating: mbut === 'create'
+	};
 
 	var menu_names = {create: 'menu_options', delete: 'del_menu_options', edit: 'edit_menu',
 		help: 'help_menu', settings: 'settings_menu', camera: 'camera_menu', trajectory: 'traj_menu',
@@ -420,7 +425,7 @@ window.onload = function(){
 			 // Clear launch power label display
 			launchPowerLabel.style.display = 'none';
 
-			if (mbut == 'create' && mouse.leftDown){
+			if (swch.objCreating && mouse.leftDown){
 				if (pauseWhenCreatingObject.state){
 					pauseState = pauseWhenCreatingObject.prevPauseState;
 				}
@@ -479,7 +484,7 @@ window.onload = function(){
 		if (event.which == 1 || touch){
 			mouse.leftDown = true;
 
-			if (mbut == 'create'){
+			if (swch.objCreating){
 				try{clearTimeout(mort)}catch(err){};
 				// If pause when creating object enabled
 				if (touch){
@@ -506,7 +511,7 @@ window.onload = function(){
 		// Right mouse down
 		if (event.which == 3){
 			mouse.rightDown = true;
-			if (mbut == 'create' && mouse.leftDown){
+			if (swch.objCreating && mouse.leftDown){
 				launchPowerLabel.style.display = 'none';
 				scene.camera.clearLayer2();		
 			}
@@ -549,19 +554,20 @@ window.onload = function(){
 				scene.objArr[mov_obj].vy = scene.mpos[3];
 				mov_obj = null;
 			}
+
 			// Create object
-			if (mbut == 'create' && mscam && !mouse.rightDown){
-				addFrameBeginTask(()=>{
-					scene.addNewObject({
-						ob_col: newObjColor.state,
-						mass: newObjMass.state,
-						objLck: newObjLock.state,
-						main_obj: scene.objIdToOrbit
+			if (swch.objCreating){
+				if (mscam && !mouse.rightDown){
+					addFrameBeginTask(()=>{
+						scene.addNewObject({
+							ob_col: newObjColor.state,
+							mass: newObjMass.state,
+							objLck: newObjLock.state,
+							main_obj: scene.objIdToOrbit
+						});
+						if (newObjRandColor.state) newObjColor.state = scene.randomColor();
 					});
-					if (newObjRandColor.state) newObjColor.state = scene.randomColor();
-				});
-			}
-			if (mbut == 'create'){
+				}
 				var mort = setTimeout(menu_open_restore, 200);
 				if (pauseWhenCreatingObject.state){
 					pauseState = pauseWhenCreatingObject.prevPauseState;
@@ -571,10 +577,11 @@ window.onload = function(){
 			if (mbut == 'camera' && swch.s_track){
 				scene.camera.setTarget(scene.objectSelect('nearest', scene.camera.Target));
 			}
-			if (mbut == 'sel_orb_obj'){
+			if (swch.s_mainObj){
 				if (allowClick){
+					swch.objCreating = true;
+					swch.s_mainObj = false;
 					scene.objIdToOrbit = scene.objectSelect();
-					mbut = 'create';
 				}
 			}
 		}
@@ -693,6 +700,16 @@ window.onload = function(){
 			}
 		}
 
+		// Show distance
+		if (mbut == 'create' && !mouse.leftDown && showDistanceFromCursorToMainObj.state && !scene.camera.canv2.visualSelect){
+			scene.camera.clearLayer2();
+			vis_distance([mouse.x, mouse.y], '#888888');
+		}
+		// Hide launch power label
+		if (mbut != 'create' || scene.camera.canv2.visualSelect){
+			launchPowerLabel.style.display = 'none';
+		}
+
 		if (scene.camera.canv2.visualSelect){
 			scene.camera.clearLayer2();
 			delete scene.camera.canv2.visualSelect;
@@ -710,20 +727,11 @@ window.onload = function(){
 		if (mbut == 'edit' && swch.s_edit){
 			scene.camera.visualObjectSelect(nearObjId, '#f81', 0);
 		} else
-		if (mbut == 'sel_orb_obj'){
+		if (swch.s_mainObj){
 			scene.camera.visualObjectSelect(nearObjId,'#bf0');
 		}
-		// Show distance
-		if (mbut == 'create' && !mouse.leftDown && showDistanceFromCursorToMainObj.state){
-			scene.camera.clearLayer2();
-			vis_distance([mouse.x, mouse.y], '#888888');
-		}
-		// Hide launch power label
-		if (mbut != 'create'){
-			launchPowerLabel.style.display = 'none';
-		}
 		// New object trajectory
-		if (mbut == 'create' 
+		if (swch.objCreating 
 			&& mouse.leftDown 
 			&& !mouse.rightDown 
 			&& (mouse.move || (!pauseWhenCreatingObject.state && scene.activCam.allowFrameRender)
@@ -813,7 +821,7 @@ window.onload = function(){
 	}
 	//Scene scale
 	scene.camera.layersDiv.addEventListener('wheel', function(e){
-		if (!e.ctrlKey && !mov_obj && !(mouse.leftDown && mbut == 'create')){
+		if (!e.ctrlKey && !mov_obj && !(mouse.leftDown && swch.objCreating)){
 			if (!mouse.middleDown){
 				if (e.deltaY > 0){
 					scene.camera.zoomOut();
@@ -823,7 +831,7 @@ window.onload = function(){
 			}
 		}
 		// Change the launch force when mouse wheel spins
-		if (mouse.leftDown && mbut == 'create') {
+		if (mouse.leftDown && swch.objCreating) {
 			let launchForceChangeValue = 0.1;
 			if (!mouse.middleDown){
 				if (e.deltaY > 0){
@@ -898,7 +906,7 @@ window.onload = function(){
 				case 70:  $('#world_settings').mousedown(); break; // (F) World physics settings
 				case 120: showFPS.state = !showFPS.state; break; // (F9) Show FPS
 				case 32: // (Space) Create object
-					if (mbut == 'create' && mouse.x){
+					if (swch.objCreating && swch.objCreating){
 						addFrameBeginTask(()=>{ 
 							scene.addNewObject({
 								x: mouse.x, y: mouse.y,
@@ -967,6 +975,7 @@ window.onload = function(){
 		//alert($(this).attr('id'));
 		pfb = mbut; // Prev clicked menu button
 		mbut = $(this).attr('id'); // Clicked menu
+		swch.objCreating = mbut === 'create'; // Allow object creating if menu is "Creation menu"
 		let btn_id = mbut;
 		// Menu buttons
 		if (!noMenuBtns.includes(btn_id)){
@@ -1037,11 +1046,7 @@ window.onload = function(){
 				zm_prev = 1;
 				break;
 			case 'select_edit_obj': // Visual select object to select edit object
-				if (swch.s_edit){
-					swch.s_edit = false;
-				} else {
-					swch.s_edit = true;
-				}				
+				swch.s_edit = !swch.s_edit;			
 				break;
 			case 'reset_speed_btn': // Edit menu, set object velocity to 0
 				if (scene.objArr[swch.edit_obj]){
@@ -1050,7 +1055,8 @@ window.onload = function(){
 				}
 				break;
 			case 'select_main_obj': // Visual select object to select main object
-				mbut = mbut !== 'sel_orb_obj'?'sel_orb_obj':'create';
+				swch.objCreating = swch.s_mainObj;
+				swch.s_mainObj = !swch.s_mainObj;
 				break;
 			case 'wrap_time': // Wrap time
 				timeSpeed.state = -timeSpeed.state;
