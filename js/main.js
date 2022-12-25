@@ -1017,7 +1017,7 @@ window.onload = function(){
 			}		
 		}
 		if (noMenuBtns.includes(mbut)) mbut = pfb;
-		swch.objCreating = mbut === 'create' && !scene.camera.canv2.visualSelect; // Allow object creating if menu is "Creation menu"
+		swch.objCreating = mbut === 'create' && !swch.s_mainObj; // Allow object creating if menu is "Creation menu"
 
 		sessionStorage['mbut'] = mbut;
 		sessionStorage['menu_state'] = menu_state;

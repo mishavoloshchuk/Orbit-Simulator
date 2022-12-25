@@ -299,8 +299,8 @@ export default class Scene {
 					obj.main_obj = objArr[objectId].main_obj;
 				}
 			}
-			eachObjectCallback && eachObjectCallback(objectId);
 			deletedObjectsList = deletedObjectsList.concat(objArr.splice(objectId, 1));
+			eachObjectCallback && eachObjectCallback(objectId);
 		}
 		return deletedObjectsList;
 	}
