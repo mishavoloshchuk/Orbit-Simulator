@@ -81,10 +81,10 @@ export default class Scene {
 									this.frame();
 								}
 								this.collidedObjectsIdList = [];
-								// if (this.simulationsPerFrame > 0){
-								// 	this.simulationsPerFrame --;
-								// 	this.physicsMultiThreadCalculate(this.objArr, this.afterPhysics,this.interactMode.state, this.timeSpeed.state, this.g.state, this.gravitationMode.state, this.collisionMode.state);
-								// }
+								if (this.simulationsPerFrame - 1 > 0){
+									this.simulationsPerFrame --;
+									this.physicsMultiThreadCalculate(this.objArr, this.afterPhysics,this.interactMode.state, this.timeSpeed.state, this.g.state, this.gravitationMode.state, this.collisionMode.state);
+								}
 							}
 						}
 					}
@@ -161,6 +161,8 @@ export default class Scene {
 				deleteObjectList.push(collidedObjectsId[1]);
 			} else if (collisionType == 1){ // Repulsion
 				// let R = collidedObjectsId[2]; // The distance between objects
+				let gvx = objA.vx + objB.vx;
+				let gvy = objA.vy + objB.vy;
 				let D = rad(objA.x, objA.y, objB.x, objB.y); // The distance between objects
 				let v1 = this.gipot(objB.vx, objB.vy); // Scallar velocity
 				let v2 = this.gipot(objA.vx, objA.vy); // Scallar velocity
@@ -190,13 +192,13 @@ export default class Scene {
 					objB.vy = (( v1*Math.cos(ag1 - fi)*(m1-m2) + 2*m2*v2*Math.cos(ag2 - fi) ) / (m2+m1) ) * Math.sin(fi) + v1*Math.sin(ag1 - fi)*Math.sin(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
 				}
 				const objARadius = Math.sqrt(Math.abs(objA.m)); // Object A radius
-				const objBRadius = Math.sqrt(Math.abs(objB.m)); // Object B radius
+				const objBRadius = objA.m === objB.m ? objARadius : Math.sqrt(Math.abs(objB.m)); // Object B radius
 				const rS = objARadius + objBRadius; // Both objects radiuses sum
 				const mS = objA.m + objB.m; // Both objects mass sum
-				let newD = rad(objA.x + objA.vx, objA.y + objA.vy, objB.x + objB.vx, objB.y + objB.vy); // The distance between objects with new position
+				let newD = rad(objA.x + objA.vx*this.timeSpeed.state, objA.y + objA.vy*this.timeSpeed.state, objB.x + objB.vx*this.timeSpeed.state, objB.y + objB.vy*this.timeSpeed.state); // The distance between objects with new position
 				if (newD - rS <= 0){
 					const rD = rS - D; // Total move
-					const objAMov = objA.lock ? 0 : rD * (Math.pow(objBRadius, 2) / mS); // Object A move
+					const objAMov = objA.lock ? 0 : rD * (objB.m / mS); // Object A move
 					const objBMov = rD - objAMov; // Object B move
 					objA.x += objAMov * cos; objA.y += objAMov * sin;
 					objB.x -= objBMov * cos; objB.y -= objBMov * sin;

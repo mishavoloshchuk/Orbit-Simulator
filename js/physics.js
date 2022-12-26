@@ -64,11 +64,9 @@ function collision(objA, objB, objAId, objBId, S, collisionType, interactMode, c
 	if (S - radiusSum <= 0){
 		if (collisionType == 0){ // Collision type: merge
 			if (interactMode === '0'){
-				if (objA.m >= objB.m){
-					if (objA.m != objB.m || objAId < objBId){ // Fix the same mass bug (only multithread bug)		
-						collidedObjectsIdList.push([objAId, objBId]); // Send the collised objects
-						return 1;
-					}
+				if (objAId < objBId){
+					collidedObjectsIdList.push([objAId, objBId]); // Send the collised objects
+					return 1;
 				}				
 			} else if (interactMode === '1') {
 				collidedObjectsIdList.push([objBId, objAId]);
