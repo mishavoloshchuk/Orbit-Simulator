@@ -85,7 +85,8 @@ window.onload = function(){
 		s_edit: true,
 		edit_obj: false,
 		s_mainObj: false,
-		allowObjCreating: mbut === 'create'
+		allowObjCreating: mbut === 'create',
+		tapCamMove: false
 	};
 
 	var menu_names = {create: 'menu_options', delete: 'del_menu_options', edit: 'edit_menu',
@@ -393,6 +394,14 @@ window.onload = function(){
 		// Touch point
 		event.clientX = event.targetTouches[0].clientX;// Touch X
 		event.clientY = event.targetTouches[0].clientY;// Touch Y
+		if (swch.tapCamMove && mouse.leftDown){
+			scene.camera.x += (mouse.x - event.clientX)/scene.camera.animZoom;
+			scene.camera.y += (mouse.y - event.clientY)/scene.camera.animZoom;
+			let mstate = menu_state;
+			close_all_menus(); 
+			menu_state = mstate;
+			scene.camera.setTarget();
+		}
 		[mouse.x, mouse.y] = [event.clientX, event.clientY]; // Set cursor position
 		// Averrage point of touchs
 		let av_touch_x = [];
@@ -584,6 +593,9 @@ window.onload = function(){
 					scene.objIdToOrbit = scene.objectSelect();
 				}
 			}
+			if (swch.tapCamMove){
+				menu_open_restore();
+			}
 		}
 		// Middle mouse up
 		if (event.which == 2 || !mscam){
@@ -609,7 +621,10 @@ window.onload = function(){
 		mouse.move = true;
 		if (mouse.leftDown) movingObjectBegin();
 		movingObject(); // Moving object if mouse down && mbut == "move"
-		if (mouse.middleDown){
+		if (
+			mouse.middleDown 
+			|| (swch.tapCamMove && mouse.leftDown)
+			){
 			scene.camera.x += (mouse.x - event.clientX)/scene.camera.animZoom;
 			scene.camera.y += (mouse.y - event.clientY)/scene.camera.animZoom;
 			let mstate = menu_state;
@@ -672,6 +687,8 @@ window.onload = function(){
 
 		// Set move cursor style
 		if (mouse.middleDown || mbut == 'move'){scene.camera.layersDiv.style.cursor = "move";}else{scene.camera.layersDiv.style.cursor = "default";};
+
+		swch.tapCamMove = mbut !== 'create' && !scene.camera.canv2.visualSelect;
 
 		simulationDone = simulationSpeed;
 		if (scene.objArr.length){
