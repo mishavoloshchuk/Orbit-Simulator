@@ -482,7 +482,7 @@ window.onload = function(){
 			event.clientX = touch.targetTouches[0].clientX;
 			event.clientY = touch.targetTouches[0].clientY;
 			allowClick = multiTouch == 1; // If touches > 1 cancel click event (mouse up event)
-			console.log('touchstart');
+			// console.log('touchstart');
 		} else {
 			[mouse.leftDownX, mouse.leftDownY] = [event.clientX, event.clientY];
 		}
@@ -529,7 +529,7 @@ window.onload = function(){
 	// Mouse UP
 	$('.renderLayer').mouseup(function(event, touch){
 		if (touch){
-			console.log('touchend');
+			// console.log('touchend');
 			event.clientX = mouse.x;
 			event.clientY = mouse.y;
 		}
@@ -686,7 +686,7 @@ window.onload = function(){
 		}
 
 		// Set move cursor style
-		if (mouse.middleDown || mbut == 'move'){scene.camera.layersDiv.style.cursor = "move";}else{scene.camera.layersDiv.style.cursor = "default";};
+		if (mouse.middleDown || mbut == 'move' || (mouse.leftDown && swch.tapCamMove)){scene.camera.layersDiv.style.cursor = "move";}else{scene.camera.layersDiv.style.cursor = "default";};
 
 		swch.tapCamMove = mbut !== 'create' && !scene.camera.canv2.visualSelect;
 
