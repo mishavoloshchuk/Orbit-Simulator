@@ -185,6 +185,10 @@ export default class Camera{
 		}
 	}
 
+	hasTarget(){
+		return this.Target !== undefined;
+	}
+
 	//Draw
 	renderObjects(){
 		// console.log('Render objects');

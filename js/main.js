@@ -394,7 +394,7 @@ window.onload = function(){
 		// Touch point
 		event.clientX = event.targetTouches[0].clientX;// Touch X
 		event.clientY = event.targetTouches[0].clientY;// Touch Y
-		if (swch.tapCamMove && mouse.leftDown){
+		if (swch.tapCamMove && mouse.leftDown && !scene.camera.hasTarget()){
 			scene.camera.x += (mouse.x - event.clientX)/scene.camera.animZoom;
 			scene.camera.y += (mouse.y - event.clientY)/scene.camera.animZoom;
 			let mstate = menu_state;
