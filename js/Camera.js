@@ -378,7 +378,7 @@ export default class Camera{
 		trajLen = trajLen * accuracity; // Trajectory calculation accuracity
 		let objArrCopy = [];
 		// Objects array to calculate prepare
-		if(this.scene.objArr.length){
+		if(!isObjectEmpty(this.scene.objArr)){
 			if (this.scene.interactMode.state === '0'){ // Add all objects to trajectory calculate array
 				objArrCopy = JSON.parse(JSON.stringify(this.scene.objArr));
 			} else if (this.scene.interactMode.state === '1') { // Add all only main (and main of main) objects to trajectory calculate array
@@ -405,9 +405,9 @@ export default class Camera{
 			}
 		}
 
-		let newObjId = objArrCopy.length;
+		let newObjId = this.scene.objIdCounter+1;
 		let savedNewObjId = newObjId;
-		objArrCopy[objArrCopy.length] = {
+		objArrCopy[newObjId] = {
 			x: this.screenPix(mouse.leftDownX + svx/2, 'x'), // Position X
 			y: this.screenPix(mouse.leftDownY + svy/2, 'y'), // Position Y
 			vx: svx, // Velocity X equals vx if given and svx if not

@@ -26,6 +26,7 @@ window.onload = function(){
 		frameTasks.push({func: func, args: args});
 	}
 
+	//Get device type
 	this.getDeviceType = () => {
 		const ua = navigator.userAgent;
 		if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
@@ -36,6 +37,10 @@ window.onload = function(){
 		}
 		return "desktop";
 	};
+	// Check if the object is empty
+	window.isObjectEmpty = function(object){
+		return Object.keys(object).length === 0;
+	}
 
 	var mbut = 'create';
 	var menu_state = true; // Menu state (Opened/Closed)
@@ -543,7 +548,7 @@ window.onload = function(){
 			[mouse.leftUpX, mouse.leftUpY] = [event.clientX, event.clientY] // Set cursor mouseUp position
 			launchPowerLabel.style.display = 'none';
 			// Object delete
-			if (mbut == 'delete' && scene.objArr.length){
+			if (mbut == 'delete' && !isObjectEmpty(scene.objArr)){
 				addFrameBeginTask( () => scene.deleteObject(scene.objectSelect(deletingMode.state)) );
 				deleted();
 			}
@@ -1234,10 +1239,6 @@ window.onload = function(){
 			this.value = '';
 		}		
 	});
-	// Check if the object is empty
-	function isObjectEmpty(object){
-		return Object.keys(object).length === 0;
-	}
 	// Write file
 	function writeFile(name, data = '') {
 		let download = document.createElement("a");
