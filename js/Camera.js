@@ -376,7 +376,7 @@ export default class Camera{
 		let svx = ((mouse.leftDownX - mcx)/30) * this.scene.powerFunc(this.scene.launchForce.state);
 		let svy = ((mouse.leftDownY - mcy)/30) * this.scene.powerFunc(this.scene.launchForce.state);	
 		trajLen = trajLen * accuracity; // Trajectory calculation accuracity
-		let objArrCopy = [];
+		let objArrCopy = {};
 		// Objects array to calculate prepare
 		if(!isObjectEmpty(this.scene.objArr)){
 			if (this.scene.interactMode.state === '0'){ // Add all objects to trajectory calculate array
@@ -405,8 +405,7 @@ export default class Camera{
 			}
 		}
 
-		let newObjId = this.scene.objIdCounter+1;
-		let savedNewObjId = newObjId;
+		let newObjId = this.scene.objIdCounter + 1;
 		objArrCopy[newObjId] = {
 			x: this.screenPix(mouse.leftDownX + svx/2, 'x'), // Position X
 			y: this.screenPix(mouse.leftDownY + svy/2, 'y'), // Position Y
@@ -420,7 +419,7 @@ export default class Camera{
 		};
 
 		// Create a trajectoryTrace array in each object
-		let trajectoryTraces = [];
+		let trajectoryTraces = {};
 		for (let objectId in objArrCopy){
 			objArrCopy[objectId].initId = objectId;
 			if (objArrCopy[objectId].lock !== true){
@@ -433,29 +432,29 @@ export default class Camera{
 			const toDeleteObjectsList = this.scene.collision(...args);
 			this.scene.addSelfVectors(objArrCopy, this.scene.timeSpeed.state/accuracity);
 
-			// Delete virtual objects
-			toDeleteObjectsList.forEach((objId)=>{
-				// Change new object ID
-				if (newObjId > objId) newObjId --;
-				else if (newObjId == objId) newObjId = NaN;
-			});
+			// // Delete virtual objects
+			// toDeleteObjectsList.forEach((objId)=>{
+			// 	// Change new object ID
+			// 	if (newObjId > objId) newObjId --;
+			// 	else if (newObjId == objId) newObjId = NaN;
+			// });
 
 			// Delete objects after collide and return the deleted objects to the deletedObjectsList array
 			if (toDeleteObjectsList.length > 0) deletedObjectsList = deletedObjectsList.concat(this.scene.deleteObject(toDeleteObjectsList, objArrCopy, null));
 
 			// Add points to trajectory trace array
-			for (let objectId = objArrCopy.length; objectId--;){
+			for (let objectId in objArrCopy){
 				let obj = objArrCopy[objectId];
 				// Minimal distance calculate
 				if (objArrCopy[newObjId]){
 					let S = rad(objArrCopy[newObjId].x, objArrCopy[newObjId].y, obj.x, obj.y);
-					if (objectId !== newObjId && S < distance[0]){
+					if (objectId !== newObjId.toString() && S < distance[0]){
 						distance[0] = S;
 						distance[1] = {x: objArrCopy[newObjId].x, y: objArrCopy[newObjId].y, x2: obj.x, y2: obj.y, obj2Id: objectId};
 					}
 				}
 				if (obj.lock !== true) trajectoryTraces[obj.initId].push([obj.x, obj.y]);
-			}	
+			}
 			// if (!mouse.move && mouse.leftDown){
 			// 	this.scene.physicsMultiThreadCalculate(objArrCopy, afterPhysicsCallback);
 			// }
@@ -469,7 +468,7 @@ export default class Camera{
 			this.scene.physicsCalculate(objArrCopy, afterPhysicsCallback, this.scene.interactMode.state, this.scene.timeSpeed.state, this.scene.g.state/accuracity);
 		}
 
-		// Отображение точек сближения
+		// // Отображение точек сближения
 		if (distance[1]){
 			// New object arc
 			this.ctx2.globalAlpha = 0.5;
@@ -509,11 +508,11 @@ export default class Camera{
 		let dashLineLen = 2; // Dash pattern line length
 		let dashSpaceLen = 3; // Dash pattern space length
 		let trajectoryEndSmooth = 300; // Trajectory end smooth length
-		for (let trace = 0; trace < trajectoryTraces.length; trace ++){
+		for (let trace in trajectoryTraces){
 			if (trajectoryTraces[trace] !== undefined){ // Don't draw if the object is locked
 				let R, color;
 				// Set styles to new object trajectory trace
-				if (trace === savedNewObjId){
+				if (trace === newObjId.toString()){
 					color  = this.scene.newObjColor.state;
 					R = 2;
 				} else { // Set styles to objects trajectory trace
@@ -565,16 +564,17 @@ export default class Camera{
 			}
 		}
 		// Draw the cross if object deleted after collision
-		for (let deletedObj of deletedObjectsList){
-			const size = this.getScreenRad(deletedObj.m)*0.7 < 3? 3 : this.getScreenRad(deletedObj.m)*0.7;
-			this.drawCross(
-				this.crd(deletedObj.x - deletedObj.vx, 'x'), 
-				this.crd(deletedObj.y - deletedObj.vy, 'y'), 
-				2, 
-				size, 
-				'#ff0000'
-			);
-		}
+		// console.log(deletedObjectsList)
+		// for (let deletedObj of deletedObjectsList){
+		// 	const size = this.getScreenRad(deletedObj.m)*0.7 < 3? 3 : this.getScreenRad(deletedObj.m)*0.7;
+		// 	this.drawCross(
+		// 		this.crd(deletedObj.x - deletedObj.vx, 'x'), 
+		// 		this.crd(deletedObj.y - deletedObj.vy, 'y'), 
+		// 		2, 
+		// 		size, 
+		// 		'#ff0000'
+		// 	);
+		// }
 	}
 
 	visual_trajectory(){

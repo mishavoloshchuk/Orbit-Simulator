@@ -18,7 +18,6 @@ function calculate({
 			const S = rad(obj.x, obj.y, obj2.x, obj2.y); // The distance between objects
 
 			const collType = collision(obj, obj2, objectId, object2Id, S, collisionType, interactMode, collidedObjectsIdList);
-
 			if(obj.lock !== true && collType === false){
 				const sin = (obj2.y - obj.y)/S; // Sin
 				const cos = (obj2.x - obj.x)/S; // Cos

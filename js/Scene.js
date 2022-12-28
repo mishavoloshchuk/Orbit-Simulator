@@ -107,7 +107,7 @@ export default class Scene {
 		for (let objectId in objectsArray){
 			calculate({
 				objectsArray: objectsArray,
-				objectId: +objectId,
+				objectId: objectId,
 				interactMode: interactMode,
 				gravitMode: +gravitMode,
 				g: g,
