@@ -234,9 +234,9 @@ window.onload = function(){
 		addFrameBeginTask(()=>{ // Frame begin taks
 			// Change time speed correction
 			if (scene.timeSpeed.changed !== undefined){
-				for (let object of scene.objArr){
-					object.x += (object.vx * scene.timeSpeed.state - object.vx * (scene.timeSpeed.state / scene.timeSpeed.changed))/2;
-					object.y += (object.vy * scene.timeSpeed.state - object.vy * (scene.timeSpeed.state / scene.timeSpeed.changed))/2;
+				for (let objId in scene.objArr){
+					scene.objArr[objId].x += (scene.objArr[objId].vx * scene.timeSpeed.state - scene.objArr[objId].vx * (scene.timeSpeed.state / scene.timeSpeed.changed))/2;
+					scene.objArr[objId].y += (scene.objArr[objId].vy * scene.timeSpeed.state - scene.objArr[objId].vy * (scene.timeSpeed.state / scene.timeSpeed.changed))/2;
 				}
 				delete scene.timeSpeed.changed;
 			}
@@ -394,6 +394,7 @@ window.onload = function(){
 		// Touch point
 		event.clientX = event.targetTouches[0].clientX;// Touch X
 		event.clientY = event.targetTouches[0].clientY;// Touch Y
+		// Camera move by one finger
 		if (swch.tapCamMove && mouse.leftDown && !scene.camera.hasTarget()){
 			scene.camera.x += (mouse.x - event.clientX)/scene.camera.animZoom;
 			scene.camera.y += (mouse.y - event.clientY)/scene.camera.animZoom;
@@ -451,7 +452,7 @@ window.onload = function(){
 			}
 			// Cancel camera target if touch camera move
 			if (rad(avTouchPoint.xd, avTouchPoint.yd, avTouchPoint.x, avTouchPoint.y) > Math.min(innerWidth, innerHeight)/6){
-				if (scene.camera.Target !== undefined){
+				if (scene.camera.hasTarget()){
 					avTouchPoint.xd = avTouchPoint.x;
 					avTouchPoint.yd = avTouchPoint.y;
 					prev_cam_x = scene.camera.x;
@@ -465,7 +466,7 @@ window.onload = function(){
 			if (newZoom < 10000 && newZoom > 1.0e-12){
 				scene.camera.zoom = scene.camera.animZoom = newZoom;
 			}
-			if (!zoomToScreenCenter.state && scene.camera.Target === undefined){ // If zoom to screen center
+			if (!zoomToScreenCenter.state && scene.camera.hasTarget()){ // If zoom to screen center
 				scene.camera.ax = scene.camera.x = prev_cam_x - (avTouchPoint.x - avTouchPoint.xd)/scene.camera.animZoom + (((window.innerWidth/2 - avTouchPoint.xd)/zm_prev)*Math.pow(Math.sqrt(zm_cff) / Math.sqrt(touchZoom), 2) - ((window.innerWidth/2 - avTouchPoint.xd)/zm_prev));
 				scene.camera.ay = scene.camera.y = prev_cam_y - (avTouchPoint.y - avTouchPoint.yd)/scene.camera.animZoom + (((window.innerHeight/2 - avTouchPoint.yd)/zm_prev)*Math.pow(Math.sqrt(zm_cff) / Math.sqrt(touchZoom), 2) - ((window.innerHeight/2 - avTouchPoint.yd)/zm_prev));
 			}
@@ -584,7 +585,7 @@ window.onload = function(){
 				scene.camera.clearLayer2();
 			}
 			if (mbut == 'camera' && swch.s_track){
-				scene.camera.setTarget(scene.objectSelect('nearest', scene.camera.Target));
+				scene.camera.setTarget(scene.objectSelect('nearest', scene.camera.target));
 			}
 			if (swch.s_mainObj){
 				if (allowClick){
@@ -691,7 +692,7 @@ window.onload = function(){
 		swch.tapCamMove = mbut !== 'create' && !scene.camera.canv2.visualSelect;
 
 		simulationDone = simulationSpeed;
-		if (scene.objArr.length){
+		if (!isObjectEmpty(scene.objArr)){
 			if (!pauseState){
 				scene.simulationsPerFrame = 1; // Simulations per frame (only multithread)
 				if (window.Worker && window.navigator.hardwareConcurrency > 1 && multitreadCompute.state){
@@ -737,7 +738,7 @@ window.onload = function(){
 			scene.camera.visualObjectSelect(scene.objectSelect(deletingMode.state), '#ff0000');
 		} else
 		if (mbut == 'camera' && swch.s_track){
-			scene.camera.visualObjectSelect(scene.objectSelect('nearest', scene.camera.Target),'#0af');
+			scene.camera.visualObjectSelect(scene.objectSelect('nearest', scene.camera.target),'#0af');
 		} else
 		if (mbut == 'move'){
 			scene.camera.visualObjectSelect(nearObjId,'#bbb');
@@ -1233,6 +1234,10 @@ window.onload = function(){
 			this.value = '';
 		}		
 	});
+	// Check if the object is empty
+	function isObjectEmpty(object){
+		return Object.keys(object).length === 0;
+	}
 	// Write file
 	function writeFile(name, data = '') {
 		let download = document.createElement("a");

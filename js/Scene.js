@@ -1,10 +1,11 @@
 export default class Scene {
 	mouse_coords = [false, false]; // Used for accuracity mode when object creating (Press CTRL while creating object)
 	mpos = []; // Move object position
-	objArr = Array(); // Scene objects array
+	objArr = new Object(); // Scene objects array
 	collidedObjectsIdList = []; // Collisions list
 	#workerThreads = []; // Threads workers
 	objIdToOrbit = 0; // The ID of the object around which the new object will orbit
+	objIdCounter = 0;
 
 	constructor() {
 		this.dis_zone = 5;
@@ -145,7 +146,7 @@ export default class Scene {
 				} else {
 					if (objB.m + objA.m == 0){
 						deleteObjectList.push(...collidedObjectsId);
-						if ( collidedObjectsId.includes(+this.camera.Target) && objArr === this.objArr ) this.camera.setTarget();
+						if ( collidedObjectsId.includes(+this.camera.target) && objArr === this.objArr ) this.camera.setTarget();
 						continue;
 					}
 				}
@@ -156,7 +157,7 @@ export default class Scene {
 
 				objA.m = objA.m + objB.m; // Set new mass to objA
 				// Change camera target
-				if (collidedObjectsId[1] == this.camera.Target && objArr === this.objArr) this.camera.setTarget(collidedObjectsId[0]);
+				if (collidedObjectsId[1] == this.camera.target && objArr === this.objArr) this.camera.setTarget(collidedObjectsId[0]);
 				// Add collided object to deleteObjectList
 				deleteObjectList.push(collidedObjectsId[1]);
 			} else if (collisionType == 1){ // Repulsion
@@ -212,19 +213,19 @@ export default class Scene {
 	// Add objects vectors to objects
 	addSelfVectors(objArr, timeSpeed){
 		// Add the vectors
-		for (let object of objArr){
-			if (mov_obj != objArr.indexOf(object)){
+		for (let objId in objArr){
+			if (mov_obj != objId){
 				// Add vectors
-				if (object.lock){ // If object locked
-					object.vx = 0;
-					object.vy = 0;
-				} else {// If object not locked
-					object.x += object.vx*timeSpeed;
-					object.y += object.vy*timeSpeed;
-					if (objArr === this.objArr && (object.vx || object.vy)) this.activCam.allowFrameRender = true;
+				if (objArr[objId].lock){ // If objArr[objId] locked
+					objArr[objId].vx = 0;
+					objArr[objId].vy = 0;
+				} else {// If objArr[objId] not locked
+					objArr[objId].x += objArr[objId].vx*timeSpeed;
+					objArr[objId].y += objArr[objId].vy*timeSpeed;
+					if (objArr === this.objArr && (objArr[objId].vx || objArr[objId].vy)) this.activCam.allowFrameRender = true;
 				}
 			} else {
-				object.vx = object.vy = 0;
+				objArr[objId].vx = objArr[objId].vy = 0;
 			}
 		}
 	}
@@ -238,12 +239,13 @@ export default class Scene {
 		mass,
 		objLck = false,
 		ob_col = '#ffffff',
-		main_obj,
+		main_obj = null,
 		objArr = this.objArr
 	}){
 		let svx = 0, svy = 0;
 		let px = mouse.leftDownX, py = mouse.leftDownY;
-		let newObjId = objArr.length;
+		let newObjId = this.objIdCounter;
+		this.objIdCounter ++;
 		if (x === undefined && y === undefined){
 			let mcx = this.mouse_coords[0] ? this.mouse_coords[0] - (this.mouse_coords[0] - mouse.leftUpX)/10 : mouse.leftUpX;
 			let mcy = this.mouse_coords[1] ? this.mouse_coords[1] - (this.mouse_coords[1] - mouse.leftUpY)/10 : mouse.leftUpY;
@@ -296,19 +298,21 @@ export default class Scene {
 		let deletedObjectsList = [];
 		for (let objectId of objectsToDelete){
 			// Change main object in child objects before delete
-			for (let obj of objArr){
-				if (obj.main_obj == objectId){
-					obj.main_obj = objArr[objectId].main_obj;
+			for (let objId in objArr){
+				if (objArr[objId].main_obj == objectId){
+					objArr[objId].main_obj = objArr[objectId].main_obj;
 				}
 			}
-			deletedObjectsList = deletedObjectsList.concat(objArr.splice(objectId, 1));
-			eachObjectCallback && eachObjectCallback(objectId);
+			// deletedObjectsList = deletedObjectsList.concat(objArr.splice(objectId, 1));
+			deletedObjectsList.push(objArr.objectId);
+			delete objArr[objectId];
+			// eachObjectCallback && eachObjectCallback(objectId);
 		}
 		return deletedObjectsList;
 	}
 	delObjectCallback(objectId){
 		if (objectId == mov_obj) mov_obj = NaN;
-		if (objectId < this.camera.Target) this.camera.Target --;
+		if (objectId < this.camera.target) this.camera.target --;
 		if (objectId < mov_obj) mov_obj --;
 		if (objectId < this.objIdToOrbit) this.objIdToOrbit --;
 		if (objectId == this.objIdToOrbit) this.objIdToOrbit = this.objectSelect('biggest');
@@ -317,7 +321,7 @@ export default class Scene {
 	}
 	// Show number of objects
 	show_obj_count(){
-		document.querySelector('#object_count_value').innerHTML = this.objArr.length;
+		document.querySelector('#object_count_value').innerHTML = Object.keys(this.objArr).length;
 	}
 	//Необходимая скорость для круговой орбиты
 	forceToCircularOrbit(px, py, objId){

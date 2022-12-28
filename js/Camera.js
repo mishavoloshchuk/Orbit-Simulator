@@ -21,15 +21,15 @@ export default class Camera{
 
 	#x = 0; #y = 0; // Target camera position
 	get x() { return this.#x } get y() { return this.#y } // Get x, y handler
-	set x(pos) { this.#x = pos; if (this.Target === undefined) this.cameraChangedState(); } // Set x handler
-	set y(pos) { this.#y = pos; if (this.Target === undefined) this.cameraChangedState(); } // Set y handler
+	set x(pos) { this.#x = pos; if (this.target === undefined) this.cameraChangedState(); } // Set x handler
+	set y(pos) { this.#y = pos; if (this.target === undefined) this.cameraChangedState(); } // Set y handler
 	ax = 0; ay = 0; // Actualy camera postiton with animation
 	lastX = 0; lastY = 0; // Last camera position
 	#zoom = 1; // Target zoom
 	set zoom(val) { this.#zoom = val; this.cameraChangedState(); }
 	animZoom = 1; // Actualy zoom with animation
 	zoomCff = 1.25; // Zoom coefficient
-	Target = undefined; // Follow target object
+	target = undefined; // Follow target object
 	switchTarget = false;
 	animTimeCorrect = 5;
 	animTime = 5;
@@ -167,15 +167,15 @@ export default class Camera{
 		}
 
 		// Camera position
-		if (scene.objArr[scene.camera.Target]){
-			scene.camera.x = scene.objArr[scene.camera.Target].x;
-			scene.camera.y = scene.objArr[scene.camera.Target].y;
+		if (scene.objArr[scene.camera.target]){
+			scene.camera.x = scene.objArr[scene.camera.target].x;
+			scene.camera.y = scene.objArr[scene.camera.target].y;
 		}
 	}
 
 	setTarget(objectId){
 		if (!this.scene.objArr[objectId]) objectId = undefined; // If there is no object with given id
-		this.Target = objectId;
+		this.target = objectId;
 		if (objectId !== undefined){
 			this.switchTarget = true;
 			this.animation = true;
@@ -186,7 +186,7 @@ export default class Camera{
 	}
 
 	hasTarget(){
-		return this.Target !== undefined;
+		return this.target !== undefined;
 	}
 
 	//Draw
@@ -201,9 +201,9 @@ export default class Camera{
 		if (!scn.maxPerformance.state) this.clearLayer1();
 		this.animFunc();
 		// Camera target velocity
-		const targetVx = scn.objArr[this.Target] ? scn.objArr[this.Target].vx : 0;
-		const targetVy = scn.objArr[this.Target] ? scn.objArr[this.Target].vy : 0;
-		for (let objectId = scn.objArr.length; objectId--;){
+		const targetVx = scn.objArr[this.target] ? scn.objArr[this.target].vx : 0;
+		const targetVy = scn.objArr[this.target] ? scn.objArr[this.target].vy : 0;
+		for (let objectId in scn.objArr){
 			let obj = scn.objArr[objectId]; // Object to draw
 			const obCol = obj.color; // Object draw color
 			let drawRadius = Math.sqrt(Math.abs(obj.m))*this.animZoom; // Object draw radius
@@ -213,11 +213,11 @@ export default class Camera{
 			// Fix object anti-aliasing when maxPerformance is enabled
 			if (scn.tracesMode.state == 1 && scn.maxPerformance.state){	
 				if (// Smooth object edges if true
-					(!scn.objArr[this.Target] && !enoughObjMove) // If there is no camera target and object locked or
-					|| ( scn.objArr[this.Target] // If there is camera target
+					(!scn.objArr[this.target] && !enoughObjMove) // If there is no camera target and object locked or
+					|| ( scn.objArr[this.target] // If there is camera target
 						&& ( // And
-							(scn.objArr[this.Target].lock && !enoughObjMove) // Camera target and object lock
-							|| (!scn.objArr[this.Target].lock && objectId == this.Target) // Or target not locked and object is camera target
+							(scn.objArr[this.target].lock && !enoughObjMove) // Camera target and object lock
+							|| (!scn.objArr[this.target].lock && objectId == this.target) // Or target not locked and object is camera target
 						)
 					)
 				){
@@ -236,8 +236,8 @@ export default class Camera{
 			// Traces mode 1 =====
 			if (// Draw line if
 				scn.tracesMode.state == 1 // If traces mode = 1
-				&& (!obj.lock || (scn.objArr[this.Target] && !scn.objArr[this.Target].lock)) // If object not locked or camera target not locked
-				&& this.Target !== objectId // If camera target != current object
+				&& (!obj.lock || (scn.objArr[this.target] && !scn.objArr[this.target].lock)) // If object not locked or camera target not locked
+				&& this.target !== objectId // If camera target != current object
 			){
 				let canv = scn.maxPerformance.state ? this.ctx : this.ctx3;
 				canv.strokeStyle = obCol;
@@ -376,30 +376,33 @@ export default class Camera{
 		let svx = ((mouse.leftDownX - mcx)/30) * this.scene.powerFunc(this.scene.launchForce.state);
 		let svy = ((mouse.leftDownY - mcy)/30) * this.scene.powerFunc(this.scene.launchForce.state);	
 		trajLen = trajLen * accuracity; // Trajectory calculation accuracity
-		let objArrCopy;
-		if (this.scene.interactMode.state === '0'){ // Add all objects to trajectory calculate array
-			objArrCopy = JSON.parse(JSON.stringify(this.scene.objArr));
-		} else if (this.scene.interactMode.state === '1') { // Add all only main (and main of main) objects to trajectory calculate array
-			let objects = []; // Array of objects to calculate
-			// let orbObj = scene.objIdToOrbit;
-			// while (orbObj !== undefined) {
-				// objects.push(this.scene.objArr[orbObj]);
-				// orbObj = this.scene.objArr[orbObj].main_obj;
-			// }
-			objects[0] = this.scene.objArr[scene.objIdToOrbit];
-			objArrCopy = JSON.parse(JSON.stringify(objects));
-		} else if (this.scene.interactMode.state === '2') { // Don't do any calculations, just draw the line
-			// Line
-			this.ctx2.save();
-			this.ctx2.beginPath();
-			this.ctx2.strokeStyle = this.scene.newObjColor.state;
-			this.ctx2.lineWidth = 1;
-			this.ctx2.setLineDash([2, 3]); // Dash line
-			this.ctx2.moveTo(mouse.leftDownX, mouse.leftDownY);
-			this.ctx2.lineTo(mouse.leftDownX+svx*trajLen*this.animZoom, mouse.leftDownY+svy*trajLen*this.animZoom);
-			this.ctx2.stroke();				
-			this.ctx2.restore();
-			return;
+		let objArrCopy = [];
+		// Objects array to calculate prepare
+		if(this.scene.objArr.length){
+			if (this.scene.interactMode.state === '0'){ // Add all objects to trajectory calculate array
+				objArrCopy = JSON.parse(JSON.stringify(this.scene.objArr));
+			} else if (this.scene.interactMode.state === '1') { // Add all only main (and main of main) objects to trajectory calculate array
+				let objects = []; // Array of objects to calculate
+				// let orbObj = scene.objIdToOrbit;
+				// while (orbObj !== undefined) {
+					// objects.push(this.scene.objArr[orbObj]);
+					// orbObj = this.scene.objArr[orbObj].main_obj;
+				// }
+				objects[0] = this.scene.objArr[scene.objIdToOrbit];
+				objArrCopy = JSON.parse(JSON.stringify(objects));
+			} else if (this.scene.interactMode.state === '2') { // Don't do any calculations, just draw the line
+				// Line
+				this.ctx2.save();
+				this.ctx2.beginPath();
+				this.ctx2.strokeStyle = this.scene.newObjColor.state;
+				this.ctx2.lineWidth = 1;
+				this.ctx2.setLineDash([2, 3]); // Dash line
+				this.ctx2.moveTo(mouse.leftDownX, mouse.leftDownY);
+				this.ctx2.lineTo(mouse.leftDownX+svx*trajLen*this.animZoom, mouse.leftDownY+svy*trajLen*this.animZoom);
+				this.ctx2.stroke();				
+				this.ctx2.restore();
+				return;
+			}
 		}
 
 		let newObjId = objArrCopy.length;
@@ -413,7 +416,7 @@ export default class Camera{
 			color: this.scene.newObjColor.state,
 			lock: this.scene.newObjLock.state,
 			trace: [],
-			main_obj: 0
+			main_obj: this.scene.objIdToOrbit
 		};
 
 		// Create a trajectoryTrace array in each object

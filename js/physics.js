@@ -11,7 +11,7 @@ function calculate({
 }){
 	const obj = objectsArray[objectId];
 	if (interactMode === '0'){
-		for (let object2Id = objectsArray.length; object2Id--;){
+		for (let object2Id in objectsArray){
 			if (object2Id === objectId){ continue; } // Skip itself
 			const obj2 = objectsArray[object2Id];
 
@@ -36,7 +36,7 @@ function calculate({
 			}
 		}
 	} else
-	if (interactMode === '1' && obj.main_obj !== undefined ){
+	if (interactMode === '1' && obj.main_obj !== null){
 		const object2Id = obj.main_obj;
 		const obj2 = objectsArray[object2Id];
 
@@ -69,6 +69,7 @@ function collision(objA, objB, objAId, objBId, S, collisionType, interactMode, c
 					return 1;
 				}				
 			} else if (interactMode === '1') {
+				console.log('colide!')
 				collidedObjectsIdList.push([objBId, objAId]);
 			}
 		} else
