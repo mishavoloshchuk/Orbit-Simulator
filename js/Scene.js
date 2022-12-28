@@ -37,10 +37,11 @@ export default class Scene {
 					let tasks = []; //new Array(this.logicalProcessors).fill(new Array()); // Distribute tasks by workers
 					for (let i = 0; i < this.logicalProcessors && i < Object.keys(objectsArray).length; i++){ tasks[i] = [] }
 					let compressedObjArr = {};
-					for (let i = 0; i < Object.keys(objectsArray).length; i++){
-						tasks[i % this.logicalProcessors].push(Object.keys(objectsArray)[i]); // Make tasks for all worker threads
+					const objArrKeys = Object.keys(objectsArray);
+					for (let i = objArrKeys.length; i--;){
+						tasks[i % this.logicalProcessors].push(objArrKeys[i]); // Make tasks for all worker threads
 					}
-					for (let i in objectsArray){
+					for (let i of objArrKeys){
 						compressedObjArr[i] = {};
 						compressedObjArr[i].x = objectsArray[i].x;
 						compressedObjArr[i].y = objectsArray[i].y;

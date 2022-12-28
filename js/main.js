@@ -910,7 +910,7 @@ window.onload = function(){
 			}
 		}	
 	}
-	//События клавиатуры
+	// Keyboard events
 	document.addEventListener('keydown', function(e){
 		//console.log(e.keyCode);
 		if (!e.ctrlKey && !document.getElementById('img_url_inp').hasfocus){

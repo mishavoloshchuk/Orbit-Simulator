@@ -11,7 +11,10 @@ function calculate({
 }){
 	const obj = objectsArray[objectId];
 	if (interactMode === '0'){
-		for (let object2Id in objectsArray){
+		const objArrKeys = Object.keys(objectsArray);
+		// let object2Id;
+		for (let object2Id of objArrKeys){
+			// object2Id = objArrKeys[i];
 			if (object2Id === objectId){ continue; } // Skip itself
 			const obj2 = objectsArray[object2Id];
 
@@ -68,7 +71,6 @@ function collision(objA, objB, objAId, objBId, S, collisionType, interactMode, c
 					return 1;
 				}				
 			} else if (interactMode === '1') {
-				console.log('colide!')
 				collidedObjectsIdList.push([objBId, objAId]);
 			}
 		} else
