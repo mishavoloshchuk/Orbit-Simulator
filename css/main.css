@@ -438,6 +438,8 @@ a:hover {
 	color: white;
 	background-color: rgba(62,62,62,0.68);
 	border: none;
+	margin: 0;
+	padding: 0.3em 0.5em;
 }
 
 .close_button {

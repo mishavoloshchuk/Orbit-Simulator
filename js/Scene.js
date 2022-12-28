@@ -290,7 +290,7 @@ export default class Scene {
 		return objArr[newObjId] ? newObjId : false;
 	}
 	//Удаление объекта
-	deleteObject(objects, objArr = this.objArr, eachObjectCallback = this.delObjectCallback.bind(this)){
+	deleteObject(objects, objArr = this.objArr, callback = this.show_obj_count.bind(this)){
 		let objectsToDelete;
 		if (Array.isArray(objects)){
 			objectsToDelete = objects.sort( (a,b)=>a-b ); // Given objects ID's to delete, sorted	
@@ -305,21 +305,13 @@ export default class Scene {
 					objArr[objId].main_obj = objArr[objectId].main_obj;
 				}
 			}
-			// deletedObjectsList = deletedObjectsList.concat(objArr.splice(objectId, 1));
-			deletedObjectsList.push(objArr.objectId);
-			delete objArr[objectId];
-			// eachObjectCallback && eachObjectCallback(objectId);
+			if (objArr[objectId]){
+				deletedObjectsList.push( JSON.parse(JSON.stringify(objArr[objectId])) );
+				delete objArr[objectId];
+				callback && callback();
+			}
 		}
 		return deletedObjectsList;
-	}
-	delObjectCallback(objectId){
-		if (objectId == mov_obj) mov_obj = NaN;
-		if (objectId < this.camera.target) this.camera.target --;
-		if (objectId < mov_obj) mov_obj --;
-		if (objectId < this.objIdToOrbit) this.objIdToOrbit --;
-		if (objectId == this.objIdToOrbit) this.objIdToOrbit = this.objectSelect('biggest');
-		this.activCam.allowFrameRender = true;
-		this.show_obj_count(); // Set objects counter indicator
 	}
 	// Show number of objects
 	show_obj_count(){
@@ -358,7 +350,8 @@ export default class Scene {
 		let sel = [Infinity, null, 0];
 		// Last object in array
 		if (mode == 'last_created'){
-			sel[1] = this.objArr.length - 1;
+			const objArrKeys = Object.keys(this.objArr);
+			sel[1] = objArrKeys[objArrKeys.length - 1];
 		}
 		// The nearest or the furthest object
 		if (mode == 'nearest' || mode == 'furthest'){

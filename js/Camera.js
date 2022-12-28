@@ -440,7 +440,8 @@ export default class Camera{
 			// });
 
 			// Delete objects after collide and return the deleted objects to the deletedObjectsList array
-			if (toDeleteObjectsList.length > 0) deletedObjectsList = deletedObjectsList.concat(this.scene.deleteObject(toDeleteObjectsList, objArrCopy, null));
+			let asdf;
+			if (toDeleteObjectsList.length > 0) deletedObjectsList = deletedObjectsList.concat(asdf = this.scene.deleteObject(toDeleteObjectsList, objArrCopy, undefined));
 
 			// Add points to trajectory trace array
 			for (let objectId in objArrCopy){
@@ -564,17 +565,16 @@ export default class Camera{
 			}
 		}
 		// Draw the cross if object deleted after collision
-		// console.log(deletedObjectsList)
-		// for (let deletedObj of deletedObjectsList){
-		// 	const size = this.getScreenRad(deletedObj.m)*0.7 < 3? 3 : this.getScreenRad(deletedObj.m)*0.7;
-		// 	this.drawCross(
-		// 		this.crd(deletedObj.x - deletedObj.vx, 'x'), 
-		// 		this.crd(deletedObj.y - deletedObj.vy, 'y'), 
-		// 		2, 
-		// 		size, 
-		// 		'#ff0000'
-		// 	);
-		// }
+		for (let deletedObj of deletedObjectsList){
+			const size = this.getScreenRad(deletedObj.m)*0.7 < 3? 3 : this.getScreenRad(deletedObj.m)*0.7;
+			this.drawCross(
+				this.crd(deletedObj.x - deletedObj.vx, 'x'), 
+				this.crd(deletedObj.y - deletedObj.vy, 'y'), 
+				2, 
+				size, 
+				'#ff0000'
+			);
+		}
 	}
 
 	visual_trajectory(){
