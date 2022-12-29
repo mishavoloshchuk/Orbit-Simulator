@@ -933,7 +933,7 @@ window.onload = function(){
 				case 70:  $('#world_settings').mousedown(); break; // (F) World physics settings
 				case 120: showFPS.state = !showFPS.state; break; // (F9) Show FPS
 				case 32: // (Space) Create object
-					if (swch.allowObjCreating && swch.allowObjCreating){
+					if (swch.allowObjCreating){
 						addFrameBeginTask(()=>{ 
 							scene.addNewObject({
 								x: mouse.x, y: mouse.y,
@@ -946,8 +946,6 @@ window.onload = function(){
 						});		
 					}
 					if (mbut == 'delete' && scene.objArr.length){
-						//$('.renderLayer').mousedown();
-						//$('.renderLayer').mouseup();
 						let delete_obj = scene.objectSelect(deletingMode.state);
 						addFrameBeginTask( () => scene.deleteObject(delete_obj) );
 						deleted();
