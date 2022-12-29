@@ -37,6 +37,15 @@ window.onload = function(){
 		return "desktop";
 	};
 
+	// Get new object id, when objects array changed
+	this.getIdAfterArrChange = (delArr, objId, defaultValue = null) => {
+		return delArr.reduce((newObjId, currId) => { 
+			if (objId > currId) return newObjId - 1;
+			else if (objId === currId) return defaultValue;
+			return newObjId; // If objId less than any of delArr
+		 }, objId);
+	}
+
 	var mbut = 'create';
 	var menu_state = true; // Menu state (Opened/Closed)
 	if (sessionStorage['mbut'] && sessionStorage['menu_state']){

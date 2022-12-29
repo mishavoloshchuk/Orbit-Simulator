@@ -289,7 +289,7 @@ export default class Scene {
 	deleteObject(objects, objArr = this.objArr, eachObjectCallback = this.delObjectCallback.bind(this)){
 		let objectsToDelete;
 		if (Array.isArray(objects)){
-			objectsToDelete = objects.sort( (a,b)=>a-b ); // Given objects ID's to delete, sorted	
+			objectsToDelete = objects; // Given objects ID's to delete
 		} else {
 			objectsToDelete = [objects]; // If given not an array
 		}
@@ -307,11 +307,11 @@ export default class Scene {
 		return deletedObjectsList;
 	}
 	delObjectCallback(objectId){
-		if (objectId == mov_obj) mov_obj = NaN;
-		if (objectId < this.camera.Target) this.camera.Target --;
-		if (objectId < mov_obj) mov_obj --;
-		if (objectId < this.objIdToOrbit) this.objIdToOrbit --;
-		if (objectId == this.objIdToOrbit) this.objIdToOrbit = this.objectSelect('biggest');
+		this.camera.Target = getIdAfterArrChange([objectId], this.camera.Target);
+		if (this.camera.Target === null) this.camera.setTarget();
+		this.objIdToOrbit = getIdAfterArrChange([objectId], this.objIdToOrbit, this.objectSelect('biggest'));
+		mov_obj = getIdAfterArrChange([objectId], mov_obj);
+
 		this.activCam.allowFrameRender = true;
 		this.show_obj_count(); // Set objects counter indicator
 	}

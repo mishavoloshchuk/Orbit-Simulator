@@ -430,12 +430,8 @@ export default class Camera{
 			const toDeleteObjectsList = this.scene.collision(...args);
 			this.scene.addSelfVectors(objArrCopy, this.scene.timeSpeed.state/accuracity);
 
-			// Delete virtual objects
-			toDeleteObjectsList.forEach((objId)=>{
-				// Change new object ID
-				if (newObjId > objId) newObjId --;
-				else if (newObjId == objId) newObjId = NaN;
-			});
+			// Change newObjId after delete some objects after collision
+			newObjId = getIdAfterArrChange(toDeleteObjectsList, newObjId);
 
 			// Delete objects after collide and return the deleted objects to the deletedObjectsList array
 			if (toDeleteObjectsList.length > 0) deletedObjectsList = deletedObjectsList.concat(this.scene.deleteObject(toDeleteObjectsList, objArrCopy, null));

@@ -64,10 +64,10 @@ function collision(objA, objB, objAId, objBId, S, collisionType, interactMode, c
 	if (S - radiusSum <= 0){
 		if (collisionType == 0){ // Collision type: merge
 			if (interactMode === '0'){
-				if (objAId < objBId){
+				if (objA.m > objB.m || (objA.m === objB.m && objAId > objBId)){ // If objA mass bigger than objB mass or id is bigger
 					collidedObjectsIdList.push([objAId, objBId]); // Send the collised objects
 					return 1;
-				}				
+				}
 			} else if (interactMode === '1') {
 				collidedObjectsIdList.push([objBId, objAId]);
 			}
