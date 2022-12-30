@@ -358,11 +358,11 @@ window.onload = function(){
 		event.preventDefault();
 		prev_cam_x = scene.camera.x;
 		prev_cam_y = scene.camera.y;
-		mouseDownHandler(event, event);
+		mouseDownHandler(event);
 	});
 	// Touch END
 	document.getElementById('renderLayers').addEventListener('touchend', function(event){
-		mouseUpHandler(event, event);
+		mouseUpHandler(event);
 		zm_prev = scene.camera.animZoom;
 	});
 	// Touch MOVE
@@ -453,29 +453,29 @@ window.onload = function(){
 	// Mouse events =========================================================
 	// Mouse DOWN
 	document.getElementById('renderLayers').addEventListener('mousedown', mouseDownHandler);
-	function mouseDownHandler(event, touch){
+	function mouseDownHandler(event){
 		// Touch
-		if (touch){
-			[mouse.leftDownX, mouse.leftDownY] = [touch.targetTouches[0].clientX, touch.targetTouches[0].clientY];
+		if (event.type === 'touchstart'){
 			multiTouch ++;
-			event.clientX = touch.targetTouches[0].clientX;
-			event.clientY = touch.targetTouches[0].clientY;
+			event.clientX = event.targetTouches[0].clientX;
+			event.clientY = event.targetTouches[0].clientY;
 			allowClick = multiTouch == 1; // If touches > 1 cancel click event (mouse up event)
 			// console.log('touchstart');
 		} else {
 			[mouse.leftDownX, mouse.leftDownY] = [event.clientX, event.clientY];
 		}
 		// Set cursor position
+		[mouse.leftDownX, mouse.leftDownY] = [event.clientX, event.clientY];
 		[mouse.x, mouse.y] = [event.clientX, event.clientY];
 
 		// Left mouse down
-		if (event.which == 1 || touch){
+		if (event.which == 1 || event.type === 'touchstart'){
 			mouse.leftDown = true;
 
 			if (swch.allowObjCreating){
 				try{clearTimeout(mort)}catch(err){};
 				// If pause when creating object enabled
-				if (touch){
+				if (event.type === 'touchstart'){
 					if (pauseWhenCreatingObject.state && multiTouch == 1){
 						pauseWhenCreatingObject.prevPauseState = pauseState;
 						pauseState = true;
@@ -507,8 +507,8 @@ window.onload = function(){
 	}
 	// Mouse UP
 	document.getElementById('renderLayers').addEventListener('mouseup', mouseUpHandler);
-	function mouseUpHandler(event, touch){
-		if (touch){
+	function mouseUpHandler(event){
+		if (event.type === 'touchend'){
 			// console.log('touchend');
 			event.clientX = mouse.x;
 			event.clientY = mouse.y;
@@ -517,7 +517,7 @@ window.onload = function(){
 		[mouse.x, mouse.y] = [event.clientX, event.clientY];
 		avTouchPoint.xd = avTouchPoint.yd = null;
 		// Left mouse up
-		if (event.which == 1 || (touch && allowClick)){
+		if (event.which == 1 || (event.type === 'touchend' && allowClick)){
 			mouse.leftDown = false;
 			[mouse.leftUpX, mouse.leftUpY] = [event.clientX, event.clientY] // Set cursor mouseUp position
 			launchPowerLabel.style.display = 'none';
@@ -590,7 +590,7 @@ window.onload = function(){
 			}
 		}
 		// Touch up
-		if (touch){
+		if (event.type === 'touchend'){
 			multiTouch --;
 			mscam = multiTouch != 0 ? false : true;
 		}

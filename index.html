@@ -566,37 +566,6 @@
 						<input type="range" list='gravitationValue' id="g_value" min="0" max="2" value="1" step="0.01" width="100%">
 						<datalist id='gravitationValue'><option value="1"></datalist>
 					</div>
-				</section>
-			</section>
-
-			<section class="options_section">	
-				<div class='option_item title_option_item'>
-					<l-text>interaction_modes</l-text>
-					<span>Режимы взаимодействия:</span>
-				</div>
-				<section>
-					<div class='option_item'>
-						<form id="interact_radio_buttons" style="width: 100%;">
-							<div class="radio_button_menu">
-								<label for="Interact_radio_0" class="input_click_handler"></label>
-								<input id="Interact_radio_0" class="checkbox" type="radio" name="interact" value="0" checked>					
-								<l-text>between_all_objects</l-text>
-								<span>Между всеми объектами </span>
-							</div>
-							<div class="radio_button_menu">
-								<label for="Interact_radio_1" class="input_click_handler"></label>
-								<input id="Interact_radio_1" class="checkbox" type="radio" name="interact" value="1">
-								<l-text>only_with_parent_object</l-text>
-								<span>Только с родительским объектом </span>
-							</div>
-							<div class="radio_button_menu">
-								<label for="Interact_radio_2" class="input_click_handler"></label>
-								<input id="Interact_radio_2" class="checkbox" type="radio" name="interact" value="2">
-								<l-text>no_interactions</l-text>
-								<span>Без взаимодействий </span>
-							</div>
-						</form>					
-					</div>
 
 					<div class='option_item'>
 						<div class="button" id="wrap_time">
@@ -634,6 +603,37 @@
 								<input id="collision_radio_2" class="checkbox" type="radio" name="collision_radio" value=2>
 								<l-text>no_collision</l-text>
 								<span>Без столкновений </span>
+							</div>
+						</form>					
+					</div>
+				</section>
+			</section>
+
+			<section class="options_section">	
+				<div class='option_item title_option_item'>
+					<l-text>interaction_modes</l-text>
+					<span>Режимы взаимодействия:</span>
+				</div>
+				<section>
+					<div class='option_item'>
+						<form id="interact_radio_buttons" style="width: 100%;">
+							<div class="radio_button_menu">
+								<label for="Interact_radio_0" class="input_click_handler"></label>
+								<input id="Interact_radio_0" class="checkbox" type="radio" name="interact" value="0" checked>					
+								<l-text>between_all_objects</l-text>
+								<span>Между всеми объектами </span>
+							</div>
+							<div class="radio_button_menu">
+								<label for="Interact_radio_1" class="input_click_handler"></label>
+								<input id="Interact_radio_1" class="checkbox" type="radio" name="interact" value="1">
+								<l-text>only_with_parent_object</l-text>
+								<span>Только с родительским объектом </span>
+							</div>
+							<div class="radio_button_menu">
+								<label for="Interact_radio_2" class="input_click_handler"></label>
+								<input id="Interact_radio_2" class="checkbox" type="radio" name="interact" value="2">
+								<l-text>no_interactions</l-text>
+								<span>Без взаимодействий </span>
 							</div>
 						</form>					
 					</div>
