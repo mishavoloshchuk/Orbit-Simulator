@@ -101,7 +101,9 @@ export default class Scene {
 		gravitMode = this.gravitationMode.state, 
 		collisionType = this.collisionMode.state
 	){
-		for (let objectId in objectsArray){
+		let iterObjArr = objectsArray.length;
+		for (let objectId = iterObjArr; objectId--;){
+			iterObjArr --;
 			calculate({
 				objectsArray: objectsArray,
 				objectId: +objectId,
@@ -110,7 +112,8 @@ export default class Scene {
 				g: g,
 				timeSpeed: timeSpeed,
 				collisionType: collisionType,
-				collidedObjectsIdList: this.collidedObjectsIdList
+				collidedObjectsIdList: this.collidedObjectsIdList,
+				toIteration: iterObjArr
 			});
 		}
 		callback && callback(objectsArray, this.collidedObjectsIdList, interactMode, collisionType, timeSpeed, 'singleThread');
