@@ -202,7 +202,7 @@ export default class Scene {
 				if (newD - rS <= 0){
 					const rD = rS - D; // Total move
 					const objAMov = objA.lock ? 0 : rD * (objB.m / mS); // Object A move
-					const objBMov = rD - objAMov; // Object B move
+					const objBMov = objB.lock ? 0 : rD - objAMov; // Object B move
 					objA.x += objAMov * cos; objA.y += objAMov * sin;
 					objB.x -= objBMov * cos; objB.y -= objBMov * sin;
 				}
