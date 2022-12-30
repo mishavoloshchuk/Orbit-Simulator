@@ -9,11 +9,10 @@
 	<meta name="viewport" content="width=device-width,user-scalable=no">
 	<link rel="stylesheet" type="text/css" href="css/main.css">
 	<script type="text/javascript" src="lib/languageManager.js"></script>
-	<script type="text/javascript" src="lib/jquery.js"></script>
 	<script type="text/javascript" src="js/physics.js"></script>
 	<script type="module" src="js/main.js"></script>
 </head>
-<body>
+<body oncontextmenu="return false;">
 	<img src="#" class="bg_image" id="background_image">
 	<div class="dimmer"></div>
 	<div class="menu">
@@ -107,11 +106,6 @@
 	</div>
 	<!-- Menu state indicator -->
 	<div class="state"></div>
-	<!-- Object deleted indicaor -->
-	<div class="deleted">
-		<l-text>deleted</l-text>
-		<h1 style="color: #dd0;">Удален!</h1>
-	</div>
 
 	<div class='menu_container menu_pos' id="options_menu_container">
 		<!--Create menu-->
@@ -687,7 +681,7 @@
 							<l-text>background_image</l-text>
 							<span class="text_input_label">Фоновое изображение:</span>
 							<!-- Error message -->
-							<div style="color: #ff5555; display: none; font-size: 15px;" id="url_err_message">
+							<div style="color: #ff5555; opacity: 0; font-size: 15px; transition: .3s; max-height: 0px;" id="url_err_message">
 								<l-text>no_image_found_at_this_address</l-text>
 								<span>*Не найдено изображения по этому адресу</span>	
 							</div>
@@ -843,5 +837,7 @@
 			<span>Количество обьектов</span>: <span id="object_count_value">1</span>
 		</h2>
 	</div>
+
+	<div id="renderLayers"></div>
 </body>
 </html>

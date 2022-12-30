@@ -564,6 +564,14 @@ select {
 	}
 }
 
+@keyframes appear {
+	from{
+		transform: scaleY(0);
+	} to {
+		transform: scaleY(1.0);
+	}
+}
+
 @media screen and (orientation:portrait) and (max-width: 1000px) {
 	.menu_container {
 		max-height: 100%;

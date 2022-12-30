@@ -80,7 +80,7 @@ export default class Camera{
 		this.layersDiv.appendChild(this.canv3);
 		this.ctx3 = this.canv3.getContext('2d',{willReadFrequently: false});
 
-		document.body.appendChild(this.layersDiv);
+		document.getElementById('renderLayers').appendChild(this.layersDiv);
 
 		// Camera resolution
 		this.resolutionX = window.innerWidth;

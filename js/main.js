@@ -57,6 +57,8 @@ window.onload = function(){
 	var chck = '';
 	var pfb = mbut;
 
+	let anyTextInputHasFocus = false;
+
 	// === ...
 	this.mov_obj = null; // Moving object id
 	this.dis_zone = 5;
@@ -101,8 +103,6 @@ window.onload = function(){
 	var menu_names = {create: 'menu_options', delete: 'del_menu_options', edit: 'edit_menu',
 		help: 'help_menu', settings: 'settings_menu', camera: 'camera_menu', trajectory: 'traj_menu',
 		world_settings: 'world_settings_menu'}
-
-	choise_restore('traj_mode', 'traj_mode2', 'radio');
 
 	function allowRender(){
 		scene.activCam.allowFrameRender = true;
@@ -197,10 +197,8 @@ window.onload = function(){
 	// Settings menu ======================================================
 	// Select background image
 	backgroundImageURL = new UserInput({type: 'text', id: 'img_url_inp', stateSaving: true, callback: (value)=>{
-		$('.bg_image').attr('src', value);
-		if (value == ''){
-			$('.bg_image').attr('src', 'background/background.jpg');
-		}
+		value = value == '' ? 'background/background.jpg' : value;
+		document.getElementById('background_image').setAttribute('src', value);
 	}, }),
 	// Set background darkness
 	backgroundDarkness = new UserInput({type: 'range', id: 'bg_darkness', stateSaving: true, eventName: 'input', callback: (state, elem)=>{
@@ -286,40 +284,11 @@ window.onload = function(){
 
 	scene.addNewObject({vx: 0, vy: 0, mass: 1000, ob_col: '#ffff00', objLck: true}); // First object init
 
-	radio_select('traj_radio', tracesMode.state);
-
 	change_state(mbut);
 
-	function radio_select(radio_id_prefix, numb){
-		$('#'+radio_id_prefix+'_'+numb).click();	
-	}
-	function check_select(check_id, state){
-		if (state == 'false' ||state == '0' ||state == 'off' ||state==''||state==NaN||state==undefined) {
-			state = false;
-		} else {
-			state = true;
-		}
-		if (state){
-			$('#'+check_id).attr('checked', '');
-			document.getElementById(check_id).checked = true;
-		} else {
-			$('#'+check_id).removeAttr('checked');
-			document.getElementById(check_id).checked = false;
-		}
-	}
-	function choise_restore(name_session, var_name, cr){
-		if (sessionStorage[name_session]){
-			if (cr == 'checkbox'){
-				switcher[var_name] = sessionStorage[name_session] != 'true' ? false : true;	
-			}
-			if (cr == 'radio'){
-				switcher[var_name] = sessionStorage[name_session];
-			}			
-		}
-	}
 	function menu_open_restore(){
 		if (menu_state){
-			$('#'+menu_names[mbut]).css({display: 'inline-block'});
+			document.querySelector('#'+menu_names[mbut]).style.display = 'inline-block';
 		}
 	}
 	menu_open_restore();
@@ -385,19 +354,19 @@ window.onload = function(){
 	});
 	// Touch events ======================================
 	// Touch START
-	$('.renderLayer').on('touchstart', function(event){
+	document.getElementById('renderLayers').addEventListener('touchstart', function(event){
 		event.preventDefault();
 		prev_cam_x = scene.camera.x;
 		prev_cam_y = scene.camera.y;
-		$('#'+scene.activCam.canv2.id).trigger('mousedown', event);
+		mouseDownHandler(event, event);
 	});
 	// Touch END
-	$('.renderLayer').on('touchend', function(event){
-		$('#'+scene.activCam.canv2.id).trigger('mouseup', event);
+	document.getElementById('renderLayers').addEventListener('touchend', function(event){
+		mouseUpHandler(event, event);
 		zm_prev = scene.camera.animZoom;
 	});
 	// Touch MOVE
-	$('.renderLayer').on('touchmove', function(event){
+	document.getElementById('renderLayers').addEventListener('touchmove', function(event){
 		event.preventDefault();
 		mouse.move = true;
 		// Touch point
@@ -483,7 +452,8 @@ window.onload = function(){
 	})
 	// Mouse events =========================================================
 	// Mouse DOWN
-	$('.renderLayer').mousedown(function(event, touch){
+	document.getElementById('renderLayers').addEventListener('mousedown', mouseDownHandler);
+	function mouseDownHandler(event, touch){
 		// Touch
 		if (touch){
 			[mouse.leftDownX, mouse.leftDownY] = [touch.targetTouches[0].clientX, touch.targetTouches[0].clientY];
@@ -534,9 +504,10 @@ window.onload = function(){
 				scene.camera.clearLayer2();		
 			}
 		}
-	});
+	}
 	// Mouse UP
-	$('.renderLayer').mouseup(function(event, touch){
+	document.getElementById('renderLayers').addEventListener('mouseup', mouseUpHandler);
+	function mouseUpHandler(event, touch){
 		if (touch){
 			// console.log('touchend');
 			event.clientX = mouse.x;
@@ -553,7 +524,6 @@ window.onload = function(){
 			// Object delete
 			if (mbut == 'delete' && scene.objArr.length){
 				addFrameBeginTask( () => scene.deleteObject(scene.objectSelect(deletingMode.state)) );
-				deleted();
 			}
 			// Object edit select
 			if (mbut == 'edit' && swch.s_edit){
@@ -624,7 +594,7 @@ window.onload = function(){
 			multiTouch --;
 			mscam = multiTouch != 0 ? false : true;
 		}
-	});	
+	}
 	// Mouse MOVE
 	document.onmousemove = function(event){
 		mouse.move = true;
@@ -657,12 +627,10 @@ window.onload = function(){
 	// Background movement
 	function bgMoving(){
 		if (backgroundFollowsMouse.state && backgroundDarkness.state && !maxPerformance.state){
-			$('.bg_image').css({top: -mouse.y/25, left: -mouse.x/25})	
+			Object.assign(document.getElementById('background_image').style, {top: (-mouse.y/25)+'px', left: (-mouse.x/25)+'px'});	
 		}
 	}
-	$('*').bind('contextmenu', function(e) {
-		return false;
-	}); //===================================================================================
+	//===================================================================================
 
 	// Frame control
 	let frameInterval;
@@ -842,8 +810,6 @@ window.onload = function(){
 					launchPowerLabel.style.display = 'none';	
 				}
 			}		
-		} else {
-			$('.power').css({display: 'none'});
 		}
 	}
 	//Scene scale
@@ -916,21 +882,21 @@ window.onload = function(){
 	//События клавиатуры
 	document.addEventListener('keydown', function(e){
 		//console.log(e.keyCode);
-		if (!e.ctrlKey && !document.getElementById('img_url_inp').hasfocus){
+		if (!e.ctrlKey && !anyTextInputHasFocus){
 			switch (e.keyCode){
-				case 67:  $('#create').mousedown(); break; // (C) Create new object menu
-				case 68:  $('#delete').mousedown(); break; // (D) Delete object menu
-				case 69:  $('#edit').mousedown(); break; // (E) Edit object menu
-				case 84:  $('#trajectory').mousedown(); break; // (T) Trajectory menu
-				case 188: $('#timedown').mousedown(); break; // (<) Time speed down
-				case 191: $('#play').mousedown(); break; // (/) Play button
-				case 190: $('#timeup').mousedown(); break; // (>) Time speed up
-				case 77:  $('#move').mousedown(); break; // (M) Move object
-				case 80:  $('#pause').mousedown(); break; // (P) Pause button
-				case 72:  $('#help').mousedown(); break; // (H) Help menu
-				case 83:  $('#settings').mousedown(); break; // (S) Settings menu
-				case 86:  $('#camera').mousedown(); break; // (V) Camera menu
-				case 70:  $('#world_settings').mousedown(); break; // (F) World physics settings
+				case 67:  document.querySelector('#create').click(); break; // (C) Create new object menu
+				case 68:  document.querySelector('#delete').click(); break; // (D) Delete object menu
+				case 69:  document.querySelector('#edit').click(); break; // (E) Edit object menu
+				case 84:  document.querySelector('#trajectory').click(); break; // (T) Trajectory menu
+				case 188: document.querySelector('#timedown').click(); break; // (<) Time speed down
+				case 191: document.querySelector('#play').click(); break; // (/) Play button
+				case 190: document.querySelector('#timeup').click(); break; // (>) Time speed up
+				case 77:  document.querySelector('#move').click(); break; // (M) Move object
+				case 80:  document.querySelector('#pause').click(); break; // (P) Pause button
+				case 72:  document.querySelector('#help').click(); break; // (H) Help menu
+				case 83:  document.querySelector('#settings').click(); break; // (S) Settings menu
+				case 86:  document.querySelector('#camera').click(); break; // (V) Camera menu
+				case 70:  document.querySelector('#world_settings').click(); break; // (F) World physics settings
 				case 120: showFPS.state = !showFPS.state; break; // (F9) Show FPS
 				case 32: // (Space) Create object
 					if (swch.allowObjCreating){
@@ -948,7 +914,6 @@ window.onload = function(){
 					if (mbut == 'delete' && scene.objArr.length){
 						let delete_obj = scene.objectSelect(deletingMode.state);
 						addFrameBeginTask( () => scene.deleteObject(delete_obj) );
-						deleted();
 					}
 					break;
 				case 107:  // (NumPad +) Zoom in
@@ -962,13 +927,13 @@ window.onload = function(){
 			if (e.keyCode == 187 || e.keyCode == 61){
 				simulationSpeed *= 2;
 				console.log(simulationSpeed);
-				$('.time_speed h2').html('T - X'+timeSpeed.state*simulationSpeed);
+				document.querySelector('.time_speed h2').innerHTML = 'T - X'+timeSpeed.state*simulationSpeed;
 			} else
 			// (-) Simulation speed down withoud lost accuracity. Min value is realtime
 			if (e.keyCode == 189 || e.keyCode == 173){
 				if (simulationSpeed > 1){simulationSpeed /= 2;}
 				console.log(simulationSpeed);
-				$('.time_speed h2').html('T - X'+timeSpeed.state*simulationSpeed);
+				document.querySelector('.time_speed h2').innerHTML = 'T - X'+timeSpeed.state*simulationSpeed;
 			}
 		}
 		//Ctrl keys
@@ -996,128 +961,143 @@ window.onload = function(){
 
 	let noMenuBtns = ['timedown', 'play', 'pause', 'timeup'];
 	// Menu buttons handler
-	$('.btn').mousedown(function(){
-		//alert($(this).attr('id'));
-		pfb = mbut; // Prev clicked menu button
-		mbut = $(this).attr('id'); // Clicked menu
-		let btn_id = mbut;
-		// Menu buttons
-		if (!noMenuBtns.includes(btn_id)){
-			if (menu_state && btn_id == pfb){
-				$('.'+menu_names[mbut]).css('display', 'none');
-			}else{
-				close_all_menus();
-				$('.'+menu_names[mbut]).fadeIn(0);
+	byClassElementsLoop('btn', (btnElement) => {
+		btnElement.addEventListener('click', function(e){
+			// console.log(e.target.closest('.btn').getAttribute('id'));
+			pfb = mbut; // Prev clicked menu button
+			let btn_elem = e.target.closest('.btn');
+			mbut = btn_elem.getAttribute('id'); // Clicked menu
+			let btn_id = mbut;
+			// Menu buttons
+			if (!noMenuBtns.includes(btn_id)){
+				if (menu_state && btn_id == pfb){
+					byClassElementsLoop(menu_names[mbut], (el) => { el.style.display = 'none' });
+				}else{
+					close_all_menus();
+					byClassElementsLoop(menu_names[mbut], (el) => { el.style.display = 'inline-block' });
+				}
+				menu_state = !menu_state;
+				change_state(mbut);
+			} else { // Time controls
+				// Change time speed
+				if (mbut == 'timedown' || mbut == 'timeup'){
+					timeSpeed.state *= mbut == 'timedown' ? 0.5 : 2;
+				} else
+				// Pause
+				if (mbut == 'pause'){
+					let img_name = pauseState ? 'pause' : 'play';
+					if (pauseState){
+						change_state('play');
+						setTimeout(function(){change_state(pfb);}, 500);			
+					} else {
+						change_state('pause');	
+					}
+					pauseState = !pauseState;
+					btn_elem.querySelector('img').setAttribute('src', 'ico/'+img_name+'.png');
+				} else
+				// Play
+				if (mbut == 'play'){
+					if (timeSpeed.state != 1 || pauseState){ // If time speed == 1 or pause == true
+						simulationSpeed = 1;
+						pauseState = false;
+						timeSpeed.state = 1;
+						document.querySelector('#pause img').setAttribute('src', 'ico/pause.png');
+						change_state('restore');
+						setTimeout(function(){change_state(pfb);}, 500);
+					}
+				}		
 			}
-			menu_state = !menu_state;
-			change_state(mbut);
-		} else { // Time controls
-			// Change time speed
-			if (mbut == 'timedown' || mbut == 'timeup'){
-				timeSpeed.state *= mbut == 'timedown' ? 0.5 : 2;
-			} else
-			// Pause
-			if (mbut == 'pause'){
-				let img_name = pauseState ? 'pause' : 'play';
-				if (pauseState){
-					change_state('play');
-					setTimeout(function(){change_state(pfb);}, 500);			
-				} else {
-					change_state('pause');	
-				}
-				pauseState = !pauseState;
-				$('img',this).attr('src', 'ico/'+img_name+'.png');
-			} else
-			// Play
-			if (mbut == 'play'){
-				if (timeSpeed.state != 1 || pauseState){ // If time speed == 1 or pause == true
-					simulationSpeed = 1;
-					pauseState = false;
-					timeSpeed.state = 1;
-					$('#pause img').attr('src', 'ico/pause.png');
-					change_state('restore');
-					setTimeout(function(){change_state(pfb);}, 500);
-				}
-			}		
-		}
-		if (noMenuBtns.includes(mbut)) mbut = pfb;
-		swch.allowObjCreating = mbut === 'create' && !swch.s_mainObj; // Allow object creating if menu is "Creation menu"
-		if (showDistanceFromCursorToMainObj.state) scene.camera.clearLayer2();
+			if (noMenuBtns.includes(mbut)) mbut = pfb;
+			swch.allowObjCreating = mbut === 'create' && !swch.s_mainObj; // Allow object creating if menu is "Creation menu"
+			if (showDistanceFromCursorToMainObj.state) scene.camera.clearLayer2();
 
-		sessionStorage['mbut'] = mbut;
-		sessionStorage['menu_state'] = menu_state;
+			sessionStorage['mbut'] = mbut;
+			sessionStorage['menu_state'] = menu_state;
+		});
 	});
 
 	background_image.onerror = function(){
 		this.src = 'background/background.jpg';
-		$('#url_err_message').slideDown();
-		setTimeout(function(){ $('#url_err_message').slideUp() }, 2000);
+		let err_mess_el = document.getElementById('url_err_message');
+		err_mess_el.style.opacity = '1';
+		err_mess_el.style.maxHeight = '2em';
+		setTimeout(function(){ err_mess_el.style.opacity = '0'; err_mess_el.style.maxHeight = '0';}, 2000);
 	}
 
-	$('.button').mouseup(function(){
-		cbut = $(this).attr('id');
-		//alert(cbut);
-		switch (cbut) { // Pressed button id
-			case 'select_track': // Visual select object to select camera target
-				if (swch.s_track){
-					swch.s_track = false;
-				} else {
-					swch.s_track = true;
-				}
-				break;
-			case 'clear_camera_settings': // Restore camera defaults
-				scene.camera.setTarget(); // Unset camera target
-				scene.camera.x = 0; scene.camera.y = 0; // Set default camera position
-				scene.camera.zoom = 1; // Set default camera zoom value
-				zm_prev = 1;
-				break;
-			case 'select_edit_obj': // Visual select object to select edit object
-				swch.s_edit = !swch.s_edit;			
-				break;
-			case 'reset_speed_btn': // Edit menu, set object velocity to 0
-				if (scene.objArr[swch.edit_obj]){
-					scene.objArr[swch.edit_obj].vx = 0;
-					scene.objArr[swch.edit_obj].vy = 0;	
-				}
-				break;
-			case 'select_main_obj': // Visual select object to select main object
-				swch.allowObjCreating = swch.s_mainObj;
-				swch.s_mainObj = !swch.s_mainObj;
-				break;
-			case 'wrap_time': // Wrap time
-				timeSpeed.state = -timeSpeed.state;
-				break;
-			case 'save_file': // Save button
-				pauseState = true;
-				change_state('pause');
-				let objArrWrite = JSON.parse(JSON.stringify(scene.objArr));
-				for(let i in objArrWrite){
-					objArrWrite[i].trace = [];
-				}
-				let my_data = {
-					objArr: objArrWrite, 
-					timeSpeed: timeSpeed.state, 
-					interactMode: interactMode.state, 
-					collisionMode: collisionMode.state,
-					gravitationMode: gravitationMode.state,
-					g: g.state,
-				};
-				my_data = JSON.stringify(my_data);
-				writeFile("Orbit Simulator - "+lanwich.getTranslatedText("my_world")+".json", my_data);
-				objArrWrite = null;
-				//saveFile(name, forat, value, event);
-				break;
-			case 'sel_file_but': // Load button
-				$('#select_file').click();
-				break;
-			case 'clear_traces': // Clear traces
-				scene.camera.clearLayer3();			
-				for (let i in scene.objArr){
-					scene.objArr[i].trace = [];
-				}
-				break;
+	// Get elements by class name iterator
+	function byClassElementsLoop(className, callback){
+		let elements = document.getElementsByClassName(className);
+		for (let el = elements.length; el--;){
+			callback(elements[el]);
 		}
+	}
 
+	// Buttons events
+	byClassElementsLoop('button', (buttonElement) => {
+		buttonElement.addEventListener('mouseup', function(e){
+			cbut = e.target.closest('.button').getAttribute('id');
+			// console.log(cbut);
+			switch (cbut) { // Pressed button id
+				case 'select_track': // Visual select object to select camera target
+					if (swch.s_track){
+						swch.s_track = false;
+					} else {
+						swch.s_track = true;
+					}
+					break;
+				case 'clear_camera_settings': // Restore camera defaults
+					scene.camera.setTarget(); // Unset camera target
+					scene.camera.x = 0; scene.camera.y = 0; // Set default camera position
+					scene.camera.zoom = 1; // Set default camera zoom value
+					zm_prev = 1;
+					break;
+				case 'select_edit_obj': // Visual select object to select edit object
+					swch.s_edit = !swch.s_edit;			
+					break;
+				case 'reset_speed_btn': // Edit menu, set object velocity to 0
+					if (scene.objArr[swch.edit_obj]){
+						scene.objArr[swch.edit_obj].vx = 0;
+						scene.objArr[swch.edit_obj].vy = 0;	
+					}
+					break;
+				case 'select_main_obj': // Visual select object to select main object
+					swch.allowObjCreating = swch.s_mainObj;
+					swch.s_mainObj = !swch.s_mainObj;
+					break;
+				case 'wrap_time': // Wrap time
+					timeSpeed.state = -timeSpeed.state;
+					break;
+				case 'save_file': // Save button
+					pauseState = true;
+					change_state('pause');
+					let objArrWrite = JSON.parse(JSON.stringify(scene.objArr));
+					for(let i in objArrWrite){
+						objArrWrite[i].trace = [];
+					}
+					let my_data = {
+						objArr: objArrWrite, 
+						timeSpeed: timeSpeed.state, 
+						interactMode: interactMode.state, 
+						collisionMode: collisionMode.state,
+						gravitationMode: gravitationMode.state,
+						g: g.state,
+					};
+					my_data = JSON.stringify(my_data);
+					writeFile("Orbit Simulator - "+lanwich.getTranslatedText("my_world")+".json", my_data);
+					objArrWrite = null;
+					//saveFile(name, forat, value, event);
+					break;
+				case 'sel_file_but': // Load button
+					document.querySelector('#select_file').click();
+					break;
+				case 'clear_traces': // Clear traces
+					scene.camera.clearLayer3();			
+					for (let i in scene.objArr){
+						scene.objArr[i].trace = [];
+					}
+					break;
+			}
+		});
 	});
 	// Close menu button handler
 	document.querySelectorAll('.close_button').forEach(function(element){
@@ -1129,33 +1109,21 @@ window.onload = function(){
 		})
 	});
 
-	$('.input_text').focus(function(){
-		this.hasfocus = true;
-	});
-	$('.input_text').blur(function(){
-		this.hasfocus = false;
+	// If texinput "input" event
+	byClassElementsLoop('input_text', (inp) => {
+		inp.addEventListener('focus', (event) => {
+			anyTextInputHasFocus = true;
+		});
+		inp.addEventListener('blur', (event) => {
+			anyTextInputHasFocus = false;
+		});
 	});
 
-	let no_del_anim = false;
 	let objDeletedMessageTimeout;
-	function deleted(){
-		if (!no_del_anim){
-			$('.deleted').css({display: 'block'});
-			$('.deleted').animate({right: 10}, 500);
-			clearTimeout(objDeletedMessageTimeout);				
-		}
-		objDeletedMessageTimeout = setTimeout(function(){
-			no_del_anim = true;
-			$('.deleted').animate({right: -300}, 500, function(){
-				$('.deleted').css({display: 'none'});
-				no_del_anim = false;
-			});
-		}, 2000);
-	}
 
 	function close_all_menus(e){
 		for (let name in menu_names){
-			$('#'+menu_names[name]).css('display', 'none');
+			document.querySelector('#'+menu_names[name]).style.display = 'none';
 		}
 		document.getElementById(pfb).removeAttribute('selected');
 		document.getElementById(mbut).setAttribute('selected', '');
@@ -1165,7 +1133,7 @@ window.onload = function(){
 	
 	function change_state(img, format = "png", path = "ico/"){
 		if (img == 'world_settings'){ img = 'functionX'; }
-		$('.state').html('<img src="'+path+img+'.'+format+'" alt="">');
+		document.querySelector('.state').innerHTML = '<img src="'+path+img+'.'+format+'" alt="">';
 	}
 
 	function getRandomArbitrary(min, max) {
@@ -1221,12 +1189,12 @@ window.onload = function(){
 	});
 	// Language
 	lanwich.onLanguageChange = function (language) {
-		language_selector.value = language;
+		document.getElementById('language_selector').value = language;
 		let loader = document.getElementById('language_loader'); // Loader element
 		loader.style.opacity = 0;
 		setTimeout( () => loader.style.display = 'none', 200);
 	}
-	language_selector.addEventListener('change', function(event){
+	document.getElementById('language_selector').addEventListener('change', function(event){
 		let loader = document.getElementById('language_loader'); // Loader element
 		loader.style.cssText = 'display: inline-block; opacity: 0;';
 		setTimeout(()=> loader.style.opacity = 1, 16);
@@ -1234,7 +1202,7 @@ window.onload = function(){
 	});
 	// File select listener
 	document.getElementById('select_file').addEventListener('change', function(e){
-		let selectedFile = $('#select_file')[0].files[0];
+		let selectedFile = document.querySelector('#select_file').files[0];
 		if (selectedFile !== undefined){
 			readFile(selectedFile);
 			this.value = '';
