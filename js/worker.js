@@ -29,7 +29,15 @@ onmessage = function (e) {
 	// 	let ob = objectsArray[objId];
 	// 	messageObjArr[objId] = {vx: ob.vx, vy: ob.vy, m: ob.m};
 	// }
-	let messageObjArr = objectsArray.map((obj, objId) => {obj.id = objId; return obj}).filter(obj => obj.vx || obj.vy);
+
+	let messageObjArr = [];
+	for (let objId = objectsArray.length; objId--;){
+		let ob = objectsArray[objId];
+		messageObjArr[objId] = {vx: ob.vx, vy: ob.vy, id: objId};
+	}
+	messageObjArr = messageObjArr.filter(obj => obj.vx || obj.vy);
+
+	// let messageObjArr = objectsArray.map((obj, objId) => {obj.id = objId; return obj}).filter(obj => obj.vx || obj.vy);
 	postMessage({
 		objArr: messageObjArr,
 		// task: e.data.task,
