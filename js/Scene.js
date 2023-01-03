@@ -153,23 +153,36 @@ export default class Scene {
 			let [objA, objB] = [ objArr[collidedObjectsId[0]], objArr[collidedObjectsId[1]] ];
 
 			if (collisionType == 0){ // Merge
-				if (objB.m > 0){
-					objA.color = this.mixColors(objA.color, objB.color, objA.m, objB.m);
-				} else {
-					if (objB.m + objA.m == 0){
-						deleteObjectList.push(...collidedObjectsId);
-						if ( collidedObjectsId.includes(+this.camera.Target) && objArr === this.objArr ) this.camera.setTarget();
-						continue;
-					}
+				if (objB.m + objA.m === 0){ // Anigilate
+					deleteObjectList.push(...collidedObjectsId);
+					if ( collidedObjectsId.includes(+this.camera.Target) && objArr === this.objArr ) this.camera.setTarget();
+					continue;
 				}
-				objA.vx = (objA.m*objA.vx+objB.m*objB.vx)/(objA.m+objB.m);// Формула абсолютно-неупругого столкновения
-				objA.vy = (objA.m*objA.vy+objB.m*objB.vy)/(objA.m+objB.m);// Формула абсолютно-неупругого столкновения
 
-				objA.m = objA.m + objB.m; // Set new mass to objA
+				let mixedColor = this.mixColors(objA.color, objB.color, objA.m, objB.m);
+
+				let obj = objB, delObj = objA;
+				let objToDelId = collidedObjectsId[0];
+				let alivedObjId = collidedObjectsId[1];
+
+				if (objA.m > objB.m && !objB.lock || (objA.m > objB.m && objA.lock && objB.lock)) {
+					obj = objA; delObj = objB;
+					objToDelId = collidedObjectsId[1];
+					alivedObjId = collidedObjectsId[0];
+				}
+
+				const mov = obj.lock ? 0 : delObj.m / (objA.m + objB.m);
+				obj.x += (delObj.x - obj.x) * mov;
+				obj.y += (delObj.y - obj.y) * mov;
+				obj.vx = (objA.m*objA.vx+objB.m*objB.vx)/(objA.m+objB.m);// Формула абсолютно-неупругого столкновения
+				obj.vy = (objA.m*objA.vy+objB.m*objB.vy)/(objA.m+objB.m);// Формула абсолютно-неупругого столкновения
+
+				obj.m = objA.m + objB.m; // Set new mass to obj
+				obj.color = mixedColor;
 				// Change camera target
-				if (collidedObjectsId[1] == this.camera.Target && objArr === this.objArr) this.camera.setTarget(collidedObjectsId[0]);
+				if (objToDelId === this.camera.Target && objArr === this.objArr) this.camera.setTarget(alivedObjId);
 				// Add collided object to deleteObjectList
-				deleteObjectList.push(collidedObjectsId[1]);
+				deleteObjectList.push(objToDelId);
 			} else if (collisionType == 1){ // Repulsion
 				// let R = collidedObjectsId[2]; // The distance between objects
 				let gvx = objA.vx + objB.vx;
