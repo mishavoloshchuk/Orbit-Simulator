@@ -8,12 +8,16 @@ function calculate({
 	timeSpeed, 
 	collisionType, 
 	collidedObjectsIdList,
-	toIteration
 }){
 	const obj = objectsArray[objectId];
 	if (interactMode === '0'){
-		for (let object2Id = toIteration; object2Id--;){
-			if (object2Id === undefined){ continue; } // Skip itself
+		const halfArrPlusObjId = objectId + objectsArray.length/2;
+		const evenLen = !(objectsArray.length % 2);
+		const halfObjArrLen = objectsArray.length / 2;
+		for (let iteration = objectId + 1; iteration <= halfArrPlusObjId; iteration++){
+			const object2Id = iteration >= objectsArray.length ? iteration - objectsArray.length : iteration;// Cycle IDs
+			if (evenLen && object2Id >= halfArrPlusObjId) continue;
+			// console.log(objectId, object2Id);
 			const obj2 = objectsArray[object2Id];
 
 			const S = rad(obj.x, obj.y, obj2.x, obj2.y); // The distance between objects
@@ -36,7 +40,7 @@ function calculate({
 				obj.vy += vector[1];
 				// Add calculated vectors to object 2
 				obj2.vx -= vector[2];
-				obj2.vy -= vector[3];	
+				obj2.vy -= vector[3];
 			}
 		}
 	} else
@@ -68,10 +72,8 @@ function collision(objA, objB, objAId, objBId, S, collisionType, interactMode, c
 	if (S - radiusSum <= 0){
 		if (collisionType == 0){ // Collision type: merge
 			if (interactMode === '0'){
-				if (objA.m > objB.m || (objA.m === objB.m && objAId > objBId)){ // If objA mass bigger than objB mass or id is bigger
-					collidedObjectsIdList.push([objAId, objBId]); // Send the collised objects
-					return 1;
-				}
+				collidedObjectsIdList.push([objAId, objBId]); // Send the collised objects
+				return 1;
 			} else if (interactMode === '1') {
 				collidedObjectsIdList.push([objBId, objAId]);
 			}

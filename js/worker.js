@@ -8,8 +8,9 @@ onmessage = function (e) {
 	g = e.data.g;
 	collisionType = e.data.collisionType;
 	collidedObjectsIdList = []; // Array of objects IDs to delete
+	// console.log(e.data.task)
 	for (let objectId of e.data.task){
-		objectsArray[objectId].vx = objectsArray[objectId].vy = 0;
+		// objectsArray[objectId].vx = objectsArray[objectId].vy = 0;
 		calculate({
 			objectsArray: objectsArray,
 			objectId: objectId,
@@ -23,15 +24,15 @@ onmessage = function (e) {
 	}
 
 	// Sent optimized objects array
-	var messageObjArr = [];
-	for (let objId of e.data.task){
-		let ob = objectsArray[objId];
-		messageObjArr[objId] = {vx: ob.vx, vy: ob.vy, m: ob.m};
-	}
-	//console.log(JSON.stringify(messageObjArr));
+	// var messageObjArr = [];
+	// for (let objId of e.data.task){
+	// 	let ob = objectsArray[objId];
+	// 	messageObjArr[objId] = {vx: ob.vx, vy: ob.vy, m: ob.m};
+	// }
+	let messageObjArr = objectsArray.map((obj, objId) => {obj.id = objId; return obj}).filter(obj => obj.vx || obj.vy);
 	postMessage({
 		objArr: messageObjArr,
-		task: e.data.task,
+		// task: e.data.task,
 		collidedObjectsIdList: collidedObjectsIdList
 	});
 }

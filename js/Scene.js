@@ -33,16 +33,25 @@ export default class Scene {
 				collisionType = this.collisionMode.state
 			)=>{
 				if (!this.workersJobDone){
+					// console.log('Calculate begin:');
 					let tasks = []; //new Array(this.logicalProcessors).fill(new Array()); // Distribute tasks by workers
-					for (let i = 0; i < this.logicalProcessors && i < objectsArray.length; i++){ tasks[i] = [] }
+					const minTask = Math.min(objectsArray.length, this.logicalProcessors);
+					const averrageTasks = Math.floor(objectsArray.length / minTask); // Averrage objects count to calculate on each thread
+					const taskRemainder = objectsArray.length % minTask;
+					let lastEnd = 0;
+					for (let i = 0; i < minTask; i++){ 
+						const end = lastEnd + averrageTasks + (i < taskRemainder);
+						tasks[i] = Object.keys(objectsArray).map(elem => +elem).slice(lastEnd, end);
+						lastEnd = end;
+					}
 					let compressedObjArr = [];
 					for (let i in objectsArray){
-						tasks[i%this.logicalProcessors].push(+i); // Make tasks for all worker threads
+						// tasks[i%this.logicalProcessors].push(+i); // Make tasks for all worker threads
 						compressedObjArr[i] = {};
 						compressedObjArr[i].x = objectsArray[i].x;
 						compressedObjArr[i].y = objectsArray[i].y;
-						//compressedObjArr[i].vx = objectsArray[i].vx;
-						//compressedObjArr[i].vy = objectsArray[i].vy;
+						compressedObjArr[i].vx = 0;//objectsArray[i].vx;
+						compressedObjArr[i].vy = 0;//objectsArray[i].vy;
 						compressedObjArr[i].m = objectsArray[i].m;
 						if (objectsArray[i].lock === true) { compressedObjArr[i].lock = true }; // If ojbect locked
 						if (objectsArray[i].main_obj !== undefined) { compressedObjArr[i].main_obj = objectsArray[i].main_obj }; // If ojbect locked
@@ -68,10 +77,13 @@ export default class Scene {
 							this.workersTime += this.#workerThreads[i].performance;
 							this.workersJobDone --;
 							this.collidedObjectsIdList.push(...e.data.collidedObjectsIdList);
-							for (let i of e.data.task){
-								e.data.objArr[i].vx += objectsArray[i].vx;
-								e.data.objArr[i].vy += objectsArray[i].vy;
-								objectsArray[i] = Object.assign(objectsArray[i], e.data.objArr[i]);
+							this.#workerThreads[i].calculatedObjArr = e.data.objArr;
+							for (let i = e.data.objArr.length; i--;){
+								// e.data.objArr[i].vx += objectsArray[i].vx;
+								// e.data.objArr[i].vy += objectsArray[i].vy;
+								// objectsArray[i] = Object.assign(objectsArray[i], e.data.objArr[i]);
+								objectsArray[e.data.objArr[i].id].vx += e.data.objArr[i].vx;
+								objectsArray[e.data.objArr[i].id].vy += e.data.objArr[i].vy;
 							}
 							if (!this.workersJobDone){
 								this.frameCounter ++;
@@ -101,9 +113,8 @@ export default class Scene {
 		gravitMode = this.gravitationMode.state, 
 		collisionType = this.collisionMode.state
 	){
-		let iterObjArr = objectsArray.length;
-		for (let objectId = iterObjArr; objectId--;){
-			iterObjArr --;
+		// console.log('Calculate begin:');
+		for (let objectId = objectsArray.length; objectId--;){
 			calculate({
 				objectsArray: objectsArray,
 				objectId: +objectId,
@@ -112,8 +123,7 @@ export default class Scene {
 				g: g,
 				timeSpeed: timeSpeed,
 				collisionType: collisionType,
-				collidedObjectsIdList: this.collidedObjectsIdList,
-				toIteration: iterObjArr
+				collidedObjectsIdList: this.collidedObjectsIdList
 			});
 		}
 		callback && callback(objectsArray, this.collidedObjectsIdList, interactMode, collisionType, timeSpeed, 'singleThread');
@@ -152,10 +162,8 @@ export default class Scene {
 						continue;
 					}
 				}
-				if (!objA.lock){
-					objA.vx = (objA.m*objA.vx+objB.m*objB.vx)/(objA.m+objB.m);// Формула абсолютно-неупругого столкновения
-					objA.vy = (objA.m*objA.vy+objB.m*objB.vy)/(objA.m+objB.m);// Формула абсолютно-неупругого столкновения
-				}
+				objA.vx = (objA.m*objA.vx+objB.m*objB.vx)/(objA.m+objB.m);// Формула абсолютно-неупругого столкновения
+				objA.vy = (objA.m*objA.vy+objB.m*objB.vy)/(objA.m+objB.m);// Формула абсолютно-неупругого столкновения
 
 				objA.m = objA.m + objB.m; // Set new mass to objA
 				// Change camera target
