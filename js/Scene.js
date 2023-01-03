@@ -165,15 +165,17 @@ export default class Scene {
 				let objToDelId = collidedObjectsId[0];
 				let alivedObjId = collidedObjectsId[1];
 
-				if (objA.m > objB.m && !objB.lock || (objA.m > objB.m && objA.lock && objB.lock)) {
+				// Swap objects if
+				if ((delObj.m > obj.m && objA.lock === objB.lock) || (objA.lock !== objB.lock && objA.lock)) {
 					obj = objA; delObj = objB;
 					objToDelId = collidedObjectsId[1];
 					alivedObjId = collidedObjectsId[0];
 				}
-
-				const mov = obj.lock ? 0 : delObj.m / (objA.m + objB.m);
-				obj.x += (delObj.x - obj.x) * mov;
-				obj.y += (delObj.y - obj.y) * mov;
+				// Center of mass point
+				const movKff = obj.lock !== delObj.lock ? 0 : delObj.m / (objA.m + objB.m);
+				obj.x += (delObj.x - obj.x) * movKff;
+				obj.y += (delObj.y - obj.y) * movKff;
+				// New velocity
 				obj.vx = (objA.m*objA.vx+objB.m*objB.vx)/(objA.m+objB.m);// Формула абсолютно-неупругого столкновения
 				obj.vy = (objA.m*objA.vy+objB.m*objB.vy)/(objA.m+objB.m);// Формула абсолютно-неупругого столкновения
 
