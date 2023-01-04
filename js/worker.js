@@ -10,7 +10,7 @@ onmessage = function (e) {
 	collidedObjectsIdList = []; // Array of objects IDs to delete
 	// console.log(e.data.task)
 	for (let objectId of e.data.task){
-		// objectsArray[objectId].vx = objectsArray[objectId].vy = 0;
+		objectsArray[objectId].vx = objectsArray[objectId].vy = 0;
 		calculate({
 			objectsArray: objectsArray,
 			objectId: objectId,

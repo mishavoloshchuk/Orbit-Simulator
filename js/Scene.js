@@ -50,8 +50,8 @@ export default class Scene {
 						compressedObjArr[i] = {};
 						compressedObjArr[i].x = objectsArray[i].x;
 						compressedObjArr[i].y = objectsArray[i].y;
-						compressedObjArr[i].vx = 0;//objectsArray[i].vx;
-						compressedObjArr[i].vy = 0;//objectsArray[i].vy;
+						// compressedObjArr[i].vx = 0;//objectsArray[i].vx;
+						// compressedObjArr[i].vy = 0;//objectsArray[i].vy;
 						compressedObjArr[i].m = objectsArray[i].m;
 						if (objectsArray[i].lock === true) { compressedObjArr[i].lock = true }; // If ojbect locked
 						if (objectsArray[i].main_obj !== undefined) { compressedObjArr[i].main_obj = objectsArray[i].main_obj }; // If ojbect locked

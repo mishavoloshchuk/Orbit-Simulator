@@ -8,39 +8,48 @@ function calculate({
 	timeSpeed, 
 	collisionType, 
 	collidedObjectsIdList,
+	multiThread = true
 }){
-	const obj = objectsArray[objectId];
-	if (interactMode === '0'){
-		const halfArrPlusObjId = objectId + objectsArray.length/2;
-		const evenLen = !(objectsArray.length % 2);
-		const halfObjArrLen = objectsArray.length / 2;
-		for (let iteration = objectId + 1; iteration <= halfArrPlusObjId; iteration++){
-			const object2Id = iteration >= objectsArray.length ? iteration - objectsArray.length : iteration;// Cycle IDs
-			if (evenLen && object2Id >= halfArrPlusObjId) continue;
-			// console.log(objectId, object2Id);
-			const obj2 = objectsArray[object2Id];
+	let innerIterator = function (object2Id) {
+		const obj2 = objectsArray[object2Id];
 
-			const S = rad(obj.x, obj.y, obj2.x, obj2.y); // The distance between objects
+		const S = rad(obj.x, obj.y, obj2.x, obj2.y); // The distance between objects
 
-			const collType = collision(obj, obj2, objectId, object2Id, S, collisionType, interactMode, collidedObjectsIdList);
+		const collType = collision(obj, obj2, objectId, object2Id, S, collisionType, interactMode, collidedObjectsIdList);
 
-			const sin = (obj2.y - obj.y)/S; // Sin
-			const cos = (obj2.x - obj.x)/S; // Cos
-			let vector;
-			if(collType === false){
-				// Physics vector calculation
-				vector = gravity_func(sin, cos, S, gravitMode, obj2.m, obj.m, timeSpeed, g);
-			} else if (collisionType == 2 && collType !== false){
-				// Physics vector calculation
-				vector = gravity_func(sin, cos, S, gravitMode, obj2.m, obj.m, timeSpeed, g*Math.pow(collType, 3));
-			}
-			if (vector){
-				// Add calculated vectors to object 1
-				obj.vx += vector[0];
-				obj.vy += vector[1];
-				// Add calculated vectors to object 2
+		const sin = (obj2.y - obj.y)/S; // Sin
+		const cos = (obj2.x - obj.x)/S; // Cos
+		let vector;
+		if(collType === false){
+			// Physics vector calculation
+			vector = gravity_func(sin, cos, S, gravitMode, obj2.m, obj.m, timeSpeed, g);
+		} else if (collisionType == 2 && collType !== false){
+			// Physics vector calculation
+			vector = gravity_func(sin, cos, S, gravitMode, obj2.m, obj.m, timeSpeed, g*Math.pow(collType, 3));
+		}
+		if (vector !== undefined){
+			// Add calculated vectors to object 1
+			obj.vx += vector[0];
+			obj.vy += vector[1];
+			// Add calculated vectors to object 2
+			if (multiThread === false){
 				obj2.vx -= vector[2];
 				obj2.vy -= vector[3];
+			}
+		}	
+	}
+
+	const obj = objectsArray[objectId];
+	if (interactMode === '0'){
+		if (multiThread === true){
+			for (let object2Id = objectsArray.length; object2Id--;){
+				if (object2Id === objectId) continue;
+				innerIterator(object2Id);
+			}
+		} else {
+			for (let object2Id = objectId; object2Id--;){
+				// console.log(objectId, object2Id)
+				innerIterator(object2Id);
 			}
 		}
 	} else
