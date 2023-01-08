@@ -441,7 +441,7 @@ export default class Camera{
 				let obj = objArrCopy[objectId];
 				// Minimal distance calculate
 				if (objArrCopy[newObjId]){
-					let S = rad(objArrCopy[newObjId].x, objArrCopy[newObjId].y, obj.x, obj.y);
+					let S = dist(objArrCopy[newObjId].x, objArrCopy[newObjId].y, obj.x, obj.y);
 					if (objectId !== newObjId && S < distance[0]){
 						distance[0] = S;
 						distance[1] = {x: objArrCopy[newObjId].x, y: objArrCopy[newObjId].y, x2: obj.x, y2: obj.y, obj2Id: objectId};
@@ -459,7 +459,13 @@ export default class Camera{
 		// 	afterPhysicsCallback(...args);
 		// });
 		for (let i = trajLen; i > 0; i--){ // Objects trajectory calculate
-			this.scene.physicsCalculate(objArrCopy, afterPhysicsCallback, this.scene.interactMode.state, this.scene.timeSpeed.state, this.scene.g.state/accuracity);
+			this.scene.physicsCalculate(
+				objArrCopy,
+				afterPhysicsCallback,
+				+this.scene.interactMode.state,
+				this.scene.timeSpeed.state,
+				this.scene.g.state/accuracity
+			);
 		}
 
 		// Отображение точек сближения
@@ -519,7 +525,7 @@ export default class Camera{
 				// Trajectory trace length in pixels
 				let traceLenInPixs = trajectoryTraces[trace].reduce((trajLength, point, pId, pArr)=>{
 					if (pId != 0) {
-						return trajLength + rad(point[0], point[1], pArr[pId-1][0], pArr[pId-1][1]);
+						return trajLength + dist(point[0], point[1], pArr[pId-1][0], pArr[pId-1][1]);
 					}
 					return trajLength;
 				}, 0) * this.animZoom;
@@ -579,7 +585,7 @@ export default class Camera{
 		let offsY = -30;
 		if (['mobile', 'tablet'].includes(getDeviceType()) ){ offsX = -25; offsY = -70; } // If device is mobile or tablet
 		Object.assign(launchPowerLabel.style, {left: (mouse.x+offsX)+'px', top: (mouse.y+offsY)+'px', display: 'block', color: this.scene.newObjColor.state});
-		launchPowerLabel.innerHTML = Math.round(this.scene.rad(mouse.leftDownX, mouse.leftDownY, mouse.x, mouse.y) * this.scene.powerFunc(this.scene.launchForce.state) * 100)/100;
+		launchPowerLabel.innerHTML = Math.round(this.scene.dist(mouse.leftDownX, mouse.leftDownY, mouse.x, mouse.y) * this.scene.powerFunc(this.scene.launchForce.state) * 100)/100;
 		let D = this.getScreenRad(this.scene.newObjMass.state)*2;
 
 		// Gradient
@@ -739,8 +745,8 @@ export default class Camera{
 	}
 	// Get object radius
 	getRadius(mass){
-		let rad = Math.sqrt(Math.abs(mass));
-		return rad < 0.25 ? 0.25 : rad;
+		let dist = Math.sqrt(Math.abs(mass));
+		return dist < 0.25 ? 0.25 : dist;
 	}
 	// Get object screen radius
 	getScreenRad(mass){

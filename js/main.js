@@ -408,7 +408,7 @@ window.onload = function(){
 			avTouchPoint.x = sumArray(av_touch_x)/av_touch_x.length;
 			avTouchPoint.y = sumArray(av_touch_y)/av_touch_x.length;
 			 // Distance between touchs
-			let touchZoom = rad(event.changedTouches[0].clientX, event.changedTouches[0].clientY, event.changedTouches[1].clientX, event.changedTouches[1].clientY);
+			let touchZoom = dist(event.changedTouches[0].clientX, event.changedTouches[0].clientY, event.changedTouches[1].clientX, event.changedTouches[1].clientY);
 			 // Clear launch power label display
 			launchPowerLabel.style.display = 'none';
 
@@ -428,7 +428,7 @@ window.onload = function(){
 				zm_cff = touchZoom;
 			}
 			// Cancel camera target if touch camera move
-			if (rad(avTouchPoint.xd, avTouchPoint.yd, avTouchPoint.x, avTouchPoint.y) > Math.min(innerWidth, innerHeight)/6){
+			if (dist(avTouchPoint.xd, avTouchPoint.yd, avTouchPoint.x, avTouchPoint.y) > Math.min(innerWidth, innerHeight)/6){
 				if (scene.camera.Target !== undefined){
 					avTouchPoint.xd = avTouchPoint.x;
 					avTouchPoint.yd = avTouchPoint.y;
@@ -674,7 +674,8 @@ window.onload = function(){
 				if (window.Worker && window.navigator.hardwareConcurrency > 1 && multitreadCompute.state){
 					scene.physicsMultiThreadCalculate();
 				} else {
-					scene.physicsCalculate(); // Scene physics calculations (1 step)
+					scene.gpuComputeVelocities();
+					// scene.physicsCalculate(); // Scene physics calculations (1 step)
 				}
 			}
 		}
@@ -781,7 +782,7 @@ window.onload = function(){
 	function vis_distance(obj_cord, col = '#888888', targ_obj = scene.objIdToOrbit){
 		if (scene.objArr[targ_obj]){
 			let obCoords = [scene.objArr[targ_obj].x, scene.objArr[targ_obj].y];
-			let size = rad(obj_cord[0], obj_cord[1], ...scene.camera.crd2(obCoords[0], obCoords[1]));
+			let size = dist(obj_cord[0], obj_cord[1], ...scene.camera.crd2(obCoords[0], obCoords[1]));
 			if (size > scene.camera.getScreenRad(scene.objArr[targ_obj].m)){
 				scene.camera.ctx2.strokeStyle = col;
 				scene.camera.ctx2.lineWidth = 2;
@@ -1145,8 +1146,6 @@ window.onload = function(){
 		for (let val of arr){ sum += val }
 		return sum;
 	}
-
-	function rad(x1, y1, x2, y2){ return Math.sqrt(Math.pow((x1 - x2), 2) + Math.pow((y1 - y2), 2)) }
 
 	function powerFunc(F){
 		if (F > 1){ return Math.round(Math.pow(F, Math.pow(F, 3))*100)/100 } else { return F }

@@ -26,11 +26,11 @@ export default class Scene {
 			this.physicsMultiThreadCalculate = (
 				objectsArray = this.objArr, 
 				callback = this.afterPhysics,
-				interactMode = this.interactMode.state, 
+				interactMode = +this.interactMode.state, 
 				timeSpeed = this.timeSpeed.state, 
 				g = this.g.state, 
-				gravitMode = this.gravitationMode.state, 
-				collisionType = this.collisionMode.state
+				gravitMode = +this.gravitationMode.state, 
+				collisionType = +this.collisionMode.state
 			)=>{
 				if (!this.workersJobDone){
 					// console.log('Calculate begin:');
@@ -103,15 +103,72 @@ export default class Scene {
 				}
 			}
 		}
+
+		this.gpu = new GPU();
+
+		// The distance between two points
+		this.gpu.addFunction(dist);
+		// Gravitation function
+		this.gpu.addFunction(gravity_func);
+
+		// Compute function
+		this.computeVelocities = this.gpu.createKernel(function(arr, len, interactMode, timeSpeed, g, gravitMode, collisionType) {
+			let vel = [0.0, 0.0];
+			const obj = [arr[this.thread.x*3], arr[this.thread.x*3+1], arr[this.thread.x*3+2]];
+			const objId = this.thread.x;
+			for(let obj2Id = 0; obj2Id < len; obj2Id++){
+				if (obj2Id === objId) continue;
+
+				const obj2 = [arr[obj2Id*3], arr[obj2Id*3+1], arr[obj2Id*3+2]];
+				const D = dist(obj[0],obj[1], obj2[0],obj2[1]);
+
+				// const collType = collision(obj, obj2, objectId, object2Id, D, collisionType, interactMode, collidedObjectsIdList);
+
+				const sin = (obj2[1] - obj[1])/D; // Sin
+				const cos = (obj2[0] - obj[0])/D; // Cos
+
+				const velocity = gravity_func(sin, cos, D, gravitMode, obj2[2], obj[2], timeSpeed, g);
+
+				vel[0] += velocity[0];
+				vel[1] += velocity[1];
+			}
+
+			return vel;
+		}, {dynamicOutput: true, dynamicArguments: true});
+
+	}
+	gpuComputeVelocities = function(
+		objectsArray = this.objArr, 
+		callback = this.afterPhysics,
+		interactMode = +this.interactMode.state, 
+		timeSpeed = this.timeSpeed.state, 
+		g = this.g.state, 
+		gravitMode = +this.gravitationMode.state, 
+		collisionType = +this.collisionMode.state
+	){
+		if (objectsArray.length > 1){
+			const prepairedArr = objectsArray.map(obj => [obj.x, obj.y, obj.m]);
+			this.computeVelocities.setOutput([objectsArray.length]);
+			const newVelosities = this.computeVelocities(prepairedArr, objectsArray.length, interactMode, timeSpeed, g, gravitMode, collisionType);
+			// console.log(newVelosities)
+			for (let objId = objectsArray.length; objId--;){
+				const obj = objectsArray[objId];
+				obj.vx += newVelosities[objId][0];
+				obj.vy += newVelosities[objId][1];
+			}
+		}
+		callback && callback(objectsArray, this.collidedObjectsIdList, interactMode, collisionType, timeSpeed, 'singleThread');
+		this.collidedObjectsIdList = [];
+
 	}
 	physicsCalculate = function (
 		objectsArray = this.objArr, 
 		callback = this.afterPhysics,
-		interactMode = this.interactMode.state, 
+		interactMode = +this.interactMode.state, 
 		timeSpeed = this.timeSpeed.state, 
 		g = this.g.state, 
 		gravitMode = this.gravitationMode.state, 
-		collisionType = this.collisionMode.state
+		collisionType = +this.collisionMode.state
 	){
 		// console.log('Calculate begin:');
 		for (let objectId = objectsArray.length; objectId--;){
@@ -189,7 +246,7 @@ export default class Scene {
 				// let R = collidedObjectsId[2]; // The distance between objects
 				let gvx = objA.vx + objB.vx;
 				let gvy = objA.vy + objB.vy;
-				let D = rad(objA.x, objA.y, objB.x, objB.y); // The distance between objects
+				let D = dist(objA.x, objA.y, objB.x, objB.y); // The distance between objects
 				let v1 = this.gipot(objB.vx, objB.vy); // Scallar velocity
 				let v2 = this.gipot(objA.vx, objA.vy); // Scallar velocity
 				let vcos1 = v1 == 0?0:objB.vx/v1; // cos vx 1
@@ -221,7 +278,7 @@ export default class Scene {
 				const objBRadius = objA.m === objB.m ? objARadius : Math.sqrt(Math.abs(objB.m)); // Object B radius
 				const rS = objARadius + objBRadius; // Both objects radiuses sum
 				const mS = objA.m + objB.m; // Both objects mass sum
-				let newD = rad(objA.x + objA.vx*this.timeSpeed.state, objA.y + objA.vy*this.timeSpeed.state, objB.x + objB.vx*this.timeSpeed.state, objB.y + objB.vy*this.timeSpeed.state); // The distance between objects with new position
+				let newD = dist(objA.x + objA.vx*this.timeSpeed.state, objA.y + objA.vy*this.timeSpeed.state, objB.x + objB.vx*this.timeSpeed.state, objB.y + objB.vy*this.timeSpeed.state); // The distance between objects with new position
 				if (newD - rS <= 0){
 					const rD = rS - D; // Total move
 					const objAMov = objA.lock ? 0 : rD * (objB.m / mS); // Object A move
@@ -349,7 +406,7 @@ export default class Scene {
 	forceToCircularOrbit(px, py, objId){
 		if (this.objArr[objId]){
 			const objToOrbMass = Math.abs(this.objArr[objId].m);
-			let R = this.rad(this.camera.screenPix(px, 'x'), this.camera.screenPix(py, 'y'), this.camera.screenPix(this.objArr[objId].x, 'x'), this.camera.screenPix(this.objArr[objId].y, 'y'))*this.camera.animZoom;
+			let R = this.dist(this.camera.screenPix(px, 'x'), this.camera.screenPix(py, 'y'), this.camera.screenPix(this.objArr[objId].x, 'x'), this.camera.screenPix(this.objArr[objId].y, 'y'))*this.camera.animZoom;
 			let V = Math.sqrt((objToOrbMass*5)*(R)/this.g.state);
 			let a = this.objArr[objId].x - px;
 			let b = this.objArr[objId].y - py;
@@ -384,7 +441,7 @@ export default class Scene {
 		if (mode == 'nearest' || mode == 'furthest'){
 			for (let i in this.objArr){
 				if (i == not) continue;
-				let r = rad(mouse.x, mouse.y, this.camera.crd(this.objArr[i].x, 'x'), this.camera.crd(this.objArr[i].y, 'y'));
+				let r = dist(mouse.x, mouse.y, this.camera.crd(this.objArr[i].x, 'x'), this.camera.crd(this.objArr[i].y, 'y'));
 				if (r < sel[0] && mode == 'nearest'){
 					sel[0] = r;
 					sel[1] = +i;
@@ -407,7 +464,7 @@ export default class Scene {
 		return sel[1];
 	}
 	// Get distance between two 2d points
-	rad(x1, y1, x2, y2){ return Math.sqrt(Math.pow((x1 - x2), 2) + Math.pow((y1 - y2), 2)) }
+	dist(x1, y1, x2, y2){ return Math.sqrt(Math.pow((x1 - x2), 2) + Math.pow((y1 - y2), 2)) }
 	// Get logariphmic value if value bigger than 1
 	powerFunc(F){
 		if (F > 1){ return Math.round(Math.pow(F, Math.pow(F, 3))*100)/100 } else { return F }
