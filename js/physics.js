@@ -189,31 +189,32 @@ function gpuCollision(objAPos, objAVel, objAMass, objALock, objBPos, objBVel, ob
 		let m1 = objAMass;
 		let m2 = objBMass;
 		// Object A new velocity
-		// if (objALock === 0){
-		// 	if (objBLock === 1) { m1 = 0; }
-		// 	objNewPosVel[2] = (( v2*Math.cos(ag2 - fi)*(m2-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1+m2) ) * Math.cos(fi) + v2*Math.sin(ag2 - fi)*Math.cos(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
-		// 	objNewPosVel[3] = (( v2*Math.cos(ag2 - fi)*(m2-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1+m2) ) * Math.sin(fi) + v2*Math.sin(ag2 - fi)*Math.sin(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
-		// }
-		// Object B new velocity
 		if (objALock === 0){
 			if (objBLock === 1) { m1 = 0; }
 			objNewPosVel[2] = (( v1*Math.cos(ag1 - fi)*(m1-m2) + 2*m2*v2*Math.cos(ag2 - fi) ) / (m2+m1) ) * Math.cos(fi) + v1*Math.sin(ag1 - fi)*Math.cos(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
 			objNewPosVel[3] = (( v1*Math.cos(ag1 - fi)*(m1-m2) + 2*m2*v2*Math.cos(ag2 - fi) ) / (m2+m1) ) * Math.sin(fi) + v1*Math.sin(ag1 - fi)*Math.sin(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
 		}
+		// const vel2 = [0.0, 0.0];
+		// // Object B new velocity
+		// if (objBLock === 0){
+		// 	if (objALock === 1) { m2 = 0; }
+		// 	vel2[0] = (( v2*Math.cos(ag2 - fi)*(m2-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1+m2) ) * Math.cos(fi) + v2*Math.sin(ag2 - fi)*Math.cos(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
+		// 	vel2[1] = (( v2*Math.cos(ag2 - fi)*(m2-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1+m2) ) * Math.sin(fi) + v2*Math.sin(ag2 - fi)*Math.sin(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
+		// }
 
-		const objARadius = Math.sqrt(Math.abs(objAMass)); // Object A radius
-		const objBRadius = objAMass === objBMass ? objARadius : Math.sqrt(Math.abs(objBMass)); // Object B radius
-		const rS = objARadius + objBRadius; // Both objects radiuses sum
-		const mS = objAMass + objBMass; // Both objects mass sum
-		let newD = dist(objAPos[0] + objAVel[0]*timeSpeed, objAPos[1] + objAVel[1]*timeSpeed, objBPos[0] + objBPos[0]*timeSpeed, objBPos[1] + objBPos[1]*timeSpeed); // The distance between objects with new position
-		if (newD - rS <= 0){
-			const rD = rS - D; // Total move
-			const objAMov = objALock === 1 ? 0 : rD * (objBMass / mS); // Object A move
-			const objBMov = objBLock === 1 ? 0 : rD - objAMov; // Object B move
-			objNewPosVel[0] -= objAMov * cos; objNewPosVel[1] -= objAMov * sin;
-			//objB.x -= objBMov * cos; objB.y -= objBMov * sin;
-		}
-		return objNewPosVel;
+		// const objARadius = Math.sqrt(Math.abs(objAMass)); // Object A radius
+		// const objBRadius = objAMass === objBMass ? objARadius : Math.sqrt(Math.abs(objBMass)); // Object B radius
+		// const rS = objARadius + objBRadius; // Both objects radiuses sum
+		// const mS = objAMass + objBMass; // Both objects mass sum
+		// let newD = dist(objAPos[0] + objNewPosVel[2]*timeSpeed, objAPos[1] + objNewPosVel[3]*timeSpeed, objBPos[0] + vel2[0]*timeSpeed, objBPos[1] + vel2[1]*timeSpeed); // The distance between objects with new position
+		// if (newD - rS <= 0){
+		// 	const rD = rS - D; // Total move
+		// 	const objAMov = objALock === 1 ? 0 : rD * (objBMass / mS); // Object A move
+		// 	const objBMov = objBLock === 1 ? 0 : rD - objAMov; // Object B move
+		// 	objNewPosVel[0] -= objAMov * cos; objNewPosVel[1] -= objAMov * sin;
+		// 	//objB.x -= objBMov * cos; objB.y -= objBMov * sin;
+		// }
+		// return objNewPosVel;
 	}
 	return objNewPosVel;
 }

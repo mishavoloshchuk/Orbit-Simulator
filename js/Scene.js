@@ -168,6 +168,7 @@ export default class Scene {
 		if (objectsArray.length > 1){
 			const prepairedArr = objectsArray.map(obj => [obj.x, obj.y, obj.vx, obj.vy, obj.m, obj.lock]);
 			this.computeVelocities.setOutput([objectsArray.length]);
+			this.computeVelocities.setLoopMaxIterations(256000000);
 			const newVelosities = this.computeVelocities(prepairedArr, objectsArray.length, interactMode, timeSpeed, g, gravitMode, collisionType);
 			// console.log(newVelosities)
 			for (let objId = objectsArray.length; objId--;){
