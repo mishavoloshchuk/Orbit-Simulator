@@ -672,10 +672,10 @@ window.onload = function(){
 			if (!pauseState){
 				scene.simulationsPerFrame = 1; // Simulations per frame (only multithread)
 				if (window.Worker && window.navigator.hardwareConcurrency > 1 && multitreadCompute.state){
-					scene.physicsMultiThreadCalculate();
-				} else {
+					// scene.physicsMultiThreadCalculate();
 					scene.gpuComputeVelocities();
-					// scene.physicsCalculate(); // Scene physics calculations (1 step)
+				} else {
+					scene.physicsCalculate(); // Scene physics calculations (1 step)
 				}
 			}
 		}

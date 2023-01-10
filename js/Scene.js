@@ -110,36 +110,55 @@ export default class Scene {
 		this.gpu.addFunction(dist);
 		// Gravitation function
 		this.gpu.addFunction(gravity_func);
+		// Gipotenuse
+		this.gpu.addFunction(function gipot(a,b){return Math.sqrt(a*a + b*b) });
+		// Collision function
+		this.gpu.addFunction(gpuCollision);
 
 		// Compute function
 		this.computeVelocities = this.gpu.createKernel(function(arr, len, interactMode, timeSpeed, g, gravitMode, collisionType) {
-			let vel = [0.0, 0.0];
-			const obj = [arr[this.thread.x*3], arr[this.thread.x*3+1], arr[this.thread.x*3+2]];
 			const objId = this.thread.x;
-			for(let obj2Id = 0; obj2Id < len; obj2Id++){
-				if (obj2Id === objId) continue;
+			const objPos = [arr[objId * this.constants.objLen], arr[objId * this.constants.objLen + 1]];
+			const objVel = [arr[objId * this.constants.objLen + 2], arr[objId * this.constants.objLen + 3]];
+			const objMass = arr[objId * this.constants.objLen + 4];
+			const objLock = arr[objId * this.constants.objLen + 5];
+			if (objLock === 0){
+				for(let obj2Id = 0; obj2Id < len; obj2Id++){
+					if (obj2Id !== objId) {
+						const obj2Pos = [arr[obj2Id * this.constants.objLen], arr[obj2Id * this.constants.objLen + 1]];
+						const obj2Vel = [arr[obj2Id * this.constants.objLen + 2], arr[obj2Id * this.constants.objLen + 3]];
+						const obj2Mass = arr[obj2Id * this.constants.objLen + 4];
+						const obj2Lock = arr[obj2Id * this.constants.objLen + 5];
+						
+						const D = dist(objPos[0],objPos[1], obj2Pos[0],obj2Pos[1]);
 
-				const obj2 = [arr[obj2Id*3], arr[obj2Id*3+1], arr[obj2Id*3+2]];
-				const D = dist(obj[0],obj[1], obj2[0],obj2[1]);
 
-				// const collType = collision(obj, obj2, objectId, object2Id, D, collisionType, interactMode, collidedObjectsIdList);
-
-				const sin = (obj2[1] - obj[1])/D; // Sin
-				const cos = (obj2[0] - obj[0])/D; // Cos
-
-				const velocity = gravity_func(sin, cos, D, gravitMode, obj2[2], obj[2], timeSpeed, g);
-
-				vel[0] += velocity[0];
-				vel[1] += velocity[1];
+						const radiusSum = Math.sqrt(Math.abs(objMass)) + Math.sqrt(Math.abs(obj2Mass));
+						if (D - radiusSum <= 0){
+							const afterCollision = gpuCollision(objPos, objVel, objMass, objLock, obj2Pos, obj2Vel, obj2Mass, obj2Lock, objId, obj2Id, D, collisionType, timeSpeed, interactMode);
+							objPos = [afterCollision[0], afterCollision[1]];
+							objVel = [afterCollision[2], afterCollision[3]];
+						} else {
+							const sin = (obj2Pos[1] - objPos[1])/D; // Sin
+							const cos = (obj2Pos[0] - objPos[0])/D; // Cos
+							const velocity = gravity_func(sin, cos, D, gravitMode, obj2Mass, objMass, timeSpeed, g);
+							objVel[0] += velocity[0];
+							objVel[1] += velocity[1];	
+						}
+					}
+				}
 			}
 
-			return vel;
-		}, {dynamicOutput: true, dynamicArguments: true});
+			objPos[0] += objVel[0]*timeSpeed;
+			objPos[1] += objVel[1]*timeSpeed;
+
+			return [objPos[0], objPos[1], objVel[0], objVel[1]];
+		}, {dynamicOutput: true, dynamicArguments: true, constants: {objLen: 6}});
 
 	}
 	gpuComputeVelocities = function(
 		objectsArray = this.objArr, 
-		callback = this.afterPhysics,
+		callback = this.gpuAfterPhysics,
 		interactMode = +this.interactMode.state, 
 		timeSpeed = this.timeSpeed.state, 
 		g = this.g.state, 
@@ -147,14 +166,16 @@ export default class Scene {
 		collisionType = +this.collisionMode.state
 	){
 		if (objectsArray.length > 1){
-			const prepairedArr = objectsArray.map(obj => [obj.x, obj.y, obj.m]);
+			const prepairedArr = objectsArray.map(obj => [obj.x, obj.y, obj.vx, obj.vy, obj.m, obj.lock]);
 			this.computeVelocities.setOutput([objectsArray.length]);
 			const newVelosities = this.computeVelocities(prepairedArr, objectsArray.length, interactMode, timeSpeed, g, gravitMode, collisionType);
 			// console.log(newVelosities)
 			for (let objId = objectsArray.length; objId--;){
 				const obj = objectsArray[objId];
-				obj.vx += newVelosities[objId][0];
-				obj.vy += newVelosities[objId][1];
+				obj.x = newVelosities[objId][0];
+				obj.y = newVelosities[objId][1];
+				obj.vx = newVelosities[objId][2];
+				obj.vy = newVelosities[objId][3];
 			}
 		}
 		callback && callback(objectsArray, this.collidedObjectsIdList, interactMode, collisionType, timeSpeed, 'singleThread');
@@ -187,6 +208,25 @@ export default class Scene {
 		this.collidedObjectsIdList = [];
 	}
 	// Runs after finish computing physics
+	gpuAfterPhysics = (objArr, collidedObjectsIdList, interactMode, collisionType, timeSpeed, func) => {
+		// After physics
+		// Set values after collisions
+		// let deleteObjectList = this.collision(objArr, collidedObjectsIdList, interactMode, collisionType);
+		// this.deleteObject(deleteObjectList, objArr);
+		this.activCam.allowFrameRender = true;
+		if (this.collisionMode.state === '0'){
+			this.addSelfVectors(objArr, timeSpeed);
+		}
+		// if (0&&(simulationDone > 1)){
+		// 	simulationDone --;
+		// 	if (func === 'multiThread'){
+		// 		this.physicsMultiThreadCalculate();
+		// 	} else if (func === 'singleThread') {
+		// 		this.physicsCalculate();
+		// 	}
+		// }
+	}
+	// Runs after finish computing physics
 	afterPhysics = (objArr, collidedObjectsIdList, interactMode, collisionType, timeSpeed, func) => {
 		// After physics
 		// Set values after collisions
@@ -209,7 +249,7 @@ export default class Scene {
 		for (let collidedObjectsId of collidedObjectsIdList){
 			let [objA, objB] = [ objArr[collidedObjectsId[0]], objArr[collidedObjectsId[1]] ];
 
-			if (collisionType == 0){ // Merge
+			if (collisionType === 0){ // Merge
 				if (objB.m + objA.m === 0){ // Anigilate
 					deleteObjectList.push(...collidedObjectsId);
 					if ( collidedObjectsId.includes(+this.camera.Target) && objArr === this.objArr ) this.camera.setTarget();
@@ -242,10 +282,8 @@ export default class Scene {
 				if (objToDelId === this.camera.Target && objArr === this.objArr) this.camera.setTarget(alivedObjId);
 				// Add collided object to deleteObjectList
 				deleteObjectList.push(objToDelId);
-			} else if (collisionType == 1){ // Repulsion
+			} else if (collisionType === 1){ // Repulsion
 				// let R = collidedObjectsId[2]; // The distance between objects
-				let gvx = objA.vx + objB.vx;
-				let gvy = objA.vy + objB.vy;
 				let D = dist(objA.x, objA.y, objB.x, objB.y); // The distance between objects
 				let v1 = this.gipot(objB.vx, objB.vy); // Scallar velocity
 				let v2 = this.gipot(objA.vx, objA.vy); // Scallar velocity
@@ -286,7 +324,7 @@ export default class Scene {
 					objA.x += objAMov * cos; objA.y += objAMov * sin;
 					objB.x -= objBMov * cos; objB.y -= objBMov * sin;
 				}
-			} else if (collisionType == 2){ // None
+			} else if (collisionType === 2){ // None
 
 			}
 		}
