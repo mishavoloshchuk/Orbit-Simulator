@@ -167,27 +167,27 @@ function gpuCollision(objAPos, objAVel, objAMass, objALock, objBPos, objBVel, ob
 
 		let v1 = gipot(objAVel[0], objAVel[1]); // Scallar velocity
 		let v2 = gipot(objBVel[0], objBVel[1]); // Scallar velocity
-		let vcos1 = 0;//v1 === 0 ? 0 : objAVel[0]/v1; // cos vx 1
-		let vsin1 = 0;//v1 === 0 ? 0 : objAVel[1]/v1; // sin vy 1
-		let vcos2 = 0;//v2 === 0 ? 0 : objBVel[0]/v2; // cos vx 2
-		let vsin2 = 0;//v2 === 0 ? 0 : objBVel[1]/v2; // sin vy 2
-		if (v1 !== 0){
-			vcos1 = objAVel[0]/v1;
-			vsin1 = objAVel[1]/v1;
-		}
-		if (v2 !== 0){
-			vcos2 = objBVel[0]/v2;
-			vsin2 = objBVel[1]/v2;
-		}
+		let vcos1 = v1 === 0 ? 0 : objAVel[0]/v1; // cos vx 1
+		let vsin1 = v1 === 0 ? 0 : objAVel[1]/v1; // sin vy 1
+		let vcos2 = v2 === 0 ? 0 : objBVel[0]/v2; // cos vx 2
+		let vsin2 = v2 === 0 ? 0 : objBVel[1]/v2; // sin vy 2
+		// if (v1 !== 0){
+		// 	vcos1 = objAVel[0]/v1;
+		// 	vsin1 = objAVel[1]/v1;
+		// }
+		// if (v2 !== 0){
+		// 	vcos2 = objBVel[0]/v2;
+		// 	vsin2 = objBVel[1]/v2;
+		// }
 		let ag1 = Math.atan2(vsin1, vcos1);
 		let ag2 = Math.atan2(vsin2, vcos2);
 
 		let cos = (objBPos[0] - objAPos[0])/D;
 		let sin = (objBPos[1] - objAPos[1])/D;
-		let fi = Math.atan2(sin, cos);
+		// let fi = Math.atan2(sin, cos);
 
-		let m1 = objAMass;
-		let m2 = objBMass;
+		// let m1 = objAMass;
+		// let m2 = objBMass;
 		// Object A new velocity
 		// if (objALock === 0){
 		// 	if (objBLock === 1) { m1 = 0; }
@@ -195,11 +195,17 @@ function gpuCollision(objAPos, objAVel, objAMass, objALock, objBPos, objBVel, ob
 		// 	objNewPosVel[3] = (( v2*Math.cos(ag2 - fi)*(m2-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1+m2) ) * Math.sin(fi) + v2*Math.sin(ag2 - fi)*Math.sin(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
 		// }
 		// Object B new velocity
-		if (objALock === 0){
-			if (objBLock === 1) { m1 = 0; }
-			objNewPosVel[2] = (( v1*Math.cos(ag1 - fi)*(m1-m2) + 2*m2*v2*Math.cos(ag2 - fi) ) / (m2+m1) ) * Math.cos(fi) + v1*Math.sin(ag1 - fi)*Math.cos(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
-			objNewPosVel[3] = (( v1*Math.cos(ag1 - fi)*(m1-m2) + 2*m2*v2*Math.cos(ag2 - fi) ) / (m2+m1) ) * Math.sin(fi) + v1*Math.sin(ag1 - fi)*Math.sin(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
-		}
+		// if (objALock === 0){
+		// 	if (objBLock === 1) { m1 = 0; }
+		// 	objNewPosVel[2] = (( v1*Math.cos(ag1 - fi)*(m1-m2) + 2*m2*v2*Math.cos(ag2 - fi) ) / (m2+m1) ) * Math.cos(fi) + v1*Math.sin(ag1 - fi)*Math.cos(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
+		// 	objNewPosVel[3] = (( v1*Math.cos(ag1 - fi)*(m1-m2) + 2*m2*v2*Math.cos(ag2 - fi) ) / (m2+m1) ) * Math.sin(fi) + v1*Math.sin(ag1 - fi)*Math.sin(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
+		// }
+		const m1 = objBLock === 1 ? 0 : objAMass;
+		const m2 = objBMass;
+		const newVel = ((m1 - m2) * v1 + 2*m2*v2) / (m1 + m2);
+		
+		objNewPosVel[2] = newVel * (cos - vcos1);
+		objNewPosVel[3] = newVel * (sin - vsin1);
 
 		// const objARadius = Math.sqrt(Math.abs(objAMass)); // Object A radius
 		// const objBRadius = objAMass === objBMass ? objARadius : Math.sqrt(Math.abs(objBMass)); // Object B radius
