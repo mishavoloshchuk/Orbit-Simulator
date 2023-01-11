@@ -115,6 +115,13 @@ export default class Scene {
 		// Collision function
 		this.gpu.addFunction(gpuCollision);
 
+		this.tst = this.gpu.createKernel(function (x, y){
+			return Math.atan2(y, x)*180/Math.PI;
+		}, {tactic: 'precision'}).setOutput([1]);
+		this.asd = function (x,y){
+			return [Math.atan2(x,y)*180/Math.PI, this.tst(x,y)[0]];
+		}
+
 		// Compute function
 		this.computeVelocities = this.gpu.createKernel(function(arr, len, interactMode, timeSpeed, g, gravitMode, collisionType) {
 			const objId = this.thread.x;

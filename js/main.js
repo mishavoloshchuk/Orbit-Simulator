@@ -74,6 +74,7 @@ window.onload = function(){
 	//Debug
 	this.simulationSpeed = 1;
 	this.maxFPS = false;
+	this.nextFrame = false;
 
 	this.simulationDone = simulationSpeed;
 
@@ -669,7 +670,7 @@ window.onload = function(){
 
 		simulationDone = simulationSpeed;
 		if (scene.objArr.length){
-			if (!pauseState){
+			if (!pauseState || nextFrame){
 				scene.simulationsPerFrame = 1; // Simulations per frame (only multithread)
 				if (window.Worker && window.navigator.hardwareConcurrency > 1 && multitreadCompute.state){
 					// scene.physicsMultiThreadCalculate();
@@ -759,6 +760,7 @@ window.onload = function(){
 
 		scene.activCam.allowFrameRender = false;
 		mouse.move = false;
+		nextFrame = false;
 		return true;
 	}
 	//scene.frame();
@@ -882,7 +884,7 @@ window.onload = function(){
 	}
 	//События клавиатуры
 	document.addEventListener('keydown', function(e){
-		//console.log(e.keyCode);
+		// console.log(e.keyCode);
 		if (!e.ctrlKey && !anyTextInputHasFocus){
 			switch (e.keyCode){
 				case 67:  document.querySelector('#create').click(); break; // (C) Create new object menu
@@ -899,6 +901,7 @@ window.onload = function(){
 				case 86:  document.querySelector('#camera').click(); break; // (V) Camera menu
 				case 70:  document.querySelector('#world_settings').click(); break; // (F) World physics settings
 				case 120: showFPS.state = !showFPS.state; break; // (F9) Show FPS
+				case 33: nextFrame = true; break; // Show one frame when paused
 				case 32: // (Space) Create object
 					if (swch.allowObjCreating){
 						addFrameBeginTask(()=>{ 

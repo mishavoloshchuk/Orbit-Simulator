@@ -10,35 +10,6 @@ function calculate({
 	collidedObjectsIdList,
 	multiThread = false
 }){
-	let innerIterator = function (object2Id) {
-		const obj2 = objectsArray[object2Id];
-
-		const D = dist(obj.x, obj.y, obj2.x, obj2.y); // The distance between objects
-
-		const collType = collision(obj, obj2, objectId, object2Id, D, collisionType, interactMode, collidedObjectsIdList);
-
-		const sin = (obj2.y - obj.y)/D; // Sin
-		const cos = (obj2.x - obj.x)/D; // Cos
-		let vector;
-		if(collType === false){
-			// Physics vector calculation
-			vector = gravity_func(sin, cos, D, gravitMode, obj2.m, obj.m, timeSpeed, g);
-		} else if (collisionType == 2 && collType !== false){
-			// Physics vector calculation
-			vector = gravity_func(sin, cos, D, gravitMode, obj2.m, obj.m, timeSpeed, g*Math.pow(collType, 3));
-		}
-		if (vector !== undefined){
-			// Add calculated vectors to object 1
-			obj.vx += vector[0];
-			obj.vy += vector[1];
-			// Add calculated vectors to object 2
-			if (multiThread === false){
-				obj2.vx -= vector[2];
-				obj2.vy -= vector[3];
-			}
-		}	
-	}
-
 	const obj = objectsArray[objectId];
 	if (interactMode === 0){
 		if (multiThread === true){
@@ -74,7 +45,32 @@ function calculate({
 		} else {
 			for (let object2Id = objectId; object2Id--;){
 				// console.log(objectId, object2Id)
-				innerIterator(object2Id);
+				const obj2 = objectsArray[object2Id];
+
+				const D = dist(obj.x, obj.y, obj2.x, obj2.y); // The distance between objects
+
+				const collType = collision(obj, obj2, objectId, object2Id, D, collisionType, interactMode, collidedObjectsIdList);
+
+				const sin = (obj2.y - obj.y)/D; // Sin
+				const cos = (obj2.x - obj.x)/D; // Cos
+				let vector;
+				if(collType === false){
+					// Physics vector calculation
+					vector = gravity_func(sin, cos, D, gravitMode, obj2.m, obj.m, timeSpeed, g);
+				} else if (collisionType == 2 && collType !== false){
+					// Physics vector calculation
+					vector = gravity_func(sin, cos, D, gravitMode, obj2.m, obj.m, timeSpeed, g*Math.pow(collType, 3));
+				}
+				if (vector !== undefined){
+					// Add calculated vectors to object 1
+					obj.vx += vector[0];
+					obj.vy += vector[1];
+					// Add calculated vectors to object 2
+					if (multiThread === false){
+						obj2.vx -= vector[2];
+						obj2.vy -= vector[3];
+					}
+				}
 			}
 		}
 	} else
@@ -194,26 +190,26 @@ function gpuCollision(objAPos, objAVel, objAMass, objALock, objBPos, objBVel, ob
 			objNewPosVel[2] = (( v1*Math.cos(ag1 - fi)*(m1-m2) + 2*m2*v2*Math.cos(ag2 - fi) ) / (m2+m1) ) * Math.cos(fi) + v1*Math.sin(ag1 - fi)*Math.cos(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
 			objNewPosVel[3] = (( v1*Math.cos(ag1 - fi)*(m1-m2) + 2*m2*v2*Math.cos(ag2 - fi) ) / (m2+m1) ) * Math.sin(fi) + v1*Math.sin(ag1 - fi)*Math.sin(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
 		}
-		// const vel2 = [0.0, 0.0];
-		// // Object B new velocity
-		// if (objBLock === 0){
-		// 	if (objALock === 1) { m2 = 0; }
-		// 	vel2[0] = (( v2*Math.cos(ag2 - fi)*(m2-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1+m2) ) * Math.cos(fi) + v2*Math.sin(ag2 - fi)*Math.cos(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
-		// 	vel2[1] = (( v2*Math.cos(ag2 - fi)*(m2-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1+m2) ) * Math.sin(fi) + v2*Math.sin(ag2 - fi)*Math.sin(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
-		// }
+		const vel2 = [0.0, 0.0];
+		// Object B new velocity
+		if (objBLock === 0){
+			if (objALock === 1) { m2 = 0; }
+			vel2[0] = (( v2*Math.cos(ag2 - fi)*(m2-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1+m2) ) * Math.cos(fi) + v2*Math.sin(ag2 - fi)*Math.cos(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
+			vel2[1] = (( v2*Math.cos(ag2 - fi)*(m2-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1+m2) ) * Math.sin(fi) + v2*Math.sin(ag2 - fi)*Math.sin(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
+		}
 
-		// const objARadius = Math.sqrt(Math.abs(objAMass)); // Object A radius
-		// const objBRadius = objAMass === objBMass ? objARadius : Math.sqrt(Math.abs(objBMass)); // Object B radius
-		// const rS = objARadius + objBRadius; // Both objects radiuses sum
-		// const mS = objAMass + objBMass; // Both objects mass sum
-		// let newD = dist(objAPos[0] + objNewPosVel[2]*timeSpeed, objAPos[1] + objNewPosVel[3]*timeSpeed, objBPos[0] + vel2[0]*timeSpeed, objBPos[1] + vel2[1]*timeSpeed); // The distance between objects with new position
-		// if (newD - rS <= 0){
-		// 	const rD = rS - D; // Total move
-		// 	const objAMov = objALock === 1 ? 0 : rD * (objBMass / mS); // Object A move
-		// 	const objBMov = objBLock === 1 ? 0 : rD - objAMov; // Object B move
-		// 	objNewPosVel[0] -= objAMov * cos; objNewPosVel[1] -= objAMov * sin;
-		// 	//objB.x -= objBMov * cos; objB.y -= objBMov * sin;
-		// }
+		const objARadius = Math.sqrt(Math.abs(objAMass)); // Object A radius
+		const objBRadius = objAMass === objBMass ? objARadius : Math.sqrt(Math.abs(objBMass)); // Object B radius
+		const rS = objARadius + objBRadius; // Both objects radiuses sum
+		const mS = objAMass + objBMass; // Both objects mass sum
+		let newD = dist(objAPos[0] + objNewPosVel[2]*timeSpeed, objAPos[1] + objNewPosVel[3]*timeSpeed, objBPos[0] + vel2[0]*timeSpeed, objBPos[1] + vel2[1]*timeSpeed); // The distance between objects with new position
+		if (newD - rS <= 0){
+			const rD = rS - D; // Total move
+			const objAMov = objALock === 1 ? 0 : rD * (objBMass / mS); // Object A move
+			const objBMov = objBLock === 1 ? 0 : rD - objAMov; // Object B move
+			objNewPosVel[0] -= objAMov * cos; objNewPosVel[1] -= objAMov * sin;
+			//objB.x -= objBMov * cos; objB.y -= objBMov * sin;
+		}
 		// return objNewPosVel;
 	}
 	return objNewPosVel;
