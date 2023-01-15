@@ -212,10 +212,10 @@ export default class Scene {
 		collisionType = +this.collisionMode.state
 	){
 		// console.log('Calculate begin:');
-		for (let objectId = objectsArray.length; objectId--;){
+		for (let object1Id = objectsArray.length; object1Id--;){
 			calculate({
 				objectsArray: objectsArray,
-				objectId: +objectId,
+				object1Id: +object1Id,
 				interactMode: interactMode,
 				gravitMode: +gravitMode,
 				g: g,
