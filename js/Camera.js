@@ -426,8 +426,12 @@ export default class Camera{
 		}
 		let deletedObjectsList = [];
 		let distance = [Infinity, ];
-		let afterPhysicsCallback = (...args) => {
-			const toDeleteObjectsList = this.scene.collision(...args);
+		let afterPhysicsCallback = (objectsArray, collidedObjectsIdList, interactMode, collisionType, timeSpeed) => {
+			let toDeleteObjectsList = [];
+			for (let collidedObjectsId of collidedObjectsIdList){
+				toDeleteObjectsList.push(...this.scene.collision(objectsArray, collisionType, ...collidedObjectsId));
+			}
+
 			this.scene.addSelfVectors(objArrCopy, this.scene.timeSpeed.state/accuracity);
 
 			// Change newObjId after delete some objects after collision

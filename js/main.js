@@ -561,7 +561,7 @@ window.onload = function(){
 				if (pauseWhenCreatingObject.state){
 					pauseState = pauseWhenCreatingObject.prevPauseState;
 				}
-				scene.camera.clearLayer2();
+				// scene.camera.clearLayer2();
 			}
 			if (mbut == 'camera' && swch.s_track){
 				scene.camera.setTarget(scene.objectSelect('nearest', scene.camera.Target));
@@ -672,11 +672,13 @@ window.onload = function(){
 		if (scene.objArr.length){
 			if (!pauseState || nextFrame){
 				scene.simulationsPerFrame = 1; // Simulations per frame (only multithread)
-				if (window.Worker && window.navigator.hardwareConcurrency > 1 && multitreadCompute.state){
-					// scene.physicsMultiThreadCalculate();
-					scene.gpuComputeVelocities();
-				} else {
-					scene.physicsCalculate(); // Scene physics calculations (1 step)
+				for(let i = 1; i--;){
+					if (window.Worker && window.navigator.hardwareConcurrency > 1 && multitreadCompute.state){
+						// scene.physicsMultiThreadCalculate();
+						scene.gpuComputeVelocities();
+					} else {
+						scene.physicsCalculate(); // Scene physics calculations (1 step)
+					}
 				}
 			}
 		}

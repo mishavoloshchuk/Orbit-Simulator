@@ -201,12 +201,12 @@ function gpuCollision(objAPos, objAVel, objAMass, objALock, objBPos, objBVel, ob
 		const objARadius = Math.sqrt(Math.abs(objAMass)); // Object A radius
 		const objBRadius = objAMass === objBMass ? objARadius : Math.sqrt(Math.abs(objBMass)); // Object B radius
 		const rS = objARadius + objBRadius; // Both objects radiuses sum
-		const mS = objAMass + objBMass; // Both objects mass sum
-		let newD = dist(objAPos[0] + objNewPosVel[2]*timeSpeed, objAPos[1] + objNewPosVel[3]*timeSpeed, objBPos[0] + vel2[0]*timeSpeed, objBPos[1] + vel2[1]*timeSpeed); // The distance between objects with new position
+		let newD = dist(objAPos[0] + objNewPosVel[2]*timeSpeed, objAPos[1] + objNewPosVel[3]*timeSpeed, objBPos[0] + objBVel[0]*timeSpeed, objBPos[1] + objBVel[1]*timeSpeed); // The distance between objects with new position
 		if (newD - rS <= 0){
+			const mS = objAMass + objBMass; // Both objects mass sum
 			const rD = rS - D; // Total move
 			const objAMov = objALock === 1 ? 0 : rD * (objBMass / mS); // Object A move
-			const objBMov = objBLock === 1 ? 0 : rD - objAMov; // Object B move
+			// const objBMov = objBLock === 1 ? 0 : rD - objAMov; // Object B move
 			objNewPosVel[0] -= objAMov * cos; objNewPosVel[1] -= objAMov * sin;
 			//objB.x -= objBMov * cos; objB.y -= objBMov * sin;
 		}
