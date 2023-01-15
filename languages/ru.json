@@ -92,7 +92,7 @@
 
 	"gravity_force_modes": "Режимы силы притяжения",
 	"inversely_proportional_to_the_cube_of_the_distance": "Обратно-пропорционально кубу расстояния",
-	"inversely_proportional_to_the_square_of_the_distance_(usually)": "Обратно-пропорционально квадрату расстояния (обычно)",
+	"inversely_proportional_to_the_square_of_the_distance_(usually)": "Обратно-пропорционально квадрату расстояния (реальность)",
 	"inversely_proportional_to_distance": "Обратно-пропорционально расстоянию",
 	"constant_attraction": "Постоянное притяжение",
 	"proportional_to_distance": "Пропорционально расстоянию",
@@ -123,7 +123,7 @@
 
 	"performance": "Производительность",
 	"show_fps": "Показывать FPS",
-	"multithreading": "Многопоточная обработка",
+	"gpu_compute": "Аппаратное ускорение (GPU)",
 	"max_performance": "Максимальная производительность",
 
 	"load/save_world": "Загрузить/сохранить мир:",

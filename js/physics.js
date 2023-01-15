@@ -7,76 +7,38 @@ function calculate({
 	g, 
 	timeSpeed, 
 	collisionType, 
-	collidedObjectsIdList,
-	multiThread = false
+	collidedObjectsIdList
 }){
 	const obj1 = objectsArray[object1Id];
 	if (interactMode === 0){
-		if (multiThread === true){
-			for (let object2Id = objectsArray.length; object2Id--;){
-				if (object2Id === object1Id) continue;
-				const obj2 = objectsArray[object2Id];
+		for (let object2Id = object1Id; object2Id--;){
+			// console.log(object1Id, object2Id)
+			const obj2 = objectsArray[object2Id];
 
-				const D = dist(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
-				const sin = (obj2.y - obj1.y)/D; // Sin
-				const cos = (obj2.x - obj1.x)/D; // Cos
-				let vector;
+			const D = dist(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
+			const sin = (obj2.y - obj1.y)/D; // Sin
+			const cos = (obj2.x - obj1.x)/D; // Cos
+			let vector;
 
-				const radiusSum = Math.sqrt(Math.abs(obj1.m)) + Math.sqrt(Math.abs(obj2.m));
-				if (D - radiusSum <= 0){
-					if (collisionType === 2){ // Collision type: none
-						vector = gravity_func(sin, cos, D, gravitMode, obj2.m, obj1.m, timeSpeed, g*Math.pow(D/radiusSum, 3));
-					}
-					collidedObjectsIdList.push([object1Id, object2Id]); // Send the collised objects
-					return 1;
-				} else { 
-					// Physics vector calculation
-					vector = gravity_func(sin, cos, D, gravitMode, obj2.m, obj1.m, timeSpeed, g);
+			const radiusSum = Math.sqrt(Math.abs(obj1.m)) + Math.sqrt(Math.abs(obj2.m));
+			if (D - radiusSum <= 0){
+				if (collisionType === 2){ // Collision type: none
+					vector = gravity_func(sin, cos, D, gravitMode, obj2.m, obj1.m, timeSpeed, g*Math.pow(D/radiusSum, 3));
 				}
-
-				if (vector !== undefined){
-					// Add calculated vectors to object 1
-					obj1.vx += vector[0];
-					obj1.vy += vector[1];
-					// Add calculated vectors to object 2
-					if (multiThread === false){
-						obj2.vx -= vector[2];
-						obj2.vy -= vector[3];
-					}
-				}
+				collidedObjectsIdList.push([object1Id, object2Id]); // Send the collised objects
+				return 1;
+			} else { 
+				// Physics vector calculation
+				vector = gravity_func(sin, cos, D, gravitMode, obj2.m, obj1.m, timeSpeed, g);
 			}
-		} else {
-			for (let object2Id = object1Id; object2Id--;){
-				// console.log(object1Id, object2Id)
-				const obj2 = objectsArray[object2Id];
 
-				const D = dist(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
-				const sin = (obj2.y - obj1.y)/D; // Sin
-				const cos = (obj2.x - obj1.x)/D; // Cos
-				let vector;
-
-				const radiusSum = Math.sqrt(Math.abs(obj1.m)) + Math.sqrt(Math.abs(obj2.m));
-				if (D - radiusSum <= 0){
-					if (collisionType === 2){ // Collision type: none
-						vector = gravity_func(sin, cos, D, gravitMode, obj2.m, obj1.m, timeSpeed, g*Math.pow(D/radiusSum, 3));
-					}
-					collidedObjectsIdList.push([object1Id, object2Id]); // Send the collised objects
-					return 1;
-				} else { 
-					// Physics vector calculation
-					vector = gravity_func(sin, cos, D, gravitMode, obj2.m, obj1.m, timeSpeed, g);
-				}
-
-				if (vector !== undefined){
-					// Add calculated vectors to object 1
-					obj1.vx += vector[0];
-					obj1.vy += vector[1];
-					// Add calculated vectors to object 2
-					if (multiThread === false){
-						obj2.vx -= vector[2];
-						obj2.vy -= vector[3];
-					}
-				}
+			if (vector !== undefined){
+				// Add calculated vectors to object 1
+				obj1.vx += vector[0];
+				obj1.vy += vector[1];
+				// Add calculated vectors to object 2
+				obj2.vx -= vector[2];
+				obj2.vy -= vector[3];
 			}
 		}
 	} else

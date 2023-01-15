@@ -92,7 +92,7 @@
 
 	"gravity_force_modes": "Gravity modes",
 	"inversely_proportional_to_the_cube_of_the_distance": "Inversely proportional to the cube of the distance",
-	"inversely_proportional_to_the_square_of_the_distance_(usually)": "Inversely proportional to the square of the distance (usually)",
+	"inversely_proportional_to_the_square_of_the_distance_(usually)": "Inversely proportional to the square of the distance (reality)",
 	"inversely_proportional_to_distance": "Inversely proportional to distance",
 	"constant_attraction": "Constant attraction",
 	"proportional_to_distance": "Proportional to distance",
@@ -119,11 +119,11 @@
 	"no_image_found_at_this_address": "*No image found for this URL",
 	"image_url": "Image URL",
 	"background_intensity": "Background intensity:",
-	"background_movement_on_mouse_movement": "Background movement on mouse movement",
+	"background_movement_on_mouse_movement": "Background movement",
 
 	"performance": "Performance",
 	"show_fps": "Show FPS",
-	"multithreading": "Multithreaded processing",
+	"gpu_compute": "Hardware acceleration (GPU)",
 	"max_performance": "Max performance",
 
 	"load/save_world": "Load/save world",

@@ -211,9 +211,9 @@ window.onload = function(){
 			if (val){ fpsIndicator.turnOn() }
 			else { fpsIndicator.turnOff() }
 	}, }),
-	multitreadCompute = new UserInput({type: 'checkbox', id: 'multithread_comput', stateSaving: true, initState: getDeviceType() === 'desktop', callback: (val, input)=>{
-		if (window.navigator.hardwareConcurrency < 2) {
-			input.element.parentElement.style.display = 'none'; // Hide multithread option, if computer have only 1 thread
+	gpuCompute = new UserInput({type: 'checkbox', id: 'gpu_compute', stateSaving: true, initState: true, callback: (val, input)=>{
+		if (!GPU.isGPUSupported) {
+			input.element.parentElement.style.display = 'none'; // Hide multithread option, if gpu not supported
 		}
 	}}),
 	maxPerformance = new UserInput({type: 'checkbox', id: 'max_performance', stateSaving: true, callback: (state)=>{
@@ -673,7 +673,7 @@ window.onload = function(){
 			if (!pauseState || nextFrame){
 				scene.simulationsPerFrame = 1; // Simulations per frame (only multithread)
 				for(let i = 1; i--;){
-					if (window.Worker && window.navigator.hardwareConcurrency > 1 && multitreadCompute.state){
+					if (GPU.isGPUSupported && gpuCompute.state){
 						// scene.physicsMultiThreadCalculate();
 						scene.gpuComputeVelocities();
 					} else {

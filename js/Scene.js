@@ -105,7 +105,6 @@ export default class Scene {
 		// }
 
 		this.gpu = new GPU();
-
 		// The distance between two points
 		this.gpu.addFunction(dist);
 		// Gravitation function

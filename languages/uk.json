@@ -92,7 +92,7 @@
 
 	"gravity_force_modes": "Режими сили тяжіння",
 	"inversely_proportional_to_the_cube_of_the_distance": "Зворотньо-пропорційно кубу відстані",
-	"inversely_proportional_to_the_square_of_the_distance_(usually)": "Зворотньо-пропорційно квадрату відстані (зазвичай)",
+	"inversely_proportional_to_the_square_of_the_distance_(usually)": "Зворотньо-пропорційно квадрату відстані (реальність)",
 	"inversely_proportional_to_distance": "Зворотньо-пропорційно відстані",
 	"constant_attraction": "Постійне тяжіння",
 	"proportional_to_distance": "Пропорційно відстані",
@@ -123,7 +123,7 @@
 
 	"performance": "Продуктивність",
 	"show_fps": "Показувати FPS",
-	"multithreading": "Багатопотокова обробка",
+	"gpu_compute": "Апаратне прискорення (GPU)",
 	"max_performance": "Максимальна продуктивність",
 	
 	"load/save_world": "Завантажити/зберегти світ",
