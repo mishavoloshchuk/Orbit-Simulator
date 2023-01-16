@@ -46,6 +46,8 @@ window.onload = function(){
 		 }, objId);
 	}
 
+	this.checkGPU = () =>  [GPU.isGPUSupported, GPU.isSinglePrecisionSupported, GPU.isWebGLSupported].every(exp => exp);
+
 	var mbut = 'create';
 	var menu_state = true; // Menu state (Opened/Closed)
 	if (sessionStorage['mbut'] && sessionStorage['menu_state']){
@@ -212,7 +214,7 @@ window.onload = function(){
 			else { fpsIndicator.turnOff() }
 	}, }),
 	gpuCompute = new UserInput({type: 'checkbox', id: 'gpu_compute', stateSaving: true, initState: true, callback: (val, input)=>{
-		if (!GPU.isGPUSupported) {
+		if (!checkGPU()) {
 			input.element.parentElement.style.display = 'none'; // Hide multithread option, if gpu not supported
 		}
 	}}),
@@ -673,7 +675,7 @@ window.onload = function(){
 			if (!pauseState || nextFrame){
 				scene.simulationsPerFrame = 1; // Simulations per frame (only multithread)
 				for(let i = 1; i--;){
-					if (GPU.isGPUSupported && gpuCompute.state){
+					if (checkGPU() && gpuCompute.state){
 						// scene.physicsMultiThreadCalculate();
 						scene.gpuComputeVelocities();
 					} else {
