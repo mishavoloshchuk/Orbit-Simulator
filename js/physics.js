@@ -12,7 +12,6 @@ function calculate({
 	const obj1 = objectsArray[object1Id];
 	if (interactMode === 0){
 		for (let object2Id = object1Id; object2Id--;){
-			// console.log(object1Id, object2Id)
 			const obj2 = objectsArray[object2Id];
 
 			const D = dist(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
@@ -26,7 +25,7 @@ function calculate({
 				if (collisionType === 2){ // Collision type: none
 					vector = gravity_func(sin, cos, D, gravitMode, obj2.m, obj1.m, timeSpeed, g*Math.pow(D/radiusSum, 3));
 				}
-				collidedObjectsIdList.push([object1Id, object2Id]); // Send the collised objects
+				collidedObjectsIdList.push([object1Id, object2Id]); // Send the collided objects
 			} else { 
 				// Physics vector calculation
 				vector = gravity_func(sin, cos, D, gravitMode, obj2.m, obj1.m, timeSpeed, g);
@@ -34,11 +33,15 @@ function calculate({
 
 			if (vector !== undefined){
 				// Add calculated vectors to object 1
-				obj1.vx += vector[0];
-				obj1.vy += vector[1];
+				if (!obj1.lock){
+					obj1.vx += vector[0];
+					obj1.vy += vector[1];
+				}
 				// Add calculated vectors to object 2
-				obj2.vx -= vector[2];
-				obj2.vy -= vector[3];
+				if (!obj2.lock){
+					obj2.vx -= vector[2];
+					obj2.vy -= vector[3];
+				}
 			}
 		}
 	} else

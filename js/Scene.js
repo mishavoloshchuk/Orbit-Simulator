@@ -150,7 +150,7 @@ export default class Scene {
 
 			return [obj1Vel[0], obj1Vel[1], collided];
 		}, {dynamicOutput: true, dynamicArguments: true, constants: {objLen: 4}, tactic: 'precision'})
-			.setLoopMaxIterations(100000000);
+			.setLoopMaxIterations(10000000);
 
 	}
 	gpuComputeVelocities = function(
@@ -167,7 +167,6 @@ export default class Scene {
 			this.computeVelocities.setOutput([objectsArray.length]);
 			const newVelosities = this.computeVelocities(prepairedArr, objectsArray.length, interactMode, timeSpeed, g, gravitMode, collisionType);
 			// After physics
-			this.activCam.allowFrameRender = true;
 			let collidedObjectsIDs = [];
 			for (let obj1Id = objectsArray.length; obj1Id--;){
 				if (newVelosities[obj1Id][2] === 1){ // if object collided
@@ -188,7 +187,7 @@ export default class Scene {
 					const D = dist(obj1.x,obj1.y, obj2.x,obj2.y);
 
 					const radiusSum = Math.sqrt(Math.abs(obj1.m)) + Math.sqrt(Math.abs(obj2.m));
-					if (D - radiusSum < 0) {
+					if (D - radiusSum <= 0) {
 						deleteObjectList.push(...this.collision(objectsArray, collisionType, obj1Id, obj2Id));
 					}
 				}
@@ -294,17 +293,17 @@ export default class Scene {
 			let sin = (objB.y - objA.y)/D;
 			let fi = Math.atan2(sin, cos);
 
-			let m1 = objA.m;
-			let m2 = objB.m;
 			// Object A new velocity
 			if (!objA.lock){
-				if (objB.lock) { m1 = 0; }
+				const m1 = objB.lock ? 0 : objA.m;
+				const m2 = objB.m;
 				objA.vx = (( v1*Math.cos(ag1 - fi)*(m1-m2) + 2*m2*v2*Math.cos(ag2 - fi) ) / (m2+m1) ) * Math.cos(fi) + v1*Math.sin(ag1 - fi)*Math.cos(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
 				objA.vy = (( v1*Math.cos(ag1 - fi)*(m1-m2) + 2*m2*v2*Math.cos(ag2 - fi) ) / (m2+m1) ) * Math.sin(fi) + v1*Math.sin(ag1 - fi)*Math.sin(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
 			}
 			// Object B new velocity
 			if (!objB.lock){
-				if (objA.lock) { m2 = 0; }
+				const m1 = objA.m;
+				const m2 = objA.lock ? 0 : objB.m;
 				objB.vx = (( v2*Math.cos(ag2 - fi)*(m2-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1+m2) ) * Math.cos(fi) + v2*Math.sin(ag2 - fi)*Math.cos(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
 				objB.vy = (( v2*Math.cos(ag2 - fi)*(m2-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1+m2) ) * Math.sin(fi) + v2*Math.sin(ag2 - fi)*Math.sin(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
 			}
@@ -331,7 +330,7 @@ export default class Scene {
 	addSelfVectors(objArr, timeSpeed){
 		// Add the vectors
 		for (let object of objArr){
-			if (mov_obj != objArr.indexOf(object)){
+			if (mov_obj !== objArr.indexOf(object)){
 				// Add vectors
 				if (object.lock){ // If object locked
 					object.vx = 0;
