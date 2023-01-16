@@ -432,13 +432,13 @@ export default class Camera{
 				toDeleteObjectsList.push(...this.scene.collision(objectsArray, collisionType, ...collidedObjectsId));
 			}
 
-			this.scene.addSelfVectors(objArrCopy, this.scene.timeSpeed.state/accuracity);
-
 			// Change newObjId after delete some objects after collision
 			newObjId = getIdAfterArrChange(toDeleteObjectsList, newObjId);
 
 			// Delete objects after collide and return the deleted objects to the deletedObjectsList array
 			if (toDeleteObjectsList.length > 0) deletedObjectsList = deletedObjectsList.concat(this.scene.deleteObject(toDeleteObjectsList, objArrCopy, null));
+
+			this.scene.addSelfVectors(objArrCopy, this.scene.timeSpeed.state/accuracity);
 
 			// Add points to trajectory trace array
 			for (let objectId = objArrCopy.length; objectId--;){

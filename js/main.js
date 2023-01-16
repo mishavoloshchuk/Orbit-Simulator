@@ -259,7 +259,6 @@ window.onload = function(){
 
 	Object.assign(scene, {
 		// Settings
-		showFPS: showFPS,
 		maxPerformance: maxPerformance,
 		zoomToScreenCenter: zoomToScreenCenter,
 		// Physics
@@ -286,6 +285,7 @@ window.onload = function(){
 	});
 
 	scene.addNewObject({vx: 0, vy: 0, mass: 1000, ob_col: '#ffff00', objLck: true}); // First object init
+	scene.addNewObject({x: innerWidth/2 + 150, y: innerHeight/2, vx: 0, vy: 0, mass: 1000, ob_col: '#0000ff', objLck: true}); // First object init
 
 	change_state(mbut);
 
@@ -905,7 +905,7 @@ window.onload = function(){
 				case 86:  document.querySelector('#camera').click(); break; // (V) Camera menu
 				case 70:  document.querySelector('#world_settings').click(); break; // (F) World physics settings
 				case 120: showFPS.state = !showFPS.state; break; // (F9) Show FPS
-				case 33: nextFrame = true; break; // Show one frame when paused
+				case 39:  nextFrame = true; break; // Show one frame when paused (Right arrow)
 				case 32: // (Space) Create object
 					if (swch.allowObjCreating){
 						addFrameBeginTask(()=>{ 

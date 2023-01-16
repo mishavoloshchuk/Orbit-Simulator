@@ -20,13 +20,13 @@ function calculate({
 			const cos = (obj2.x - obj1.x)/D; // Cos
 			let vector;
 
+			// Collision
 			const radiusSum = Math.sqrt(Math.abs(obj1.m)) + Math.sqrt(Math.abs(obj2.m));
 			if (D - radiusSum <= 0){
 				if (collisionType === 2){ // Collision type: none
 					vector = gravity_func(sin, cos, D, gravitMode, obj2.m, obj1.m, timeSpeed, g*Math.pow(D/radiusSum, 3));
 				}
 				collidedObjectsIdList.push([object1Id, object2Id]); // Send the collised objects
-				return 1;
 			} else { 
 				// Physics vector calculation
 				vector = gravity_func(sin, cos, D, gravitMode, obj2.m, obj1.m, timeSpeed, g);
