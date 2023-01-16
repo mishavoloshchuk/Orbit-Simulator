@@ -116,39 +116,39 @@ export default class Scene {
 
 		// Compute function
 		this.computeVelocities = this.gpu.createKernel(function(arr, len, interactMode, timeSpeed, g, gravitMode, collisionType) {
-			const objId = this.thread.x;
-			const objPos = [arr[objId * this.constants.objLen], arr[objId * this.constants.objLen + 1]];
-			const objVel = [0, 0];
-			const objMass = arr[objId * this.constants.objLen + 2];
-			const objLock = arr[objId * this.constants.objLen + 3];
+			const obj1Id = this.thread.x;
+			const obj1Pos = [arr[obj1Id * this.constants.objLen], arr[obj1Id * this.constants.objLen + 1]];
+			const obj1Vel = [0, 0];
+			const obj1Mass = arr[obj1Id * this.constants.objLen + 2];
+			const obj1Lock = arr[obj1Id * this.constants.objLen + 3];
 			let collided = false;
 
 			for(let obj2Id = 0; obj2Id < len; obj2Id++){
-				if (obj2Id !== objId) {
+				if (obj2Id !== obj1Id) {
 					const obj2Pos = [arr[obj2Id * this.constants.objLen], arr[obj2Id * this.constants.objLen + 1]];
 					const obj2Mass = arr[obj2Id * this.constants.objLen + 2];
 
-					const D = dist(objPos[0],objPos[1], obj2Pos[0],obj2Pos[1]);
+					const D = dist(obj1Pos[0],obj1Pos[1], obj2Pos[0],obj2Pos[1]);
 
-					const radiusSum = Math.sqrt(Math.abs(objMass)) + Math.sqrt(Math.abs(obj2Mass));
-					if (D - radiusSum < 0) {
+					const radiusSum = Math.sqrt(Math.abs(obj1Mass)) + Math.sqrt(Math.abs(obj2Mass));
+					if (D - radiusSum <= 0) {
 						if (collided === false){
 							collided = true;
 						}
 					} else {
-						if (objLock === 0){
-							const sin = (obj2Pos[1] - objPos[1])/D; // Sin
-							const cos = (obj2Pos[0] - objPos[0])/D; // Cos
-							const velocity = gravity_func(sin, cos, D, gravitMode, obj2Mass, objMass, timeSpeed, g);
-							objVel[0] += velocity[0];
-							objVel[1] += velocity[1];	
+						if (obj1Lock === 0){
+							const sin = (obj2Pos[1] - obj1Pos[1])/D; // Sin
+							const cos = (obj2Pos[0] - obj1Pos[0])/D; // Cos
+							const velocity = gravity_func(sin, cos, D, gravitMode, obj2Mass, obj1Mass, timeSpeed, g);
+							obj1Vel[0] += velocity[0];
+							obj1Vel[1] += velocity[1];	
 						}
 					}
 
 				}
 			}
 
-			return [objVel[0], objVel[1], collided];
+			return [obj1Vel[0], obj1Vel[1], collided];
 		}, {dynamicOutput: true, dynamicArguments: true, constants: {objLen: 4}, tactic: 'precision'})
 			.setLoopMaxIterations(100000000);
 
@@ -169,13 +169,14 @@ export default class Scene {
 			// After physics
 			this.activCam.allowFrameRender = true;
 			let collidedObjectsIDs = [];
-			for (let objId = objectsArray.length; objId--;){
-				if (newVelosities[objId][2] === 1){ // if object collided
-					collidedObjectsIDs.push(objId);
+			for (let obj1Id = objectsArray.length; obj1Id--;){
+				if (newVelosities[obj1Id][2] === 1){ // if object collided
+					collidedObjectsIDs.push(obj1Id);
 				}
-				objectsArray[objId].vx += newVelosities[objId][0];
-				objectsArray[objId].vy += newVelosities[objId][1];
+				objectsArray[obj1Id].vx += newVelosities[obj1Id][0];
+				objectsArray[obj1Id].vy += newVelosities[obj1Id][1];
 			}
+			
 			let deleteObjectList = []; // Array of objects will be deleted after collision "merge"
 			for (let i = collidedObjectsIDs.length; i--;){
 				const obj1Id = collidedObjectsIDs[i];
@@ -437,18 +438,18 @@ export default class Scene {
 		document.querySelector('#object_count_value').innerHTML = this.objArr.length;
 	}
 	//Необходимая скорость для круговой орбиты
-	forceToCircularOrbit(px, py, objId){
-		if (this.objArr[objId]){
-			const objToOrbMass = Math.abs(this.objArr[objId].m);
-			let R = this.dist(this.camera.screenPix(px, 'x'), this.camera.screenPix(py, 'y'), this.camera.screenPix(this.objArr[objId].x, 'x'), this.camera.screenPix(this.objArr[objId].y, 'y'))*this.camera.animZoom;
+	forceToCircularOrbit(px, py, obj1Id){
+		if (this.objArr[obj1Id]){
+			const objToOrbMass = Math.abs(this.objArr[obj1Id].m);
+			let R = this.dist(this.camera.screenPix(px, 'x'), this.camera.screenPix(py, 'y'), this.camera.screenPix(this.objArr[obj1Id].x, 'x'), this.camera.screenPix(this.objArr[obj1Id].y, 'y'))*this.camera.animZoom;
 			let V = Math.sqrt((objToOrbMass*5)*(R)/this.g.state);
-			let a = this.objArr[objId].x - px;
-			let b = this.objArr[objId].y - py;
+			let a = this.objArr[obj1Id].x - px;
+			let b = this.objArr[obj1Id].y - py;
 			let sin = b/R, cos = a/R;
 			let svx = -(sin/V)*objToOrbMass*5;
 			let svy = (cos/V)*objToOrbMass*5;
-			//if (this.objArr[objId].main_obj){
-			//	let object = this.objArr[objId].main_obj;
+			//if (this.objArr[obj1Id].main_obj){
+			//	let object = this.objArr[obj1Id].main_obj;
 			//	while (this.objArr[object].main_obj){
 			//		svx -= this.objArr[object].vx;
 			//		svx -= this.objArr[object].vy;

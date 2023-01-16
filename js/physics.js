@@ -26,13 +26,12 @@ function calculate({
 					vector = gravity_func(sin, cos, D, gravitMode, obj2.m, obj1.m, timeSpeed, g*Math.pow(D/radiusSum, 3));
 				}
 				collidedObjectsIdList.push([object1Id, object2Id]); // Send the collised objects
-				return 1;
 			} else { 
 				// Physics vector calculation
 				vector = gravity_func(sin, cos, D, gravitMode, obj2.m, obj1.m, timeSpeed, g);
 			}
 
-			if (vector !== undefined){
+			if (vector !== undefined && obj1.lock === false){
 				// Add calculated vectors to object 1
 				obj1.vx += vector[0];
 				obj1.vy += vector[1];
