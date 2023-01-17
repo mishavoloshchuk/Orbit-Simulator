@@ -285,7 +285,10 @@ window.onload = function(){
 	});
 
 	scene.addNewObject({vx: 0, vy: 0, mass: 1000, ob_col: '#ffff00', objLck: true}); // First object init
-	scene.addNewObject({x: innerWidth/2 + 150, y: innerHeight/2, vx: 0, vy: 0, mass: 1000, ob_col: '#0000ff', objLck: true}); // First object init
+	// pauseState = true;
+	// scene.addNewObject({vx: 0, vy: 0, mass: 1000, ob_col: '#0000ff88'}); // First object init
+	// scene.addNewObject({x: innerWidth/2 + 30, y: innerHeight/2, vx: 0, vy: 0, mass: 1000, ob_col: '#00ff0088'}); // First object init
+	// scene.addNewObject({x: innerWidth/2 - 30, y: innerHeight/2, vx: 0, vy: 0, mass: 1000, ob_col: '#ff000088'}); // First object init
 
 	change_state(mbut);
 

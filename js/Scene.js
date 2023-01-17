@@ -176,6 +176,7 @@ export default class Scene {
 				objectsArray[obj1Id].vy += newVelosities[obj1Id][1];
 			}
 			
+			let collidedPairs = [];
 			let deleteObjectList = []; // Array of objects will be deleted after collision "merge"
 			for (let i = collidedObjectsIDs.length; i--;){
 				const obj1Id = collidedObjectsIDs[i];
@@ -188,9 +189,16 @@ export default class Scene {
 
 					const radiusSum = Math.sqrt(Math.abs(obj1.m)) + Math.sqrt(Math.abs(obj2.m));
 					if (D - radiusSum <= 0) {
-						deleteObjectList.push(...this.collision(objectsArray, collisionType, obj1Id, obj2Id));
+						collidedPairs.push([obj1Id, obj2Id]);
 					}
 				}
+			}
+			// const globalMass = objectsArray.reduce((gMass, obj) => gMass + obj.m, 0);
+			// const globVel = objectsArray.reduce((vec2, obj)=>[vec2[0] + obj.vx * (obj.m/globalMass), vec2[1] + obj.vy * (obj.m/globalMass)], [0, 0]);
+			// console.log(globVel)
+			for (let i = collidedPairs.length; i--;){
+				const collidedPair = collidedPairs[i]
+				deleteObjectList.push(...this.collision(objectsArray, collisionType, collidedPair[1], collidedPair[0]));
 			}
 
 			this.deleteObject(deleteObjectList, objectsArray); // Delete objects by deleteObjectsList
@@ -211,6 +219,9 @@ export default class Scene {
 		collisionType = +this.collisionMode.state
 	){
 		// console.log('Calculate begin:');
+		// const globalMass = objectsArray.reduce((gMass, obj) => gMass + obj.m, 0);
+		// const globVel = objectsArray.reduce((vec2, obj)=>[vec2[0] + obj.vx * (obj.m/globalMass), vec2[1] + obj.vy * (obj.m/globalMass)], [0, 0]);
+		// console.log(globVel)
 		for (let object1Id = objectsArray.length; object1Id--;){
 			calculate({
 				objectsArray: objectsArray,
@@ -292,7 +303,6 @@ export default class Scene {
 			let cos = (objB.x - objA.x)/D;
 			let sin = (objB.y - objA.y)/D;
 			let fi = Math.atan2(sin, cos);
-
 			// Object A new velocity
 			if (!objA.lock){
 				const m1 = objB.lock ? 0 : objA.m;
@@ -316,7 +326,7 @@ export default class Scene {
 			let newD = dist(objA.x + objA.vx*this.timeSpeed.state, objA.y + objA.vy*this.timeSpeed.state, objB.x + objB.vx*this.timeSpeed.state, objB.y + objB.vy*this.timeSpeed.state); // The distance between objects with new position
 			if (newD - rS <= 0){
 				const rD = rS - D; // Total move
-				const objAMov = objA.lock ? 0 : rD * (objB.m / mS); // Object A move
+				const objAMov = objA.lock ? 0 : rD * (objA.m / mS); // Object A move
 				const objBMov = objB.lock ? 0 : rD - objAMov; // Object B move
 				objA.x -= objAMov * cos; objA.y -= objAMov * sin;
 				objB.x += objBMov * cos; objB.y += objBMov * sin;
