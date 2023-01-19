@@ -583,8 +583,8 @@ export default class Camera{
 		for (let deletedObj of deletedObjectsList){
 			const size = this.getScreenRad(deletedObj.m)*0.7 < 3? 3 : this.getScreenRad(deletedObj.m)*0.7;
 			this.drawCross(
-				this.crd(deletedObj.x - deletedObj.vx, 'x'), 
-				this.crd(deletedObj.y - deletedObj.vy, 'y'), 
+				this.crd(deletedObj.x, 'x'), 
+				this.crd(deletedObj.y, 'y'), 
 				2, 
 				size, 
 				'#ff0000'
