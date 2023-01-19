@@ -1,5 +1,4 @@
 export default class Scene {
-	mouse_coords = [false, false]; // Used for accuracity mode when object creating (Press CTRL while creating object)
 	mpos = []; // Move object position
 	objArr = Array(); // Scene objects array
 	collidedObjectsIdList = []; // Collisions list
@@ -7,103 +6,6 @@ export default class Scene {
 	objIdToOrbit = 0; // The ID of the object around which the new object will orbit
 
 	constructor() {
-		this.dis_zone = 5;
-		this.simulationsPerFrame = 1;
-
-		//Worker 
-		// if (window.Worker){
-		// 	this.logicalProcessors = window.navigator.hardwareConcurrency > 1 ?window.navigator.hardwareConcurrency - 1 : 1;
-		// 	// this.logicalProcessors = 1;
-		// 	//alert('CPU Threads count: ' + (this.logicalProcessors+1));
-		// 	this.workersJobDone = 0; // Thread job done
-		// 	// Create worker for almost (workerThreads - 1) each local CPU thread
-		// 	for (let i = this.logicalProcessors; i--;) {
-		// 		this.#workerThreads[i] = new Worker('js/worker.js');
-		// 	}
-
-		// 	this.workersTime = 0;
-		// 	// Multithread physics calculations
-		// 	this.physicsMultiThreadCalculate = (
-		// 		objectsArray = this.objArr, 
-		// 		callback = this.afterPhysics,
-		// 		interactMode = +this.interactMode.state, 
-		// 		timeSpeed = this.timeSpeed.state, 
-		// 		g = this.g.state, 
-		// 		gravitMode = +this.gravitationMode.state, 
-		// 		collisionType = +this.collisionMode.state
-		// 	)=>{
-		// 		if (!this.workersJobDone){
-		// 			// console.log('Calculate begin:');
-		// 			let tasks = []; //new Array(this.logicalProcessors).fill(new Array()); // Distribute tasks by workers
-		// 			const minTask = Math.min(objectsArray.length, this.logicalProcessors);
-		// 			const averrageTasks = Math.floor(objectsArray.length / minTask); // Averrage objects count to calculate on each thread
-		// 			const taskRemainder = objectsArray.length % minTask;
-		// 			let lastEnd = 0;
-		// 			for (let i = 0; i < minTask; i++){ 
-		// 				const end = lastEnd + averrageTasks + (i < taskRemainder);
-		// 				tasks[i] = Object.keys(objectsArray).map(elem => +elem).slice(lastEnd, end);
-		// 				lastEnd = end;
-		// 			}
-		// 			let compressedObjArr = [];
-		// 			for (let i in objectsArray){
-		// 				// tasks[i%this.logicalProcessors].push(+i); // Make tasks for all worker threads
-		// 				compressedObjArr[i] = {};
-		// 				compressedObjArr[i].x = objectsArray[i].x;
-		// 				compressedObjArr[i].y = objectsArray[i].y;
-		// 				// compressedObjArr[i].vx = 0;//objectsArray[i].vx;
-		// 				// compressedObjArr[i].vy = 0;//objectsArray[i].vy;
-		// 				compressedObjArr[i].m = objectsArray[i].m;
-		// 				if (objectsArray[i].lock === true) { compressedObjArr[i].lock = true }; // If ojbect locked
-		// 				if (objectsArray[i].main_obj !== undefined) { compressedObjArr[i].main_obj = objectsArray[i].main_obj }; // If ojbect locked
-		// 			}
-		// 			compressedObjArr = JSON.stringify(compressedObjArr);
-		// 			this.workersJobDone = tasks.length;
-		// 			for (let i in tasks){
-		// 				this.#workerThreads[i].performance = performance.now();
-		// 				this.#workerThreads[i].postMessage({
-		// 					task: tasks[i], 
-		// 					objArr: compressedObjArr, 
-		// 					interactMode: interactMode, 
-		// 					timeSpeed: timeSpeed, 
-		// 					g: g, 
-		// 					gravitMode: +gravitMode, 
-		// 					collisionType: collisionType
-		// 				});
-
-		// 				// On worker message
-		// 				this.#workerThreads[i].onmessage = (e) => {
-		// 					//console.log(i, performance.now() - this.#workerThreads[i].lastPerformance);
-		// 					this.#workerThreads[i].performance = performance.now() - this.#workerThreads[i].performance;
-		// 					this.workersTime += this.#workerThreads[i].performance;
-		// 					this.workersJobDone --;
-		// 					this.collidedObjectsIdList.push(...e.data.collidedObjectsIdList);
-		// 					this.#workerThreads[i].calculatedObjArr = e.data.objArr;
-		// 					for (let i = e.data.objArr.length; i--;){
-		// 						// e.data.objArr[i].vx += objectsArray[i].vx;
-		// 						// e.data.objArr[i].vy += objectsArray[i].vy;
-		// 						// objectsArray[i] = Object.assign(objectsArray[i], e.data.objArr[i]);
-		// 						objectsArray[e.data.objArr[i].id].vx += e.data.objArr[i].vx;
-		// 						objectsArray[e.data.objArr[i].id].vy += e.data.objArr[i].vy;
-		// 					}
-		// 					if (!this.workersJobDone){
-		// 						this.frameCounter ++;
-		// 						callback && callback(objectsArray, this.collidedObjectsIdList, interactMode, collisionType, timeSpeed, 'multiThread');
-		// 						if (allowCompute){
-		// 							allowCompute = false;
-		// 							this.frame();
-		// 						}
-		// 						this.collidedObjectsIdList = [];
-		// 						if (this.simulationsPerFrame - 1 > 0){
-		// 							this.simulationsPerFrame --;
-		// 							this.physicsMultiThreadCalculate(this.objArr, this.afterPhysics,this.interactMode.state, this.timeSpeed.state, this.g.state, this.gravitationMode.state, this.collisionMode.state);
-		// 						}
-		// 					}
-		// 				}
-		// 			}
-		// 		}
-		// 	}
-		// }
-
 		this.gpu = new GPU();
 		// The distance between two points
 		this.gpu.addFunction(dist);
@@ -156,11 +58,11 @@ export default class Scene {
 	gpuComputeVelocities = function(
 		objectsArray = this.objArr, 
 		callback = this.gpuAfterPhysics,
-		interactMode = +this.interactMode.state, 
-		timeSpeed = this.timeSpeed.state, 
-		g = this.g.state, 
-		gravitMode = +this.gravitationMode.state, 
-		collisionType = +this.collisionMode.state
+		interactMode = +ui.interactMode.state, 
+		timeSpeed = ui.timeSpeed.state, 
+		g = ui.g.state, 
+		gravitMode = +ui.gravitationMode.state, 
+		collisionType = +ui.collisionMode.state
 	){
 		if (objectsArray.length > 1){
 			const prepairedArr = objectsArray.map(obj => [obj.x, obj.y, obj.m, obj.lock]);
@@ -193,9 +95,6 @@ export default class Scene {
 					}
 				}
 			}
-			// const globalMass = objectsArray.reduce((gMass, obj) => gMass + obj.m, 0);
-			// const globVel = objectsArray.reduce((vec2, obj)=>[vec2[0] + obj.vx * (obj.m/globalMass), vec2[1] + obj.vy * (obj.m/globalMass)], [0, 0]);
-			// console.log(globVel)
 			for (let i = collidedPairs.length; i--;){
 				const collidedPair = collidedPairs[i]
 				deleteObjectList.push(...this.collision(objectsArray, collisionType, collidedPair[1], collidedPair[0]));
@@ -212,16 +111,13 @@ export default class Scene {
 	physicsCalculate = function (
 		objectsArray = this.objArr, 
 		callback = this.afterPhysics,
-		interactMode = +this.interactMode.state, 
-		timeSpeed = this.timeSpeed.state, 
-		g = this.g.state, 
-		gravitMode = this.gravitationMode.state, 
-		collisionType = +this.collisionMode.state
+		interactMode = +ui.interactMode.state, 
+		timeSpeed = ui.timeSpeed.state, 
+		g = ui.g.state, 
+		gravitMode = ui.gravitationMode.state, 
+		collisionType = +ui.collisionMode.state
 	){
 		// console.log('Calculate begin:');
-		// const globalMass = objectsArray.reduce((gMass, obj) => gMass + obj.m, 0);
-		// const globVel = objectsArray.reduce((vec2, obj)=>[vec2[0] + obj.vx * (obj.m/globalMass), vec2[1] + obj.vy * (obj.m/globalMass)], [0, 0]);
-		// console.log(globVel)
 		for (let object1Id = objectsArray.length; object1Id--;){
 			calculate({
 				objectsArray: objectsArray,
@@ -323,7 +219,7 @@ export default class Scene {
 			const objBRadius = objA.m === objB.m ? objARadius : Math.sqrt(Math.abs(objB.m)); // Object B radius
 			const rS = objARadius + objBRadius; // Both objects radiuses sum
 			const mS = objA.m + objB.m; // Both objects mass sum
-			let newD = dist(objA.x + objA.vx*this.timeSpeed.state, objA.y + objA.vy*this.timeSpeed.state, objB.x + objB.vx*this.timeSpeed.state, objB.y + objB.vy*this.timeSpeed.state); // The distance between objects with new position
+			let newD = dist(objA.x + objA.vx*ui.timeSpeed.state, objA.y + objA.vy*ui.timeSpeed.state, objB.x + objB.vx*ui.timeSpeed.state, objB.y + objB.vy*ui.timeSpeed.state); // The distance between objects with new position
 			if (newD - rS <= 0){
 				const rD = rS - D; // Total move
 				const objAMov = objA.lock ? 0 : rD * (objA.m / mS); // Object A move
@@ -359,53 +255,55 @@ export default class Scene {
 	addNewObject({
 		x,
 		y,
+		screenX,
+		screenY,
 		vx,
 		vy,
 		radius,
 		mass,
 		objLck = false,
-		ob_col = '#ffffff',
+		ob_col,
 		main_obj,
-		objArr = this.objArr
+		objArr = this.objArr,
+		circularOrbit = false
 	}){
 		let svx = 0, svy = 0;
-		let px = mouse.leftDownX, py = mouse.leftDownY;
+		let px = x, py = y;
+		if (screenX){
+			[px, py] = this.activCam.screenPix2(screenX, screenY);
+		}
 		let newObjId = objArr.length;
-		if (x === undefined && y === undefined){
-			let mcx = this.mouse_coords[0] ? this.mouse_coords[0] - (this.mouse_coords[0] - mouse.leftUpX)/10 : mouse.leftUpX;
-			let mcy = this.mouse_coords[1] ? this.mouse_coords[1] - (this.mouse_coords[1] - mouse.leftUpY)/10 : mouse.leftUpY;
-			if (!objLck){
-				svx = ((mouse.leftDownX-mcx)/30) * this.powerFunc(this.launchForce.state);
-				svy = ((mouse.leftDownY-mcy)/30) * this.powerFunc(this.launchForce.state);	
-			}
-		} else {px = x; py = y;};
 
-		if (((Math.abs(mouse.leftDownX-mouse.leftUpX) <= dis_zone && Math.abs(mouse.leftDownY-mouse.leftUpY) <= dis_zone) || (x && y)) && objArr[this.objIdToOrbit] && this.newObjCircularOrbit.state && !objLck) {
-			let vel = this.forceToCircularOrbit(this.activCam.screenPix(px, 'x'), this.activCam.screenPix(py, 'y'), this.objIdToOrbit);
-			svx = vel[0];
-			svy = vel[1];
+		if ( (dist(mouse.leftDownX, mouse.leftDownY, mouse.leftUpX, mouse.leftUpY) <= dis_zone || circularOrbit) && objArr[this.objIdToOrbit] && ui.newObjCircularOrbit.state && !objLck) {
+			[svx, svy] = this.forceToCircularOrbit(px, py, this.objIdToOrbit);
 			if (!objArr[this.objIdToOrbit].lock){
 				svx += objArr[this.objIdToOrbit].vx;
 				svy += objArr[this.objIdToOrbit].vy;
+			}
+			// Circular orbit correction
+			px += vx === undefined ? svx/2*ui.timeSpeed.state : 0;
+			py += vy === undefined ? svy/2*ui.timeSpeed.state : 0;
+		} else {
+			let [mcx, mcy] = mouse.ctrlModificatedMousePosition();
+			if (!objLck){
+				svx = ((mouse.leftDownX-mcx)/30) * this.powerFunc(ui.launchForce.state);
+				svy = ((mouse.leftDownY-mcy)/30) * this.powerFunc(ui.launchForce.state);	
 			}
 		}
 		// New object velocity
 		svx = vx !== undefined? vx : svx;
 		svy = vy !== undefined? vy : svy;
-		// Circular orbit correction
-		px += vx === undefined ? svx/2*this.timeSpeed.state : 0;
-		py += vy === undefined ? svy/2*this.timeSpeed.state : 0;
 		// Add new objArr with parameters
 		objArr[newObjId] = {
-			x: this.activCam.screenPix(px, 'x'), // Position X
-			y: this.activCam.screenPix(py, 'y'), // Position Y
-			vx: svx, // Velocity X equals vx if given and svx if not
-			vy: svy, // Velocity Y equals vy if given and svy if not
-			m: mass, // Object mass via given radius || Radius
-			color: ob_col,
-			lock: objLck,
-			trace: [],
-			main_obj: main_obj
+			x: px, // Position X
+			y: py, // Position Y
+			vx: svx, // Velocity X 
+			vy: svy, // Velocity Y 
+			m: mass, // Object mass
+			color: ob_col, // Object color
+			lock: objLck, // Object locked (boolean)
+			trace: [], // Array of trace points (traces mode 2-3)
+			main_obj: main_obj // Affects in interaction mode 1 (interact with only main objecgt)
 		};
 		this.show_obj_count();
 		this.activCam.allowFrameRender = true;
@@ -451,7 +349,7 @@ export default class Scene {
 		if (this.objArr[obj1Id]){
 			const objToOrbMass = Math.abs(this.objArr[obj1Id].m);
 			let R = this.dist(this.camera.screenPix(px, 'x'), this.camera.screenPix(py, 'y'), this.camera.screenPix(this.objArr[obj1Id].x, 'x'), this.camera.screenPix(this.objArr[obj1Id].y, 'y'))*this.camera.animZoom;
-			let V = Math.sqrt((objToOrbMass*5)*(R)/this.g.state);
+			let V = Math.sqrt((objToOrbMass*5)*(R)/ui.g.state);
 			let a = this.objArr[obj1Id].x - px;
 			let b = this.objArr[obj1Id].y - py;
 			let sin = b/R, cos = a/R;
@@ -465,7 +363,7 @@ export default class Scene {
 			//		object = this.objArr[object].main_obj;
 			//	}
 			//}
-			if (this.newObjCreateReverseOrbit.state){
+			if (ui.newObjCreateReverseOrbit.state){
 				svx = -svx;
 				svy = -svy;
 			}

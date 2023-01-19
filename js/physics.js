@@ -50,20 +50,33 @@ function calculate({
 		const obj2 = objectsArray[object2Id];
 
 		const D = dist(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
+		const sin = (obj2.y - obj1.y)/D; // Sin
+		const cos = (obj2.x - obj1.x)/D; // Cos
+		let vector;
 
-		const collType = collision(obj1, obj2, object1Id, object2Id, D, collisionType, interactMode, collidedObjectsIdList);
-
-		if(!obj1.lock && collType === false){
-			const sin = (obj2.y - obj1.y)/D;
-			const cos = (obj2.x - obj1.x)/D;
+		// Collision
+		const radiusSum = Math.sqrt(Math.abs(obj1.m)) + Math.sqrt(Math.abs(obj2.m));
+		if (D - radiusSum <= 0){
+			if (collisionType === 2){ // Collision type: none
+				vector = gravity_func(sin, cos, D, gravitMode, obj2.m, obj1.m, timeSpeed, g*Math.pow(D/radiusSum, 3));
+			}
+			collidedObjectsIdList.push([object1Id, object2Id]); // Send the collided objects
+		} else { 
 			// Physics vector calculation
-			const vector = gravity_func(sin, cos, D, gravitMode, obj2.m, timeSpeed, g);
-			obj1.vx += vector[0];
-			obj1.vy += vector[1];
-			// if (obj1.main_obj !== undefined){
-			// 	obj1.x += objectsArray[obj1.main_obj].vx || 0;
-			// 	obj1.y += objectsArray[obj1.main_obj].vy || 0;
-			// }
+			vector = gravity_func(sin, cos, D, gravitMode, obj2.m, obj1.m, timeSpeed, g);
+		}
+
+		if (vector !== undefined){
+			// Add calculated vectors to object 1
+			if (!obj1.lock){
+				obj1.vx += vector[0];
+				obj1.vy += vector[1];
+			}
+			// Add calculated vectors to object 2
+			if (!obj2.lock){
+				obj2.vx -= vector[2];
+				obj2.vy -= vector[3];
+			}
 		}
 	}
 };

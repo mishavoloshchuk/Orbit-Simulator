@@ -111,9 +111,19 @@ export default class Camera{
 		let sCtrY = window.innerHeight/2 - this.ay;
 
 		switch (axis){
-			case 'x': return coord/this.animZoom - (sCtrX - this.ax*(this.animZoom-1))/(this.animZoom);
-			case 'y': return coord/this.animZoom - (sCtrY - this.ay*(this.animZoom-1))/(this.animZoom);
+			case 'x': return coord/this.animZoom - (sCtrX - this.ax*(this.animZoom-1))/this.animZoom;
+			case 'y': return coord/this.animZoom - (sCtrY - this.ay*(this.animZoom-1))/this.animZoom;
 		}
+	}
+
+	screenPix2(xPix, yPix){ // Cursor position in world
+		let sCtrX = window.innerWidth/2 - this.ax;
+		let sCtrY = window.innerHeight/2 - this.ay;
+
+		return [
+			xPix/this.animZoom - (sCtrX - this.ax*(this.animZoom-1))/this.animZoom,
+			yPix/this.animZoom - (sCtrY - this.ay*(this.animZoom-1))/this.animZoom
+			];
 	}
 
 	animFunc(){
@@ -138,7 +148,7 @@ export default class Camera{
 		if (this.#zoom < 10000){
 			this.cameraChangedState();
 			this.#zoom *= vl; // Set zoom value
-			if (!this.scene.zoomToScreenCenter.state){
+			if (!ui.zoomToScreenCenter.state){
 				this.x += (this.screenPix(mouse.x, 'x')-this.x)/(vl/(vl-1));
 				this.y += (this.screenPix(mouse.y, 'y')-this.y)/(vl/(vl-1));
 			}
@@ -149,7 +159,7 @@ export default class Camera{
 		if (this.#zoom > 1.0e-12){
 			this.cameraChangedState();
 			this.#zoom /= vl; // Set zoom value
-			if (!this.scene.zoomToScreenCenter.state){
+			if (!ui.zoomToScreenCenter.state){
 				this.x -= (this.screenPix(mouse.x, 'x')-this.x)/(1/(vl-1));
 				this.y -= (this.screenPix(mouse.y, 'y')-this.y)/(1/(vl-1));
 			}
@@ -193,12 +203,12 @@ export default class Camera{
 	renderObjects(){
 		// console.log('Render objects');
 		let scn = this.scene;
-		if (scn.tracesMode.state === '1'){
+		if (ui.tracesMode.state === '1'){
 			this.tracesMode1Wiping();
 		} else {
 			this.clearLayer3();
 		}
-		if (!scn.maxPerformance.state) this.clearLayer1();
+		if (!ui.maxPerformance.state) this.clearLayer1();
 		this.animFunc();
 		// Camera target velocity
 		const targetVx = scn.objArr[this.Target] ? scn.objArr[this.Target].vx : 0;
@@ -209,9 +219,9 @@ export default class Camera{
 			let drawRadius = Math.sqrt(Math.abs(obj.m))*this.animZoom; // Object draw radius
 			drawRadius = drawRadius < 0.5 ? 0.5 : drawRadius; // Minimal draw radius
 			// If object screen speed is enough to render or anyhting else 
-			const enoughObjMove = Math.sqrt(Math.pow(obj.vx - targetVx, 2) + Math.pow(obj.vy - targetVy, 2))*scn.timeSpeed.state*this.animZoom > 0.1 ? true : false;
+			const enoughObjMove = Math.sqrt(Math.pow(obj.vx - targetVx, 2) + Math.pow(obj.vy - targetVy, 2))*ui.timeSpeed.state*this.animZoom > 0.1 ? true : false;
 			// Fix object anti-aliasing when maxPerformance is enabled
-			if (scn.tracesMode.state == 1 && scn.maxPerformance.state){	
+			if (ui.tracesMode.state == 1 && ui.maxPerformance.state){	
 				if (// Smooth object edges if true
 					(!scn.objArr[this.Target] && !enoughObjMove) // If there is no camera target and object locked or
 					|| ( scn.objArr[this.Target] // If there is camera target
@@ -235,27 +245,27 @@ export default class Camera{
 			let traceResolution = 1;
 			// Traces mode 1 =====
 			if (// Draw line if
-				scn.tracesMode.state == 1 // If traces mode = 1
+				ui.tracesMode.state == 1 // If traces mode = 1
 				&& (!obj.lock || (scn.objArr[this.Target] && !scn.objArr[this.Target].lock)) // If object not locked or camera target not locked
 				&& this.Target !== objectId // If camera target != current object
 			){
-				let canv = scn.maxPerformance.state ? this.ctx : this.ctx3;
+				let canv = ui.maxPerformance.state ? this.ctx : this.ctx3;
 				canv.strokeStyle = obCol;
 				canv.lineWidth = drawRadius * 2 - (enoughObjMove ? 0 : (drawRadius * 2 > 1.5) ? 1.5 : 0);
 				canv.lineCap = drawRadius > 1 ? 'round' : 'butt';
 				canv.beginPath();
-				canv.moveTo(this.crd(obj.x - obj.vx*scn.timeSpeed.state + targetVx * scn.timeSpeed.state, 'x'), this.crd(obj.y - obj.vy*scn.timeSpeed.state + targetVy * scn.timeSpeed.state, 'y'));
+				canv.moveTo(this.crd(obj.x - obj.vx*ui.timeSpeed.state + targetVx * ui.timeSpeed.state, 'x'), this.crd(obj.y - obj.vy*ui.timeSpeed.state + targetVy * ui.timeSpeed.state, 'y'));
 				canv.lineTo(this.crd(obj.x, 'x'), this.crd(obj.y, 'y'));
 				canv.stroke();
 				canv.lineCap = 'butt';
 			} else
 			// Traces mode 2 =====
-			if (scn.tracesMode.state == 2 && !obj.lock){
+			if (ui.tracesMode.state == 2 && !obj.lock){
 				let randKff = 0.8;
 				let TLength = obj.trace.length; //Length of trace array
 				let prev_randX = 0, prev_randY = 0;
 				let randX = 0, randY = 0;
-				traceLength = Math.round(Math.pow(8, scn.traceMode2Length.state));
+				traceLength = Math.round(Math.pow(8, ui.traceMode2Length.state));
 
 				this.ctx.fillStyle = obCol;
 				this.ctx.strokeStyle = obCol;
@@ -272,13 +282,13 @@ export default class Camera{
 					itr = itr < 0?0:itr;
 					prev_randX = randX; prev_randY = randY;
 					let rnd_lim = drawRadius*(i/TLength)*randKff;
-					if (scn.traceMode2Trembling.state === true || scn.traceMode2Particles.state === true){
+					if (ui.traceMode2Trembling.state === true || ui.traceMode2Particles.state === true){
 						randX = scn.getRandomArbitrary(-rnd_lim, rnd_lim);
 						randY = scn.getRandomArbitrary(-rnd_lim, rnd_lim);
 					}
 					this.ctx.lineWidth = drawRadius * (1-i/TLength) * 1.8;
 					// Particles
-					if (scn.traceMode2Particles.state){
+					if (ui.traceMode2Particles.state){
 						this.ctx.beginPath();
 						this.ctx.translate(
 							Math.floor(this.crd(obj.trace[itr][0],'x')+randX*2), 
@@ -289,7 +299,7 @@ export default class Camera{
 						this.ctx.resetTransform();
 					}
 					// Line
-					if (scn.traceMode2Trembling.state === false) randX = randY = 0;
+					if (ui.traceMode2Trembling.state === false) randX = randY = 0;
 					this.ctx.globalAlpha = (TLength-i/1.5)/TLength;
 					this.ctx.beginPath();
 					this.ctx.moveTo(this.crd(obj.trace[i][0], 'x')+randX, this.crd(obj.trace[i][1], 'y')+randY);
@@ -300,11 +310,11 @@ export default class Camera{
 				this.ctx.globalCompositeOperation = 'source-over';
 			} else
 			// Traces mode 3 =====
-			if (scn.tracesMode.state == 3 && !obj.lock){
-				traceResolution = 61 - Math.round(Math.pow(scn.traceMode3Quality.state, 1/8)*60);
-				traceLength = Math.ceil(scn.powerFunc(scn.traceMode3Length.state) / traceResolution);
+			if (ui.tracesMode.state == 3 && !obj.lock){
+				traceResolution = 61 - Math.round(Math.pow(ui.traceMode3Quality.state, 1/8)*60);
+				traceLength = Math.ceil(scn.powerFunc(ui.traceMode3Length.state) / traceResolution);
 				this.ctx.strokeStyle = obCol;
-				this.ctx.lineWidth = Math.min(drawRadius*1.7, Math.pow(scn.traceMode3Width.state, 10));
+				this.ctx.lineWidth = Math.min(drawRadius*1.7, Math.pow(ui.traceMode3Width.state, 10));
 				this.ctx.globalCompositeOperation = 'destination-over';
 				if (obj.trace.length > 0){
 					// Smooth the end cut of the trace
@@ -341,10 +351,12 @@ export default class Camera{
 				this.ctx.fill();
 				this.ctx.globalCompositeOperation = 'source-over';
 			}
-			this.ctx.fillStyle = obCol;
-			this.ctx.beginPath();
-			this.ctx.arc(this.crd(obj.x, 'x'), this.crd(obj.y, 'y'), drawRadius, 0, 7);
-			this.ctx.fill();
+			if (!(ui.maxPerformance.state === true && ui.tracesMode.state == 1) || obj.lock){
+				this.ctx.fillStyle = obCol;
+				this.ctx.beginPath();
+				this.ctx.arc(...this.crd2(obj.x, obj.y), drawRadius, 0, 7);
+				this.ctx.fill();
+			}
 			if (obj.m < 0){
 				this.ctx.strokeStyle = "#000";
 				this.ctx.lineWidth = drawRadius/10;
@@ -370,16 +382,15 @@ export default class Camera{
 
 	trajectoryCalculate({trajLen = 256, accuracity = 1, color = ['#006BDE', '#ffffff']}){
 		// Ctrl pressed change mouse accuracity
-		let mcx = scene.mouse_coords[0] ? scene.mouse_coords[0] - (scene.mouse_coords[0] - mouse.x)/10 : mouse.x;
-		let mcy = scene.mouse_coords[1] ? scene.mouse_coords[1] - (scene.mouse_coords[1] - mouse.y)/10 : mouse.y;
+		let [mcx, mcy] = mouse.ctrlModificatedMousePosition();
 		// New obj vector
-		let svx = ((mouse.leftDownX - mcx)/30) * this.scene.powerFunc(this.scene.launchForce.state);
-		let svy = ((mouse.leftDownY - mcy)/30) * this.scene.powerFunc(this.scene.launchForce.state);	
+		let svx = ((mouse.leftDownX - mcx)/30) * this.scene.powerFunc(ui.launchForce.state);
+		let svy = ((mouse.leftDownY - mcy)/30) * this.scene.powerFunc(ui.launchForce.state);	
 		trajLen = trajLen * accuracity; // Trajectory calculation accuracity
 		let objArrCopy;
-		if (this.scene.interactMode.state === '0'){ // Add all objects to trajectory calculate array
+		if (ui.interactMode.state === '0'){ // Add all objects to trajectory calculate array
 			objArrCopy = JSON.parse(JSON.stringify(this.scene.objArr));
-		} else if (this.scene.interactMode.state === '1') { // Add all only main (and main of main) objects to trajectory calculate array
+		} else if (ui.interactMode.state === '1') { // Add all only main (and main of main) objects to trajectory calculate array
 			let objects = []; // Array of objects to calculate
 			// let orbObj = scene.objIdToOrbit;
 			// while (orbObj !== undefined) {
@@ -388,11 +399,11 @@ export default class Camera{
 			// }
 			objects[0] = this.scene.objArr[scene.objIdToOrbit];
 			objArrCopy = JSON.parse(JSON.stringify(objects));
-		} else if (this.scene.interactMode.state === '2') { // Don't do any calculations, just draw the line
+		} else if (ui.interactMode.state === '2') { // Don't do any calculations, just draw the line
 			// Line
 			this.ctx2.save();
 			this.ctx2.beginPath();
-			this.ctx2.strokeStyle = this.scene.newObjColor.state;
+			this.ctx2.strokeStyle = ui.newObjColor.state;
 			this.ctx2.lineWidth = 1;
 			this.ctx2.setLineDash([2, 3]); // Dash line
 			this.ctx2.moveTo(mouse.leftDownX, mouse.leftDownY);
@@ -404,16 +415,17 @@ export default class Camera{
 
 		let newObjId = objArrCopy.length;
 		let savedNewObjId = newObjId;
+		const [px, py] = this.screenPix2(mouse.leftDownX, mouse.leftDownY);
 		objArrCopy[objArrCopy.length] = {
-			x: this.screenPix(mouse.leftDownX + svx/2, 'x'), // Position X
-			y: this.screenPix(mouse.leftDownY + svy/2, 'y'), // Position Y
+			x: px, // Position X
+			y: py, // Position Y
 			vx: svx, // Velocity X equals vx if given and svx if not
 			vy: svy, // Velocity Y equals vy if given and svy if not
-			m: this.scene.newObjMass.state, // Object mass via given radius || Radius
-			color: this.scene.newObjColor.state,
-			lock: this.scene.newObjLock.state,
+			m: ui.newObjMass.state, // Object mass via given radius || Radius
+			color: ui.newObjColor.state,
+			lock: ui.newObjLock.state,
 			trace: [],
-			main_obj: 0
+			main_obj: this.scene.objIdToOrbit
 		};
 
 		// Create a trajectoryTrace array in each object
@@ -438,7 +450,7 @@ export default class Camera{
 			// Delete objects after collide and return the deleted objects to the deletedObjectsList array
 			if (toDeleteObjectsList.length > 0) deletedObjectsList = deletedObjectsList.concat(this.scene.deleteObject(toDeleteObjectsList, objArrCopy, null));
 
-			this.scene.addSelfVectors(objArrCopy, this.scene.timeSpeed.state/accuracity);
+			this.scene.addSelfVectors(objArrCopy, ui.timeSpeed.state/accuracity);
 
 			// Add points to trajectory trace array
 			for (let objectId = objArrCopy.length; objectId--;){
@@ -466,9 +478,9 @@ export default class Camera{
 			this.scene.physicsCalculate(
 				objArrCopy,
 				afterPhysicsCallback,
-				+this.scene.interactMode.state,
-				this.scene.timeSpeed.state,
-				this.scene.g.state/accuracity
+				+ui.interactMode.state,
+				ui.timeSpeed.state,
+				ui.g.state/accuracity
 			);
 		}
 
@@ -476,9 +488,9 @@ export default class Camera{
 		if (distance[1]){
 			// New object arc
 			this.ctx2.globalAlpha = 0.5;
-			this.ctx2.fillStyle = this.scene.newObjColor.state;
+			this.ctx2.fillStyle = ui.newObjColor.state;
 			this.ctx2.beginPath();
-			let mass = this.getScreenRad(this.scene.newObjMass.state);
+			let mass = this.getScreenRad(ui.newObjMass.state);
 			mass = mass < 2 ? 2 : mass;
 			this.ctx2.arc(this.crd(distance[1].x, 'x'), this.crd(distance[1].y, 'y'), mass, 0, 7);
 			this.ctx2.fill();
@@ -496,7 +508,7 @@ export default class Camera{
 				this.crd(distance[1].y, 'y'),//   Y1
 				this.crd(distance[1].x2, 'x'),//  X2
 				this.crd(distance[1].y2, 'y'));// Y2
-			gradient.addColorStop(0, this.scene.newObjColor.state); // New object color
+			gradient.addColorStop(0, ui.newObjColor.state); // New object color
 			gradient.addColorStop(1, this.scene.objArr[distance[1].obj2Id].color); // Second object color
 			this.ctx2.strokeStyle = gradient;
 			this.ctx2.lineWidth = 2; // Line width between approachment points
@@ -517,7 +529,7 @@ export default class Camera{
 				let R, color;
 				// Set styles to new object trajectory trace
 				if (trace === savedNewObjId){
-					color  = this.scene.newObjColor.state;
+					color  = ui.newObjColor.state;
 					R = 2;
 				} else { // Set styles to objects trajectory trace
 					color = "#999999";
@@ -582,15 +594,14 @@ export default class Camera{
 
 	visual_trajectory(){
 		this.clearLayer2();
-		let mcx = this.scene.mouse_coords[0] ? this.scene.mouse_coords[0] - (this.scene.mouse_coords[0] - mouse.x)/10 : mouse.x;
-		let mcy = this.scene.mouse_coords[1] ? this.scene.mouse_coords[1] - (this.scene.mouse_coords[1] - mouse.y)/10 : mouse.y;
+		let [mcx, mcy] = mouse.ctrlModificatedMousePosition(); // CTRL mouse precision modificator
 
 		let offsX = 0;
 		let offsY = -30;
 		if (['mobile', 'tablet'].includes(getDeviceType()) ){ offsX = -25; offsY = -70; } // If device is mobile or tablet
-		Object.assign(launchPowerLabel.style, {left: (mouse.x+offsX)+'px', top: (mouse.y+offsY)+'px', display: 'block', color: this.scene.newObjColor.state});
-		launchPowerLabel.innerHTML = Math.round(this.scene.dist(mouse.leftDownX, mouse.leftDownY, mouse.x, mouse.y) * this.scene.powerFunc(this.scene.launchForce.state) * 100)/100;
-		let D = this.getScreenRad(this.scene.newObjMass.state)*2;
+		Object.assign(launchPowerLabel.style, {left: (mouse.x+offsX)+'px', top: (mouse.y+offsY)+'px', display: 'block', color: ui.newObjColor.state});
+		launchPowerLabel.innerHTML = Math.round(this.scene.dist(mouse.leftDownX, mouse.leftDownY, mouse.x, mouse.y) * this.scene.powerFunc(ui.launchForce.state) * 100)/100;
+		let D = this.getScreenRad(ui.newObjMass.state)*2;
 
 		// Gradient
 		let gradient = this.ctx2.createLinearGradient(
@@ -598,7 +609,7 @@ export default class Camera{
 			mouse.leftDownY,//   Y1
 			mcx,//  X2
 			mcy);// Y2
-		gradient.addColorStop(0, this.scene.newObjColor.state); // New object color
+		gradient.addColorStop(0, ui.newObjColor.state); // New object color
 		gradient.addColorStop(1, "#0000"); // Alpha
 		this.ctx2.strokeStyle = gradient;
 
@@ -610,11 +621,11 @@ export default class Camera{
 		this.ctx2.globalAlpha = 1;
 
 		this.ctx2.beginPath();
-		this.ctx2.fillStyle = this.scene.newObjColor.state;
+		this.ctx2.fillStyle = ui.newObjColor.state;
 		this.ctx2.arc(mouse.leftDownX, mouse.leftDownY, D/2, 0, 7);
 		this.ctx2.fill();
 
-		if (this.scene.newObjMass.state < 0){
+		if (ui.newObjMass.state < 0){
 			this.ctx2.strokeStyle = "#000";
 			this.ctx2.lineWidth = D/2/10;
 			this.ctx2.beginPath();
@@ -710,7 +721,7 @@ export default class Camera{
 
 	tracesMode1Wiping(){
 		//console.log('clear layer 1');
-		let canvas = this.scene.maxPerformance.state ? this.ctx : this.ctx3;
+		let canvas = ui.maxPerformance.state ? this.ctx : this.ctx3;
 		canvas.globalAlpha = 0.01;
 		canvas.fillStyle = this.wipeColor;
 		canvas.fillRect(0, 0, this.resolutionX, this.resolutionY);
@@ -727,7 +738,7 @@ export default class Camera{
 	}
 	clearLayer3(){
 		//console.log('clear layer 3');
-		let canvas = this.scene.maxPerformance.state ? this.ctx : this.ctx3;
+		let canvas = ui.maxPerformance.state ? this.ctx : this.ctx3;
 		canvas.clearRect(0, 0, this.resolutionX, this.resolutionY);
 	}
 	//Draw cross function
