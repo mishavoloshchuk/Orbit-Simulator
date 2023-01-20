@@ -20,20 +20,25 @@ export default class Scene {
 		this.computeVelocities = this.gpu.createKernel(function(arr, len, interactMode, timeSpeed, g, gravitMode, collisionType) {
 			const obj1Id = this.thread.x;
 			const obj1Pos = [arr[obj1Id * this.constants.objLen], arr[obj1Id * this.constants.objLen + 1]];
-			const obj1Vel = [0, 0];
-			const obj1Mass = arr[obj1Id * this.constants.objLen + 2];
-			const obj1Lock = arr[obj1Id * this.constants.objLen + 3];
+			const obj1Vel = [arr[obj1Id * this.constants.objLen + 2], arr[obj1Id * this.constants.objLen + 3]];
+			const obj1Mass = arr[obj1Id * this.constants.objLen + 4];
+			const obj1Lock = arr[obj1Id * this.constants.objLen + 5];
 			let collided = false;
 
 			for(let obj2Id = 0; obj2Id < len; obj2Id++){
 				if (obj2Id !== obj1Id) {
 					const obj2Pos = [arr[obj2Id * this.constants.objLen], arr[obj2Id * this.constants.objLen + 1]];
-					const obj2Mass = arr[obj2Id * this.constants.objLen + 2];
+					const obj2Vel = [arr[obj2Id * this.constants.objLen + 2], arr[obj2Id * this.constants.objLen + 3]];
+					const obj2Mass = arr[obj2Id * this.constants.objLen + 4];
+					const obj2Lock = arr[obj2Id * this.constants.objLen + 5];
 
 					const D = dist(obj1Pos[0],obj1Pos[1], obj2Pos[0],obj2Pos[1]);
 
 					const radiusSum = Math.sqrt(Math.abs(obj1Mass)) + Math.sqrt(Math.abs(obj2Mass));
 					if (D - radiusSum <= 0) {
+						const afterCollision = gpuCollision(obj1Pos, obj1Vel, obj1Mass, obj1Lock, obj2Pos, obj2Vel, obj2Mass, obj2Lock, obj1Id, obj2Id, D, collisionType, timeSpeed, interactMode);
+						obj1Pos = [afterCollision[0], afterCollision[1]];
+						obj1Vel = [afterCollision[2], afterCollision[3]];
 						if (collided === false){
 							collided = true;
 						}
@@ -43,15 +48,18 @@ export default class Scene {
 							const cos = (obj2Pos[0] - obj1Pos[0])/D; // Cos
 							const velocity = gravity_func(sin, cos, D, gravitMode, obj2Mass, obj1Mass, timeSpeed, g);
 							obj1Vel[0] += velocity[0];
-							obj1Vel[1] += velocity[1];	
+							obj1Vel[1] += velocity[1];
 						}
 					}
 
 				}
 			}
 
-			return [obj1Vel[0], obj1Vel[1], collided];
-		}, {dynamicOutput: true, dynamicArguments: true, constants: {objLen: 4}, tactic: 'precision'})
+			obj1Pos[0] += obj1Vel[0]*timeSpeed;
+			obj1Pos[1] += obj1Vel[1]*timeSpeed;
+
+			return [obj1Vel[0], obj1Vel[1], obj1Pos[0], obj1Pos[1]];
+		}, {dynamicOutput: true, dynamicArguments: true, constants: {objLen: 6}, tactic: 'precision'})
 			.setLoopMaxIterations(10000000);
 
 	}
@@ -65,46 +73,56 @@ export default class Scene {
 		collisionType = +ui.collisionMode.state
 	){
 		if (objectsArray.length > 1){
-			const prepairedArr = objectsArray.map(obj => [obj.x, obj.y, obj.m, obj.lock]);
-			this.computeVelocities.setOutput([objectsArray.length]);
-			const newVelosities = this.computeVelocities(prepairedArr, objectsArray.length, interactMode, timeSpeed, g, gravitMode, collisionType);
-			// After physics
-			let collidedObjectsIDs = [];
-			for (let obj1Id = objectsArray.length; obj1Id--;){
-				if (newVelosities[obj1Id][2] === 1){ // if object collided
-					collidedObjectsIDs.push(obj1Id);
+			if (ui.collisionMode.state === '0'){
+				const prepairedArr = objectsArray.map(obj => [obj.x, obj.y, obj.m, obj.lock]);
+				this.computeVelocities.setOutput([objectsArray.length]);
+				const newVelosities = this.computeVelocities(prepairedArr, objectsArray.length, interactMode, timeSpeed, g, gravitMode, collisionType);
+				// After physics
+				let collidedObjectsIDs = [];
+				for (let obj1Id = objectsArray.length; obj1Id--;){
+					if (newVelosities[obj1Id][2] === 1){ // if object collided
+						collidedObjectsIDs.push(obj1Id);
+					}
+					objectsArray[obj1Id].vx += newVelosities[obj1Id][0];
+					objectsArray[obj1Id].vy += newVelosities[obj1Id][1];
 				}
-				objectsArray[obj1Id].vx += newVelosities[obj1Id][0];
-				objectsArray[obj1Id].vy += newVelosities[obj1Id][1];
-			}
-			
-			let collidedPairs = [];
-			let deleteObjectList = []; // Array of objects will be deleted after collision "merge"
-			for (let i = collidedObjectsIDs.length; i--;){
-				const obj1Id = collidedObjectsIDs[i];
-				const obj1 = objectsArray[obj1Id];
-				for (let j = i; j--;){
-					const obj2Id = collidedObjectsIDs[j];
-					const obj2 = objectsArray[obj2Id];
+				let collidedPairs = [];
+				let deleteObjectList = []; // Array of objects will be deleted after collision "merge"
+				for (let i = collidedObjectsIDs.length; i--;){
+					const obj1Id = collidedObjectsIDs[i];
+					const obj1 = objectsArray[obj1Id];
+					for (let j = i; j--;){
+						const obj2Id = collidedObjectsIDs[j];
+						const obj2 = objectsArray[obj2Id];
 
-					const D = dist(obj1.x,obj1.y, obj2.x,obj2.y);
+						const D = dist(obj1.x,obj1.y, obj2.x,obj2.y);
 
-					const radiusSum = Math.sqrt(Math.abs(obj1.m)) + Math.sqrt(Math.abs(obj2.m));
-					if (D - radiusSum <= 0) {
-						collidedPairs.push([obj1Id, obj2Id]);
+						const radiusSum = Math.sqrt(Math.abs(obj1.m)) + Math.sqrt(Math.abs(obj2.m));
+						if (D - radiusSum <= 0) {
+							collidedPairs.push([obj1Id, obj2Id]);
+						}
 					}
 				}
-			}
-			for (let i = collidedPairs.length; i--;){
-				const collidedPair = collidedPairs[i]
-				deleteObjectList.push(...this.collision(objectsArray, collisionType, collidedPair[1], collidedPair[0]));
-			}
+				for (let i = collidedPairs.length; i--;){
+					const collidedPair = collidedPairs[i]
+					deleteObjectList.push(...this.collision(objectsArray, collisionType, collidedPair[1], collidedPair[0]));
+				}
 
-			this.deleteObject(deleteObjectList, objectsArray); // Delete objects by deleteObjectsList
+				this.deleteObject(deleteObjectList, objectsArray); // Delete objects by deleteObjectsList
 
-			this.addSelfVectors(objectsArray, timeSpeed);
+				this.addSelfVectors(objectsArray, timeSpeed);
+			} else {
+				const prepairedArr = objectsArray.map(obj => [obj.x, obj.y, obj.vx, obj.vy, obj.m, obj.lock]);
+				this.computeVelocities.setOutput([objectsArray.length]);
+				const newVelosities = this.computeVelocities(prepairedArr, objectsArray.length, interactMode, timeSpeed, g, gravitMode, collisionType);
+				this.activCam.allowFrameRender = true;
+				for (let objId = objectsArray.length; objId--;){
+					const obj = objectsArray[objId];
+					[obj.vx, obj.vy, obj.x, obj.y] = newVelosities[objId];
+				}
+			}
 		}
-		callback && callback(objectsArray, this.collidedObjectsIdList, interactMode, collisionType, timeSpeed, 'singleThread');
+		// callback && callback(objectsArray, this.collidedObjectsIdList, interactMode, collisionType, timeSpeed, 'singleThread');
 		this.collidedObjectsIdList = [];
 
 	}
@@ -212,20 +230,6 @@ export default class Scene {
 				const m2 = objA.lock ? 0 : objB.m;
 				objB.vx = (( v2*Math.cos(ag2 - fi)*(m2-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1+m2) ) * Math.cos(fi) + v2*Math.sin(ag2 - fi)*Math.cos(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
 				objB.vy = (( v2*Math.cos(ag2 - fi)*(m2-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1+m2) ) * Math.sin(fi) + v2*Math.sin(ag2 - fi)*Math.sin(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
-			}
-
-			// Colliding
-			const objARadius = Math.sqrt(Math.abs(objA.m)); // Object A radius
-			const objBRadius = objA.m === objB.m ? objARadius : Math.sqrt(Math.abs(objB.m)); // Object B radius
-			const rS = objARadius + objBRadius; // Both objects radiuses sum
-			const mS = objA.m + objB.m; // Both objects mass sum
-			let newD = dist(objA.x + objA.vx*ui.timeSpeed.state, objA.y + objA.vy*ui.timeSpeed.state, objB.x + objB.vx*ui.timeSpeed.state, objB.y + objB.vy*ui.timeSpeed.state); // The distance between objects with new position
-			if (newD - rS <= 0){
-				const rD = rS - D; // Total move
-				const objAMov = objA.lock ? 0 : rD * (objA.m / mS); // Object A move
-				const objBMov = objB.lock ? 0 : rD - objAMov; // Object B move
-				objA.x -= objAMov * cos; objA.y -= objAMov * sin;
-				objB.x += objBMov * cos; objB.y += objBMov * sin;
 			}
 		} else if (collisionType === 2){ // None
 

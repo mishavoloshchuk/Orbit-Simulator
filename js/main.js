@@ -560,7 +560,7 @@ window.onload = function(){
 				if (ui.pauseWhenCreatingObject.state){
 					pauseState = ui.pauseWhenCreatingObject.prevPauseState;
 				}
-				scene.camera.clearLayer2();
+				// scene.camera.clearLayer2();
 			}
 			if (mbut == 'camera' && swch.s_track){
 				scene.camera.setTarget(scene.objectSelect('nearest', scene.camera.Target));
@@ -769,11 +769,12 @@ window.onload = function(){
 		  	addFrameBeginTask(()=>{ 
 				scene.addNewObject({
 		  	 		screenX: scene.camera.resolutionX * Math.random(), screenY: scene.camera.resolutionY *Math.random(),
+		  	 		vx: 0, vy: 0,
 					ob_col: ui.newObjColor.state,
 					mass: ui.newObjMass.state,
 					objLck: ui.newObjLock.state,
 					main_obj: scene.objIdToOrbit,
-					circularOrbit: true
+					circularOrbit: ui.newObjCircularOrbit.state
 				});
 				if (ui.newObjRandColor.state) ui.newObjColor.state = scene.randomColor();
 			});
@@ -908,11 +909,12 @@ window.onload = function(){
 						addFrameBeginTask(()=>{ 
 							scene.addNewObject({
 								screenX: mouse.x, screenY: mouse.y,
+								vx: 0, vy: 0,
 								ob_col: ui.newObjColor.state,
 								mass: ui.newObjMass.state,
 								objLck: ui.newObjLock.state,
 								main_obj: scene.objIdToOrbit,
-								circularOrbit: true
+								circularOrbit: ui.newObjCircularOrbit.state
 							});
 							if (ui.newObjRandColor.state) ui.newObjColor.state = scene.randomColor();
 						});		
