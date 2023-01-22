@@ -114,6 +114,12 @@ window.onload = function(){
 
 	this.pauseState = false; // Global pause state
 
+	// After new object created function
+	let newObjectCreatedCallback = function() {
+		scene.show_obj_count();
+		scene.activCam.allowFrameRender = true;
+	}
+
 	var switcher = {device: 'desktop',
 		visT: false}; // Collisions: repulsion merge none
 
@@ -277,11 +283,11 @@ window.onload = function(){
 	}
 	ui.init();
 
-	scene.addNewObject({x: 0, y: 0, vx: 0, vy: 0, mass: 1000, ob_col: '#ffff00', objLck: true}); // First object init
+	scene.addNewObject({x: 0, y: 0, vx: 0, vy: 0, mass: 1000, color: '#ffff00', objLck: true, callback: newObjectCreatedCallback}); // First object init
 	// pauseState = true;
-	// scene.addNewObject({vx: 0, vy: 0, mass: 1000, ob_col: '#0000ff88'}); // First object init
-	// scene.addNewObject({x: innerWidth/2 + 30, y: innerHeight/2, vx: 0, vy: 0, mass: 1000, ob_col: '#00ff0088'}); // First object init
-	// scene.addNewObject({x: innerWidth/2 - 30, y: innerHeight/2, vx: 0, vy: 0, mass: 1000, ob_col: '#ff000088'}); // First object init
+	// scene.addNewObject({vx: 0, vy: 0, mass: 1000, color: '#0000ff88', callback: newObjectCreatedCallback}); // First object init
+	// scene.addNewObject({x: innerWidth/2 + 30, y: innerHeight/2, vx: 0, vy: 0, mass: 1000, color: '#00ff0088', callback: newObjectCreatedCallback}); // First object init
+	// scene.addNewObject({x: innerWidth/2 - 30, y: innerHeight/2, vx: 0, vy: 0, mass: 1000, color: '#ff000088', callback: newObjectCreatedCallback}); // First object init
 
 	change_state(mbut);
 
@@ -544,14 +550,29 @@ window.onload = function(){
 			// Create object
 			if (swch.allowObjCreating){
 				if (mscam && !mouse.rightDown){
+					let circularOrbit = false;
+					let [svx, svy] = [0, 0];
+					if ( dist(mouse.leftDownX, mouse.leftDownY, mouse.leftUpX, mouse.leftUpY) <= dis_zone && ui.newObjCircularOrbit.state) {
+						circularOrbit = true;
+					} else {
+						let [mcx, mcy] = mouse.ctrlModificatedMousePosition();
+						if (!ui.newObjLock.state){
+							svx = ((mouse.leftDownX-mcx)/30) * powerFunc(ui.launchForce.state);
+							svy = ((mouse.leftDownY-mcy)/30) * powerFunc(ui.launchForce.state);	
+						}
+					}
 					addFrameBeginTask(()=>{
 						scene.addNewObject({
 							screenX: mouse.leftDownX,
 							screenY: mouse.leftDownY,
-							ob_col: ui.newObjColor.state,
+							vx: svx,
+							vy: svy,
+							color: ui.newObjColor.state,
 							mass: ui.newObjMass.state,
 							objLck: ui.newObjLock.state,
-							main_obj: scene.objIdToOrbit
+							main_obj: scene.objIdToOrbit,
+							circularOrbit: circularOrbit,
+							callback: newObjectCreatedCallback
 						});
 						if (ui.newObjRandColor.state) ui.newObjColor.state = scene.randomColor();
 					});
@@ -560,7 +581,7 @@ window.onload = function(){
 				if (ui.pauseWhenCreatingObject.state){
 					pauseState = ui.pauseWhenCreatingObject.prevPauseState;
 				}
-				scene.camera.clearLayer2();
+				// scene.camera.clearLayer2();
 			}
 			if (mbut == 'camera' && swch.s_track){
 				scene.camera.setTarget(scene.objectSelect('nearest', scene.camera.Target));
@@ -769,11 +790,13 @@ window.onload = function(){
 		  	addFrameBeginTask(()=>{ 
 				scene.addNewObject({
 		  	 		screenX: scene.camera.resolutionX * Math.random(), screenY: scene.camera.resolutionY *Math.random(),
-					ob_col: ui.newObjColor.state,
+		  	 		vx: 0, vy: 0,
+					color: ui.newObjColor.state,
 					mass: ui.newObjMass.state,
 					objLck: ui.newObjLock.state,
 					main_obj: scene.objIdToOrbit,
-					circularOrbit: true
+					circularOrbit: ui.newObjCircularOrbit.state,
+					callback: newObjectCreatedCallback
 				});
 				if (ui.newObjRandColor.state) ui.newObjColor.state = scene.randomColor();
 			});
@@ -907,13 +930,15 @@ window.onload = function(){
 					if (swch.allowObjCreating){
 						addFrameBeginTask(()=>{ 
 							scene.addNewObject({
-								screenX: mouse.x, screenY: mouse.y,
-								ob_col: ui.newObjColor.state,
-								mass: ui.newObjMass.state,
-								objLck: ui.newObjLock.state,
-								main_obj: scene.objIdToOrbit,
-								circularOrbit: true
-							});
+							screenX: mouse.x, screenY: mouse.y,
+							vx: 0, vy: 0,
+							color: ui.newObjColor.state,
+							mass: ui.newObjMass.state,
+							objLck: ui.newObjLock.state,
+							main_obj: scene.objIdToOrbit,
+							circularOrbit: ui.newObjCircularOrbit.state,
+							callback: newObjectCreatedCallback
+						});
 							if (ui.newObjRandColor.state) ui.newObjColor.state = scene.randomColor();
 						});		
 					}

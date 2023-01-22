@@ -259,54 +259,46 @@ export default class Scene {
 		screenY,
 		vx,
 		vy,
-		radius,
 		mass,
 		objLck = false,
-		ob_col,
+		color,
 		main_obj,
 		objArr = this.objArr,
-		circularOrbit = false
+		circularOrbit = false,
+		callback
 	}){
-		let svx = 0, svy = 0;
-		let px = x, py = y;
-		if (screenX){
-			[px, py] = this.activCam.screenPix2(screenX, screenY);
-		}
-		let newObjId = objArr.length;
+		const newObjId = objArr.length; // The ID of a new object
 
-		if ( (dist(mouse.leftDownX, mouse.leftDownY, mouse.leftUpX, mouse.leftUpY) <= dis_zone || circularOrbit) && objArr[this.objIdToOrbit] && ui.newObjCircularOrbit.state && !objLck) {
-			[svx, svy] = this.forceToCircularOrbit(px, py, this.objIdToOrbit);
+		// If received a screen coordinates convert it to a world coordinates
+		if (screenX !== undefined && screenY !== undefined){
+			[x, y] = this.activCam.screenPix2(screenX, screenY);
+		}
+
+		if (circularOrbit && objArr[this.objIdToOrbit]) {
+			[vx, vy] = this.forceToCircularOrbit(x, y, this.objIdToOrbit);
 			if (!objArr[this.objIdToOrbit].lock){
-				svx += objArr[this.objIdToOrbit].vx;
-				svy += objArr[this.objIdToOrbit].vy;
+				vx += objArr[this.objIdToOrbit].vx;
+				vy += objArr[this.objIdToOrbit].vy;
 			}
 			// Circular orbit correction
-			px += vx === undefined ? svx/2*ui.timeSpeed.state : 0;
-			py += vy === undefined ? svy/2*ui.timeSpeed.state : 0;
-		} else {
-			let [mcx, mcy] = mouse.ctrlModificatedMousePosition();
-			if (!objLck){
-				svx = ((mouse.leftDownX-mcx)/30) * this.powerFunc(ui.launchForce.state);
-				svy = ((mouse.leftDownY-mcy)/30) * this.powerFunc(ui.launchForce.state);	
-			}
+			x += vx/2 * ui.timeSpeed.state;
+			y += vy/2 * ui.timeSpeed.state;
 		}
-		// New object velocity
-		svx = vx !== undefined? vx : svx;
-		svy = vy !== undefined? vy : svy;
-		// Add new objArr with parameters
+
+		// Add new object to objArr with parameters
 		objArr[newObjId] = {
-			x: px, // Position X
-			y: py, // Position Y
-			vx: svx, // Velocity X 
-			vy: svy, // Velocity Y 
+			x: x, // Position X
+			y: y, // Position Y
+			vx: vx, // Velocity X 
+			vy: vy, // Velocity Y 
 			m: mass, // Object mass
-			color: ob_col, // Object color
+			color: color, // Object color
 			lock: objLck, // Object locked (boolean)
 			trace: [], // Array of trace points (traces mode 2-3)
 			main_obj: main_obj // Affects in interaction mode 1 (interact with only main objecgt)
 		};
-		this.show_obj_count();
-		this.activCam.allowFrameRender = true;
+		// Run callback after an object have been created
+		callback && callback(newObjId);
 		// If object created return its ID, else return false
 		return objArr[newObjId] ? newObjId : false;
 	}

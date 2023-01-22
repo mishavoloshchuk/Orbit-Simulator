@@ -383,7 +383,7 @@ export default class Camera{
 	trajectoryCalculate({trajLen = 256, accuracity = 1, color = ['#006BDE', '#ffffff']}){
 		// Ctrl pressed change mouse accuracity
 		let [mcx, mcy] = mouse.ctrlModificatedMousePosition();
-		// New obj vector
+		// New obj velocity
 		let svx = ((mouse.leftDownX - mcx)/30) * this.scene.powerFunc(ui.launchForce.state);
 		let svy = ((mouse.leftDownY - mcy)/30) * this.scene.powerFunc(ui.launchForce.state);	
 		trajLen = trajLen * accuracity; // Trajectory calculation accuracity
@@ -413,20 +413,19 @@ export default class Camera{
 			return;
 		}
 
-		let newObjId = objArrCopy.length;
-		let savedNewObjId = newObjId;
-		const [px, py] = this.screenPix2(mouse.leftDownX, mouse.leftDownY);
-		objArrCopy[objArrCopy.length] = {
-			x: px, // Position X
-			y: py, // Position Y
+		let newObjId = this.scene.addNewObject({
+			objArr: objArrCopy,
+			screenX: mouse.leftDownX, // Position X
+			screenY: mouse.leftDownY, // Position Y
 			vx: svx, // Velocity X equals vx if given and svx if not
 			vy: svy, // Velocity Y equals vy if given and svy if not
-			m: ui.newObjMass.state, // Object mass via given radius || Radius
+			mass: ui.newObjMass.state, // Object mass via given radius || Radius
 			color: ui.newObjColor.state,
-			lock: ui.newObjLock.state,
-			trace: [],
+			objLck: ui.newObjLock.state,
 			main_obj: this.scene.objIdToOrbit
-		};
+		});
+
+		const savedNewObjId = newObjId;
 
 		// Create a trajectoryTrace array in each object
 		let trajectoryTraces = [];
