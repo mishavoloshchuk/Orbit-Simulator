@@ -30,15 +30,15 @@ export default class Scene {
 					const obj2Pos = [arr[obj2Id * this.constants.objLen], arr[obj2Id * this.constants.objLen + 1]];
 					const obj2Mass = arr[obj2Id * this.constants.objLen + 2];
 
-					const D = dist(obj1Pos[0],obj1Pos[1], obj2Pos[0],obj2Pos[1]);
-
 					const radiusSum = Math.sqrt(Math.abs(obj1Mass)) + Math.sqrt(Math.abs(obj2Mass));
-					if (D - radiusSum <= 0) {
+					const newD = dist(obj1Pos[0],obj1Pos[1], obj2Pos[0],obj2Pos[1]);
+					if (newD - radiusSum <= 0) {
 						if (collided === false){
 							collided = true;
 						}
 					} else {
 						if (obj1Lock === 0){
+							const D = dist(obj1Pos[0],obj1Pos[1], obj2Pos[0],obj2Pos[1]);
 							const sin = (obj2Pos[1] - obj1Pos[1])/D; // Sin
 							const cos = (obj2Pos[0] - obj1Pos[0])/D; // Cos
 							const velocity = gravity_func(sin, cos, D, gravitMode, obj2Mass, obj1Mass, timeSpeed, g);
@@ -74,8 +74,9 @@ export default class Scene {
 				if (newVelosities[obj1Id][2] === 1){ // if object collided
 					collidedObjectsIDs.push(obj1Id);
 				}
-				objectsArray[obj1Id].vx += newVelosities[obj1Id][0];
-				objectsArray[obj1Id].vy += newVelosities[obj1Id][1];
+				const obj1 = objectsArray[obj1Id];
+				obj1.vx += newVelosities[obj1Id][0];
+				obj1.vy += newVelosities[obj1Id][1];
 			}
 			
 			let collidedPairs = [];
@@ -87,11 +88,14 @@ export default class Scene {
 					const obj2Id = collidedObjectsIDs[j];
 					const obj2 = objectsArray[obj2Id];
 
-					const D = dist(obj1.x,obj1.y, obj2.x,obj2.y);
+					const radiusSum = obj1.r + obj2.r;
 
-					const radiusSum = Math.sqrt(Math.abs(obj1.m)) + Math.sqrt(Math.abs(obj2.m));
-					if (D - radiusSum <= 0) {
-						collidedPairs.push([obj1Id, obj2Id]);
+					if (Math.abs(obj1.x - obj2.x) <= radiusSum && Math.abs(obj1.y - obj2.y) <= radiusSum){
+						const D = dist(obj1.x,obj1.y, obj2.x,obj2.y);
+
+						if (D - radiusSum <= 0) {
+							collidedPairs.push([obj1Id, obj2Id]);
+						}
 					}
 				}
 			}
@@ -118,6 +122,7 @@ export default class Scene {
 		collisionType = +ui.collisionMode.state
 	){
 		// console.log('Calculate begin:');
+		// console.log(objectsArray.reduce((vel2, obj) => [vel2[0] + obj.vx, vel2[1] + obj.vy], [0, 0]));
 		for (let object1Id = objectsArray.length; object1Id--;){
 			calculate({
 				objectsArray: objectsArray,
@@ -180,12 +185,27 @@ export default class Scene {
 			obj.vy = (objA.m*objA.vy+objB.m*objB.vy)/(objA.m+objB.m);// Формула абсолютно-неупругого столкновения
 
 			obj.m = objA.m + objB.m; // Set new mass to obj
+			obj.r = Math.sqrt(Math.abs(obj.m));
 			obj.color = mixedColor;
 			// Change camera target
 			if (objToDelId === this.camera.Target && objArr === this.objArr) this.camera.setTarget(alivedObjId);
 			// Add collided object to deleteObjectList
 			deleteObjectList.push(objToDelId);
 		} else if (collisionType === 1){ // Repulsion
+					if (objA.lock){ // If object locked
+						objA.vx = 0;
+						objA.vy = 0;
+					} else {// If object not locked
+						objA.x += objA.vx*ui.timeSpeed.state;
+						objA.y += objA.vy*ui.timeSpeed.state;
+					}
+					if (objB.lock){ // If object locked
+						objB.vx = 0;
+						objB.vy = 0;
+					} else {// If object not locked
+						objB.x += objB.vx*ui.timeSpeed.state;
+						objB.y += objB.vy*ui.timeSpeed.state;
+					}	
 			let D = dist(objA.x, objA.y, objB.x, objB.y); // The distance between objects
 			let v1 = this.gipot(objA.vx, objA.vy); // Scallar velocity
 			let v2 = this.gipot(objB.vx, objB.vy); // Scallar velocity
@@ -214,19 +234,20 @@ export default class Scene {
 				objB.vy = (( v2*Math.cos(ag2 - fi)*(m2-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1+m2) ) * Math.sin(fi) + v2*Math.sin(ag2 - fi)*Math.sin(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
 			}
 
-			// Colliding
-			const objARadius = Math.sqrt(Math.abs(objA.m)); // Object A radius
-			const objBRadius = objA.m === objB.m ? objARadius : Math.sqrt(Math.abs(objB.m)); // Object B radius
-			const rS = objARadius + objBRadius; // Both objects radiuses sum
-			const mS = objA.m + objB.m; // Both objects mass sum
-			let newD = dist(objA.x + objA.vx*ui.timeSpeed.state, objA.y + objA.vy*ui.timeSpeed.state, objB.x + objB.vx*ui.timeSpeed.state, objB.y + objB.vy*ui.timeSpeed.state); // The distance between objects with new position
-			if (newD - rS <= 0){
-				const rD = rS - D; // Total move
-				const objAMov = objA.lock ? 0 : rD * (objA.m / mS); // Object A move
-				const objBMov = objB.lock ? 0 : rD - objAMov; // Object B move
-				objA.x -= objAMov * cos; objA.y -= objAMov * sin;
-				objB.x += objBMov * cos; objB.y += objBMov * sin;
-			}
+
+			// // Colliding
+			// const objARadius = Math.sqrt(Math.abs(objA.m)); // Object A radius
+			// const objBRadius = objA.m === objB.m ? objARadius : Math.sqrt(Math.abs(objB.m)); // Object B radius
+			// const rS = objARadius + objBRadius; // Both objects radiuses sum
+			// const mS = objA.m + objB.m; // Both objects mass sum
+			// let newD = dist(objA.x + objA.vx*ui.timeSpeed.state, objA.y + objA.vy*ui.timeSpeed.state, objB.x + objB.vx*ui.timeSpeed.state, objB.y + objB.vy*ui.timeSpeed.state); // The distance between objects with new position
+			// if (newD - rS <= 0){
+			// 	const rD = rS - D; // Total move
+			// 	const objAMov = objA.lock ? 0 : objB.lock ? rD : rD * (objA.m / mS); // Object A move
+			// 	const objBMov = objB.lock ? 0 : rD - objAMov; // Object B move
+			// 	objA.x -= objAMov * cos; objA.y -= objAMov * sin;
+			// 	objB.x += objBMov * cos; objB.y += objBMov * sin;
+			// }
 		} else if (collisionType === 2){ // None
 
 		}
@@ -292,6 +313,7 @@ export default class Scene {
 			vx: vx, // Velocity X 
 			vy: vy, // Velocity Y 
 			m: mass, // Object mass
+			r: Math.sqrt(Math.abs(mass)), // Object radius
 			color: color, // Object color
 			lock: objLck, // Object locked (boolean)
 			trace: [], // Array of trace points (traces mode 2-3)
@@ -340,7 +362,7 @@ export default class Scene {
 	forceToCircularOrbit(px, py, obj1Id){
 		if (this.objArr[obj1Id]){
 			const objToOrbMass = Math.abs(this.objArr[obj1Id].m);
-			let R = this.dist(this.camera.screenPix(px, 'x'), this.camera.screenPix(py, 'y'), this.camera.screenPix(this.objArr[obj1Id].x, 'x'), this.camera.screenPix(this.objArr[obj1Id].y, 'y'))*this.camera.animZoom;
+			let R = dist(this.camera.screenPix(px, 'x'), this.camera.screenPix(py, 'y'), this.camera.screenPix(this.objArr[obj1Id].x, 'x'), this.camera.screenPix(this.objArr[obj1Id].y, 'y'))*this.camera.animZoom;
 			let V = Math.sqrt((objToOrbMass*5)*(R)/ui.g.state);
 			let a = this.objArr[obj1Id].x - px;
 			let b = this.objArr[obj1Id].y - py;
@@ -397,8 +419,6 @@ export default class Scene {
 		}
 		return sel[1];
 	}
-	// Get distance between two 2d points
-	dist(x1, y1, x2, y2){ return Math.sqrt(Math.pow((x1 - x2), 2) + Math.pow((y1 - y2), 2)) }
 	// Get logariphmic value if value bigger than 1
 	powerFunc(F){
 		if (F > 1){ return Math.round(Math.pow(F, Math.pow(F, 3))*100)/100 } else { return F }

@@ -43,7 +43,7 @@ export default class Camera{
 	#clrTmt = setTimeout(()=>{ this.#clrDelay = false }, this.#clrDTim);
 	cameraChangedState(){
 		this.#clrDelay = true;
-		clearTimeout(this.#clrTmt);;
+		clearTimeout(this.#clrTmt);
 		this.#clrTmt = setTimeout(()=>{ this.#clrDelay = false }, this.#clrDTim);
 	}
 
@@ -599,7 +599,7 @@ export default class Camera{
 		let offsY = -30;
 		if (['mobile', 'tablet'].includes(getDeviceType()) ){ offsX = -25; offsY = -70; } // If device is mobile or tablet
 		Object.assign(launchPowerLabel.style, {left: (mouse.x+offsX)+'px', top: (mouse.y+offsY)+'px', display: 'block', color: ui.newObjColor.state});
-		launchPowerLabel.innerHTML = Math.round(this.scene.dist(mouse.leftDownX, mouse.leftDownY, mouse.x, mouse.y) * this.scene.powerFunc(ui.launchForce.state) * 100)/100;
+		launchPowerLabel.innerHTML = Math.round(dist(mouse.leftDownX, mouse.leftDownY, mouse.x, mouse.y) * this.scene.powerFunc(ui.launchForce.state) * 100)/100;
 		let D = this.getScreenRad(ui.newObjMass.state)*2;
 
 		// Gradient

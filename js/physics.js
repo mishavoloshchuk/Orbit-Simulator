@@ -14,35 +14,60 @@ function calculate({
 		for (let object2Id = object1Id; object2Id--;){
 			const obj2 = objectsArray[object2Id];
 
-			const D = dist(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
-			const sin = (obj2.y - obj1.y)/D; // Sin
-			const cos = (obj2.x - obj1.x)/D; // Cos
-			let vector;
+			if (obj2.lock === true && obj1.lock === true) continue;
+
+			let D = dist(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
+			let sin = (obj2.y - obj1.y)/D; // Sin
+			let cos = (obj2.x - obj1.x)/D; // Cos
 
 			// Collision
-			const radiusSum = Math.sqrt(Math.abs(obj1.m)) + Math.sqrt(Math.abs(obj2.m));
-			if (D - radiusSum <= 0){
-				if (collisionType === 2){ // Collision type: none
-					vector = gravity_func(sin, cos, D, gravitMode, obj2.m, obj1.m, timeSpeed, g*Math.pow(D/radiusSum, 3));
+			const radiusSum = obj1.r + obj2.r;
+
+			if (D - radiusSum > 0){
+			} else {
+				const mS = obj1.m + obj2.m; // Both objects mass sum
+				const rD = radiusSum - D; // Total move
+				const objAMov = obj1.lock ? 0 : obj2.lock ? rD : rD * (obj1.m / mS); // Object A move
+				const objBMov = obj2.lock ? 0 : rD - objAMov; // Object B move
+				obj1.x -= objAMov * cos; obj1.y -= objAMov * sin;
+				obj2.x += objBMov * cos; obj2.y += objBMov * sin;
+				D = dist(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
+				sin = (obj2.y - obj1.y)/D; // Sin
+				cos = (obj2.x - obj1.x)/D; // Cos
+				// debugger;
+			}
+			let vector = gravity_func(sin, cos, D, gravitMode, obj2.m, obj1.m, timeSpeed, g);
+			// Add calculated vectors to object 1
+			if (!obj1.lock){
+				obj1.vx += vector[0];
+				obj1.vy += vector[1];
+			}
+			// Add calculated vectors to object 2
+			if (!obj2.lock){
+				obj2.vx -= vector[2];
+				obj2.vy -= vector[3];
+			}
+			if (Math.abs((obj1.x + obj1.vx*timeSpeed) - (obj2.x + obj2.vx*timeSpeed)) <= radiusSum && Math.abs((obj1.y + obj1.vy*timeSpeed) - (obj2.y + obj2.vy*timeSpeed)) <= radiusSum){
+				const newD = dist(obj1.x + obj1.vx*timeSpeed, obj1.y + obj1.vy*timeSpeed, obj2.x + obj2.vx*timeSpeed, obj2.y + obj2.vy*timeSpeed); // The distance between objects
+				if (newD - radiusSum <= 0){
+					// if (obj1.lock){ // If object locked
+					// 	obj1.vx = 0;
+					// 	obj1.vy = 0;
+					// } else {// If object not locked
+					// 	obj1.x += obj1.vx*timeSpeed;
+					// 	obj1.y += obj1.vy*timeSpeed;
+					// }
+					// if (obj2.lock){ // If object locked
+					// 	obj2.vx = 0;
+					// 	obj2.vy = 0;
+					// } else {// If object not locked
+					// 	obj2.x += obj2.vx*timeSpeed;
+					// 	obj2.y += obj2.vy*timeSpeed;
+					// }			
+					collidedObjectsIdList.push([object1Id, object2Id]); // Send the collided objects
 				}
-				collidedObjectsIdList.push([object1Id, object2Id]); // Send the collided objects
-			} else { 
-				// Physics vector calculation
-				vector = gravity_func(sin, cos, D, gravitMode, obj2.m, obj1.m, timeSpeed, g);
 			}
 
-			if (vector !== undefined){
-				// Add calculated vectors to object 1
-				if (!obj1.lock){
-					obj1.vx += vector[0];
-					obj1.vy += vector[1];
-				}
-				// Add calculated vectors to object 2
-				if (!obj2.lock){
-					obj2.vx -= vector[2];
-					obj2.vy -= vector[3];
-				}
-			}
 		}
 	} else
 	if (interactMode === 1 && obj1.main_obj !== undefined ){
@@ -161,7 +186,7 @@ function gpuCollision(objAPos, objAVel, objAMass, objALock, objBPos, objBVel, ob
 		const objARadius = Math.sqrt(Math.abs(objAMass)); // Object A radius
 		const objBRadius = objAMass === objBMass ? objARadius : Math.sqrt(Math.abs(objBMass)); // Object B radius
 		const rS = objARadius + objBRadius; // Both objects radiuses sum
-		let newD = dist(objAPos[0] + objNewPosVel[2]*timeSpeed, objAPos[1] + objNewPosVel[3]*timeSpeed, objBPos[0] + objBVel[0]*timeSpeed, objBPos[1] + objBVel[1]*timeSpeed); // The distance between objects with new position
+		let newD = dist(objAPos[0] + objNewPosVel[2]*timeSpeed, objAPos[1] + objNewPosVel[3]*timeSpeed, objBPos[0] + vel2[0]*timeSpeed, objBPos[1] + vel2[1]*timeSpeed); // The distance between objects with new position
 		if (newD - rS <= 0){
 			const mS = objAMass + objBMass; // Both objects mass sum
 			const rD = rS - D; // Total move
