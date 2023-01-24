@@ -463,6 +463,37 @@ export default class Camera{
 					}
 				}
 				if (obj.lock !== true) trajectoryTraces[obj.initId].push([obj.x, obj.y]);
+
+				// Debug show velocities
+				{
+					this.ctx2.save();
+					if (obj.lock === false){
+						this.ctx2.strokeStyle = this.ctx2.fillStyle = obj.color;
+
+						this.ctx2.globalAlpha = 0.2;
+						this.ctx2.beginPath();
+						this.ctx2.arc(...this.crd2(obj.x, obj.y), obj.r * this.animZoom, 0, 7);
+						this.ctx2.fill();
+
+						this.ctx2.globalAlpha = 1;
+						this.ctx2.beginPath();
+						this.ctx2.arc(...this.crd2(obj.x, obj.y), 2, 0, 7);
+						this.ctx2.fill();	
+
+						this.ctx2.lineWidth = 2;
+						this.ctx2.beginPath();
+						this.ctx2.moveTo(...this.crd2(obj.x, obj.y));
+						this.ctx2.lineTo(...this.crd2(obj.x - obj.vx * ui.timeSpeed.state, obj.y - obj.vy * ui.timeSpeed.state));
+						this.ctx2.stroke();
+
+					} else {
+						this.ctx2.strokeStyle = this.ctx2.fillStyle = '#000';
+						this.ctx2.beginPath();
+						this.ctx2.arc(...this.crd2(obj.x, obj.y), 2, 0, 7);
+						this.ctx2.fill();
+					}
+					this.ctx2.restore();
+				}
 			}	
 			// if (!mouse.move && mouse.leftDown){
 			// 	this.scene.physicsMultiThreadCalculate(objArrCopy, afterPhysicsCallback);

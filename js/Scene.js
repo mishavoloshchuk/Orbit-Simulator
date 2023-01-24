@@ -65,6 +65,23 @@ export default class Scene {
 		collisionType = +ui.collisionMode.state
 	){
 		if (objectsArray.length > 1){
+			// let D = dist(objA.x, objA.y, objB.x, objB.y); // The distance between objects
+			// let sin = (objB.y - objA.y)/D; // Sin
+			// let cos = (objB.x - objA.x)/D; // Cos
+
+			// // Collision
+			// const radiusSum = objA.r + objB.r;
+
+			// if (D - radiusSum > 0){
+			// } else {
+			// 	const mS = objA.m + objB.m; // Both objects mass sum
+			// 	const rD = radiusSum - D; // Total move
+			// 	const objAMov = objA.lock ? 0 : objB.lock ? rD : rD * (objA.m / mS); // Object A move
+				// const objBMov = objB.lock ? 0 : rD - objAMov; // Object B move
+			// 	objA.x -= objAMov * cos; objA.y -= objAMov * sin;
+			// 	objB.x += objBMov * cos; objB.y += objBMov * sin;
+			// }
+
 			const prepairedArr = objectsArray.map(obj => [obj.x, obj.y, obj.m, obj.lock]);
 			this.computeVelocities.setOutput([objectsArray.length]);
 			const newVelosities = this.computeVelocities(prepairedArr, objectsArray.length, interactMode, timeSpeed, g, gravitMode, collisionType);
@@ -192,6 +209,23 @@ export default class Scene {
 			// Add collided object to deleteObjectList
 			deleteObjectList.push(objToDelId);
 		} else if (collisionType === 1){ // Repulsion
+			let D = dist(objA.x, objA.y, objB.x, objB.y); // The distance between objects
+			let cos = (objB.x - objA.x)/D;
+			let sin = (objB.y - objA.y)/D;
+			const radiusSum = objA.r + objB.r;
+			if (D - radiusSum > 0){
+			} else {
+				// const mS = objA.m + objB.m; // Both objects mass sum
+				// const rD = radiusSum - D; // Total move
+				// const objAMov = objA.lock ? 0 : objB.lock ? rD : rD * (objA.m / mS); // Object A move
+				// const objBMov = objB.lock ? 0 : rD - objAMov; // Object B move
+				// objA.x -= objAMov * cos; objA.y -= objAMov * sin;
+				// objB.x += objBMov * cos; objB.y += objBMov * sin;
+				// // D = dist(objA.x, objA.y, objB.x, objB.y); // The distance between objects
+				// // sin = (objB.y - objA.y)/D; // Sin
+				// // cos = (objB.x - objA.x)/D; // Cos
+				// // debugger;
+			}
 					if (objA.lock){ // If object locked
 						objA.vx = 0;
 						objA.vy = 0;
@@ -206,7 +240,7 @@ export default class Scene {
 						objB.x += objB.vx*ui.timeSpeed.state;
 						objB.y += objB.vy*ui.timeSpeed.state;
 					}	
-			let D = dist(objA.x, objA.y, objB.x, objB.y); // The distance between objects
+			D = dist(objA.x, objA.y, objB.x, objB.y); // The distance between objects
 			let v1 = this.gipot(objA.vx, objA.vy); // Scallar velocity
 			let v2 = this.gipot(objB.vx, objB.vy); // Scallar velocity
 			let vcos1 = v1 == 0?0:objA.vx/v1; // cos vx 1
@@ -216,8 +250,8 @@ export default class Scene {
 			let ag1 = Math.atan2(vsin1, vcos1);
 			let ag2 = Math.atan2(vsin2, vcos2);
 
-			let cos = (objB.x - objA.x)/D;
-			let sin = (objB.y - objA.y)/D;
+			cos = (objB.x - objA.x)/D;
+			sin = (objB.y - objA.y)/D;
 			let fi = Math.atan2(sin, cos);
 			// Object A new velocity
 			if (!objA.lock){
