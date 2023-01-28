@@ -23,19 +23,19 @@ function calculate({
 			// Collision
 			const radiusSum = obj1.r + obj2.r;
 
-			if (D - radiusSum > 0){
-			} else {
-				const mS = obj1.m + obj2.m; // Both objects mass sum
-				const rD = radiusSum - D; // Total move
-				const objAMov = obj1.lock ? 0 : obj2.lock ? rD : rD * (obj1.m / mS); // Object A move
-				const objBMov = obj2.lock ? 0 : rD - objAMov; // Object B move
-				obj1.x -= objAMov * cos; obj1.y -= objAMov * sin;
-				obj2.x += objBMov * cos; obj2.y += objBMov * sin;
-				D = dist(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
-				sin = (obj2.y - obj1.y)/D; // Sin
-				cos = (obj2.x - obj1.x)/D; // Cos
-				// debugger;
-			}
+			// if (D - radiusSum > 0){
+			// } else {
+			// 	const mS = obj1.m + obj2.m; // Both objects mass sum
+			// 	const rD = radiusSum - D; // Total move
+			// 	const objAMov = obj1.lock ? 0 : obj2.lock ? rD : rD * (obj1.m / mS); // Object A move
+			// 	const objBMov = obj2.lock ? 0 : rD - objAMov; // Object B move
+			// 	obj1.x -= objAMov * cos; obj1.y -= objAMov * sin;
+			// 	obj2.x += objBMov * cos; obj2.y += objBMov * sin;
+			// 	D = dist(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
+			// 	sin = (obj2.y - obj1.y)/D; // Sin
+			// 	cos = (obj2.x - obj1.x)/D; // Cos
+			// 	// debugger;
+			// }
 			let vector = gravity_func(sin, cos, D, gravitMode, obj2.m, obj1.m, timeSpeed, g);
 			// Add calculated vectors to object 1
 			if (!obj1.lock){
