@@ -229,18 +229,18 @@ export default class Scene {
 						objB.y += objB.vy*ui.timeSpeed.state;
 					}	
 			} else {
-				const mS = objA.m + objB.m; // Both objects mass sum
-				const rD = radiusSum - D; // Total move
-				const objAMov = objA.lock ? 0 : objB.lock ? rD : rD * (objA.m / mS); // Object A move
-				const objBMov = objB.lock ? 0 : rD - objAMov; // Object B move
-				objA.x -= objAMov * cos; objA.y -= objAMov * sin;
-				objB.x += objBMov * cos; objB.y += objBMov * sin;
+				// const mS = objA.m + objB.m; // Both objects mass sum
+				// const rD = radiusSum - D; // Total move
+				// const objAMov = objA.lock ? 0 : objB.lock ? rD : rD * (objA.m / mS); // Object A move
+				// const objBMov = objB.lock ? 0 : rD - objAMov; // Object B move
+				// objA.x -= objAMov * cos; objA.y -= objAMov * sin;
+				// objB.x += objBMov * cos; objB.y += objBMov * sin;
 				// D = dist(objA.x, objA.y, objB.x, objB.y); // The distance between objects
 				// sin = (objB.y - objA.y)/D; // Sin
 				// cos = (objB.x - objA.x)/D; // Cos
 				// debugger;
 			}
-			// D = dist(objA.x, objA.y, objB.x, objB.y); // The distance between objects
+			D = dist(objA.x, objA.y, objB.x, objB.y); // The distance between objects
 			let v1 = this.gipot(objA.vx, objA.vy); // Scallar velocity
 			let v2 = this.gipot(objB.vx, objB.vy); // Scallar velocity
 			let vcos1 = v1 == 0?0:objA.vx/v1; // cos vx 1
@@ -250,8 +250,8 @@ export default class Scene {
 			let ag1 = Math.atan2(vsin1, vcos1);
 			let ag2 = Math.atan2(vsin2, vcos2);
 
-			// cos = (objB.x - objA.x)/D;
-			// sin = (objB.y - objA.y)/D;
+			cos = (objB.x - objA.x)/D;
+			sin = (objB.y - objA.y)/D;
 			let fi = Math.atan2(sin, cos);
 			// Object A new velocity
 			if (!objA.lock){
