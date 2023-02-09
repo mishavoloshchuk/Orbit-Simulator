@@ -71,52 +71,52 @@ function calculate({
 			// 	}
 			// }
 		}
-		for (let object2Id = object1Id; object2Id--;){
-			const obj2 = objectsArray[object2Id];
+		// for (let object2Id = object1Id; object2Id--;){
+		// 	const obj2 = objectsArray[object2Id];
 
-			if (obj2.lock === true && obj1.lock === true) continue;
+		// 	if (obj2.lock === true && obj1.lock === true) continue;
 
-			// let D = dist(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
-			// let sin = (obj2.y - obj1.y)/D; // Sin
-			// let cos = (obj2.x - obj1.x)/D; // Cos
+		// 	// let D = dist(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
+		// 	// let sin = (obj2.y - obj1.y)/D; // Sin
+		// 	// let cos = (obj2.x - obj1.x)/D; // Cos
 
-			// Collision
-			const radiusSum = obj1.r + obj2.r;
+		// 	// Collision
+		// 	const radiusSum = obj1.r + obj2.r;
 
-			// if (D - radiusSum > 0){
-			// } else {
-			// 	const mS = obj1.m + obj2.m; // Both objects mass sum
-			// 	const rD = radiusSum - D; // Total move
-			// 	const objAMov = obj1.lock ? 0 : obj2.lock ? rD : rD * (obj1.m / mS); // Object A move
-			// 	const objBMov = obj2.lock ? 0 : rD - objAMov; // Object B move
-			// 	obj1.x -= objAMov * cos; obj1.y -= objAMov * sin;
-			// 	obj2.x += objBMov * cos; obj2.y += objBMov * sin;
-			// 	D = dist(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
-			// 	sin = (obj2.y - obj1.y)/D; // Sin
-			// 	cos = (obj2.x - obj1.x)/D; // Cos
-			// 	// debugger;
-			// }
-			if (Math.abs((obj1.x + obj1.vx*timeSpeed) - (obj2.x + obj2.vx*timeSpeed)) <= radiusSum && Math.abs((obj1.y + obj1.vy*timeSpeed) - (obj2.y + obj2.vy*timeSpeed)) <= radiusSum){
-				const newD = dist(obj1.x + obj1.vx*timeSpeed, obj1.y + obj1.vy*timeSpeed, obj2.x + obj2.vx*timeSpeed, obj2.y + obj2.vy*timeSpeed); // The distance between objects
-				if (newD - radiusSum <= 0){
-					// if (obj1.lock){ // If object locked
-					// 	obj1.vx = 0;
-					// 	obj1.vy = 0;
-					// } else {// If object not locked
-					// 	obj1.x += obj1.vx*timeSpeed;
-					// 	obj1.y += obj1.vy*timeSpeed;
-					// }
-					// if (obj2.lock){ // If object locked
-					// 	obj2.vx = 0;
-					// 	obj2.vy = 0;
-					// } else {// If object not locked
-					// 	obj2.x += obj2.vx*timeSpeed;
-					// 	obj2.y += obj2.vy*timeSpeed;
-					// }			
-					collidedObjectsIdList.push([object1Id, object2Id]); // Send the collided objects
-				}
-			}
-		}
+		// 	// if (D - radiusSum > 0){
+		// 	// } else {
+		// 	// 	const mS = obj1.m + obj2.m; // Both objects mass sum
+		// 	// 	const rD = radiusSum - D; // Total move
+		// 	// 	const objAMov = obj1.lock ? 0 : obj2.lock ? rD : rD * (obj1.m / mS); // Object A move
+		// 	// 	const objBMov = obj2.lock ? 0 : rD - objAMov; // Object B move
+		// 	// 	obj1.x -= objAMov * cos; obj1.y -= objAMov * sin;
+		// 	// 	obj2.x += objBMov * cos; obj2.y += objBMov * sin;
+		// 	// 	D = dist(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
+		// 	// 	sin = (obj2.y - obj1.y)/D; // Sin
+		// 	// 	cos = (obj2.x - obj1.x)/D; // Cos
+		// 	// 	// debugger;
+		// 	// }
+		// 	if (Math.abs((obj1.x + obj1.vx*timeSpeed) - (obj2.x + obj2.vx*timeSpeed)) <= radiusSum && Math.abs((obj1.y + obj1.vy*timeSpeed) - (obj2.y + obj2.vy*timeSpeed)) <= radiusSum){
+		// 		const newD = dist(obj1.x + obj1.vx*timeSpeed, obj1.y + obj1.vy*timeSpeed, obj2.x + obj2.vx*timeSpeed, obj2.y + obj2.vy*timeSpeed); // The distance between objects
+		// 		if (newD - radiusSum <= 0){
+		// 			// if (obj1.lock){ // If object locked
+		// 			// 	obj1.vx = 0;
+		// 			// 	obj1.vy = 0;
+		// 			// } else {// If object not locked
+		// 			// 	obj1.x += obj1.vx*timeSpeed;
+		// 			// 	obj1.y += obj1.vy*timeSpeed;
+		// 			// }
+		// 			// if (obj2.lock){ // If object locked
+		// 			// 	obj2.vx = 0;
+		// 			// 	obj2.vy = 0;
+		// 			// } else {// If object not locked
+		// 			// 	obj2.x += obj2.vx*timeSpeed;
+		// 			// 	obj2.y += obj2.vy*timeSpeed;
+		// 			// }			
+		// 			collidedObjectsIdList.push([object1Id, object2Id]); // Send the collided objects
+		// 		}
+		// 	}
+		// }
 	} else
 	if (interactMode === 1 && obj1.main_obj !== undefined ){
 		const object2Id = obj1.main_obj;

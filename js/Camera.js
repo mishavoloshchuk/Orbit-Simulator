@@ -439,9 +439,10 @@ export default class Camera{
 		let distance = [Infinity, ];
 		let afterPhysicsCallback = (objectsArray, collidedObjectsIdList, interactMode, collisionType, timeSpeed) => {
 			let toDeleteObjectsList = [];
-			for (let collidedObjectsId of collidedObjectsIdList){
-				toDeleteObjectsList.push(...this.scene.collision(objectsArray, collisionType, ...collidedObjectsId));
-			}
+			toDeleteObjectsList = this.scene.checkCollision(objectsArray, collisionType, timeSpeed);
+			// for (let collidedObjectsId of collidedObjectsIdList){
+			// 	toDeleteObjectsList.push(...this.scene.collision(objectsArray, collisionType, ...collidedObjectsId));
+			// }
 
 			// Change newObjId after delete some objects after collision
 			newObjId = getIdAfterArrChange(toDeleteObjectsList, newObjId);

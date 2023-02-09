@@ -161,13 +161,37 @@ export default class Scene {
 		// After physics
 		// Set values after collisions
 		let deleteObjectList = [];
-		for (let collidedObjectsId of collidedObjectsIdList){ // collidedObjectsId max length is 2
-			deleteObjectList.push(...this.collision(objArr, collisionType, ...collidedObjectsId));
-		}
+		deleteObjectList = this.checkCollision(objArr, collisionType, timeSpeed);
+		// for (let collidedObjectsId of collidedObjectsIdList){ // collidedObjectsId max length is 2
+		// 	deleteObjectList.push(...this.collision(objArr, collisionType, ...collidedObjectsId));
+		// }
 
 		this.deleteObject(deleteObjectList, objArr);
 
 		this.addSelfVectors(objArr, timeSpeed);
+	}
+
+	checkCollision(objectsArray, collisionType, timeSpeed){
+		const objectsToDelete = [];
+		for (let object1Id in objectsArray){
+			const obj1 = objectsArray[object1Id];
+			for (let object2Id = object1Id; object2Id--;){
+				const obj2 = objectsArray[object2Id];
+
+				if (obj2.lock === true && obj1.lock === true) continue;
+
+				// Collision
+				const radiusSum = obj1.r + obj2.r;
+
+				if (Math.abs((obj1.x + obj1.vx*timeSpeed) - (obj2.x + obj2.vx*timeSpeed)) <= radiusSum && Math.abs((obj1.y + obj1.vy*timeSpeed) - (obj2.y + obj2.vy*timeSpeed)) <= radiusSum){
+					const newD = dist(obj1.x + obj1.vx*timeSpeed, obj1.y + obj1.vy*timeSpeed, obj2.x + obj2.vx*timeSpeed, obj2.y + obj2.vy*timeSpeed); // The distance between objects
+					if (newD - radiusSum <= 0){			
+						objectsToDelete.push(...this.collision(objectsArray, collisionType, object1Id, object2Id));
+					}
+				}
+			}
+		}
+		return objectsToDelete;
 	}
 	// Collision handler
 	collision(objArr, collisionType, obj1Id, obj2Id){
@@ -229,12 +253,12 @@ export default class Scene {
 						objB.y += objB.vy*ui.timeSpeed.state;
 					}	
 			} else {
-				// const mS = objA.m + objB.m; // Both objects mass sum
-				// const rD = radiusSum - D; // Total move
-				// const objAMov = objA.lock ? 0 : objB.lock ? rD : rD * (objA.m / mS); // Object A move
-				// const objBMov = objB.lock ? 0 : rD - objAMov; // Object B move
-				// objA.x -= objAMov * cos; objA.y -= objAMov * sin;
-				// objB.x += objBMov * cos; objB.y += objBMov * sin;
+				const mS = objA.m + objB.m; // Both objects mass sum
+				const rD = radiusSum - D; // Total move
+				const objAMov = objA.lock ? 0 : objB.lock ? rD : rD * (objA.m / mS); // Object A move
+				const objBMov = objB.lock ? 0 : rD - objAMov; // Object B move
+				objA.x -= objAMov * cos; objA.y -= objAMov * sin;
+				objB.x += objBMov * cos; objB.y += objBMov * sin;
 				// D = dist(objA.x, objA.y, objB.x, objB.y); // The distance between objects
 				// sin = (objB.y - objA.y)/D; // Sin
 				// cos = (objB.x - objA.x)/D; // Cos
