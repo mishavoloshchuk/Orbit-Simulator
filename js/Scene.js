@@ -20,7 +20,7 @@ export default class Scene {
 		this.computeVelocities = this.gpu.createKernel(function(arr, len, interactMode, timeSpeed, g, gravitMode, collisionType) {
 			const obj1Id = this.thread.x;
 			const obj1Pos = [arr[obj1Id * this.constants.objLen], arr[obj1Id * this.constants.objLen + 1]];
-			const obj1Vel = [0, 0];
+			const obj1Vel = [0.0, 0.0];
 			const obj1Mass = arr[obj1Id * this.constants.objLen + 2];
 			const obj1Lock = arr[obj1Id * this.constants.objLen + 3];
 			let collided = false;
@@ -28,25 +28,28 @@ export default class Scene {
 			for(let obj2Id = 0; obj2Id < len; obj2Id++){
 				if (obj2Id !== obj1Id) {
 					const obj2Pos = [arr[obj2Id * this.constants.objLen], arr[obj2Id * this.constants.objLen + 1]];
+					const obj2Vel = [0.0, 0.0];
 					const obj2Mass = arr[obj2Id * this.constants.objLen + 2];
+					const obj2Lock = arr[obj2Id * this.constants.objLen + 3];
 
 					const radiusSum = Math.sqrt(Math.abs(obj1Mass)) + Math.sqrt(Math.abs(obj2Mass));
-					const newD = dist(obj1Pos[0],obj1Pos[1], obj2Pos[0],obj2Pos[1]);
-					if (newD - radiusSum <= 0) {
-						if (collided === false){
-							collided = true;
-						}
-					} else {
-						if (obj1Lock === 0){
-							const D = dist(obj1Pos[0],obj1Pos[1], obj2Pos[0],obj2Pos[1]);
-							const sin = (obj2Pos[1] - obj1Pos[1])/D; // Sin
-							const cos = (obj2Pos[0] - obj1Pos[0])/D; // Cos
-							const velocity = gravity_func(sin, cos, D, gravitMode, obj2Mass, obj1Mass, timeSpeed, g);
-							obj1Vel[0] += velocity[0];
-							obj1Vel[1] += velocity[1];	
-						}
+					const D = dist(obj1Pos[0],obj1Pos[1], obj2Pos[0],obj2Pos[1]);
+					const sin = (obj2Pos[1] - obj1Pos[1])/D; // Sin
+					const cos = (obj2Pos[0] - obj1Pos[0])/D; // Cos
+					const velocity = gravity_func(sin, cos, D, gravitMode, obj2Mass, obj1Mass, timeSpeed, g);
+					if (obj1Lock === 0){
+						obj1Vel[0] += velocity[0];
+						obj1Vel[1] += velocity[1];	
+					}
+					if (obj2Lock === 0){
+						obj2Vel[0] += velocity[2];
+						obj2Vel[1] += velocity[3];	
 					}
 
+					const newD = dist(obj1Pos[0] + obj1Vel[0],obj1Pos[1] + obj1Vel[1], obj2Pos[0] + obj2Vel[0],obj2Pos[1] + obj2Vel[1]);
+					if (newD - radiusSum <= 0) {
+						collided = true;
+					}
 				}
 			}
 
@@ -98,28 +101,29 @@ export default class Scene {
 			
 			let collidedPairs = [];
 			let deleteObjectList = []; // Array of objects will be deleted after collision "merge"
-			for (let i = collidedObjectsIDs.length; i--;){
-				const obj1Id = collidedObjectsIDs[i];
-				const obj1 = objectsArray[obj1Id];
-				for (let j = i; j--;){
-					const obj2Id = collidedObjectsIDs[j];
-					const obj2 = objectsArray[obj2Id];
+			// for (let i = collidedObjectsIDs.length; i--;){
+			// 	const obj1Id = collidedObjectsIDs[i];
+			// 	const obj1 = objectsArray[obj1Id];
+			// 	for (let j = i; j--;){
+			// 		const obj2Id = collidedObjectsIDs[j];
+			// 		const obj2 = objectsArray[obj2Id];
 
-					const radiusSum = obj1.r + obj2.r;
+			// 		const radiusSum = obj1.r + obj2.r;
 
-					if (Math.abs(obj1.x - obj2.x) <= radiusSum && Math.abs(obj1.y - obj2.y) <= radiusSum){
-						const D = dist(obj1.x,obj1.y, obj2.x,obj2.y);
+			// 		if (Math.abs(obj1.x - obj2.x) <= radiusSum && Math.abs(obj1.y - obj2.y) <= radiusSum){
+			// 			const D = dist(obj1.x,obj1.y, obj2.x,obj2.y);
 
-						if (D - radiusSum <= 0) {
-							collidedPairs.push([obj1Id, obj2Id]);
-						}
-					}
-				}
-			}
-			for (let i = collidedPairs.length; i--;){
-				const collidedPair = collidedPairs[i]
-				deleteObjectList.push(...this.collision(objectsArray, collisionType, collidedPair[1], collidedPair[0]));
-			}
+			// 			if (D - radiusSum <= 0) {
+			// 				collidedPairs.push([obj1Id, obj2Id]);
+			// 			}
+			// 		}
+			// 	}
+			// }
+			// for (let i = collidedPairs.length; i--;){
+			// 	const collidedPair = collidedPairs[i]
+			// 	deleteObjectList.push(...this.collision(objectsArray, collisionType, collidedPair[1], collidedPair[0]));
+			// }
+			deleteObjectList = this.checkCollision(objectsArray, collisionType, timeSpeed);
 
 			this.deleteObject(deleteObjectList, objectsArray); // Delete objects by deleteObjectsList
 
