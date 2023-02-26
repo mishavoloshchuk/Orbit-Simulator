@@ -28,11 +28,11 @@ export default class Scene {
 			for(let obj2Id = 0; obj2Id < len; obj2Id++){
 				if (obj2Id !== obj1Id) {
 					const obj2Pos = [arr[obj2Id * this.constants.objLen], arr[obj2Id * this.constants.objLen + 1]];
-					const obj2Vel = [0.0, 0.0];
+					// const obj2Vel = [0.0, 0.0];
 					const obj2Mass = arr[obj2Id * this.constants.objLen + 2];
-					const obj2Lock = arr[obj2Id * this.constants.objLen + 3];
+					// const obj2Lock = arr[obj2Id * this.constants.objLen + 3];
 
-					const radiusSum = Math.sqrt(Math.abs(obj1Mass)) + Math.sqrt(Math.abs(obj2Mass));
+					// const radiusSum = Math.sqrt(Math.abs(obj1Mass)) + Math.sqrt(Math.abs(obj2Mass));
 					const D = dist(obj1Pos[0],obj1Pos[1], obj2Pos[0],obj2Pos[1]);
 					const sin = (obj2Pos[1] - obj1Pos[1])/D; // Sin
 					const cos = (obj2Pos[0] - obj1Pos[0])/D; // Cos
@@ -41,19 +41,19 @@ export default class Scene {
 						obj1Vel[0] += velocity[0];
 						obj1Vel[1] += velocity[1];	
 					}
-					if (obj2Lock === 0){
-						obj2Vel[0] += velocity[2];
-						obj2Vel[1] += velocity[3];	
-					}
+					// if (obj2Lock === 0){
+					// 	obj2Vel[0] += velocity[2];
+					// 	obj2Vel[1] += velocity[3];	
+					// }
 
-					const newD = dist(obj1Pos[0] + obj1Vel[0],obj1Pos[1] + obj1Vel[1], obj2Pos[0] + obj2Vel[0],obj2Pos[1] + obj2Vel[1]);
-					if (newD - radiusSum <= 0) {
-						collided = true;
-					}
+					// const newD = dist(obj1Pos[0] + obj1Vel[0],obj1Pos[1] + obj1Vel[1], obj2Pos[0] + obj2Vel[0],obj2Pos[1] + obj2Vel[1]);
+					// if (newD - radiusSum <= 0) {
+					// 	collided = true;
+					// }
 				}
 			}
 
-			return [obj1Vel[0], obj1Vel[1], collided];
+			return [obj1Vel[0], obj1Vel[1]];
 		}, {dynamicOutput: true, dynamicArguments: true, constants: {objLen: 4}, tactic: 'precision'})
 			.setLoopMaxIterations(10000000);
 
@@ -68,22 +68,36 @@ export default class Scene {
 		collisionType = +ui.collisionMode.state
 	){
 		if (objectsArray.length > 1){
-			// let D = dist(objA.x, objA.y, objB.x, objB.y); // The distance between objects
-			// let sin = (objB.y - objA.y)/D; // Sin
-			// let cos = (objB.x - objA.x)/D; // Cos
+			(function colliding(){
+				for (let i = 1; i--;){
+					for (let object1Id in objectsArray){
+						const obj1 = objectsArray[object1Id];
+						for (let object2Id = object1Id; object2Id--;){
+							const obj2 = objectsArray[object2Id];
 
-			// // Collision
-			// const radiusSum = objA.r + objB.r;
+							if (obj2.lock === true && obj1.lock === true) continue;
 
-			// if (D - radiusSum > 0){
-			// } else {
-			// 	const mS = objA.m + objB.m; // Both objects mass sum
-			// 	const rD = radiusSum - D; // Total move
-			// 	const objAMov = objA.lock ? 0 : objB.lock ? rD : rD * (objA.m / mS); // Object A move
-				// const objBMov = objB.lock ? 0 : rD - objAMov; // Object B move
-			// 	objA.x -= objAMov * cos; objA.y -= objAMov * sin;
-			// 	objB.x += objBMov * cos; objB.y += objBMov * sin;
-			// }
+							// Collision
+							const radiusSum = obj1.r + obj2.r;
+
+							if (Math.abs(obj1.x - obj2.x) <= radiusSum && Math.abs(obj1.y - obj2.y) <= radiusSum){
+								const D = dist(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
+								if (D - radiusSum <= 0){
+									let cos = (obj2.x - obj1.x)/D;
+									let sin = (obj2.y - obj1.y)/D;
+									// Colliding
+									const mS = obj1.m + obj2.m; // Both objects mass sum
+									const rD = radiusSum - D; // Total move
+									const objAMov = obj1.lock ? 0 : obj2.lock ? rD : rD * (obj1.m / mS); // Object A move
+									const objBMov = obj2.lock ? 0 : rD - objAMov; // Object B move
+									obj1.x -= objAMov * cos; obj1.y -= objAMov * sin;
+									obj2.x += objBMov * cos; obj2.y += objBMov * sin;
+								}
+							}
+						}
+					}
+				}
+			})();
 
 			const prepairedArr = objectsArray.map(obj => [obj.x, obj.y, obj.m, obj.lock]);
 			this.computeVelocities.setOutput([objectsArray.length]);
@@ -91,43 +105,18 @@ export default class Scene {
 			// After physics
 			let collidedObjectsIDs = [];
 			for (let obj1Id = objectsArray.length; obj1Id--;){
-				if (newVelosities[obj1Id][2] === 1){ // if object collided
-					collidedObjectsIDs.push(obj1Id);
-				}
 				const obj1 = objectsArray[obj1Id];
 				obj1.vx += newVelosities[obj1Id][0];
 				obj1.vy += newVelosities[obj1Id][1];
 			}
 			
-			let collidedPairs = [];
 			let deleteObjectList = []; // Array of objects will be deleted after collision "merge"
-			// for (let i = collidedObjectsIDs.length; i--;){
-			// 	const obj1Id = collidedObjectsIDs[i];
-			// 	const obj1 = objectsArray[obj1Id];
-			// 	for (let j = i; j--;){
-			// 		const obj2Id = collidedObjectsIDs[j];
-			// 		const obj2 = objectsArray[obj2Id];
 
-			// 		const radiusSum = obj1.r + obj2.r;
-
-			// 		if (Math.abs(obj1.x - obj2.x) <= radiusSum && Math.abs(obj1.y - obj2.y) <= radiusSum){
-			// 			const D = dist(obj1.x,obj1.y, obj2.x,obj2.y);
-
-			// 			if (D - radiusSum <= 0) {
-			// 				collidedPairs.push([obj1Id, obj2Id]);
-			// 			}
-			// 		}
-			// 	}
-			// }
-			// for (let i = collidedPairs.length; i--;){
-			// 	const collidedPair = collidedPairs[i]
-			// 	deleteObjectList.push(...this.collision(objectsArray, collisionType, collidedPair[1], collidedPair[0]));
-			// }
+			this.addSelfVectors(objectsArray, timeSpeed);
 			deleteObjectList = this.checkCollision(objectsArray, collisionType, timeSpeed);
 
 			this.deleteObject(deleteObjectList, objectsArray); // Delete objects by deleteObjectsList
 
-			this.addSelfVectors(objectsArray, timeSpeed);
 		}
 		callback && callback(objectsArray, this.collidedObjectsIdList, interactMode, collisionType, timeSpeed, 'singleThread');
 		this.collidedObjectsIdList = [];
@@ -144,6 +133,37 @@ export default class Scene {
 	){
 		// console.log('Calculate begin:');
 		// console.log(objectsArray.reduce((vel2, obj) => [vel2[0] + obj.vx, vel2[1] + obj.vy], [0, 0]));
+		(function colliding(){
+			for (let i = 1; i--;){
+				for (let object1Id in objectsArray){
+					const obj1 = objectsArray[object1Id];
+					for (let object2Id = object1Id; object2Id--;){
+						const obj2 = objectsArray[object2Id];
+
+						if (obj2.lock === true && obj1.lock === true) continue;
+
+						// Collision
+						const radiusSum = obj1.r + obj2.r;
+
+						if (Math.abs(obj1.x - obj2.x) <= radiusSum && Math.abs(obj1.y - obj2.y) <= radiusSum){
+							const D = dist(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
+							if (D - radiusSum <= 0){
+								let cos = (obj2.x - obj1.x)/D;
+								let sin = (obj2.y - obj1.y)/D;
+								// Colliding
+								const mS = obj1.m + obj2.m; // Both objects mass sum
+								const rD = radiusSum - D; // Total move
+								const objAMov = obj1.lock ? 0 : obj2.lock ? rD : rD * (obj1.m / mS); // Object A move
+								const objBMov = obj2.lock ? 0 : rD - objAMov; // Object B move
+								obj1.x -= objAMov * cos; obj1.y -= objAMov * sin;
+								obj2.x += objBMov * cos; obj2.y += objBMov * sin;
+							}
+						}
+					}
+				}
+			}
+		})();
+		// Physics calculating
 		for (let object1Id = objectsArray.length; object1Id--;){
 			calculate({
 				objectsArray: objectsArray,
@@ -163,20 +183,21 @@ export default class Scene {
 	// Runs after finish computing physics
 	afterPhysics = (objArr, collidedObjectsIdList, interactMode, collisionType, timeSpeed) => {
 		// After physics
+		// Add velocities
+		this.addSelfVectors(objArr, timeSpeed);
 		// Set values after collisions
 		let deleteObjectList = [];
-		deleteObjectList = this.checkCollision(objArr, collisionType, timeSpeed);
+		deleteObjectList = this.checkCollision(objArr, collisionType);
 		// for (let collidedObjectsId of collidedObjectsIdList){ // collidedObjectsId max length is 2
 		// 	deleteObjectList.push(...this.collision(objArr, collisionType, ...collidedObjectsId));
 		// }
-
 		this.deleteObject(deleteObjectList, objArr);
 
-		this.addSelfVectors(objArr, timeSpeed);
 	}
 
-	checkCollision(objectsArray, collisionType, timeSpeed){
+	checkCollision(objectsArray, collisionType){
 		const objectsToDelete = [];
+		const collidedPairs = [];
 		for (let object1Id in objectsArray){
 			const obj1 = objectsArray[object1Id];
 			for (let object2Id = object1Id; object2Id--;){
@@ -187,12 +208,29 @@ export default class Scene {
 				// Collision
 				const radiusSum = obj1.r + obj2.r;
 
-				if (Math.abs((obj1.x + obj1.vx*timeSpeed) - (obj2.x + obj2.vx*timeSpeed)) <= radiusSum && Math.abs((obj1.y + obj1.vy*timeSpeed) - (obj2.y + obj2.vy*timeSpeed)) <= radiusSum){
-					const newD = dist(obj1.x + obj1.vx*timeSpeed, obj1.y + obj1.vy*timeSpeed, obj2.x + obj2.vx*timeSpeed, obj2.y + obj2.vy*timeSpeed); // The distance between objects
-					if (newD - radiusSum <= 0){			
-						objectsToDelete.push(...this.collision(objectsArray, collisionType, object1Id, object2Id));
+				if (Math.abs(obj1.x - obj2.x) <= radiusSum && Math.abs(obj1.y - obj2.y) <= radiusSum){
+					const D = dist(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
+					if (D - radiusSum <= 0){	
+						collidedPairs.push([object1Id, object2Id]);		
 					}
 				}
+			}
+		}
+		for (let collidedPairId = collidedPairs.length; collidedPairId--;){
+			const collidedPair = collidedPairs[collidedPairId];
+			objectsToDelete.push(...this.collision(objectsArray, collisionType, ...collidedPair));
+		}
+		for (let objId = objectsArray.length; objId--;){
+			let objA = objectsArray[objId];
+			if (objA.collided){
+				if (objA.lock){ // If object locked
+					objA.vx = 0;
+					objA.vy = 0;
+				} else {// If object not locked
+					objA.x += objA.vx*ui.timeSpeed.state;
+					objA.y += objA.vy*ui.timeSpeed.state;
+				}
+				delete objA.collided;			
 			}
 		}
 		return objectsToDelete;
@@ -241,33 +279,7 @@ export default class Scene {
 			let cos = (objB.x - objA.x)/D;
 			let sin = (objB.y - objA.y)/D;
 			const radiusSum = objA.r + objB.r;
-			if (D - radiusSum > 0){
-					if (objA.lock){ // If object locked
-						objA.vx = 0;
-						objA.vy = 0;
-					} else {// If object not locked
-						objA.x += objA.vx*ui.timeSpeed.state;
-						objA.y += objA.vy*ui.timeSpeed.state;
-					}
-					if (objB.lock){ // If object locked
-						objB.vx = 0;
-						objB.vy = 0;
-					} else {// If object not locked
-						objB.x += objB.vx*ui.timeSpeed.state;
-						objB.y += objB.vy*ui.timeSpeed.state;
-					}	
-			} else {
-				const mS = objA.m + objB.m; // Both objects mass sum
-				const rD = radiusSum - D; // Total move
-				const objAMov = objA.lock ? 0 : objB.lock ? rD : rD * (objA.m / mS); // Object A move
-				const objBMov = objB.lock ? 0 : rD - objAMov; // Object B move
-				objA.x -= objAMov * cos; objA.y -= objAMov * sin;
-				objB.x += objBMov * cos; objB.y += objBMov * sin;
-				// D = dist(objA.x, objA.y, objB.x, objB.y); // The distance between objects
-				// sin = (objB.y - objA.y)/D; // Sin
-				// cos = (objB.x - objA.x)/D; // Cos
-				// debugger;
-			}
+
 			D = dist(objA.x, objA.y, objB.x, objB.y); // The distance between objects
 			let v1 = this.gipot(objA.vx, objA.vy); // Scallar velocity
 			let v2 = this.gipot(objB.vx, objB.vy); // Scallar velocity
@@ -296,6 +308,51 @@ export default class Scene {
 				objB.vy = (( v2*Math.cos(ag2 - fi)*(m2-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1+m2) ) * Math.sin(fi) + v2*Math.sin(ag2 - fi)*Math.sin(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
 			}
 
+			objA.collided = objB.collided = true;
+
+			// let cam = this.activCam;
+			// cam.ctx2.globalAlpha = 1;
+			// cam.ctx2.beginPath();
+			// cam.ctx2.arc(...cam.crd2(objA.x, objA.y), 2, 0, 7);
+			// cam.ctx2.fill();	
+
+			// cam.ctx2.lineWidth = 2;
+			// cam.ctx2.beginPath();
+			// cam.ctx2.moveTo(...cam.crd2(objA.x, objA.y));
+			// cam.ctx2.lineTo(...cam.crd2(objA.x - objA.vx * ui.timeSpeed.state, objA.y - objA.vy * ui.timeSpeed.state));
+			// cam.ctx2.stroke();
+
+			// Adding velocity
+			// if (objA.lock){ // If object locked
+			// 	objA.vx = 0;
+			// 	objA.vy = 0;
+			// } else {// If object not locked
+			// 	objA.x += objA.vx*ui.timeSpeed.state;
+			// 	objA.y += objA.vy*ui.timeSpeed.state;
+			// }
+			// if (objB.lock){ // If object locked
+			// 	objB.vx = 0;
+			// 	objB.vy = 0;
+			// } else {// If object not locked
+			// 	objB.x += objB.vx*ui.timeSpeed.state;
+			// 	objB.y += objB.vy*ui.timeSpeed.state;
+			// }
+
+			// Colliding
+			// let newD = dist(objA.x, objA.y, objB.x, objB.y); // The distance between objects
+			// if (newD - radiusSum < 0){
+			// 	const mS = objA.m + objB.m; // Both objects mass sum
+			// 	const rD = radiusSum - newD; // Total move
+			// 	const objAMov = objA.lock ? 0 : objB.lock ? rD : rD * (objB.m / mS); // Object A move
+			// 	const objBMov = objB.lock ? 0 : rD - objAMov; // Object B move
+			// 	objA.x -= objAMov * cos; objA.y -= objAMov * sin;
+			// 	objB.x += objBMov * cos; objB.y += objBMov * sin;
+			// 	// D = dist(objA.x, objA.y, objB.x, objB.y); // The distance between objects
+			// 	// sin = (objB.y - objA.y)/D; // Sin
+			// 	// cos = (objB.x - objA.x)/D; // Cos
+			// 	// debugger;
+			// }
+
 
 			// // Colliding
 			// const objARadius = Math.sqrt(Math.abs(objA.m)); // Object A radius
@@ -319,6 +376,11 @@ export default class Scene {
 	addSelfVectors(objArr, timeSpeed){
 		// Add the vectors
 		for (let object of objArr){
+			let can = this.activCam.ctx3;
+			// can.beginPath();
+			// can.fillStyle = object.color;
+			// can.arc(...this.activCam.crd2(object.x, object.y), 2, 0, 7);
+			// can.fill();	
 			if (mov_obj !== objArr.indexOf(object)){
 				// Add vectors
 				if (object.lock){ // If object locked

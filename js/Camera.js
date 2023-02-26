@@ -438,6 +438,9 @@ export default class Camera{
 		let deletedObjectsList = [];
 		let distance = [Infinity, ];
 		let afterPhysicsCallback = (objectsArray, collidedObjectsIdList, interactMode, collisionType, timeSpeed) => {
+			// Add velocities
+			this.scene.addSelfVectors(objArrCopy, ui.timeSpeed.state/accuracity);
+			
 			let toDeleteObjectsList = [];
 			toDeleteObjectsList = this.scene.checkCollision(objectsArray, collisionType, timeSpeed);
 			// for (let collidedObjectsId of collidedObjectsIdList){
@@ -449,8 +452,6 @@ export default class Camera{
 
 			// Delete objects after collide and return the deleted objects to the deletedObjectsList array
 			if (toDeleteObjectsList.length > 0) deletedObjectsList = deletedObjectsList.concat(this.scene.deleteObject(toDeleteObjectsList, objArrCopy, null));
-
-			this.scene.addSelfVectors(objArrCopy, ui.timeSpeed.state/accuracity);
 
 			// Add points to trajectory trace array
 			for (let objectId = objArrCopy.length; objectId--;){
