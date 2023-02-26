@@ -293,7 +293,7 @@ window.onload = function(){
 
 	function menu_open_restore(){
 		if (menu_state){
-			document.querySelector('#'+menu_names[mbut]).style.display = 'inline-block';
+			document.querySelector('#'+(menu_names[mbut] ?menu_names [mbut] : 'create')).style.display = 'inline-block';
 		}
 	}
 	menu_open_restore();
