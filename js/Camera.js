@@ -199,7 +199,7 @@ export default class Camera{
 		return this.Target !== undefined;
 	}
 
-	//Draw
+	//Draw objecs
 	renderObjects(){
 		// console.log('Render objects');
 		let scn = this.scene;
@@ -215,9 +215,23 @@ export default class Camera{
 		const targetVy = scn.objArr[this.Target] ? scn.objArr[this.Target].vy : 0;
 		for (let objectId = scn.objArr.length; objectId--;){
 			let obj = scn.objArr[objectId]; // Object to draw
-			const obCol = obj.color; // Object draw color
+
 			let drawRadius = Math.sqrt(Math.abs(obj.m))*this.animZoom; // Object draw radius
 			drawRadius = drawRadius < 0.5 ? 0.5 : drawRadius; // Minimal draw radius
+
+			// If object out of screen space
+			let objOutOfScreen = false;
+			let objPrevPosOutScreen = false;
+			const screenPos = this.crd2(obj.x, obj.y);
+			const screenPrevPos = this.crd2(obj.x - obj.vx, obj.y - obj.vy);
+			if (screenPos[0] < 0 - drawRadius || screenPos[0] > innerWidth + drawRadius || screenPos[1] < 0 - drawRadius || screenPos[1] > innerHeight + drawRadius){
+				objOutOfScreen = true;
+			}
+			if (screenPrevPos[0] < 0 - drawRadius || screenPrevPos[0] > innerWidth + drawRadius || screenPrevPos[1] < 0 - drawRadius || screenPrevPos[1] > innerHeight + drawRadius){
+				objPrevPosOutScreen = true;
+			}
+
+			const obCol = obj.color; // Object draw color
 			// If object screen speed is enough to render or anyhting else 
 			const enoughObjMove = Math.sqrt(Math.pow(obj.vx - targetVx, 2) + Math.pow(obj.vy - targetVy, 2))*ui.timeSpeed.state*this.animZoom > 0.1 ? true : false;
 			// Fix object anti-aliasing when maxPerformance is enabled
@@ -248,6 +262,7 @@ export default class Camera{
 				ui.tracesMode.state == 1 // If traces mode = 1
 				&& (!obj.lock || (scn.objArr[this.Target] && !scn.objArr[this.Target].lock)) // If object not locked or camera target not locked
 				&& this.Target !== objectId // If camera target != current object
+				&& !(objOutOfScreen && objPrevPosOutScreen)
 			){
 				let canv = ui.maxPerformance.state ? this.ctx : this.ctx3;
 				canv.strokeStyle = obCol;
@@ -351,7 +366,7 @@ export default class Camera{
 				this.ctx.fill();
 				this.ctx.globalCompositeOperation = 'source-over';
 			}
-			if (!(ui.maxPerformance.state === true && ui.tracesMode.state == 1) || obj.lock){
+			if ((!(ui.maxPerformance.state === true && ui.tracesMode.state == 1) || obj.lock) && !objOutOfScreen){
 				this.ctx.fillStyle = obCol;
 				this.ctx.beginPath();
 				this.ctx.arc(...this.crd2(obj.x, obj.y), drawRadius, 0, 7);
@@ -442,7 +457,7 @@ export default class Camera{
 			this.scene.addSelfVectors(objArrCopy, ui.timeSpeed.state/accuracity);
 			
 			let toDeleteObjectsList = [];
-			toDeleteObjectsList = this.scene.checkCollision(objectsArray, collisionType, timeSpeed);
+			toDeleteObjectsList = this.scene.collisionHandler(objectsArray, collisionType, timeSpeed);
 			// for (let collidedObjectsId of collidedObjectsIdList){
 			// 	toDeleteObjectsList.push(...this.scene.collision(objectsArray, collisionType, ...collidedObjectsId));
 			// }
@@ -467,35 +482,35 @@ export default class Camera{
 				if (obj.lock !== true) trajectoryTraces[obj.initId].push([obj.x, obj.y]);
 
 				// Debug show velocities
-				{
-					this.ctx2.save();
-					if (obj.lock === false){
-						this.ctx2.strokeStyle = this.ctx2.fillStyle = obj.color;
+				// {
+				// 	this.ctx2.save();
+				// 	if (obj.lock === false){
+				// 		this.ctx2.strokeStyle = this.ctx2.fillStyle = obj.color;
 
-						this.ctx2.globalAlpha = 0.2;
-						this.ctx2.beginPath();
-						this.ctx2.arc(...this.crd2(obj.x, obj.y), obj.r * this.animZoom, 0, 7);
-						this.ctx2.fill();
+				// 		this.ctx2.globalAlpha = 0.2;
+				// 		this.ctx2.beginPath();
+				// 		this.ctx2.arc(...this.crd2(obj.x, obj.y), obj.r * this.animZoom, 0, 7);
+				// 		this.ctx2.fill();
 
-						this.ctx2.globalAlpha = 1;
-						this.ctx2.beginPath();
-						this.ctx2.arc(...this.crd2(obj.x, obj.y), 2, 0, 7);
-						this.ctx2.fill();	
+				// 		this.ctx2.globalAlpha = 1;
+				// 		this.ctx2.beginPath();
+				// 		this.ctx2.arc(...this.crd2(obj.x, obj.y), 2, 0, 7);
+				// 		this.ctx2.fill();	
 
-						this.ctx2.lineWidth = 2;
-						this.ctx2.beginPath();
-						this.ctx2.moveTo(...this.crd2(obj.x, obj.y));
-						this.ctx2.lineTo(...this.crd2(obj.x - obj.vx * ui.timeSpeed.state, obj.y - obj.vy * ui.timeSpeed.state));
-						this.ctx2.stroke();
+				// 		this.ctx2.lineWidth = 2;
+				// 		this.ctx2.beginPath();
+				// 		this.ctx2.moveTo(...this.crd2(obj.x, obj.y));
+				// 		this.ctx2.lineTo(...this.crd2(obj.x - obj.vx * ui.timeSpeed.state, obj.y - obj.vy * ui.timeSpeed.state));
+				// 		this.ctx2.stroke();
 
-					} else {
-						this.ctx2.strokeStyle = this.ctx2.fillStyle = '#000';
-						this.ctx2.beginPath();
-						this.ctx2.arc(...this.crd2(obj.x, obj.y), 2, 0, 7);
-						this.ctx2.fill();
-					}
-					this.ctx2.restore();
-				}
+				// 	} else {
+				// 		this.ctx2.strokeStyle = this.ctx2.fillStyle = '#000';
+				// 		this.ctx2.beginPath();
+				// 		this.ctx2.arc(...this.crd2(obj.x, obj.y), 2, 0, 7);
+				// 		this.ctx2.fill();
+				// 	}
+				// 	this.ctx2.restore();
+				// }
 			}	
 			// if (!mouse.move && mouse.leftDown){
 			// 	this.scene.physicsMultiThreadCalculate(objArrCopy, afterPhysicsCallback);
@@ -615,8 +630,8 @@ export default class Camera{
 		for (let deletedObj of deletedObjectsList){
 			const size = this.getScreenRad(deletedObj.m)*0.7 < 3? 3 : this.getScreenRad(deletedObj.m)*0.7;
 			this.drawCross(
-				this.crd(deletedObj.x, 'x'), 
-				this.crd(deletedObj.y, 'y'), 
+				this.crd(deletedObj.x - deletedObj.vx, 'x'),
+				this.crd(deletedObj.y - deletedObj.vy, 'y'), 
 				2, 
 				size, 
 				'#ff0000'

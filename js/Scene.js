@@ -14,16 +14,15 @@ export default class Scene {
 		// Gipotenuse
 		this.gpu.addFunction(function gipot(a,b){return Math.sqrt(a*a + b*b) });
 		// Collision function
-		this.gpu.addFunction(gpuCollision);
+		// this.gpu.addFunction(gpuCollision);
 
 		// Compute function
-		this.computeVelocities = this.gpu.createKernel(function(arr, len, interactMode, timeSpeed, g, gravitMode, collisionType) {
+		this.computeVelocities = this.gpu.createKernel(function(arr, len, timeSpeed, g, gravitMode) {
 			const obj1Id = this.thread.x;
 			const obj1Pos = [arr[obj1Id * this.constants.objLen], arr[obj1Id * this.constants.objLen + 1]];
 			const obj1Vel = [0.0, 0.0];
 			const obj1Mass = arr[obj1Id * this.constants.objLen + 2];
 			const obj1Lock = arr[obj1Id * this.constants.objLen + 3];
-			let collided = false;
 
 			for(let obj2Id = 0; obj2Id < len; obj2Id++){
 				if (obj2Id !== obj1Id) {
@@ -54,7 +53,7 @@ export default class Scene {
 			}
 
 			return [obj1Vel[0], obj1Vel[1]];
-		}, {dynamicOutput: true, dynamicArguments: true, constants: {objLen: 4}, tactic: 'precision'})
+		}, {dynamicOutput: true, dynamicArguments: true, constants: {objLen: 4}})
 			.setLoopMaxIterations(10000000);
 
 	}
@@ -68,40 +67,39 @@ export default class Scene {
 		collisionType = +ui.collisionMode.state
 	){
 		if (objectsArray.length > 1){
-			(function colliding(){
-				for (let i = 1; i--;){
-					for (let object1Id in objectsArray){
-						const obj1 = objectsArray[object1Id];
-						for (let object2Id = object1Id; object2Id--;){
-							const obj2 = objectsArray[object2Id];
+			if (ui.collisionMode.state != 2){
+				const collidedPairs = this.collisionCeilAlgorithm(objectsArray);
 
-							if (obj2.lock === true && obj1.lock === true) continue;
+				for (let collidedPair of collidedPairs){
+					const [object1Id, object2Id] = collidedPair;
+					const obj1 = objectsArray[object1Id];
+					const obj2 = objectsArray[object2Id];
 
-							// Collision
-							const radiusSum = obj1.r + obj2.r;
+					if (obj2.lock === true && obj1.lock === true) continue;
 
-							if (Math.abs(obj1.x - obj2.x) <= radiusSum && Math.abs(obj1.y - obj2.y) <= radiusSum){
-								const D = dist(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
-								if (D - radiusSum <= 0){
-									let cos = (obj2.x - obj1.x)/D;
-									let sin = (obj2.y - obj1.y)/D;
-									// Colliding
-									const mS = obj1.m + obj2.m; // Both objects mass sum
-									const rD = radiusSum - D; // Total move
-									const objAMov = obj1.lock ? 0 : obj2.lock ? rD : rD * (obj1.m / mS); // Object A move
-									const objBMov = obj2.lock ? 0 : rD - objAMov; // Object B move
-									obj1.x -= objAMov * cos; obj1.y -= objAMov * sin;
-									obj2.x += objBMov * cos; obj2.y += objBMov * sin;
-								}
-							}
+					// Collision
+					const radiusSum = obj1.r + obj2.r;
+
+					if (Math.abs(obj1.x - obj2.x) <= radiusSum && Math.abs(obj1.y - obj2.y) <= radiusSum){
+						const D = dist(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
+						if (D - radiusSum <= 0){
+							let cos = (obj2.x - obj1.x)/D;
+							let sin = (obj2.y - obj1.y)/D;
+							// Colliding
+							const mS = obj1.m + obj2.m; // Both objects mass sum
+							const rD = radiusSum - D; // Total move
+							const objAMov = obj1.lock ? 0 : obj2.lock ? rD : rD * (obj1.m / mS); // Object A move
+							const objBMov = obj2.lock ? 0 : rD - objAMov; // Object B move
+							obj1.x -= objAMov * cos; obj1.y -= objAMov * sin;
+							obj2.x += objBMov * cos; obj2.y += objBMov * sin;
 						}
-					}
+					}	
 				}
-			})();
+			}
 
 			const prepairedArr = objectsArray.map(obj => [obj.x, obj.y, obj.m, obj.lock]);
 			this.computeVelocities.setOutput([objectsArray.length]);
-			const newVelosities = this.computeVelocities(prepairedArr, objectsArray.length, interactMode, timeSpeed, g, gravitMode, collisionType);
+			const newVelosities = this.computeVelocities(prepairedArr, objectsArray.length, timeSpeed, g, gravitMode);
 			// After physics
 			let collidedObjectsIDs = [];
 			for (let obj1Id = objectsArray.length; obj1Id--;){
@@ -113,7 +111,10 @@ export default class Scene {
 			let deleteObjectList = []; // Array of objects will be deleted after collision "merge"
 
 			this.addSelfVectors(objectsArray, timeSpeed);
-			deleteObjectList = this.checkCollision(objectsArray, collisionType, timeSpeed);
+			if (ui.collisionMode.state != 2){
+				deleteObjectList = this.collisionHandler(objectsArray, collisionType, timeSpeed);
+
+			}
 
 			this.deleteObject(deleteObjectList, objectsArray); // Delete objects by deleteObjectsList
 
@@ -187,7 +188,7 @@ export default class Scene {
 		this.addSelfVectors(objArr, timeSpeed);
 		// Set values after collisions
 		let deleteObjectList = [];
-		deleteObjectList = this.checkCollision(objArr, collisionType);
+		deleteObjectList = this.collisionHandler(objArr, collisionType);
 		// for (let collidedObjectsId of collidedObjectsIdList){ // collidedObjectsId max length is 2
 		// 	deleteObjectList.push(...this.collision(objArr, collisionType, ...collidedObjectsId));
 		// }
@@ -195,27 +196,76 @@ export default class Scene {
 
 	}
 
-	checkCollision(objectsArray, collisionType){
-		const objectsToDelete = [];
+	makeObjPosMatrix(objectsArray){
+		const positionMatrix = {};
+		const seilSize = 31.6227766016*2;
+		for (let objId = objectsArray.length; objId --;){
+			let obj = objectsArray[objId];
+			const posX = Math.floor(obj.x / seilSize);
+			const posY = Math.floor(obj.y / seilSize);
+			const strPos = posX.toString() + '|' + posY.toString();
+
+			if (positionMatrix[strPos] === undefined) positionMatrix[strPos] = [];
+			positionMatrix[strPos].push(objId);
+		}
+		return positionMatrix;
+	}
+
+
+	collisionCeilAlgorithm(objectsArray){
 		const collidedPairs = [];
-		for (let object1Id in objectsArray){
-			const obj1 = objectsArray[object1Id];
-			for (let object2Id = object1Id; object2Id--;){
-				const obj2 = objectsArray[object2Id];
+		let posMatrix = this.makeObjPosMatrix(objectsArray);
+		for (let cellPos in posMatrix){
+			const [x, y] = cellPos.split("|").map(n => +n);
+			const iterObjs = posMatrix[cellPos];
+			const enumObjs = [];
 
-				if (obj2.lock === true && obj1.lock === true) continue;
+			const cl1 = (x + 1) + "|" + y; // Right ceil
+			const cl2 = x + "|" + (y + 1); // Bottom ceil
+			const cl3 = (x + 1) + "|" + (y + 1); // Right bottom ceil
+			const cl4 = (x - 1) + "|" + (y + 1); // Left bottom ceil
 
+			if (posMatrix[cl1]) enumObjs.push(...posMatrix[cl1]); // ░░░░░░
+			if (posMatrix[cl2]) enumObjs.push(...posMatrix[cl2]); // ░░██▓▓
+			if (posMatrix[cl3]) enumObjs.push(...posMatrix[cl3]); // ▓▓▓▓▓▓ 
+			if (posMatrix[cl4]) enumObjs.push(...posMatrix[cl4]);
+
+			for (let i = iterObjs.length; i--;){
+				const obj1Id = iterObjs[i];
+				const obj1 = objectsArray[obj1Id];
+				for (let j = enumObjs.length; j--;){
+					const obj2Id = enumObjs[j];
+					checkCollision(obj1Id, obj2Id);
+				}
+				for (let j = i; j--;){
+					const obj2Id = iterObjs[j];
+					checkCollision(obj1Id, obj2Id);
+				}
+			}
+		}
+		// Check collision function
+		function checkCollision(obj1Id, obj2Id){
+			const obj1 = objectsArray[obj1Id];
+			const obj2 = objectsArray[obj2Id];
+			if (!(obj2.lock === true && obj1.lock === true)) {
 				// Collision
 				const radiusSum = obj1.r + obj2.r;
 
 				if (Math.abs(obj1.x - obj2.x) <= radiusSum && Math.abs(obj1.y - obj2.y) <= radiusSum){
 					const D = dist(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
-					if (D - radiusSum <= 0){	
-						collidedPairs.push([object1Id, object2Id]);		
+					if (D - radiusSum <= 0){
+						collidedPairs.push([obj1Id, obj2Id]);
 					}
 				}
 			}
 		}
+		return collidedPairs;
+	}
+
+	collisionHandler(objectsArray, collisionType){
+		const objectsToDelete = [];
+		const collidedPairs = this.collisionCeilAlgorithm(objectsArray);
+
 		for (let collidedPairId = collidedPairs.length; collidedPairId--;){
 			const collidedPair = collidedPairs[collidedPairId];
 			objectsToDelete.push(...this.collision(objectsArray, collisionType, ...collidedPair));
@@ -375,13 +425,14 @@ export default class Scene {
 	// Add objects vectors to objects
 	addSelfVectors(objArr, timeSpeed){
 		// Add the vectors
-		for (let object of objArr){
-			let can = this.activCam.ctx3;
+		for (let objId = objArr.length; objId--;){
+			let object = objArr[objId];
+			// let can = this.activCam.ctx3;
 			// can.beginPath();
 			// can.fillStyle = object.color;
 			// can.arc(...this.activCam.crd2(object.x, object.y), 2, 0, 7);
 			// can.fill();	
-			if (mov_obj !== objArr.indexOf(object)){
+			if (mov_obj !== objId){
 				// Add vectors
 				if (object.lock){ // If object locked
 					object.vx = 0;

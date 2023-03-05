@@ -46,7 +46,7 @@ function calculate({
 		const radiusSum = Math.sqrt(Math.abs(obj1.m)) + Math.sqrt(Math.abs(obj2.m));
 		if (D - radiusSum <= 0){
 			if (collisionType === 2){ // Collision type: none
-				vector = gravity_func(sin, cos, D, gravitMode, obj2.m, obj1.m, timeSpeed, g*Math.pow(D/radiusSum, 3));
+				vector = gravity_func(sin, cos, D, gravitMode, obj2.m, obj1.m, timeSpeed, g* ((D/radiusSum)*(D/radiusSum)*(D/radiusSum)) );
 			}
 			collidedObjectsIdList.push([object1Id, object2Id]); // Send the collided objects
 		} else { 

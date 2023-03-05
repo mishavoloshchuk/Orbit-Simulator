@@ -285,7 +285,7 @@ window.onload = function(){
 
 	scene.addNewObject({x: 0, y: 0, vx: 0, vy: 0, mass: 1000, color: '#ffff00', objLck: true, callback: newObjectCreatedCallback}); // First object init
 	// pauseState = true;
-	scene.addNewObject({x: 50, y: 0, vx: 0, vy: 0, mass: 1000, color: '#0000ff88', objLck: true, callback: newObjectCreatedCallback}); // First object init
+	// scene.addNewObject({x: 50, y: 0, vx: 0, vy: 0, mass: 1000, color: '#0000ff88', objLck: true, callback: newObjectCreatedCallback}); // First object init
 	// scene.addNewObject({x: innerWidth/2 + 30, y: innerHeight/2, vx: 0, vy: 0, mass: 1000, color: '#00ff0088', callback: newObjectCreatedCallback}); // First object init
 	// scene.addNewObject({x: innerWidth/2 - 30, y: innerHeight/2, vx: 0, vy: 0, mass: 1000, color: '#ff000088', callback: newObjectCreatedCallback}); // First object init
 
@@ -581,7 +581,7 @@ window.onload = function(){
 				if (ui.pauseWhenCreatingObject.state){
 					pauseState = ui.pauseWhenCreatingObject.prevPauseState;
 				}
-				// scene.camera.clearLayer2();
+				scene.camera.clearLayer2();
 			}
 			if (mbut == 'camera' && swch.s_track){
 				scene.camera.setTarget(scene.objectSelect('nearest', scene.camera.Target));
@@ -689,6 +689,11 @@ window.onload = function(){
 
 		simulationDone = simulationSpeed;
 		if (scene.objArr.length){
+			if (scene.objArr[0].r === undefined){
+				for (let obj of scene.objArr){
+					obj.r = Math.sqrt(obj.m);
+				}
+			}
 			if (!pauseState || nextFrame){
 				scene.simulationsPerFrame = 1; // Simulations per frame (only multithread)
 				for(let i = simulationSpeed; i--;){
