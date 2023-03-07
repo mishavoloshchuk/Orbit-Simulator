@@ -4,6 +4,7 @@ export default class Scene {
 	collidedObjectsIdList = []; // Collisions list
 	#workerThreads = []; // Threads workers
 	objIdToOrbit = 0; // The ID of the object around which the new object will orbit
+	collisionCeilSize = 31.6227766016*2;
 
 	constructor() {
 		this.gpu = new GPU();
@@ -67,9 +68,8 @@ export default class Scene {
 		collisionType = +ui.collisionMode.state
 	){
 		if (objectsArray.length > 1){
-			if (ui.collisionMode.state != 2){
+			if (ui.collisionMode.state == 1){
 				const collidedPairs = this.collisionCeilAlgorithm(objectsArray);
-
 				for (let collidedPair of collidedPairs){
 					const [object1Id, object2Id] = collidedPair;
 					const obj1 = objectsArray[object1Id];
@@ -134,36 +134,34 @@ export default class Scene {
 	){
 		// console.log('Calculate begin:');
 		// console.log(objectsArray.reduce((vel2, obj) => [vel2[0] + obj.vx, vel2[1] + obj.vy], [0, 0]));
-		(function colliding(){
-			for (let i = 1; i--;){
-				for (let object1Id in objectsArray){
-					const obj1 = objectsArray[object1Id];
-					for (let object2Id = object1Id; object2Id--;){
-						const obj2 = objectsArray[object2Id];
+		if (ui.collisionMode.state == 1){
+			for (let object1Id in objectsArray){
+				const obj1 = objectsArray[object1Id];
+				for (let object2Id = object1Id; object2Id--;){
+					const obj2 = objectsArray[object2Id];
 
-						if (obj2.lock === true && obj1.lock === true) continue;
+					if (obj2.lock === true && obj1.lock === true) continue;
 
-						// Collision
-						const radiusSum = obj1.r + obj2.r;
+					// Collision
+					const radiusSum = obj1.r + obj2.r;
 
-						if (Math.abs(obj1.x - obj2.x) <= radiusSum && Math.abs(obj1.y - obj2.y) <= radiusSum){
-							const D = dist(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
-							if (D - radiusSum <= 0){
-								let cos = (obj2.x - obj1.x)/D;
-								let sin = (obj2.y - obj1.y)/D;
-								// Colliding
-								const mS = obj1.m + obj2.m; // Both objects mass sum
-								const rD = radiusSum - D; // Total move
-								const objAMov = obj1.lock ? 0 : obj2.lock ? rD : rD * (obj1.m / mS); // Object A move
-								const objBMov = obj2.lock ? 0 : rD - objAMov; // Object B move
-								obj1.x -= objAMov * cos; obj1.y -= objAMov * sin;
-								obj2.x += objBMov * cos; obj2.y += objBMov * sin;
-							}
+					if (Math.abs(obj1.x - obj2.x) <= radiusSum && Math.abs(obj1.y - obj2.y) <= radiusSum){
+						const D = dist(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
+						if (D - radiusSum <= 0){
+							let cos = (obj2.x - obj1.x)/D;
+							let sin = (obj2.y - obj1.y)/D;
+							// Colliding
+							const mS = obj1.m + obj2.m; // Both objects mass sum
+							const rD = radiusSum - D; // Total move
+							const objAMov = obj1.lock ? 0 : obj2.lock ? rD : rD * (obj1.m / mS); // Object A move
+							const objBMov = obj2.lock ? 0 : rD - objAMov; // Object B move
+							obj1.x -= objAMov * cos; obj1.y -= objAMov * sin;
+							obj2.x += objBMov * cos; obj2.y += objBMov * sin;
 						}
 					}
 				}
 			}
-		})();
+		}
 		// Physics calculating
 		for (let object1Id = objectsArray.length; object1Id--;){
 			calculate({
@@ -198,7 +196,7 @@ export default class Scene {
 
 	makeObjPosMatrix(objectsArray){
 		const positionMatrix = {};
-		const seilSize = 31.6227766016*2;
+		const seilSize = this.collisionCeilSize;
 		for (let objId = objectsArray.length; objId --;){
 			let obj = objectsArray[objId];
 			const posX = Math.floor(obj.x / seilSize);
@@ -440,7 +438,7 @@ export default class Scene {
 				} else {// If object not locked
 					object.x += object.vx*timeSpeed;
 					object.y += object.vy*timeSpeed;
-					if (objArr === this.objArr && (object.vx || object.vy)) this.activCam.allowFrameRender = true;
+					if (objArr === this.objArr && (object.vx || object.vy)) renderer.allowFrameRender = true;
 				}
 			} else {
 				object.vx = object.vy = 0;
@@ -526,7 +524,7 @@ export default class Scene {
 		this.objIdToOrbit = getIdAfterArrChange([objectId], this.objIdToOrbit, this.objectSelect('biggest'));
 		mov_obj = getIdAfterArrChange([objectId], mov_obj);
 
-		this.activCam.allowFrameRender = true;
+		renderer.allowFrameRender = true;
 		this.show_obj_count(); // Set objects counter indicator
 	}
 	// Show number of objects
@@ -572,7 +570,7 @@ export default class Scene {
 		if (mode == 'nearest' || mode == 'furthest'){
 			for (let i in this.objArr){
 				if (i == not) continue;
-				let r = dist(mouse.x, mouse.y, this.camera.crd(this.objArr[i].x, 'x'), this.camera.crd(this.objArr[i].y, 'y'));
+				let r = dist(mouse.x, mouse.y, ...renderer.crd2(this.objArr[i].x, this.objArr[i].y));
 				if (r < sel[0] && mode == 'nearest'){
 					sel[0] = r;
 					sel[1] = +i;

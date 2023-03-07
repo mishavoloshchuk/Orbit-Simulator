@@ -19,6 +19,7 @@ function calculate({
 			let D = dist(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
 			let sin = (obj2.y - obj1.y)/D; // Sin
 			let cos = (obj2.x - obj1.x)/D; // Cos
+			const radiusSum = obj1.r + obj2.r;
 
 			let vector = gravity_func(sin, cos, D, gravitMode, obj2.m, obj1.m, timeSpeed, g);
 			// Add calculated vectors to object 1
