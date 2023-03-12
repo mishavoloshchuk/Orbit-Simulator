@@ -449,7 +449,7 @@ export default class Renderer {
 	//Draw cross function
 	drawCross(x, y, width = 1, size = 5, color = '#ff0000', canvObj = this.ctx2){
 		canvObj.strokeStyle = this.wipeColor;
-		canvObj.lineWidth = 2;
+		canvObj.lineWidth = width;
 		canvObj.lineCap = 'round';
 		for (let i = 0; i < 2; i++){
 			canvObj.beginPath();

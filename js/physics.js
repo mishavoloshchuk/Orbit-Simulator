@@ -42,7 +42,7 @@ export default class Physics {
 			.setLoopMaxIterations(1000000);
 	}
 	gpuComputeVelocities = function(
-		callback = this.gpuAfterPhysics,
+		callback = this.afterPhysics,
 		interactMode = +ui.interactMode.state, 
 		timeSpeed = ui.timeSpeed.state, 
 		g = ui.g.state, 
@@ -54,8 +54,10 @@ export default class Physics {
 
 		const objArr = this.scene.objArr; // Objects array
 		if (objArr.length > 1){
-			// Pull out all objects from each other
-			this.pullOutFromEachOther();
+			// Merge collision
+			ui.collisionMode.state == '0' && this.mergeCollision();
+			// Bounce collision preprocessing
+			ui.collisionMode.state == '1' && this.pullOutFromEachOther();
 
 			const prepairedArr = objArr.map(obj => [obj.x, obj.y, obj.m, obj.lock]);
 			this.computeVelocities.setOutput([objArr.length]);
@@ -67,18 +69,8 @@ export default class Physics {
 				obj1.vx += newVelosities[obj1Id][0];
 				obj1.vy += newVelosities[obj1Id][1];
 			}
-			
-			let deleteObjectList = []; // Array of objects will be deleted after collision "merge"
-
-			this.addVelocity(timeSpeed);
-			if (ui.collisionMode.state != 2){
-				deleteObjectList = this.collisionHandler(collisionType, timeSpeed);
-			}
-
-			this.scene.deleteObject(deleteObjectList); // Delete objects by deleteObjectsList
-
 		}
-		callback && callback(objArr, interactMode, collisionType, timeSpeed);
+		callback && callback(interactMode, collisionType, timeSpeed);
 	}
 	physicsCalculate = function (
 		callback = this.afterPhysics,
@@ -94,8 +86,10 @@ export default class Physics {
 		// Console log global velocity (only if all objects in scene have the same mass)
 		// console.log(objArr.reduce((vel2, obj) => [vel2[0] + obj.vx, vel2[1] + obj.vy], [0, 0]));
 
-		// Pull out all objects from each other
-		this.pullOutFromEachOther();
+		// Merge collision
+		ui.collisionMode.state == '0' && this.mergeCollision();
+		// Bounce collision preprocessing
+		ui.collisionMode.state == '1' && this.pullOutFromEachOther();
 
 		// Physics calculating
 		for (let object1Id = objArr.length; object1Id--;){
@@ -114,15 +108,14 @@ export default class Physics {
 	// Runs after finish computing physics
 	afterPhysics = (interactMode, collisionType, timeSpeed) => {
 		// After physics
-
+		const obj = this.scene.objArr[this.scene.objArr.length-1]
+		const pos = [obj.x, obj.y];
 		// Add velocities
 		this.addVelocity(timeSpeed);
 
-		// Collision
-		if (ui.collisionMode.state != 2){
-			let deleteObjectList = this.collisionHandler(collisionType);
-			this.scene.deleteObject(deleteObjectList);
-		}
+		// Bounce collision
+		ui.collisionMode.state == '1' && this.bounceCollision();
+		console.log(Math.hypot(obj.x - pos[0], obj.y - pos[1]), Math.hypot(obj.vx, obj.vy));
 	}
 
 	makeObjPosMatrix(objArr = this.scene.objArr){
@@ -225,7 +218,7 @@ export default class Physics {
 							// Colliding
 							const mS = obj1.m + obj2.m; // Both objects mass sum
 							const rD = radiusSum - D; // Total move
-							const objAMov = obj1.lock ? 0 : obj2.lock ? rD : rD * (obj1.m / mS); // Object A move
+							const objAMov = obj1.lock ? 0 : obj2.lock ? rD : rD * (obj2.m / mS); // Object A move
 							const objBMov = obj2.lock ? 0 : rD - objAMov; // Object B move
 							obj1.x -= objAMov * cos; obj1.y -= objAMov * sin;
 							obj2.x += objBMov * cos; obj2.y += objBMov * sin;
@@ -236,43 +229,19 @@ export default class Physics {
 		}
 	}
 
-	collisionHandler(collisionType){
+	mergeCollision(){
 		const objArr = this.scene.objArr;
-		const objectsToDelete = [];
-		if (ui.interactMode.state != '2'){
-			const collidedPairs = this.collisionCeilAlgorithm();
-
-			for (let collidedPairId = collidedPairs.length; collidedPairId--;){
-				const collidedPair = collidedPairs[collidedPairId];
-				objectsToDelete.push(...this.collision(collisionType, ...collidedPair));
-			}
-			for (let objId = objArr.length; objId--;){
-				let objA = objArr[objId];
-				if (objA.collided){
-					if (objA.lock){ // If object locked
-						objA.vx = 0;
-						objA.vy = 0;
-					} else {// If object not locked
-						objA.x += objA.vx*ui.timeSpeed.state;
-						objA.y += objA.vy*ui.timeSpeed.state;
-					}
-					delete objA.collided;			
-				}
-			}
-		}
-		return objectsToDelete;
-	}
-
-	collision(collisionType, obj1Id, obj2Id){
-		const objArr = this.scene.objArr;
-		let [objA, objB] = [ objArr[obj1Id], objArr[obj2Id] ];
 		let deleteObjectList = [];
 
-		if (collisionType === 0){ // Merge
+		const collidedPairs = this.collisionCeilAlgorithm();
+		for (let collidedPair of collidedPairs){
+			let [obj1Id, obj2Id] = collidedPair;
+			let [objA, objB] = [ objArr[obj1Id], objArr[obj2Id] ];
+			if (deleteObjectList.includes(obj1Id) || deleteObjectList.includes(obj2Id))continue;
 			if (objB.m + objA.m === 0){ // Anigilate
 				deleteObjectList.push(obj1Id, obj2Id);
-				if ( [obj1Id, obj2Id].includes(+this.camera.Target) && objArr === this.objArr ) this.camera.setTarget();
-				return deleteObjectList;
+				if ( [obj1Id, obj2Id].includes(+camera.Target) && objArr === this.objArr ) camera.setTarget();
+				continue;
 			}
 
 			let mixedColor = this.scene.mixColors(objA.color, objB.color, objA.m, objB.m);
@@ -282,7 +251,10 @@ export default class Physics {
 			let alivedObjId = obj2Id;
 
 			// Swap objects if
-			if ((delObj.m > obj.m && objA.lock === objB.lock) || (objA.lock !== objB.lock && objA.lock)) {
+			if ((delObj.m > obj.m && objA.lock === objB.lock)
+				|| (objA.lock !== objB.lock && objA.lock)
+				|| obj1Id < obj2Id
+			) {
 				obj = objA; delObj = objB;
 				objToDelId = obj2Id;
 				alivedObjId = obj1Id;
@@ -302,10 +274,23 @@ export default class Physics {
 			// Change camera target
 			if (objArr === scene.objArr && objToDelId === camera.Target) camera.setTarget(alivedObjId);
 
-			// Add collided object to deleteObjectList
+			// Add obj to delete arreay
 			deleteObjectList.push(objToDelId);
-		} else
-		if (collisionType === 1){ // Repulsion
+		}
+		const deletedObjsArr = this.scene.deleteObject(deleteObjectList);
+		return {
+			idArr: deleteObjectList,
+			objArr: deletedObjsArr
+		}		
+	}
+
+	bounceCollision(){
+		const objArr = this.scene.objArr;
+		const collidedPairs = this.collisionCeilAlgorithm();
+		for (let collidedPair of collidedPairs) {
+			const [obj1Id, obj2Id] = collidedPair;
+			let [objA, objB] = [ objArr[obj1Id], objArr[obj2Id] ];
+
 			let D = dist(objA.x, objA.y, objB.x, objB.y); // The distance between objects
 			let sin, cos;
 			if (D > 0){ // Angle between objects
@@ -344,11 +329,21 @@ export default class Physics {
 			}
 
 			objA.collided = objB.collided = true;
-
-		} else if (collisionType === 2){ // None
-
 		}
-		return deleteObjectList;
+		// Add new velocity
+		for (let objId = objArr.length; objId--;){
+			let objA = objArr[objId];
+			if (objA.collided){
+				if (objA.lock){ // If object locked
+					objA.vx = 0;
+					objA.vy = 0;
+				} else {// If object not locked
+					objA.x += objA.vx*ui.timeSpeed.state;
+					objA.y += objA.vy*ui.timeSpeed.state;
+				}
+				delete objA.collided;			
+			}
+		}
 	}
 	// Add objects vectors to objects
 	addVelocity(timeSpeed){

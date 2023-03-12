@@ -90,7 +90,8 @@ window.onload = function(){
 	// === ...
 	this.mov_obj = null; // Moving object id
 	this.movingObjectPosition = []; // Moving object position and velocity
-	this.dis_zone = 5; // Minimal mouse move to show new object trajectory preview
+	this.minMouseMove = getDeviceType() == 'desktop' ? 5 : 10; // Minimal mouse move to show new object trajectory preview in pixels
+	this.isMinMouseMove = false; // If mouse moved minMouseMove pix from last mouse down
 	let renderStopLatency; // Frames to render after render disabled
 	// Parameters of new object that will be created, if user will want to create an object
 	this.newObjParams = {
@@ -387,6 +388,7 @@ window.onload = function(){
 	});
 	// Touch events ======================================
 	// Touch START
+	let touchStartEvent = false;
 	document.getElementById('renderLayers').addEventListener('touchstart', function(event){
 		event.preventDefault();
 		prev_cam_x = camera.x;
@@ -414,6 +416,7 @@ window.onload = function(){
 			camera.setTarget();
 		}
 		[mouse.x, mouse.y] = [event.clientX, event.clientY]; // Set cursor position
+		isMinMouseMove = isMinMouseMove ? true : dist(mouse.x, mouse.y, mouse.leftDownX, mouse.leftDownY) >= minMouseMove;
 		// Averrage point of touchs
 		let av_touch_x = [];
 		let av_touch_y = [];
@@ -497,6 +500,7 @@ window.onload = function(){
 		// Set cursor position
 		[mouse.leftDownX, mouse.leftDownY] = [event.clientX, event.clientY];
 		[mouse.x, mouse.y] = [event.clientX, event.clientY];
+		isMinMouseMove = false;
 
 		// Left mouse down
 		if (event.which == 1 || event.type === 'touchstart'){
@@ -621,7 +625,10 @@ window.onload = function(){
 	// Mouse MOVE
 	document.onmousemove = function(event){
 		mouse.move = true;
-		if (mouse.leftDown) movingObjectBegin();
+		if (mouse.leftDown) {
+			movingObjectBegin();
+			isMinMouseMove = isMinMouseMove ? true : dist(mouse.x, mouse.y, mouse.leftDownX, mouse.leftDownY) >= minMouseMove;
+		}
 		movingObject(); // Moving object if mouse down && mbut == "move"
 		if (
 			mouse.middleDown 
@@ -659,7 +666,7 @@ window.onload = function(){
 			if (mouse.leftDown){
 				let circularOrbit = false;
 				let [svx, svy] = [0, 0];
-				if ( dist(mouse.leftDownX, mouse.leftDownY, mouse.x, mouse.y) <= dis_zone && ui.newObjCircularOrbit.state) {
+				if ( !isMinMouseMove && ui.newObjCircularOrbit.state) {
 					circularOrbit = true;
 				} else {
 					const [mcx, mcy] = mouse.ctrlModificatedMousePosition();
@@ -804,7 +811,7 @@ window.onload = function(){
 			&& (mouse.move || (!ui.pauseWhenCreatingObject.state && renderer.allowFrameRender)
 			)
 			){
-			if (true || dist(mouse.leftDownX, mouse.leftDownY, mouse.x, mouse.y) > dis_zone){
+			if (isMinMouseMove){
 				renderer.visual_trajectory();
 				if (ui.showNewObjTrajectory.state){
 					// Show trajectory preview

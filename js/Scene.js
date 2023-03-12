@@ -63,7 +63,7 @@ export default class Scene {
 		const objArr = this.objArr;
 		let objectsToDelete;
 		if (Array.isArray(objects)){
-			objectsToDelete = objects; // Given objects ID's to delete
+			objectsToDelete = objects.sort((a, b) => b - a); // Given objects ID's to delete
 		} else {
 			objectsToDelete = [objects]; // If given not an array
 		}
@@ -193,7 +193,7 @@ export default class Scene {
 		let c1 = color1[0] === "#" ? color1.slice(1) : color1;
 		let c2 = color2[0] === "#" ? color2.slice(1) : color2;
 
-		return "#" + this._mixColors(c1, c2, m1, m2);
+		return "#" + this._mixColors(c1, c2, Math.abs(m1), Math.abs(m2));
 	}
 
 	randomColor() {

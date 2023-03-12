@@ -125,10 +125,21 @@ export default class TrajectoryPreview {
 		// Draw the cross if object(s) deleted after collision
 		for (let deletedObj of deletedObjectsList){
 			const size = this.camera.getScreenRad(deletedObj.m)*0.7 < 3? 3 : this.camera.getScreenRad(deletedObj.m)*0.7;
+			// Circle
+			ctx2.save();
+			ctx2.beginPath();
+			ctx2.globalAlpha = 0.3;
+			ctx2.fillStyle = '#f30';
+			let drawRadius = this.camera.getScreenRad(deletedObj.m);
+			drawRadius = drawRadius < 2 ? 2 : drawRadius;
+			ctx2.arc(...this.renderer.crd2(deletedObj.x, deletedObj.y), drawRadius, 0, 7);
+			ctx2.fill();
+
+			ctx2.restore();
 			this.renderer.drawCross(
-				this.renderer.crd(deletedObj.x - deletedObj.vx, 'x'),
-				this.renderer.crd(deletedObj.y - deletedObj.vy, 'y'), 
-				2, 
+				this.renderer.crd(deletedObj.x, 'x'),
+				this.renderer.crd(deletedObj.y, 'y'), 
+				1.5, 
 				size, 
 				'#ff0000'
 			);
@@ -136,9 +147,9 @@ export default class TrajectoryPreview {
 	}
 
 	calculateTrajectories({trajLen, accuracity}) {
+		const objArrCopy = this.sceneClone.objArr;
 		// Create new object
 		let newObjId = this.sceneClone.addNewObject({...newObjParams, callback: false});
-		const objArrCopy = this.sceneClone.objArr;
 
 		// Array with all trajectory traces
 		const trajectoryTraces = [];
@@ -165,7 +176,7 @@ export default class TrajectoryPreview {
 			// Calculate minimal distance
 			for (let objectId = objArrCopy.length; objectId--;){
 				const obj = objArrCopy[objectId];
-
+				// Check distances
 				if (objArrCopy[newObjId]){
 					const D = dist(objArrCopy[newObjId].x, objArrCopy[newObjId].y, obj.x, obj.y);
 					if (objectId !== newObjId){
@@ -179,25 +190,25 @@ export default class TrajectoryPreview {
 					}
 				}
 			}
+			// Merge collision
+			if (ui.collisionMode.state == '0'){
+				const deletedObjsData = this.physics.mergeCollision();
+				deletedObjectsList.push(...deletedObjsData.objArr);
+
+				// Change newObjId after delete some objects after collision
+				newObjId = getIdAfterArrChange(deletedObjsData.idArr, newObjId);
+			}
+			// Bounce collision preprocessing
+			ui.collisionMode.state == '1' && this.physics.pullOutFromEachOther();
+
+
 			// Physics compute
 			this.physics.physicsCalculate(
-				false,
+				undefined,
 				+ui.interactMode.state,
 				ui.timeSpeed.state,
 				ui.g.state/accuracity
 			);
-
-			// Add velocity
-			this.physics.addVelocity(ui.timeSpeed.state/accuracity);
-
-			// CollisionHandler returns a list of objects that could be deleted (If not merge collision - returns empty array)
-			const toDeleteObjectsList = this.physics.collisionHandler(+ui.collisionMode.state);
-
-			// Change newObjId after delete some objects after collision
-			newObjId = getIdAfterArrChange(toDeleteObjectsList, newObjId);
-
-			// Delete objects after collide and return the deleted objects to the toDeleteObjectsList array (returns array only in collision mode '0')
-			if (toDeleteObjectsList.length > 0) deletedObjectsList.push(...this.sceneClone.deleteObject(toDeleteObjectsList, false));
 
 			// Add points to trajectory trace array
 			for (let objectId = objArrCopy.length; objectId--;){
