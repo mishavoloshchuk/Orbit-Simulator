@@ -1,8 +1,10 @@
 import Scene from './Scene.js';
 import Camera from './Camera.js';
+import Physics from './Physics.js';
 import Renderer from './Renderer.js';
 import UserInput from './UserInput.js';
 import IndicateFPS from './IndicateFPS.js';
+import TrajectoryPreview from './TrajectoryPreview.js';
 
 self.ui = new Object();
 window.onload = function(){
@@ -87,9 +89,20 @@ window.onload = function(){
 
 	// === ...
 	this.mov_obj = null; // Moving object id
-	this.dis_zone = 5; // Minimal mouse move to show new object trajectory
-	this.frameTime = [0, Date.now()]; // Frametime
+	this.movingObjectPosition = []; // Moving object position and velocity
+	this.dis_zone = 5; // Minimal mouse move to show new object trajectory preview
 	let renderStopLatency; // Frames to render after render disabled
+	// Parameters of new object that will be created, if user will want to create an object
+	this.newObjParams = {
+		screenX: 0, // Position X
+		screenY: 0, // Position Y
+		vx: 0, // Velocity X equals vx if given and svx if not
+		vy: 0, // Velocity Y equals vy if given and svy if not
+		mass: null, // Object mass via given radius || Radius
+		color: null,
+		objLck: null,
+		main_obj: null		
+	}
 
 	// Camera touch control
 	var prev_cam_x = 0;
@@ -109,11 +122,20 @@ window.onload = function(){
 
 	// Scene init
 	this.scene = new Scene();
-	scene.camera = new Camera(scene);
-	scene.activCam = scene.camera;
+
+	// Init camera
+	this.camera = new Camera();
+
 	scene.frame = frame;
 
-	this.renderer = new Renderer({camera: scene.activCam, scene: scene});
+	// Physics init
+	this.physics = new Physics(scene);
+
+	// Init render
+	this.renderer = new Renderer({camera: camera, scene: scene});
+
+	// Init trajectory preview
+	this.trajectoryPreview = new TrajectoryPreview({scene: scene, renderer: renderer, camera: camera});
 
 	this.pauseState = false; // Global pause state
 
@@ -121,6 +143,7 @@ window.onload = function(){
 	let newObjectCreatedCallback = function() {
 		scene.show_obj_count();
 		renderer.allowFrameRender = true;
+		if (ui.newObjRandColor.state) ui.newObjColor.state = scene.randomColor();
 	}
 
 	var switcher = {device: 'desktop',
@@ -157,7 +180,7 @@ window.onload = function(){
 		this.newObjCircularOrbit = new UserInput({type: 'checkbox', id: 'circleOrbitCheck', stateSaving: true, initState: true}); // Menu circle orbit on click input
 		this.newObjCreateReverseOrbit = new UserInput({type: 'checkbox', id: 'objReverseCheck', stateSaving: true, initState: false}); // Menu reverse ordit direction input
 		this.pauseWhenCreatingObject = new UserInput({type: 'checkbox', id: 'new_obj_pause', stateSaving: true, initState: true, callback: (val, elem)=>{elem.prevPauseState = false}}); // Menu pause when user add object input
-		this.launchForce = new UserInput({type: 'range', id: 'launch_power', stateSaving: true, callback: (val)=>{lnch_pwr_span.innerHTML = Math.round(powerFunc(val)*1000)/1000; mouse.move = true;}, eventName: 'input'}); // Menu launch power value input
+		this.launchForce = new UserInput({type: 'range', id: 'launch_power', stateSaving: true, callback: (val)=>{lnch_pwr_span.innerHTML = expVal(val); mouse.move = true;}, eventName: 'input'}); // Menu launch power value input
 		this.showDistanceFromCursorToMainObj = new UserInput({type: 'checkbox', id: 'vis_distance_check', stateSaving: true, callback: ()=>{ launchPowerLabel.style.display = 'none'; renderer.clearLayer2(); }}); // Menu visual distance
 		//
 		this.showNewObjTrajectory = new UserInput({type: 'checkbox', id: 'traj_prev_check', stateSaving: true, initState: true, callback: (val, elem)=>{
@@ -224,7 +247,7 @@ window.onload = function(){
 
 		// Physics menu =======================
 		this.gravitationMode = new UserInput({type: 'radio', id: 'gravit_mode_radio_buttons', stateSaving: true}); // Select gravitation mode (radio)
-		this.g = new UserInput({type: 'range', id: 'g_value', eventName: 'input', callback: (val)=>{g_value_title.innerHTML = powerFunc(val)}, initState: 1}); // Set gravitation (G) value
+		this.g = new UserInput({type: 'range', id: 'g_value', eventName: 'input', callback: (val)=>{g_value_title.innerHTML = expVal(val)}, initState: 1}); // Set gravitation (G) value
 		this.interactMode = new UserInput({type: 'radio', id: 'interact_radio_buttons', stateSaving: true}); // Select interactions mode
 		this.collisionMode = new UserInput({type: 'radio', id: 'collision_radio_buttons', stateSaving: true}); // Select collision mode
 
@@ -310,8 +333,8 @@ window.onload = function(){
 		renderer.resolutionX = window.innerWidth;
 		renderer.resolutionY = window.innerHeight;
 		renderer.allowFrameRender = true;
-		scene.camera.centerX = innerWidth / 2;
-		scene.camera.centerY = innerHeight / 2;
+		camera.centerX = innerWidth / 2;
+		camera.centerY = innerHeight / 2;
 		setFullScreenIcon(); // Check full screen mode and set the button icon
 		setMassRange();
 	}
@@ -321,17 +344,17 @@ window.onload = function(){
 	function setMassRange() {
 		let element = document.querySelector('#create_mass');
 		if (!ui.newObjMass.event){
-			element.value = Math.pow(Math.abs(ui.newObjMass.state) / Math.pow((innerWidth + innerHeight)/4/scene.camera.animZoom, 2), 1/3);
+			element.value = Math.pow(Math.abs(ui.newObjMass.state) / Math.pow((innerWidth + innerHeight)/4/camera.animZoom, 2), 1/3);
 		}
 		element = document.querySelector('#mass_edit');
 		if (!ui.editMass.event){
-			element.value = Math.pow(Math.abs(ui.editMass.state) / Math.pow((innerWidth + innerHeight)/4/scene.camera.animZoom, 2), 1/3);
+			element.value = Math.pow(Math.abs(ui.editMass.state) / Math.pow((innerWidth + innerHeight)/4/camera.animZoom, 2), 1/3);
 		}
 	}
 	// New object mass edit input events
 	document.getElementById('create_mass').addEventListener('input', (e)=>{
 		ui.newObjMass.event = true;
-		ui.newObjMass.state = ( Math.pow(e.target.value, 3) * Math.pow((innerWidth + innerHeight)/4/scene.camera.animZoom, 2) ) * (ui.newObjNegativeMass.state ? -1 : 1);
+		ui.newObjMass.state = ( Math.pow(e.target.value, 3) * Math.pow((innerWidth + innerHeight)/4/camera.animZoom, 2) ) * (ui.newObjNegativeMass.state ? -1 : 1);
 		let menuContainer = document.getElementById('options_menu_container');
 		if (!menuContainer.className.includes(" zero_opacity")){
 			e.target.closest('.option_item').className += " nozeroopacity";
@@ -346,7 +369,7 @@ window.onload = function(){
 	});
 	document.querySelector('#mass_edit').addEventListener('input', (e)=>{
 		ui.editMass.event = true;
-		ui.editMass.state = ( Math.pow(e.target.value, 3) * Math.pow((innerWidth + innerHeight)/4/scene.camera.animZoom, 2) ) * (ui.editObjNegativeMass.state ? -1 : 1);
+		ui.editMass.state = ( Math.pow(e.target.value, 3) * Math.pow((innerWidth + innerHeight)/4/camera.animZoom, 2) ) * (ui.editObjNegativeMass.state ? -1 : 1);
 		let menuContainer = document.getElementById('options_menu_container');
 		if (!menuContainer.className.includes(" zero_opacity")){
 			e.target.closest('.option_item').className += " nozeroopacity";
@@ -366,14 +389,14 @@ window.onload = function(){
 	// Touch START
 	document.getElementById('renderLayers').addEventListener('touchstart', function(event){
 		event.preventDefault();
-		prev_cam_x = scene.camera.x;
-		prev_cam_y = scene.camera.y;
+		prev_cam_x = camera.x;
+		prev_cam_y = camera.y;
 		mouseDownHandler(event);
 	});
 	// Touch END
 	document.getElementById('renderLayers').addEventListener('touchend', function(event){
 		mouseUpHandler(event);
-		zm_prev = scene.camera.animZoom;
+		zm_prev = camera.animZoom;
 	});
 	// Touch MOVE
 	document.getElementById('renderLayers').addEventListener('touchmove', function(event){
@@ -382,13 +405,13 @@ window.onload = function(){
 		// Touch point
 		event.clientX = event.targetTouches[0].clientX;// Touch X
 		event.clientY = event.targetTouches[0].clientY;// Touch Y
-		if (swch.tapCamMove && mouse.leftDown && !scene.camera.hasTarget()){
-			scene.camera.x += (mouse.x - event.clientX)/scene.camera.animZoom;
-			scene.camera.y += (mouse.y - event.clientY)/scene.camera.animZoom;
+		if (swch.tapCamMove && mouse.leftDown && !camera.hasTarget()){
+			camera.x += (mouse.x - event.clientX)/camera.animZoom;
+			camera.y += (mouse.y - event.clientY)/camera.animZoom;
 			let mstate = menu_state;
 			close_all_menus(); 
 			menu_state = mstate;
-			scene.camera.setTarget();
+			camera.setTarget();
 		}
 		[mouse.x, mouse.y] = [event.clientX, event.clientY]; // Set cursor position
 		// Averrage point of touchs
@@ -401,8 +424,8 @@ window.onload = function(){
 			} else {
 				// Object move end
 				if (scene.objArr[mov_obj]){
-					scene.objArr[mov_obj].vx = scene.mpos[2];
-					scene.objArr[mov_obj].vy = scene.mpos[3];
+					scene.objArr[mov_obj].vx = movingObjectPosition[2];
+					scene.objArr[mov_obj].vy = movingObjectPosition[3];
 					mov_obj = null;
 				}
 			}
@@ -424,7 +447,7 @@ window.onload = function(){
 
 			if (swch.allowObjCreating && mouse.leftDown){
 				if (ui.pauseWhenCreatingObject.state){
-					pauseState = pauseWhenCreatingObject.prevPauseState;
+					pauseState = ui.pauseWhenCreatingObject.prevPauseState;
 				}
 				renderer.clearLayer2();
 			}
@@ -439,22 +462,22 @@ window.onload = function(){
 			}
 			// Cancel camera target if touch camera move
 			if (dist(avTouchPoint.xd, avTouchPoint.yd, avTouchPoint.x, avTouchPoint.y) > Math.min(innerWidth, innerHeight)/6){
-				if (scene.camera.Target !== undefined){
+				if (camera.Target !== undefined){
 					avTouchPoint.xd = avTouchPoint.x;
 					avTouchPoint.yd = avTouchPoint.y;
-					prev_cam_x = scene.camera.x;
-					prev_cam_y = scene.camera.y;
-					scene.camera.setTarget();
+					prev_cam_x = camera.x;
+					prev_cam_y = camera.y;
+					camera.setTarget();
 				}
 			}
 			// Limit zoom
 			let newZoom = zm_prev / Math.pow(Math.sqrt(zm_cff) / Math.sqrt(touchZoom), 2); // Zoom
 			if (newZoom < 10000 && newZoom > 1.0e-12){
-				scene.camera.zoom = scene.camera.animZoom = newZoom;
+				camera.zoom = camera.animZoom = newZoom;
 			}
-			if (!ui.zoomToScreenCenter.state && scene.camera.Target === undefined){ // If zoom to screen center
-				scene.camera.ax = scene.camera.x = prev_cam_x - (avTouchPoint.x - avTouchPoint.xd)/scene.camera.animZoom + (((window.innerWidth/2 - avTouchPoint.xd)/zm_prev)*Math.pow(Math.sqrt(zm_cff) / Math.sqrt(touchZoom), 2) - ((window.innerWidth/2 - avTouchPoint.xd)/zm_prev));
-				scene.camera.ay = scene.camera.y = prev_cam_y - (avTouchPoint.y - avTouchPoint.yd)/scene.camera.animZoom + (((window.innerHeight/2 - avTouchPoint.yd)/zm_prev)*Math.pow(Math.sqrt(zm_cff) / Math.sqrt(touchZoom), 2) - ((window.innerHeight/2 - avTouchPoint.yd)/zm_prev));
+			if (!ui.zoomToScreenCenter.state && camera.Target === undefined){ // If zoom to screen center
+				camera.ax = camera.x = prev_cam_x - (avTouchPoint.x - avTouchPoint.xd)/camera.animZoom + (((window.innerWidth/2 - avTouchPoint.xd)/zm_prev)*Math.pow(Math.sqrt(zm_cff) / Math.sqrt(touchZoom), 2) - ((window.innerWidth/2 - avTouchPoint.xd)/zm_prev));
+				camera.ay = camera.y = prev_cam_y - (avTouchPoint.y - avTouchPoint.yd)/camera.animZoom + (((window.innerHeight/2 - avTouchPoint.yd)/zm_prev)*Math.pow(Math.sqrt(zm_cff) / Math.sqrt(touchZoom), 2) - ((window.innerHeight/2 - avTouchPoint.yd)/zm_prev));
 			}
 		}
 		bgMoving();
@@ -470,8 +493,6 @@ window.onload = function(){
 			event.clientY = event.targetTouches[0].clientY;
 			allowClick = multiTouch == 1; // If touches > 1 cancel click event (mouse up event)
 			// console.log('touchstart');
-		} else {
-			[mouse.leftDownX, mouse.leftDownY] = [event.clientX, event.clientY];
 		}
 		// Set cursor position
 		[mouse.leftDownX, mouse.leftDownY] = [event.clientX, event.clientY];
@@ -498,7 +519,7 @@ window.onload = function(){
 				if (event.ctrlKey){ // If Ctrl pressed
 					mouse.ctrlTriggerModificator();
 				}
-			};
+			}
 		}
 		// Middle mouse down
 		if (event.which == 2){
@@ -546,39 +567,16 @@ window.onload = function(){
 			}
 			// // Object move end
 			if (mbut == 'move' && scene.objArr[mov_obj] && mov_obj !== null){
-				scene.objArr[mov_obj].vx = scene.mpos[2];
-				scene.objArr[mov_obj].vy = scene.mpos[3];
+				scene.objArr[mov_obj].vx = movingObjectPosition[2];
+				scene.objArr[mov_obj].vy = movingObjectPosition[3];
 				mov_obj = null;
 			}
 
 			// Create object
 			if (swch.allowObjCreating){
 				if (mscam && !mouse.rightDown){
-					let circularOrbit = false;
-					let [svx, svy] = [0, 0];
-					if ( dist(mouse.leftDownX, mouse.leftDownY, mouse.leftUpX, mouse.leftUpY) <= dis_zone && ui.newObjCircularOrbit.state) {
-						circularOrbit = true;
-					} else {
-						let [mcx, mcy] = mouse.ctrlModificatedMousePosition();
-						if (!ui.newObjLock.state){
-							svx = ((mouse.leftDownX-mcx)/30) * powerFunc(ui.launchForce.state);
-							svy = ((mouse.leftDownY-mcy)/30) * powerFunc(ui.launchForce.state);	
-						}
-					}
 					addFrameBeginTask(()=>{
-						scene.addNewObject({
-							screenX: mouse.leftDownX,
-							screenY: mouse.leftDownY,
-							vx: svx,
-							vy: svy,
-							color: ui.newObjColor.state,
-							mass: ui.newObjMass.state,
-							objLck: ui.newObjLock.state,
-							main_obj: scene.objIdToOrbit,
-							circularOrbit: circularOrbit,
-							callback: newObjectCreatedCallback
-						});
-						if (ui.newObjRandColor.state) ui.newObjColor.state = scene.randomColor();
+						scene.addNewObject(newObjParams);
 					});
 				}
 				var mort = setTimeout(menu_open_restore, 200);
@@ -588,7 +586,7 @@ window.onload = function(){
 				renderer.clearLayer2();
 			}
 			if (mbut == 'camera' && swch.s_track){
-				scene.camera.setTarget(scene.objectSelect('nearest', scene.camera.Target));
+				camera.setTarget(scene.objectSelect('nearest', camera.Target));
 			}
 			if (swch.s_mainObj){
 				if (allowClick){
@@ -628,13 +626,13 @@ window.onload = function(){
 		if (
 			mouse.middleDown 
 			|| (swch.tapCamMove && mouse.leftDown)
-			){
-			scene.camera.x += (mouse.x - event.clientX)/scene.camera.animZoom;
-			scene.camera.y += (mouse.y - event.clientY)/scene.camera.animZoom;
+		){
+			camera.x += (mouse.x - event.clientX)/camera.animZoom;
+			camera.y += (mouse.y - event.clientY)/camera.animZoom;
 			let mstate = menu_state;
 			close_all_menus(); 
 			menu_state = mstate;
-			scene.camera.setTarget();
+			camera.setTarget();
 		}
 
 		// Set cursor position
@@ -652,6 +650,42 @@ window.onload = function(){
 	function bgMoving(){
 		if (ui.backgroundFollowsMouse.state && ui.backgroundDarkness.state && !ui.maxPerformance.state){
 			Object.assign(document.getElementById('background_image').style, {top: (-mouse.y/25)+'px', left: (-mouse.x/25)+'px'});	
+		}
+	}
+
+	// Set params to the new object
+	function setParameterToNewObject(){
+		if (swch.allowObjCreating){
+			if (mouse.leftDown){
+				let circularOrbit = false;
+				let [svx, svy] = [0, 0];
+				if ( dist(mouse.leftDownX, mouse.leftDownY, mouse.x, mouse.y) <= dis_zone && ui.newObjCircularOrbit.state) {
+					circularOrbit = true;
+				} else {
+					const [mcx, mcy] = mouse.ctrlModificatedMousePosition();
+					if (!ui.newObjLock.state){
+						svx = ((mouse.leftDownX-mcx)/30) * expVal(ui.launchForce.state);
+						svy = ((mouse.leftDownY-mcy)/30) * expVal(ui.launchForce.state);	
+					}
+				}
+				newObjParams = {
+					screenX: mouse.leftDownX, // Position X
+					screenY: mouse.leftDownY, // Position Y
+					vx: svx, // Velocity X equals vx if given and svx if not
+					vy: svy, // Velocity Y equals vy if given and svy if not	
+					circularOrbit: circularOrbit,
+					callback: newObjectCreatedCallback
+				};
+			} else {
+				newObjParams = {
+					screenX: mouse.x, // Position X
+					screenY: mouse.y, // Position Y
+					vx: 0, // Velocity X equals vx if given and svx if not
+					vy: 0, // Velocity Y equals vy if given and svy if not	
+					circularOrbit: ui.newObjCircularOrbit.state, // Circular orbit
+					callback: newObjectCreatedCallback
+				};
+			}
 		}
 	}
 	//===================================================================================
@@ -688,6 +722,8 @@ window.onload = function(){
 			scene.objIdToOrbit = scene.objectSelect('biggest');		
 		}
 
+		setParameterToNewObject();
+
 		// Set move cursor style
 		if (mouse.middleDown || mbut == 'move' || (mouse.leftDown && swch.tapCamMove)){renderer.layersDiv.style.cursor = "move";}else{renderer.layersDiv.style.cursor = "default";};
 
@@ -698,25 +734,25 @@ window.onload = function(){
 			// Set objects radiuses
 			let maxDiameter = 0;
 			for (let obj of scene.objArr){
-				obj.r = Math.sqrt(obj.m);
-				maxDiameter = Math.max(maxDiameter, obj.r * 2);
+				obj.r = Math.sqrt(Math.abs(obj.m));
+				maxDiameter = Math.max(Math.abs(maxDiameter), Math.abs(obj.r) * 2);
 			}
 			// Set collision ceil size
-			scene.collisionCeilSize = maxDiameter;
+			physics.collisionCeilSize = maxDiameter;
 
 			// Physics calculating...
 			if (!pauseState || nextFrame){
 				scene.simulationsPerFrame = 1; // Simulations per frame (only multithread)
 				for(let i = simulationSpeed; i--;){
 					if (gpuComputeAvailable && ui.gpuCompute.state && ui.interactMode.state === '0'){
-						scene.gpuComputeVelocities();
+						physics.gpuComputeVelocities();
 					} else {
-						scene.physicsCalculate(); // Scene physics calculations (1 step)
+						physics.physicsCalculate(); // Scene physics calculations (1 step)
 					}
 				}
 			}
 		}
-		scene.camera.frame(); // Trigger camera frame
+		camera.frame(); // Trigger camera frame
 		// Frame rendering...
 		if (renderer.allowFrameRender){
 			renderer.renderObjects();
@@ -750,7 +786,7 @@ window.onload = function(){
 			renderer.visualObjectSelect(scene.objectSelect(ui.deletingMode.state), '#ff0000');
 		} else
 		if (mbut == 'camera' && swch.s_track){
-			renderer.visualObjectSelect(scene.objectSelect('nearest', scene.camera.Target),'#0af');
+			renderer.visualObjectSelect(scene.objectSelect('nearest', camera.Target),'#0af');
 		} else
 		if (mbut == 'move'){
 			renderer.visualObjectSelect(nearObjId,'#bbb');
@@ -768,11 +804,11 @@ window.onload = function(){
 			&& (mouse.move || (!ui.pauseWhenCreatingObject.state && renderer.allowFrameRender)
 			)
 			){
-			if (!(dist(mouse.leftDownX, mouse.leftDownY, mouse.leftUpX, mouse.leftUpY) <= dis_zone)){
+			if (true || dist(mouse.leftDownX, mouse.leftDownY, mouse.x, mouse.y) > dis_zone){
 				renderer.visual_trajectory();
 				if (ui.showNewObjTrajectory.state){
-					// Trajectory calculation
-					renderer.trajectoryCalculate({
+					// Show trajectory preview
+					trajectoryPreview.trajectoryPreview({
 						trajLen: ui.newObjTrajLength.state, 
 						accuracity: ui.newObjTrajAccuracity.state
 					});
@@ -802,17 +838,7 @@ window.onload = function(){
 	this.addObjects = function(count = 100){
 		for (let i = 0; i < count; i++){
 		  	addFrameBeginTask(()=>{ 
-				scene.addNewObject({
-		  	 		screenX: renderer.resolutionX * Math.random(), screenY: renderer.resolutionY *Math.random(),
-		  	 		vx: 0, vy: 0,
-					color: ui.newObjColor.state,
-					mass: ui.newObjMass.state,
-					objLck: ui.newObjLock.state,
-					main_obj: scene.objIdToOrbit,
-					circularOrbit: ui.newObjCircularOrbit.state,
-					callback: newObjectCreatedCallback
-				});
-				if (ui.newObjRandColor.state) ui.newObjColor.state = scene.randomColor();
+				scene.addNewObject(newObjParams);
 			});
 		}
 	}
@@ -823,7 +849,7 @@ window.onload = function(){
 		if (scene.objArr[targ_obj]){
 			let obCoords = [scene.objArr[targ_obj].x, scene.objArr[targ_obj].y];
 			let size = dist(obj_cord[0], obj_cord[1], ...renderer.crd2(obCoords[0], obCoords[1]));
-			if (size > scene.camera.getScreenRad(scene.objArr[targ_obj].m)){
+			if (size > camera.getScreenRad(scene.objArr[targ_obj].m)){
 				renderer.ctx2.strokeStyle = col;
 				renderer.ctx2.lineWidth = 2;
 				// Line
@@ -845,7 +871,7 @@ window.onload = function(){
 				renderer.ctx2.beginPath();
 
 				Object.assign(launchPowerLabel.style, {left: `calc(${mouse.x}px + 1em)`, top: `calc(${mouse.y}px - 1em)`, display: 'block', color: col});
-				launchPowerLabel.innerHTML = Math.round(size/scene.camera.animZoom*1000)/1000;
+				launchPowerLabel.innerHTML = Math.round(size/camera.animZoom*1000)/1000;
 			} else {
 				if (!mouse.leftDown){
 					launchPowerLabel.style.display = 'none';	
@@ -859,10 +885,10 @@ window.onload = function(){
 			if (!mouse.middleDown){
 				if (e.deltaY > 0){
 					// Zoom out
-					scene.camera.zoomTo(-1.25);
+					camera.zoomTo(-1.25);
 				} else {
 					// Zoom in
-					scene.camera.zoomTo(1.25);
+					camera.zoomTo(1.25);
 				}		
 			}
 		}
@@ -885,8 +911,8 @@ window.onload = function(){
 		if (mbut == 'move' && mov_obj === null){
 			mov_obj = scene.objectSelect();
 			if (scene.objArr[mov_obj]){
-				scene.mpos[0] = scene.objArr[mov_obj].x; scene.mpos[1] = scene.objArr[mov_obj].y; //Координаты перемещяемого объекта
-				scene.mpos[2] = scene.objArr[mov_obj].vx; scene.mpos[3] = scene.objArr[mov_obj].vy;	// Вектор перемещяемого объекта
+				movingObjectPosition[0] = scene.objArr[mov_obj].x; movingObjectPosition[1] = scene.objArr[mov_obj].y; //Координаты перемещяемого объекта
+				movingObjectPosition[2] = scene.objArr[mov_obj].vx; movingObjectPosition[3] = scene.objArr[mov_obj].vy;	// Вектор перемещяемого объекта
 				scene.objArr[mov_obj].vx = 0; scene.objArr[mov_obj].vy = 0;
 			}
 		}
@@ -894,15 +920,15 @@ window.onload = function(){
 	// Moving object function
 	function movingObject(){
 		if (mouse.leftDown && mbut == 'move' && mov_obj !== null){ // Moving object
-			let newX = (mouse.x - mouse.leftDownX)/scene.camera.animZoom + scene.mpos[0]; // New object X
-			let newY = (mouse.y - mouse.leftDownY)/scene.camera.animZoom + scene.mpos[1]; // New object Y
+			let newX = (mouse.x - mouse.leftDownX)/camera.animZoom + movingObjectPosition[0]; // New object X
+			let newY = (mouse.y - mouse.leftDownY)/camera.animZoom + movingObjectPosition[1]; // New object Y
 			// Draw trace while user moving object
 			if (scene.objArr[mov_obj]){
 				if (ui.tracesMode.state == 1){ // If traces mode == 1
 					let dCanv = ui.maxPerformance.state ? renderer.ctx1 : renderer.ctx3;
 					dCanv.strokeStyle = scene.objArr[mov_obj].color;
 					dCanv.fillStyle = scene.objArr[mov_obj].color;	
-					dCanv.lineWidth = scene.camera.getScreenRad(scene.objArr[mov_obj].m)*2;
+					dCanv.lineWidth = camera.getScreenRad(scene.objArr[mov_obj].m)*2;
 					// Line
 					dCanv.beginPath();
 					dCanv.lineCap = 'round';
@@ -945,17 +971,7 @@ window.onload = function(){
 				case 32: // (Space) Create object
 					if (swch.allowObjCreating){
 						addFrameBeginTask(()=>{ 
-							scene.addNewObject({
-							screenX: mouse.x, screenY: mouse.y,
-							vx: 0, vy: 0,
-							color: ui.newObjColor.state,
-							mass: ui.newObjMass.state,
-							objLck: ui.newObjLock.state,
-							main_obj: scene.objIdToOrbit,
-							circularOrbit: ui.newObjCircularOrbit.state,
-							callback: newObjectCreatedCallback
-						});
-							if (ui.newObjRandColor.state) ui.newObjColor.state = scene.randomColor();
+							scene.addNewObject(newObjParams);
 						});		
 					}
 					if (mbut == 'delete' && scene.objArr.length){
@@ -964,10 +980,10 @@ window.onload = function(){
 					}
 					break;
 				case 107:  // (NumPad +) Zoom in
-					scene.camera.zoomTo(2);
+					camera.zoomTo(2);
 					break;
 				case 109:  // (NumPad -) Zoom out
-					scene.camera.zoomTo(-2);
+					camera.zoomTo(-2);
 					break;
 			}
 			// (+) Simulation speed up withoud lost accuracity. Max limit is computer performance
@@ -1093,9 +1109,9 @@ window.onload = function(){
 					}
 					break;
 				case 'clear_camera_settings': // Restore camera defaults
-					scene.camera.setTarget(); // Unset camera target
-					scene.camera.x = 0; scene.camera.y = 0; // Set default camera position
-					scene.camera.zoom = 1; // Set default camera zoom value
+					camera.setTarget(); // Unset camera target
+					camera.x = 0; camera.y = 0; // Set default camera position
+					camera.zoom = 1; // Set default camera zoom value
 					zm_prev = 1;
 					break;
 				case 'select_edit_obj': // Visual select object to select edit object
@@ -1193,8 +1209,10 @@ window.onload = function(){
 		return sum;
 	}
 
-	function powerFunc(F){
-		if (F > 1){ return Math.round(Math.pow(F, Math.pow(F, 3))*100)/100 } else { return F }
+	// Get exponential value if value bigger than 1
+	function expVal(F, round = 1000){
+		let val = F > 1 ? Math.pow(F, 8) : F;
+		return Math.round(val * round) / round;
 	}
 
 	// Toggle full screen
@@ -1271,7 +1289,6 @@ window.onload = function(){
 		reader.onload = function() {
 			try {
 			  	let file_data = JSON.parse(reader.result);
-				console.log('File loaded successfully!');
 			  	scene.objArr = file_data.objArr;
 			  	ui.interactMode.state = file_data.interactMode || 0;
 			  	ui.gravitationMode.state = file_data.gravitationMode || 1;
@@ -1281,6 +1298,7 @@ window.onload = function(){
 			  	scene.show_obj_count();
 			  	renderer.allowFrameRender = true;
 			  	renderer.clearLayer3();
+				console.log('File loaded successfully!');
 			} catch(err){
 				console.error(err);
 				alert('Несовместимый файл!');

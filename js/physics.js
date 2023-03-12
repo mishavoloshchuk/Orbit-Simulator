@@ -1,205 +1,382 @@
-// Physics calculations
-function calculate({ 
-	objectsArray, 
-	object1Id, 
-	interactMode, 
-	gravitMode, 
-	g, 
-	timeSpeed, 
-	collisionType, 
-	collidedObjectsIdList
-}){
-	const obj1 = objectsArray[object1Id];
-	if (interactMode === 0){
-		for (let object2Id = object1Id; object2Id--;){
-			const obj2 = objectsArray[object2Id];
+export default class Physics {
+	collisionCeilSize = 31.6227766016*2; // Ceil collision algorithm ceil size
+	constructor(scene) {
+		// Set scene
+		this.scene = scene;
+	}
+	// Init GPU.js
+	initGPUjs(){
+		this.gpu = new GPU();
+		// The distance between two points
+		this.gpu.addFunction(dist);
+		// Gravitation function
+		this.gpu.addFunction(gravity_func);
+		// Gipotenuse
+		this.gpu.addFunction(function gipot(a,b){return Math.sqrt(a*a + b*b) });
+		// Compute function
+		this.computeVelocities = this.gpu.createKernel(function(arr, len, timeSpeed, g, gravitMode) {
+			const obj1Id = this.thread.x;
+			const obj1Pos = [arr[obj1Id * this.constants.objLen], arr[obj1Id * this.constants.objLen + 1]];
+			const obj1Vel = [0.0, 0.0];
+			const obj1Mass = arr[obj1Id * this.constants.objLen + 2];
+			const obj1Lock = arr[obj1Id * this.constants.objLen + 3];
 
-			if (obj2.lock === true && obj1.lock === true) continue;
+			for(let obj2Id = 0; obj2Id < len; obj2Id++){
+				if (obj2Id !== obj1Id) {
+					const obj2Pos = [arr[obj2Id * this.constants.objLen], arr[obj2Id * this.constants.objLen + 1]];
+					const obj2Mass = arr[obj2Id * this.constants.objLen + 2];
 
-			let D = dist(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
-			let sin = (obj2.y - obj1.y)/D; // Sin
-			let cos = (obj2.x - obj1.x)/D; // Cos
-			const radiusSum = obj1.r + obj2.r;
-
-			let vector = gravity_func(sin, cos, D, gravitMode, obj2.m, obj1.m, timeSpeed, g);
-			// Add calculated vectors to object 1
-			if (!obj1.lock){
-				obj1.vx += vector[0];
-				obj1.vy += vector[1];
+					const D = dist(obj1Pos[0],obj1Pos[1], obj2Pos[0],obj2Pos[1]);
+					const sin = (obj2Pos[1] - obj1Pos[1])/D; // Sin
+					const cos = (obj2Pos[0] - obj1Pos[0])/D; // Cos
+					const velocity = gravity_func(sin, cos, D, gravitMode, obj2Mass, obj1Mass, timeSpeed, g);
+					if (obj1Lock === 0){
+						obj1Vel[0] += velocity[0];
+						obj1Vel[1] += velocity[1];	
+					}
+				}
 			}
-			// Add calculated vectors to object 2
-			if (!obj2.lock){
-				obj2.vx -= vector[2];
-				obj2.vy -= vector[3];
+
+			return [obj1Vel[0], obj1Vel[1]];
+		}, {dynamicOutput: true, dynamicArguments: true, constants: {objLen: 4}})
+			.setLoopMaxIterations(1000000);
+	}
+	gpuComputeVelocities = function(
+		callback = this.gpuAfterPhysics,
+		interactMode = +ui.interactMode.state, 
+		timeSpeed = ui.timeSpeed.state, 
+		g = ui.g.state, 
+		gravitMode = +ui.gravitationMode.state, 
+		collisionType = +ui.collisionMode.state
+	){
+		// Init GPU if not
+		this.gpu || this.initGPUjs();
+
+		const objArr = this.scene.objArr; // Objects array
+		if (objArr.length > 1){
+			// Pull out all objects from each other
+			this.pullOutFromEachOther();
+
+			const prepairedArr = objArr.map(obj => [obj.x, obj.y, obj.m, obj.lock]);
+			this.computeVelocities.setOutput([objArr.length]);
+			const newVelosities = this.computeVelocities(prepairedArr, objArr.length, timeSpeed, g, gravitMode);
+			// After physics
+			let collidedObjectsIDs = [];
+			for (let obj1Id = objArr.length; obj1Id--;){
+				const obj1 = objArr[obj1Id];
+				obj1.vx += newVelosities[obj1Id][0];
+				obj1.vy += newVelosities[obj1Id][1];
 			}
+			
+			let deleteObjectList = []; // Array of objects will be deleted after collision "merge"
+
+			this.addVelocity(timeSpeed);
+			if (ui.collisionMode.state != 2){
+				deleteObjectList = this.collisionHandler(collisionType, timeSpeed);
+			}
+
+			this.scene.deleteObject(deleteObjectList); // Delete objects by deleteObjectsList
+
 		}
-	} else
-	if (interactMode === 1 && obj1.main_obj !== undefined ){
-		const object2Id = obj1.main_obj;
-		const obj2 = objectsArray[object2Id];
+		callback && callback(objArr, interactMode, collisionType, timeSpeed);
+	}
+	physicsCalculate = function (
+		callback = this.afterPhysics,
+		interactMode = +ui.interactMode.state, 
+		timeSpeed = ui.timeSpeed.state, 
+		g = ui.g.state, 
+		gravitMode = +ui.gravitationMode.state, 
+		collisionType = +ui.collisionMode.state
+	){
+		const objArr = this.scene.objArr;
+		// console.log('Calculate begin:');
 
-		const D = dist(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
-		const sin = (obj2.y - obj1.y)/D; // Sin
-		const cos = (obj2.x - obj1.x)/D; // Cos
-		let vector;
+		// Console log global velocity (only if all objects in scene have the same mass)
+		// console.log(objArr.reduce((vel2, obj) => [vel2[0] + obj.vx, vel2[1] + obj.vy], [0, 0]));
+
+		// Pull out all objects from each other
+		this.pullOutFromEachOther();
+
+		// Physics calculating
+		for (let object1Id = objArr.length; object1Id--;){
+			calculate({
+				objectsArray: objArr,
+				object1Id: object1Id,
+				interactMode: interactMode,
+				gravitMode: gravitMode,
+				g: g,
+				timeSpeed: timeSpeed
+			});
+		}
+		callback && callback(interactMode, collisionType, timeSpeed);
+	}
+
+	// Runs after finish computing physics
+	afterPhysics = (interactMode, collisionType, timeSpeed) => {
+		// After physics
+
+		// Add velocities
+		this.addVelocity(timeSpeed);
 
 		// Collision
-		const radiusSum = Math.sqrt(Math.abs(obj1.m)) + Math.sqrt(Math.abs(obj2.m));
-		if (D - radiusSum <= 0){
-			if (collisionType === 2){ // Collision type: none
-				vector = gravity_func(sin, cos, D, gravitMode, obj2.m, obj1.m, timeSpeed, g* ((D/radiusSum)*(D/radiusSum)*(D/radiusSum)) );
-			}
-			collidedObjectsIdList.push([object1Id, object2Id]); // Send the collided objects
-		} else { 
-			// Physics vector calculation
-			vector = gravity_func(sin, cos, D, gravitMode, obj2.m, obj1.m, timeSpeed, g);
+		if (ui.collisionMode.state != 2){
+			let deleteObjectList = this.collisionHandler(collisionType);
+			this.scene.deleteObject(deleteObjectList);
 		}
+	}
 
-		if (vector !== undefined){
-			// Add calculated vectors to object 1
-			if (!obj1.lock){
-				obj1.vx += vector[0];
-				obj1.vy += vector[1];
+	makeObjPosMatrix(objArr = this.scene.objArr){
+		const positionMatrix = {};
+		const seilSize = this.collisionCeilSize;
+		for (let objId = objArr.length; objId --;){
+			let obj = objArr[objId];
+			const posX = Math.floor(obj.x / seilSize);
+			const posY = Math.floor(obj.y / seilSize);
+			const strPos = posX.toString() + '|' + posY.toString();
+
+			if (positionMatrix[strPos] === undefined) positionMatrix[strPos] = [];
+			positionMatrix[strPos].push(objId);
+		}
+		return positionMatrix;
+	}
+
+	collisionCeilAlgorithm(){
+		const objArr = this.scene.objArr;
+		const collidedPairs = [];
+		let posMatrix = this.makeObjPosMatrix();
+		for (let cellPos in posMatrix){
+			let [x, y] = cellPos.split("|");
+			x = +x; y = +y; // To number
+			const iterObjs = posMatrix[cellPos]; // Objects inside current ceil
+			const enumObjs = []; // Objects inside neighborhood ceils
+
+			const cl1 = (x + 1) + "|" + y; // Right ceil
+			const cl2 = x + "|" + (y + 1); // Bottom ceil
+			const cl3 = (x + 1) + "|" + (y + 1); // Right bottom ceil
+			const cl4 = (x - 1) + "|" + (y + 1); // Left bottom ceil
+
+			if (posMatrix[cl1]) enumObjs.push(...posMatrix[cl1]); // ░░░░░░
+			if (posMatrix[cl2]) enumObjs.push(...posMatrix[cl2]); // ░░██▓▓
+			if (posMatrix[cl3]) enumObjs.push(...posMatrix[cl3]); // ▓▓▓▓▓▓ 
+			if (posMatrix[cl4]) enumObjs.push(...posMatrix[cl4]);
+
+			// Iterate ceil for collision
+			for (let i = iterObjs.length; i--;){
+				const obj1Id = iterObjs[i];
+				const obj1 = objArr[obj1Id];
+				// Iterate neighborhood ceils
+				for (let j = enumObjs.length; j--;){
+					const obj2Id = enumObjs[j];
+					checkCollision(obj1Id, obj2Id);
+				}
+				// Iterate current ceil
+				for (let j = i; j--;){
+					const obj2Id = iterObjs[j];
+					checkCollision(obj1Id, obj2Id);
+				}
 			}
-			// Add calculated vectors to object 2
-			if (!obj2.lock){
-				obj2.vx -= vector[2];
-				obj2.vy -= vector[3];
+		}
+		// Check collision function
+		function checkCollision(obj1Id, obj2Id){
+			const obj1 = objArr[obj1Id];
+			const obj2 = objArr[obj2Id];
+			if (!(obj2.lock === true && obj1.lock === true)) {
+				// Collision
+				const radiusSum = obj1.r + obj2.r;
+
+				if (Math.abs(obj1.x - obj2.x) <= radiusSum && Math.abs(obj1.y - obj2.y) <= radiusSum){
+					const D = dist(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
+					if (D - radiusSum <= 0){
+						collidedPairs.push([obj1Id, obj2Id]);
+					}
+				}
+			}
+		}
+		return collidedPairs;
+	}
+
+	pullOutFromEachOther(){
+		const objArr = this.scene.objArr;
+		if (ui.collisionMode.state == 1 && ui.interactMode.state == 0){
+			for (let i = 1; i--;){
+				const collidedPairs = this.collisionCeilAlgorithm();
+				for (let collidedPair of collidedPairs){
+					const [object1Id, object2Id] = collidedPair;
+					const obj1 = objArr[object1Id];
+					const obj2 = objArr[object2Id];
+
+					if (obj2.lock === true && obj1.lock === true) continue;
+
+					// Collision
+					const radiusSum = obj1.r + obj2.r;
+
+					if (Math.abs(obj1.x - obj2.x) <= radiusSum && Math.abs(obj1.y - obj2.y) <= radiusSum){
+						const D = dist(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
+						if (D - radiusSum <= 0){
+							let sin, cos;
+							if (D > 0){ // Angle between objects
+								cos = (obj2.x - obj1.x)/D;
+								sin = (obj2.y - obj1.y)/D;
+							} else { // Random angle
+								const randAngleRadians = Math.random() * Math.PI * 2;
+								cos = Math.cos(randAngleRadians);
+								sin = Math.sin(randAngleRadians);
+							}
+							// Colliding
+							const mS = obj1.m + obj2.m; // Both objects mass sum
+							const rD = radiusSum - D; // Total move
+							const objAMov = obj1.lock ? 0 : obj2.lock ? rD : rD * (obj1.m / mS); // Object A move
+							const objBMov = obj2.lock ? 0 : rD - objAMov; // Object B move
+							obj1.x -= objAMov * cos; obj1.y -= objAMov * sin;
+							obj2.x += objBMov * cos; obj2.y += objBMov * sin;
+						}
+					}	
+				}
 			}
 		}
 	}
-};
-// Collision
-function gpuCollision(objAPos, objAVel, objAMass, objALock, objBPos, objBVel, objBMass, objBLock, objAId, objBId, D, collisionType, timeSpeed, interactMode){
-	let objNewPosVel = [objAPos[0], objAPos[1], objAVel[0], objAVel[1]];
-	// if (collisionType === 0){ // Collision type: merge
-	// 	return [0.0, 0.0, 0.0, 0.0];
-	// 	if (interactMode === '0'){
-	// 		if (objAMass > objBMass || (objAMass === objBMass && objAId > objBId)){ // If objA mass bigger than objB mass or id is bigger
-	// 			return true;
-	// 		}
-	// 	} else if (interactMode === '1') {
-	// 		collidedObjectsIdList.push([objBId, objAId]);
-	// 	}
-	// } else
-	if (collisionType === 1){ // Collision type: repulsion
-		// var v1 = gipot(obj.vx, obj.vy); // Scallar velocity
-		// var v2 = gipot(obj2.vx, obj2.vy); // Scallar velocity
-		// var vcos1 = v1 == 0?0:obj.vx/v1;// cos vx 1
-		// var vsin1 = v1 == 0?0:obj.vy/v1;// sin vy 1
-		// var vcos2 = v2 == 0?0:obj2.vx/v2;// cos vx 2
-		// var vsin2 = v2 == 0?0:obj2.vy/v2;// sin vy 2
-		// var ag1 = Math.atan2(vsin1, vcos1);
-		// var ag2 = Math.atan2(vsin2, vcos2);
 
-		// var cos = (obj2.x - obj.x)/R;
-		// var sin = (obj2.y - obj.y)/R;
-		// var fi = Math.atan2(sin, cos);
+	collisionHandler(collisionType){
+		const objArr = this.scene.objArr;
+		const objectsToDelete = [];
+		if (ui.interactMode.state != '2'){
+			const collidedPairs = this.collisionCeilAlgorithm();
 
-		// var m1 = obj.m;
-		// var m2 = obj2.m;
-
-		// if (!obj.lck && switcher.Interact != 1){
-		// 	if (!obj2.lck){
-		// 		ob_arr[obj2_name].vx = (( v2*Math.cos(ag2 - fi)*(m2-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1+m2) ) * Math.cos(fi) + v2*Math.sin(ag2 - fi)*Math.cos(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
-		// 		ob_arr[obj2_name].vy = (( v2*Math.cos(ag2 - fi)*(m2-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1+m2) ) * Math.sin(fi) + v2*Math.sin(ag2 - fi)*Math.sin(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
-		// 	}
-		// } else {
-		// 	ob_arr[obj2_name].vx = (( v2*Math.cos(ag2 - fi)*(-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1) ) * Math.cos(fi) + v2*Math.sin(ag2 - fi)*Math.cos(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
-		// 	ob_arr[obj2_name].vy = (( v2*Math.cos(ag2 - fi)*(-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1) ) * Math.sin(fi) + v2*Math.sin(ag2 - fi)*Math.sin(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
-		// }
-		// return 'repulsion';
-
-		let v1 = gipot(objAVel[0], objAVel[1]); // Scallar velocity
-		let v2 = gipot(objBVel[0], objBVel[1]); // Scallar velocity
-		let vcos1 = 0;//v1 === 0 ? 0 : objAVel[0]/v1; // cos vx 1
-		let vsin1 = 0;//v1 === 0 ? 0 : objAVel[1]/v1; // sin vy 1
-		let vcos2 = 0;//v2 === 0 ? 0 : objBVel[0]/v2; // cos vx 2
-		let vsin2 = 0;//v2 === 0 ? 0 : objBVel[1]/v2; // sin vy 2
-		if (v1 !== 0){
-			vcos1 = objAVel[0]/v1;
-			vsin1 = objAVel[1]/v1;
+			for (let collidedPairId = collidedPairs.length; collidedPairId--;){
+				const collidedPair = collidedPairs[collidedPairId];
+				objectsToDelete.push(...this.collision(collisionType, ...collidedPair));
+			}
+			for (let objId = objArr.length; objId--;){
+				let objA = objArr[objId];
+				if (objA.collided){
+					if (objA.lock){ // If object locked
+						objA.vx = 0;
+						objA.vy = 0;
+					} else {// If object not locked
+						objA.x += objA.vx*ui.timeSpeed.state;
+						objA.y += objA.vy*ui.timeSpeed.state;
+					}
+					delete objA.collided;			
+				}
+			}
 		}
-		if (v2 !== 0){
-			vcos2 = objBVel[0]/v2;
-			vsin2 = objBVel[1]/v2;
-		}
-		let ag1 = Math.atan(vsin1, vcos1);
-		let ag2 = Math.atan(vsin2, vcos2);
-
-		let cos = (objBPos[0] - objAPos[0])/D;
-		let sin = (objBPos[1] - objAPos[1])/D;
-		let fi = Math.atan(sin, cos);
-
-		let m1 = objAMass;
-		let m2 = objBMass;
-		// Object A new velocity
-		if (objALock === 0){
-			if (objBLock === 1) { m1 = 0; }
-			objNewPosVel[2] = (( v1*Math.cos(ag1 - fi)*(m1-m2) + 2*m2*v2*Math.cos(ag2 - fi) ) / (m2+m1) ) * Math.cos(fi) + v1*Math.sin(ag1 - fi)*Math.cos(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
-			objNewPosVel[3] = (( v1*Math.cos(ag1 - fi)*(m1-m2) + 2*m2*v2*Math.cos(ag2 - fi) ) / (m2+m1) ) * Math.sin(fi) + v1*Math.sin(ag1 - fi)*Math.sin(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
-		}
-		const vel2 = [0.0, 0.0];
-		// Object B new velocity
-		if (objBLock === 0){
-			if (objALock === 1) { m2 = 0; }
-			vel2[0] = (( v2*Math.cos(ag2 - fi)*(m2-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1+m2) ) * Math.cos(fi) + v2*Math.sin(ag2 - fi)*Math.cos(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
-			vel2[1] = (( v2*Math.cos(ag2 - fi)*(m2-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1+m2) ) * Math.sin(fi) + v2*Math.sin(ag2 - fi)*Math.sin(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
-		}
-
-		const objARadius = Math.sqrt(Math.abs(objAMass)); // Object A radius
-		const objBRadius = objAMass === objBMass ? objARadius : Math.sqrt(Math.abs(objBMass)); // Object B radius
-		const rS = objARadius + objBRadius; // Both objects radiuses sum
-		let newD = dist(objAPos[0] + objNewPosVel[2]*timeSpeed, objAPos[1] + objNewPosVel[3]*timeSpeed, objBPos[0] + vel2[0]*timeSpeed, objBPos[1] + vel2[1]*timeSpeed); // The distance between objects with new position
-		if (newD - rS <= 0){
-			const mS = objAMass + objBMass; // Both objects mass sum
-			const rD = rS - D; // Total move
-			const objAMov = objALock === 1 ? 0 : rD * (objBMass / mS); // Object A move
-			// const objBMov = objBLock === 1 ? 0 : rD - objAMov; // Object B move
-			objNewPosVel[0] -= objAMov * cos; objNewPosVel[1] -= objAMov * sin;
-			//objB.x -= objBMov * cos; objB.y -= objBMov * sin;
-		}
-		// return objNewPosVel;
+		return objectsToDelete;
 	}
-	return objNewPosVel;
-}
-//Функции притяжения
-function gravity_func(sin, cos, D, gravitMode, mass1, mass2, timeSpeed, g){
-	let kff = 0.0, vx = 0.0, vy = 0.0;
-	//Обратно-пропорционально квадрату расстояния
-	if (gravitMode === 1){  // The gravitMode variable must be a number
-		kff = g * timeSpeed * 5;
-		vx = kff*(cos/(D*D));
-		vy = kff*(sin/(D*D));
-	} else
-	//Обранто-пропорционально кубу расстояния
-	if (gravitMode === 0){
-		kff = g * timeSpeed * 500;
-		vx = kff*(cos/(D*D*D));
-		vy = kff*(sin/(D*D*D));
-	} else
-	//Обранто-пропорционально расстоянию
-	if (gravitMode === 2){
-		kff = g * timeSpeed * 0.05;
-		vx = kff*(cos/D);
-		vy = kff*(sin/D);
-	} else
-	//Постоянное притяжение
-	if (gravitMode === 3){
-		kff = g * timeSpeed * 0.0005;
-		vx = kff*(cos);
-		vy = kff*(sin);
-	} else
-	//Пропорционально расстоянию
-	if (gravitMode === 4){
-		kff = g * timeSpeed * 0.000005;
-		vx = kff*(cos*D);
-		vy = kff*(sin*D);
-	}
-	//Отправить вектор
-	return [vx*mass1, vy*mass1, vx*mass2, vy*mass2];
-}
 
-function dist(x1, y1, x2, y2) { 
-	return Math.sqrt((x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2));
+	collision(collisionType, obj1Id, obj2Id){
+		const objArr = this.scene.objArr;
+		let [objA, objB] = [ objArr[obj1Id], objArr[obj2Id] ];
+		let deleteObjectList = [];
+
+		if (collisionType === 0){ // Merge
+			if (objB.m + objA.m === 0){ // Anigilate
+				deleteObjectList.push(obj1Id, obj2Id);
+				if ( [obj1Id, obj2Id].includes(+this.camera.Target) && objArr === this.objArr ) this.camera.setTarget();
+				return deleteObjectList;
+			}
+
+			let mixedColor = this.scene.mixColors(objA.color, objB.color, objA.m, objB.m);
+
+			let obj = objB, delObj = objA;
+			let objToDelId = obj1Id;
+			let alivedObjId = obj2Id;
+
+			// Swap objects if
+			if ((delObj.m > obj.m && objA.lock === objB.lock) || (objA.lock !== objB.lock && objA.lock)) {
+				obj = objA; delObj = objB;
+				objToDelId = obj2Id;
+				alivedObjId = obj1Id;
+			}
+			// Center of mass point
+			const movKff = obj.lock !== delObj.lock ? 0 : delObj.m / (objA.m + objB.m);
+			obj.x += (delObj.x - obj.x) * movKff;
+			obj.y += (delObj.y - obj.y) * movKff;
+			// New velocity
+			obj.vx = (objA.m*objA.vx+objB.m*objB.vx)/(objA.m+objB.m);// Формула абсолютно-неупругого столкновения
+			obj.vy = (objA.m*objA.vy+objB.m*objB.vy)/(objA.m+objB.m);// Формула абсолютно-неупругого столкновения
+
+			obj.m = objA.m + objB.m; // Set new mass to obj
+			obj.r = Math.sqrt(Math.abs(obj.m));
+			obj.color = mixedColor;
+
+			// Change camera target
+			if (objArr === scene.objArr && objToDelId === camera.Target) camera.setTarget(alivedObjId);
+
+			// Add collided object to deleteObjectList
+			deleteObjectList.push(objToDelId);
+		} else
+		if (collisionType === 1){ // Repulsion
+			let D = dist(objA.x, objA.y, objB.x, objB.y); // The distance between objects
+			let sin, cos;
+			if (D > 0){ // Angle between objects
+				cos = (objB.x - objA.x)/D;
+				sin = (objB.y - objA.y)/D;
+			} else { // Random angle
+				const randAngleRadians = Math.random() * Math.PI * 2;
+				cos = Math.cos(randAngleRadians);
+				sin = Math.sin(randAngleRadians);
+			}
+			const radiusSum = objA.r + objB.r;
+
+			let v1 = this.gipot(objA.vx, objA.vy); // Scallar velocity
+			let v2 = this.gipot(objB.vx, objB.vy); // Scallar velocity
+			let vcos1 = v1 == 0?0:objA.vx/v1; // cos vx 1
+			let vsin1 = v1 == 0?0:objA.vy/v1; // sin vy 1
+			let vcos2 = v2 == 0?0:objB.vx/v2; // cos vx 2
+			let vsin2 = v2 == 0?0:objB.vy/v2; // sin vy 2
+			let ag1 = Math.atan2(vsin1, vcos1);
+			let ag2 = Math.atan2(vsin2, vcos2);
+
+			let fi = Math.atan2(sin, cos);
+			// Object A new velocity
+			if (!objA.lock){
+				const m1 = objB.lock ? 0 : objA.m;
+				const m2 = objB.m;
+				objA.vx = (( v1*Math.cos(ag1 - fi)*(m1-m2) + 2*m2*v2*Math.cos(ag2 - fi) ) / (m2+m1) ) * Math.cos(fi) + v1*Math.sin(ag1 - fi)*Math.cos(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
+				objA.vy = (( v1*Math.cos(ag1 - fi)*(m1-m2) + 2*m2*v2*Math.cos(ag2 - fi) ) / (m2+m1) ) * Math.sin(fi) + v1*Math.sin(ag1 - fi)*Math.sin(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
+			}
+			// Object B new velocity
+			if (!objB.lock){
+				const m1 = objA.m;
+				const m2 = objA.lock ? 0 : objB.m;
+				objB.vx = (( v2*Math.cos(ag2 - fi)*(m2-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1+m2) ) * Math.cos(fi) + v2*Math.sin(ag2 - fi)*Math.cos(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
+				objB.vy = (( v2*Math.cos(ag2 - fi)*(m2-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1+m2) ) * Math.sin(fi) + v2*Math.sin(ag2 - fi)*Math.sin(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
+			}
+
+			objA.collided = objB.collided = true;
+
+		} else if (collisionType === 2){ // None
+
+		}
+		return deleteObjectList;
+	}
+	// Add objects vectors to objects
+	addVelocity(timeSpeed){
+		const objArr = this.scene.objArr;
+		// Add the vectors
+		for (let objId = objArr.length; objId--;){
+			let object = objArr[objId];
+			// let can = this.activCam.ctx3;
+			// can.beginPath();
+			// can.fillStyle = object.color;
+			// can.arc(...this.activCam.crd2(object.x, object.y), 2, 0, 7);
+			// can.fill();	
+			if (mov_obj !== objId){
+				// Add vectors
+				if (object.lock){ // If object locked
+					object.vx = 0;
+					object.vy = 0;
+				} else {// If object not locked
+					object.x += object.vx*timeSpeed;
+					object.y += object.vy*timeSpeed;
+					// Allow frame render if object moves
+					if (object.vx || object.vy) renderer.allowFrameRender = true;
+				}
+			} else {
+				object.vx = object.vy = 0;
+			}
+		}
+	}
+	// Pythagorean theorem
+	gipot(a,b){return Math.sqrt(a*a + b*b) }
 }

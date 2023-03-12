@@ -28,9 +28,7 @@ export default class Camera{
 		this.#clrTmt = setTimeout(()=>{ this.#clrDelay = false }, this.#clrDTim);
 	}
 
-	constructor(scene){
-		this.scene = scene;
-
+	constructor(){
 		Camera.cameraId ++;
 	}
 
@@ -70,28 +68,23 @@ export default class Camera{
 		}
 	}
 
-	zoomTo(val){ // Value 2 is 2x zoom. Value -2 is 0.5x zoom. Value 0.5 is 0.5x zoom.
-		const dir = val > 0 ? 1 : -1; // Zoom direction. 1 zoom in, -1 zoom out.
-		let vl = Math.abs(val);
-		if (dir === 1){
-			if (this.#zoom < 10000) {
-				this.#zoom *= vl; // Zoom in
-			} else {
-				vl = 1;
-			}
-		} else {
-			if (this.#zoom > 1.0e-12) {
-				this.#zoom /= vl; // Zoom out
-			} else {
-				vl = 1;
-			}
+	zoomTo(zmFactor){ // Value 2 is 2x zoom. Value -2 is 0.5x zoom. Value 0.5 is 0.5x zoom.
+		const dir = zmFactor > 0 ? 1 : -1; // Zoom direction. 1 zoom in, -1 zoom out.
+		let fac = zmFactor > 0 ? zmFactor : -1 / zmFactor; // Calculate zoom factor
+		if (zmFactor*zmFactor == 1) return; // If zoom factor == 1
+		if (dir === 1){ // Zoom in
+			if (this.#zoom < 10000) { // Max zoom value
+				this.#zoom *= fac; // Set new zoom
+			} else { return }
+		} else { // Zoom out
+			if (this.#zoom > 1.0e-12) { // Min zoom value
+				this.#zoom *= fac; // Set new zoom
+			} else { return }
 		}
-		if (vl !== 1){ // If zoom value != 1
-			this.cameraChangedState();
-			if (!ui.zoomToScreenCenter.state){
-				this.x += dir * (this.screenPix(mouse.x, 'x')-this.x)/(1/(vl-1));
-				this.y += dir * (this.screenPix(mouse.y, 'y')-this.y)/(1/(vl-1));
-			}
+		this.cameraChangedState();
+		if (!ui.zoomToScreenCenter.state){
+			this.x += (this.screenPix(mouse.x, 'x')-this.x)/(fac/(fac-1));
+			this.y += (this.screenPix(mouse.y, 'y')-this.y)/(fac/(fac-1));
 		}
 	}
 
@@ -115,7 +108,7 @@ export default class Camera{
 	}
 
 	setTarget(objectId){
-		if (!this.scene.objArr[objectId]) objectId = undefined; // If there is no object with given id
+		if (!scene.objArr[objectId]) objectId = undefined; // If there is no object with given id
 		this.Target = objectId;
 		if (objectId !== undefined){
 			this.switchTarget = true;
