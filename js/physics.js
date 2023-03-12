@@ -108,14 +108,11 @@ export default class Physics {
 	// Runs after finish computing physics
 	afterPhysics = (interactMode, collisionType, timeSpeed) => {
 		// After physics
-		const obj = this.scene.objArr[this.scene.objArr.length-1]
-		const pos = [obj.x, obj.y];
 		// Add velocities
 		this.addVelocity(timeSpeed);
 
 		// Bounce collision
 		ui.collisionMode.state == '1' && this.bounceCollision();
-		console.log(Math.hypot(obj.x - pos[0], obj.y - pos[1]), Math.hypot(obj.vx, obj.vy));
 	}
 
 	makeObjPosMatrix(objArr = this.scene.objArr){
