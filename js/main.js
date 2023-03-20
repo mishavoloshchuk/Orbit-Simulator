@@ -112,7 +112,7 @@ window.onload = function(){
 	var zm_cff = null;
 
 	//Debug
-	this.simulationSpeed = 1;
+	this.simulationSpeed = 2;
 	this.maxFPS = false;
 	this.nextFrame = false;
 
@@ -136,7 +136,7 @@ window.onload = function(){
 	this.renderer = new Renderer({camera: camera, scene: scene});
 
 	// Init trajectory preview
-	this.trajectoryPreview = new TrajectoryPreview({scene: scene, renderer: renderer, camera: camera});
+	this.trajectoryPreview = new TrajectoryPreview({scene: scene, renderer: renderer, physics: physics, camera: camera});
 
 	this.pauseState = false; // Global pause state
 
@@ -167,15 +167,64 @@ window.onload = function(){
 		renderer.allowFrameRender = true;
 	}
 
+	class UserMassInput extends UserInput {
+		static update = function (){
+			document.dispatchEvent(UserMassInput.inputsUpdate);
+		}
+		static inputsUpdate = new Event('inputsUpdate');
+		constructor ({id, stateSaving, initState, negativeMassCheckboxParams, onChange, onInput, onUpdate}){
+			super({type: 'manualInput', id: id, stateSaving: stateSaving, initState: Math.round(getRandomArbitrary(0.5, 100)*10)/10, 
+				callback: (state)=>{
+					const ths = document.getElementById(id);
+					ths.getElementsByClassName('title')[0].innerHTML = Math.round(state*1000)/1000;
+				}
+			});
+			this.elem = document.getElementById(id); // Option item DOM element
+			// Negative mass checkbox
+			this.negativeMassCheckbox = new UserInput({
+				type: 'checkbox', 
+				stateSaving: true, 
+				callback: (state) => {this.state = state ? -Math.abs(this.state) : Math.abs(this.state)}, 
+				...negativeMassCheckboxParams
+			});
+			this.valueElem = this.elem.getElementsByClassName('mass_input')[0]; // Input range element
+			// On Input
+			this.valueElem.addEventListener('input', (e)=>{
+				this.event = true;
+				this.state = (Math.pow(Math.pow(this.valueElem.value, 2) / 2 * ( (innerWidth + innerHeight) / 2 / camera.animZoom ), 3)) * (this.negativeMassCheckbox.state ? -1 : 1);
+				let menuContainer = document.getElementById('options_menu_container');
+				if (!menuContainer.className.includes(" zero_opacity")){
+					this.valueElem.closest('.option_item').className += " nozeroopacity";
+					menuContainer.className += " zero_opacity";
+				}
+			});
+			// On Change
+			const onchanged = () => {
+				this.event = false;
+				let menuContainer = document.getElementById('options_menu_container');
+				menuContainer.className = menuContainer.className.replace(" zero_opacity", "");
+				this.valueElem.closest('.option_item').className = this.valueElem.closest('.option_item').className.replace(" nozeroopacity", "");
+				onChange && onChange(); // Callback
+			}
+			document.addEventListener('mouseup', onchanged);
+			document.addEventListener('touchend', onchanged);
+			// On Update
+			document.addEventListener('inputsUpdate', () => {
+				if (!this.event){
+					this.valueElem.value = Math.pow(scene.getRadiusFromMass(this.state) * camera.animZoom * 2 / ((innerHeight + innerWidth) / 2), 1/2);
+				}
+			})
+		}
+	}
+
 	// Init user interface
 	ui.init = function (){
 		// Create object menu ================================================ 
 		this.newObjColor = new UserInput({type: 'color', id: 'newObjeColorSelect', stateSaving: true, initState: scene.randomColor()}); // Menu color select input
 		this.newObjRandColor = new UserInput({type: 'checkbox', id: 'randColorCheck', stateSaving: true, initState: true}); // Menu new object random color input
-		this.newObjMass = new UserInput({type: 'manualInput', id: 'new_object_mass_input', stateSaving: true, initState: Math.round(getRandomArbitrary(0.5, 100)*10)/10, callback: (state)=>{
+		this.newObjMass = new UserMassInput({id: 'create_mass', stateSaving: true, initState: Math.round(getRandomArbitrary(0.5, 100)*10)/10, negativeMassCheckboxParams: {id: "new_obj_negative_mass"}, callback: (state)=>{
 			document.getElementById('newObjMassSpan').innerHTML = Math.round(state*1000)/1000;
 		}}); // Menu new object's mass input
-		this.newObjNegativeMass = new UserInput({type: 'checkbox', id: 'new_obj_negative_mass', stateSaving: true, callback: (state) => {this.newObjMass.state = state ? -Math.abs(this.newObjMass.state) : Math.abs(this.newObjMass.state)} }); // Menu new object negative mass
 		this.newObjLock = new UserInput({type: 'checkbox', id: 'objLckCeck', initState: false}); // Menu lock created object input
 		//
 		this.newObjCircularOrbit = new UserInput({type: 'checkbox', id: 'circleOrbitCheck', stateSaving: true, initState: true}); // Menu circle orbit on click input
@@ -199,18 +248,28 @@ window.onload = function(){
 		this.deletingMode = new UserInput({type: 'radio', id: 'dellMethodRadio'}); // Deleting method
 
 		// Edit object menu ===================================================
-		this.editMass = new UserInput({type: 'manualInput', id: 'mass_edit', initState: 1000, callback: (state) => {
+		this.editMass = new UserMassInput({id: 'mass_edit', stateSaving: false, initState: 1000, callback: (state) => {
 				document.getElementById('editObjMassSpan').innerHTML = Math.round(state*1000)/1000;
+			},
+			negativeMassCheckboxParams: {
+				id: 'edit_obj_negative_mass',
+				stateSaving: false,
+				callback: (state) => {
+					if (this.editMass){
+						this.editMass.state = state ? -Math.abs(this.editMass.state) : Math.abs(this.editMass.state);
+						allowRender();
+						addFrameBeginTask(()=>{
+							if (scene.objArr[swch.edit_obj]) scene.objArr[swch.edit_obj].m = this.editMass.state;
+						});
+					}
+				}
+			},
+			onChange: ()=>{
+				addFrameBeginTask(() => {
+					if (scene.objArr[swch.edit_obj]){ scene.objArr[swch.edit_obj].m = ui.editMass.state; allowRender();}
+				});
 			}
 		});
-		this.editObjNegativeMass = new UserInput({type: 'checkbox', id: 'edit_obj_negative_mass', callback: (state) => {
-			this.editMass.state = state ? -Math.abs(this.editMass.state) : Math.abs(this.editMass.state);
-			allowRender();
-			addFrameBeginTask(()=>{
-				if (scene.objArr[swch.edit_obj]) scene.objArr[swch.edit_obj].m = this.editMass.state;
-			});
-		} }); // Menu edit object negative mass
-
 		this.editColor = new UserInput({type: 'color', id: 'col_edit', eventName: 'input', callback: (state) => addFrameBeginTask(() => {
 			if (scene.objArr[swch.edit_obj]){ scene.objArr[swch.edit_obj].color = state; allowRender();}
 		}), });
@@ -220,7 +279,12 @@ window.onload = function(){
 		// Trace settings =====================================================
 		this.tracesMode = new UserInput({type: 'radio', id: 'traj_radio_buttons', stateSaving: true, initState: 1, callback: (val, elem) => {
 			for (let element of traj_menu.getElementsByClassName('additionalOption')){
-				if ( element.id.includes(val.toString()) && !element.hasAttribute('disabled')) { element.style.display = 'inline' } else { element.style.display = 'none' } // Show additional options by radio value
+				// Show additional options by radio value
+				if ( element.id.includes(val.toString()) && !element.hasAttribute('disabled')) { 
+					element.style.display = 'inline';
+				} else {
+					element.style.display = 'none';
+					}
 			}
 			if (elem.prevState != val){ // If state changed
 				addFrameBeginTask(()=>{
@@ -232,6 +296,7 @@ window.onload = function(){
 
 		} });
 		// Mode 1
+		this.traceMode1Length = new UserInput({type: 'range', id: 'trace1Lnth', stateSaving: true, eventName: 'input', callback: (val, ths) => {ths.value = Math.pow(1 - val, 2)} });
 		this.traceMode1Opacity = new UserInput({type: 'range', id: 'trace_opacity', stateSaving: true, eventName: 'input', callback: (val)=>{renderer.canv3.style.opacity = val; allowRender();} });
 		this.traceMode1Blur = new UserInput({type: 'range', id: 'trace_blur', stateSaving: true, eventName: 'input', callback: (val)=>{renderer.canv3.style.filter = `blur(${val*val}px)`; allowRender();} });
 		// Mode 2
@@ -277,22 +342,22 @@ window.onload = function(){
 			if (state) {
 				renderer.ctx3.clearRect(0,0, renderer.resolutionX, renderer.resolutionY);
 				renderer.canv3.style.display = background_image.style.display = 'none';
-				additionalTrajectoryOptions1.setAttribute('disabled', '');
+				additionalTrajectoryOptionsExtended1.style.display = 'none';
 				renderer.allowFrameRender = true; // Render
-				this.tracesMode.state = this.tracesMode.state; // Refresh trace mode menu
+				this.tracesMode.state = 1; // Refresh trace mode menu
 				view_settings.className += ' disabled'; // Hide view settings
 			} else {
 				renderer.ctx1.clearRect(0,0, renderer.resolutionX, renderer.resolutionY);
 				renderer.canv3.style.display = background_image.style.display = '';
-				additionalTrajectoryOptions1.removeAttribute('disabled');
+				additionalTrajectoryOptionsExtended1.style.display = 'initial';
 				renderer.allowFrameRender = true; // Render
 				this.tracesMode.state = this.tracesMode.state; // Refresh trace mode menu
 				view_settings.className = view_settings.className.replace('disabled', ''); // Hide view settings
 			}
 		}});
 
-		this.timeSpeed = new UserInput({type: 'manualInput', initState: 1, callback: (val, inpVar)=>{
-			document.querySelector('.time_speed h2').innerHTML = 'T - X'+val;
+		this.timeSpeed = new UserInput({type: 'manualInput', initState: 0.5, callback: (val, inpVar)=>{
+			document.querySelector('.time_speed h2').innerHTML = 'T - X' + (val * simulationSpeed);
 			let changedVal = val / inpVar.prevState;
 			inpVar.changed = inpVar.changed !== undefined ? inpVar.changed * changedVal : changedVal;
 			addFrameBeginTask(()=>{ // Frame begin taks
@@ -310,7 +375,7 @@ window.onload = function(){
 	}
 	ui.init();
 
-	scene.addNewObject({x: 0, y: 0, vx: 0, vy: 0, mass: 1000, color: '#ffff00', objLck: true, callback: newObjectCreatedCallback}); // First object init
+	scene.addNewObject({x: 0, y: 0, vx: 0, vy: 0, mass: 19889, color: '#ffff00', objLck: true, callback: newObjectCreatedCallback}); // First object init
 	// pauseState = true;
 	// scene.addNewObject({x: 50, y: 0, vx: 0, vy: 0, mass: 1000, color: '#0000ff88', objLck: true, callback: newObjectCreatedCallback}); // First object init
 	// scene.addNewObject({x: innerWidth/2 + 30, y: innerHeight/2, vx: 0, vy: 0, mass: 1000, color: '#00ff0088', callback: newObjectCreatedCallback}); // First object init
@@ -337,55 +402,9 @@ window.onload = function(){
 		camera.centerX = innerWidth / 2;
 		camera.centerY = innerHeight / 2;
 		setFullScreenIcon(); // Check full screen mode and set the button icon
-		setMassRange();
+		UserMassInput.update();
+		scene.resetPrevScreenPositions(); // Reset objects prev screen positions 'cause they're not relevant
 	}
-
-	// Mass range inputs =======
-	setMassRange();
-	function setMassRange() {
-		let element = document.querySelector('#create_mass');
-		if (!ui.newObjMass.event){
-			element.value = Math.pow(Math.abs(ui.newObjMass.state) / Math.pow((innerWidth + innerHeight)/4/camera.animZoom, 2), 1/3);
-		}
-		element = document.querySelector('#mass_edit');
-		if (!ui.editMass.event){
-			element.value = Math.pow(Math.abs(ui.editMass.state) / Math.pow((innerWidth + innerHeight)/4/camera.animZoom, 2), 1/3);
-		}
-	}
-	// New object mass edit input events
-	document.getElementById('create_mass').addEventListener('input', (e)=>{
-		ui.newObjMass.event = true;
-		ui.newObjMass.state = ( Math.pow(e.target.value, 3) * Math.pow((innerWidth + innerHeight)/4/camera.animZoom, 2) ) * (ui.newObjNegativeMass.state ? -1 : 1);
-		let menuContainer = document.getElementById('options_menu_container');
-		if (!menuContainer.className.includes(" zero_opacity")){
-			e.target.closest('.option_item').className += " nozeroopacity";
-			menuContainer.className += " zero_opacity";
-		}
-	});
-	document.getElementById('create_mass').addEventListener('change', (e)=>{
-		ui.newObjMass.event = false;
-		let menuContainer = document.getElementById('options_menu_container');
-		menuContainer.className = menuContainer.className.replace(" zero_opacity", "");
-		e.target.closest('.option_item').className = e.target.closest('.option_item').className.replace(" nozeroopacity", "");
-	});
-	document.querySelector('#mass_edit').addEventListener('input', (e)=>{
-		ui.editMass.event = true;
-		ui.editMass.state = ( Math.pow(e.target.value, 3) * Math.pow((innerWidth + innerHeight)/4/camera.animZoom, 2) ) * (ui.editObjNegativeMass.state ? -1 : 1);
-		let menuContainer = document.getElementById('options_menu_container');
-		if (!menuContainer.className.includes(" zero_opacity")){
-			e.target.closest('.option_item').className += " nozeroopacity";
-			menuContainer.className += " zero_opacity";
-		}
-	});
-	document.querySelector('#mass_edit').addEventListener('change', (e)=>{
-		ui.editMass.event = false;
-		let menuContainer = document.getElementById('options_menu_container');
-		menuContainer.className = menuContainer.className.replace(" zero_opacity", "");
-		e.target.closest('.option_item').className = e.target.closest('.option_item').className.replace(" nozeroopacity", "");
-		addFrameBeginTask(() => {
-			if (scene.objArr[swch.edit_obj]){ scene.objArr[swch.edit_obj].m = ui.editMass.state; allowRender();}
-		});
-	});
 	// Touch events ======================================
 	// Touch START
 	let touchStartEvent = false;
@@ -565,7 +584,7 @@ window.onload = function(){
 				if (scene.objArr[swch.edit_obj]){
 					ui.editColor.state = scene.objArr[swch.edit_obj].color;
 					ui.editMass.state = scene.objArr[swch.edit_obj].m;
-					ui.editObjNegativeMass.state = scene.objArr[swch.edit_obj].m < 0;
+					ui.editMass.negativeMassCheckbox.state = scene.objArr[swch.edit_obj].m < 0;
 					document.getElementById('lck_edit_chbox').checked = scene.objArr[swch.edit_obj].lock;
 				}
 			}
@@ -741,8 +760,8 @@ window.onload = function(){
 			// Set objects radiuses
 			let maxDiameter = 0;
 			for (let obj of scene.objArr){
-				obj.r = Math.sqrt(Math.abs(obj.m));
-				maxDiameter = Math.max(Math.abs(maxDiameter), Math.abs(obj.r) * 2);
+				obj.r = scene.getRadiusFromMass(obj.m);
+				maxDiameter = Math.max(maxDiameter, Math.abs(obj.r) * 2);
 			}
 			// Set collision ceil size
 			physics.collisionCeilSize = maxDiameter;
@@ -763,13 +782,13 @@ window.onload = function(){
 		// Frame rendering...
 		if (renderer.allowFrameRender){
 			renderer.renderObjects();
-			setMassRange();
+			UserMassInput.update();
 			renderStopLatency = 125; // Count of frames to render after render is disabled
 		} else {
 			// If traces mode is 1 render ${renderStopLatency} frames after render disabled
 			if (renderStopLatency && ui.tracesMode.state == 1 && !pauseState){
 				renderStopLatency --;
-				setMassRange();
+				UserMassInput.update();
 				renderer.renderObjects();
 			}
 		}
@@ -812,10 +831,10 @@ window.onload = function(){
 			)
 			){
 			if (isMinMouseMove){
-				renderer.visual_trajectory();
+				renderer.visualizeLaunchPower();
 				if (ui.showNewObjTrajectory.state){
 					// Show trajectory preview
-					trajectoryPreview.trajectoryPreview({
+					trajectoryPreview.process({
 						trajLen: ui.newObjTrajLength.state, 
 						accuracity: ui.newObjTrajAccuracity.state
 					});
@@ -845,7 +864,10 @@ window.onload = function(){
 	this.addObjects = function(count = 100){
 		for (let i = 0; i < count; i++){
 		  	addFrameBeginTask(()=>{ 
-				scene.addNewObject(newObjParams);
+				scene.addNewObject({...newObjParams,
+					screenX: Math.random() * innerWidth,
+					screenY: Math.random() * innerHeight
+				});
 			});
 		}
 	}
@@ -856,7 +878,7 @@ window.onload = function(){
 		if (scene.objArr[targ_obj]){
 			let obCoords = [scene.objArr[targ_obj].x, scene.objArr[targ_obj].y];
 			let size = dist(obj_cord[0], obj_cord[1], ...renderer.crd2(obCoords[0], obCoords[1]));
-			if (size > camera.getScreenRad(scene.objArr[targ_obj].m)){
+			if (size > renderer.getScreenRad(scene.objArr[targ_obj].m)){
 				renderer.ctx2.strokeStyle = col;
 				renderer.ctx2.lineWidth = 2;
 				// Line
@@ -935,7 +957,7 @@ window.onload = function(){
 					let dCanv = ui.maxPerformance.state ? renderer.ctx1 : renderer.ctx3;
 					dCanv.strokeStyle = scene.objArr[mov_obj].color;
 					dCanv.fillStyle = scene.objArr[mov_obj].color;	
-					dCanv.lineWidth = camera.getScreenRad(scene.objArr[mov_obj].m)*2;
+					dCanv.lineWidth = renderer.getScreenRad(scene.objArr[mov_obj].m)*2;
 					// Line
 					dCanv.beginPath();
 					dCanv.lineCap = 'round';
@@ -1143,6 +1165,9 @@ window.onload = function(){
 					let objArrWrite = JSON.parse(JSON.stringify(scene.objArr));
 					for(let i in objArrWrite){
 						objArrWrite[i].trace = [];
+						delete objArrWrite[i].prevScreenX;
+						delete objArrWrite[i].prevScreenY;
+						delete objArrWrite[i].prevScreenR;
 					}
 					let my_data = {
 						objArr: objArrWrite, 

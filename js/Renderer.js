@@ -23,7 +23,7 @@ export default class Renderer {
 	#visualObjectSelectAnimation = 10;
 	#visualObjectSelectAnimDir = 0;
 
-	wipeColor = '#000000';
+	dimmColor = '#000000';
 	constructor({scene, camera}) {
 		// Set scene
 		this.scene = scene;
@@ -57,7 +57,6 @@ export default class Renderer {
 		this.canv3.id = 'layer2_renderer' + this.rendererId;
 		this.canv3.className = 'renderLayer';
 		this.canv3.style.zIndex = -6;
-		this.canv3.style.mixBlendMode = 'screen';
 		this.canv3.style.filter = 'blur(0px)';
 		this.canv3.style.opacity = 0.7;
 		this.canv3.innerHTML = 'Your browser does not support canvas!';
@@ -88,7 +87,7 @@ export default class Renderer {
 
 		return [xpos * this.camera.animZoom + sCtrX - this.camera.ax*(this.camera.animZoom-1), ypos * this.camera.animZoom + sCtrY - this.camera.ay*(this.camera.animZoom-1)];		
 	}
-	//Draw objecs
+	//Draw objects
 	renderObjects(){
 		// console.log('Render objects');
 		let scn = this.scene;
@@ -104,16 +103,29 @@ export default class Renderer {
 		for (let objectId = scn.objArr.length; objectId--;){
 			let obj = scn.objArr[objectId]; // Object to draw
 
-			let drawRadius = Math.sqrt(Math.abs(obj.m))*this.camera.animZoom; // Object draw radius
+			let drawRadius = this.getScreenRad(obj.m) // Object draw radius
 			drawRadius = drawRadius < 0.5 ? 0.5 : drawRadius; // Minimal draw radius
+
+			if (!obj.prevScreenR) {
+				obj.prevScreenR = drawRadius;
+			}
+
+			// Object screen position
+			const [screenX, screenY] = this.crd2(obj.x, obj.y);
+
+			let enoughObjMove = true; // If object screen speed is enough to render or anything else
+			// Set prev screen position if there is no prev screen position
+			if (obj.prevScreenX === undefined || obj.prevScreenY === undefined){
+				[obj.prevScreenX, obj.prevScreenY] = [screenX, screenY];
+			} else {
+				enoughObjMove = dist(screenX, screenY, obj.prevScreenX, obj.prevScreenY) > 0.3 ? true : false;
+			}
 
 			// If object out of screen space
 			let isObjOutOfScreen = false;
 			let isPrevPosObjOutOfScreen = false;
-
-			const screenPos = this.crd2(obj.x, obj.y);
 			const screenPrevPos = this.crd2(obj.x - obj.vx, obj.y - obj.vy);
-			if (screenPos[0] < 0 - drawRadius || screenPos[0] > innerWidth + drawRadius || screenPos[1] < 0 - drawRadius || screenPos[1] > innerHeight + drawRadius){
+			if (screenX < 0 - drawRadius || screenX > innerWidth + drawRadius || screenY < 0 - drawRadius || screenY > innerHeight + drawRadius){
 				isObjOutOfScreen = true; // If out of screen
 			}
 			if (screenPrevPos[0] < 0 - drawRadius || screenPrevPos[0] > innerWidth + drawRadius || screenPrevPos[1] < 0 - drawRadius || screenPrevPos[1] > innerHeight + drawRadius){
@@ -121,45 +133,39 @@ export default class Renderer {
 			}
 
 			const obCol = obj.color; // Object draw color
-			// If object screen speed is enough to render or anyhting else 
-			const enoughObjMove = Math.sqrt(Math.pow(obj.vx - targetVx, 2) + Math.pow(obj.vy - targetVy, 2))*ui.timeSpeed.state*this.camera.animZoom > 0.1 ? true : false;
+
 			// Fix object anti-aliasing when maxPerformance is enabled
-			if (ui.tracesMode.state == 1 && ui.maxPerformance.state){	
-				if (// Smooth object edges if true
-					(!scn.objArr[this.camera.Target] && !enoughObjMove) // If there is no camera target and object locked or
-					|| ( scn.objArr[this.camera.Target] // If there is camera target
-						&& ( // And
-							(scn.objArr[this.camera.Target].lock && !enoughObjMove) // Camera target and object lock
-							|| (!scn.objArr[this.camera.Target].lock && objectId == this.camera.Target) // Or target not locked and object is camera target
-						)
-					)
-				){
-					this.ctx1.save();
-					this.ctx1.beginPath();
-					this.ctx1.fillStyle = '#ffffff';
-					this.ctx1.globalCompositeOperation = 'destination-out';
-					this.ctx1.arc(this.crd(obj.x, 'x'), this.crd(obj.y, 'y'), (drawRadius+0.125), 0, 7);
-					this.ctx1.fill();
-					this.ctx1.restore();
-				}
+			if (ui.tracesMode.state == 1 
+				&& ui.maxPerformance.state 
+				&& !enoughObjMove 
+				&& !isObjOutOfScreen
+			){	
+				this.ctx1.save();
+				this.ctx1.beginPath();
+				this.ctx1.fillStyle = '#FFF';
+				this.ctx1.globalCompositeOperation = 'destination-out';
+				this.ctx1.arc(screenX, screenY, drawRadius + 0.4, 0, 7);
+				this.ctx1.fill();
+				this.ctx1.restore();
 			}
 
 			let traceLength = false;
 			let traceResolution = 1;
+
+			const traceDrawRadius = Math.min(drawRadius, obj.prevScreenR);
+
 			// Traces mode 1 =====
-			if (// Draw line if
-				ui.tracesMode.state == 1 // If traces mode = 1
-				&& (!obj.lock || (scn.objArr[this.camera.Target] && !scn.objArr[this.camera.Target].lock)) // If object not locked or camera target not locked
-				&& this.camera.Target !== objectId // If camera target != current object
-				&& !(isPrevPosObjOutOfScreen && isObjOutOfScreen) // If object (and it's prev position) not out of screen
+			if (ui.tracesMode.state == 1 
+				&& (enoughObjMove || (ui.maxPerformance.state === true && ui.tracesMode.state == 1 && enoughObjMove))
+				&& !(isObjOutOfScreen && isPrevPosObjOutOfScreen)
 			){
 				let canv = ui.maxPerformance.state ? this.ctx1 : this.ctx3;
 				canv.strokeStyle = obCol;
-				canv.lineWidth = drawRadius * 2 - (enoughObjMove ? 0 : (drawRadius * 2 > 1.5) ? 1.5 : 0);
-				canv.lineCap = drawRadius > 1 ? 'round' : 'butt';
+				canv.lineWidth = traceDrawRadius * 2;
+				canv.lineCap = traceDrawRadius > 1 ? 'round' : 'butt';
 				canv.beginPath();
-				canv.moveTo(this.crd(obj.x - obj.vx*ui.timeSpeed.state + targetVx * ui.timeSpeed.state, 'x'), this.crd(obj.y - obj.vy*ui.timeSpeed.state + targetVy * ui.timeSpeed.state, 'y'));
-				canv.lineTo(this.crd(obj.x, 'x'), this.crd(obj.y, 'y'));
+				canv.moveTo(obj.prevScreenX, obj.prevScreenY);
+				canv.lineTo(screenX, screenY);
 				canv.stroke();
 				canv.lineCap = 'butt';
 			} else
@@ -177,7 +183,7 @@ export default class Renderer {
 				if (obj.trace[0]){
 					this.ctx1.lineWidth = drawRadius*2;
 					this.ctx1.beginPath();
-					this.ctx1.moveTo(this.crd(obj.x, 'x')+randX, this.crd(obj.y, 'y')+randY);
+					this.ctx1.moveTo(screenX + randX, screenY + randY);
 					this.ctx1.lineTo(this.crd(obj.trace[0][0], 'x')+prev_randX, this.crd(obj.trace[0][1], 'y')+prev_randY);
 					this.ctx1.stroke();				
 				}
@@ -251,29 +257,26 @@ export default class Renderer {
 				this.ctx1.globalCompositeOperation = 'destination-out';
 				this.ctx1.fillStyle = "#ffffff";
 				this.ctx1.beginPath();
-				this.ctx1.arc(this.crd(obj.x, 'x'), this.crd(obj.y, 'y'), drawRadius+1.5, 0, 7);
+				this.ctx1.arc(screenX, screenY, drawRadius+1.5, 0, 7);
 				this.ctx1.fill();
 				this.ctx1.globalCompositeOperation = 'source-over';
 			}
 			if (!isObjOutOfScreen) {
-				if (
-					!(ui.maxPerformance.state === true && ui.tracesMode.state == 1)
-					|| camera.Target === objectId
-					|| obj.lock
-				){
+				if (!(ui.maxPerformance.state === true && ui.tracesMode.state == 1 && enoughObjMove)){
 					this.ctx1.fillStyle = obCol;
 					this.ctx1.beginPath();
-					this.ctx1.arc(...this.crd2(obj.x, obj.y), drawRadius, 0, 7);
+					this.ctx1.arc(screenX, screenY, drawRadius, 0, 7);
 					this.ctx1.fill();
 				}
+
 				if (obj.m < 0){
 					this.ctx1.strokeStyle = "#000";
 					this.ctx1.lineWidth = drawRadius/10;
 					this.ctx1.beginPath();
-					this.ctx1.arc(this.crd(obj.x, 'x'), this.crd(obj.y, 'y'), drawRadius*0.6, 0, 7);
+					this.ctx1.arc(screenX, screenY, drawRadius*0.6, 0, 7);
 
-					this.ctx1.moveTo(this.crd(obj.x, 'x')-drawRadius*0.4, this.crd(obj.y, 'y'));
-					this.ctx1.lineTo(this.crd(obj.x, 'x')+drawRadius*0.4, this.crd(obj.y, 'y'))
+					this.ctx1.moveTo(screenX-drawRadius*0.4, screenY);
+					this.ctx1.lineTo(screenX+drawRadius*0.4, screenY)
 					this.ctx1.stroke();
 				}
 			}
@@ -284,13 +287,17 @@ export default class Renderer {
 					obj.trace.pop();
 				}
 			}
+			// Set prev screen position if object moved enough
+			if (enoughObjMove) [obj.prevScreenX, obj.prevScreenY] = [screenX, screenY];
+			// Set prev screen radius
+			obj.prevScreenR = drawRadius;
 		}
 		if (!pauseState){
 			this.renderedSceneFrames ++;
 		}
 	}
 
-	visual_trajectory(){
+	visualizeLaunchPower(){
 		this.clearLayer2();
 		let [mcx, mcy] = mouse.ctrlModificatedMousePosition(); // CTRL mouse precision modificator
 
@@ -299,7 +306,7 @@ export default class Renderer {
 		if (['mobile', 'tablet'].includes(getDeviceType()) ){ offsX = -25; offsY = -70; } // If device is mobile or tablet
 		Object.assign(launchPowerLabel.style, {left: (mouse.x+offsX)+'px', top: (mouse.y+offsY)+'px', display: 'block', color: ui.newObjColor.state});
 		launchPowerLabel.innerHTML = Math.round(dist(mouse.leftDownX, mouse.leftDownY, mouse.x, mouse.y) * this.scene.expVal(ui.launchForce.state) * 100)/100;
-		let D = this.camera.getScreenRad(ui.newObjMass.state)*2;
+		let D = this.getScreenRad(ui.newObjMass.state)*2;
 
 		// Gradient
 		let gradient = this.ctx2.createLinearGradient(
@@ -358,7 +365,7 @@ export default class Renderer {
 				this.#visualObjectSelectAnimation -= 0.5;
 			}
 
-			const drawRadius = this.camera.getScreenRad(obj.m); // Object screen draw radius
+			const drawRadius = this.getScreenRad(obj.m); // Object screen draw radius
 
 			// Fill circle
 			if (alpha > 0){
@@ -387,21 +394,21 @@ export default class Renderer {
 	// Visualize new object mass
 	visObjMass(mass, color, posX = innerWidth/2, posY = innerHeight/2){
 		// Fill circle
-		let drawRadius = this.camera.getScreenRad(mass);
+		let drawRadius = this.getScreenRad(mass);
 		this.canv2.visualSelect = true;
 		this.clearLayer2();
 
 		// Darken background
 		this.ctx2.globalAlpha = 0.5;
 		this.ctx2.beginPath();
-		this.ctx2.fillStyle = this.wipeColor;
+		this.ctx2.fillStyle = this.dimmColor;
 		this.ctx2.fillRect(0, 0, this.resolutionX, this.resolutionY);
 
 		// Draw object size
 		this.ctx2.globalAlpha = 0.8;
 		this.ctx2.beginPath();
 		this.ctx2.fillStyle = color;
-		this.ctx2.arc(posX, posY, this.camera.getScreenRad(mass), 0, 7);
+		this.ctx2.arc(posX, posY, this.getScreenRad(mass), 0, 7);
 		this.ctx2.fill();
 
 		this.ctx2.strokeStyle = "#fff";
@@ -427,10 +434,12 @@ export default class Renderer {
 	tracesMode1Wiping(){
 		//console.log('clear layer 1');
 		let canvas = ui.maxPerformance.state ? this.ctx1 : this.ctx3;
-		canvas.globalAlpha = 0.01;
-		canvas.fillStyle = this.wipeColor;
+		canvas.save();
+		canvas.globalAlpha = ui.traceMode1Length.value;
+		canvas.globalCompositeOperation = 'destination-out';
+		canvas.fillStyle = "#FFF";
 		canvas.fillRect(0, 0, this.resolutionX, this.resolutionY);
-		canvas.globalAlpha = 1;
+		canvas.restore();
 	}
 	clearLayer1(col){
 		//console.log('clear layer 1');
@@ -448,7 +457,7 @@ export default class Renderer {
 	}
 	//Draw cross function
 	drawCross(x, y, width = 1, size = 5, color = '#ff0000', canvObj = this.ctx2){
-		canvObj.strokeStyle = this.wipeColor;
+		canvObj.strokeStyle = this.dimmColor;
 		canvObj.lineWidth = width;
 		canvObj.lineCap = 'round';
 		for (let i = 0; i < 2; i++){
@@ -464,4 +473,9 @@ export default class Renderer {
 		canvObj.lineCap = 'butt';
 	}
 
+	// Get object screen radius
+	getScreenRad(mass){
+		let screenRad = this.scene.getRadiusFromMass(mass) * this.camera.animZoom;
+		return screenRad < 0.25 ? 0.25 : screenRad;
+	}
 }

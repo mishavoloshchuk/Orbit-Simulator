@@ -1,19 +1,21 @@
 import Physics from './Physics.js';
 export default class TrajectoryPreview {
-	constructor ({scene, renderer, camera}){
+	constructor ({scene, renderer, camera, physics}){
 		this.scene = scene;
 		this.renderer = renderer;
 		this.camera = camera;
-		this.physics = new Physics();
+		this.physics = physics;
 	}
 
-	trajectoryPreview ({trajLen = 256, accuracity = 1}){
+	process ({trajLen = 256, accuracity = 1}){
 		this.sceneClone = this.physics.scene = this.scene.makeCopy();
-		const calcInfo = this.calculateTrajectories({trajLen: trajLen, accuracity: accuracity});
-		this.renderTrajPreview(calcInfo);
+		this.physics.scene = this.sceneClone; // Set physics scene to clone of given scene
+		const calcInfo = this.calculate({trajLen: trajLen, accuracity: accuracity});
+		this.render(calcInfo);
+		this.physics.scene = this.scene; // Restore physiscs scene
 	}
 
-	renderTrajPreview({tracesArray, deletedObjectsList, distances, minDistance}){
+	render({tracesArray, deletedObjectsList, distances, minDistance}){
 		const ctx2 = this.renderer.ctx2;
 		const newObjId = tracesArray.length - 1; // Created object id
 		const otherObjTraceColor = "#999999"; // The trace color for non new object
@@ -86,14 +88,14 @@ export default class TrajectoryPreview {
 					ctx2.globalAlpha = 0.7;
 					ctx2.fillStyle = ui.newObjColor.state;
 					ctx2.beginPath();
-					let drawRadius = this.camera.getScreenRad(ui.newObjMass.state);
+					let drawRadius = this.renderer.getScreenRad(ui.newObjMass.state);
 					drawRadius = drawRadius < 2 ? 2 : drawRadius;
 					ctx2.arc(this.renderer.crd(dObj.x, 'x'), this.renderer.crd(dObj.y, 'y'), drawRadius, 0, 7);
 					ctx2.fill();
 					// Second object arc
 					ctx2.beginPath();
 					ctx2.fillStyle = this.scene.objArr[dObj.obj2Id].color;
-					drawRadius = this.camera.getScreenRad(this.scene.objArr[dObj.obj2Id].m);
+					drawRadius = this.renderer.getScreenRad(this.scene.objArr[dObj.obj2Id].m);
 					drawRadius = drawRadius < 2 ? 2 : drawRadius;
 					ctx2.arc(this.renderer.crd(dObj.x2, 'x'), this.renderer.crd(dObj.y2, 'y'), drawRadius, 0, 7);
 					ctx2.fill();
@@ -124,13 +126,13 @@ export default class TrajectoryPreview {
 		}
 		// Draw the cross if object(s) deleted after collision
 		for (let deletedObj of deletedObjectsList){
-			const size = this.camera.getScreenRad(deletedObj.m)*0.7 < 3? 3 : this.camera.getScreenRad(deletedObj.m)*0.7;
+			const size = this.renderer.getScreenRad(deletedObj.m)*0.7 < 3? 3 : this.renderer.getScreenRad(deletedObj.m)*0.7;
 			// Circle
 			ctx2.save();
 			ctx2.beginPath();
 			ctx2.globalAlpha = 0.3;
 			ctx2.fillStyle = '#f30';
-			let drawRadius = this.camera.getScreenRad(deletedObj.m);
+			let drawRadius = this.renderer.getScreenRad(deletedObj.m);
 			drawRadius = drawRadius < 2 ? 2 : drawRadius;
 			ctx2.arc(...this.renderer.crd2(deletedObj.x, deletedObj.y), drawRadius, 0, 7);
 			ctx2.fill();
@@ -146,30 +148,31 @@ export default class TrajectoryPreview {
 		}
 	}
 
-	calculateTrajectories({trajLen, accuracity}) {
+	calculate({trajLen, accuracity}) {
 		const objArrCopy = this.sceneClone.objArr;
 		// Create new object
 		let newObjId = this.sceneClone.addNewObject({...newObjParams, callback: false});
 
 		// Array with all trajectory traces
 		const trajectoryTraces = [];
-
 		for (let objectId in objArrCopy){
 			objArrCopy[objectId].initId = objectId;
 			if (objArrCopy[objectId].lock !== true){
 				trajectoryTraces[objectId] = [[objArrCopy[objectId].x, objArrCopy[objectId].y]];
 			}
 		}
-		trajLen = trajLen * accuracity; // Trajectory calculation accuracity
 
-		const savedNewObjId = newObjId;
+		// Trajectory calculation accuracity. Change iterations count to keep the same length.
+		trajLen = trajLen * accuracity;
+
 		const deletedObjectsList = []; // Array of deleted objects
 		// Make distances array
 		const distances = [];
 		for (let i = objArrCopy.length - 1; i--;){
 			distances[i] = {D: Infinity, obj: {}};
 		}
-		let minDistance = Infinity; // Minimal distance during trajectory calculating
+		// Minimal distance during trajectory calculating
+		let minDistance = Infinity;
 
 		// Calculate all trajectories
 		for (let i = trajLen; i--;){
@@ -200,7 +203,6 @@ export default class TrajectoryPreview {
 			}
 			// Bounce collision preprocessing
 			ui.collisionMode.state == '1' && this.physics.pullOutFromEachOther();
-
 
 			// Physics compute
 			this.physics.physicsCalculate(

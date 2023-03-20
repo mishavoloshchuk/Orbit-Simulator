@@ -69,31 +69,31 @@ function gravity_func(sin, cos, D, gravitMode, mass1, mass2, timeSpeed, g){
 	let kff = 0.0, vx = 0.0, vy = 0.0;
 	//Обратно-пропорционально квадрату расстояния
 	if (gravitMode === 1){  // The gravitMode variable must be a number
-		kff = g * timeSpeed * 5;
+		kff = g * timeSpeed * 0.5;
 		vx = kff*(cos/(D*D));
 		vy = kff*(sin/(D*D));
 	} else
 	//Обранто-пропорционально кубу расстояния
 	if (gravitMode === 0){
-		kff = g * timeSpeed * 500;
+		kff = g * timeSpeed * 50;
 		vx = kff*(cos/(D*D*D));
 		vy = kff*(sin/(D*D*D));
 	} else
 	//Обранто-пропорционально расстоянию
 	if (gravitMode === 2){
-		kff = g * timeSpeed * 0.05;
+		kff = g * timeSpeed * 0.005;
 		vx = kff*(cos/D);
 		vy = kff*(sin/D);
 	} else
 	//Постоянное притяжение
 	if (gravitMode === 3){
-		kff = g * timeSpeed * 0.0005;
+		kff = g * timeSpeed * 0.00005;
 		vx = kff*(cos);
 		vy = kff*(sin);
 	} else
 	//Пропорционально расстоянию
 	if (gravitMode === 4){
-		kff = g * timeSpeed * 0.000005;
+		kff = g * timeSpeed * 0.0000005;
 		vx = kff*(cos*D);
 		vy = kff*(sin*D);
 	}

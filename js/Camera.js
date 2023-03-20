@@ -122,15 +122,4 @@ export default class Camera{
 	hasTarget(){
 		return this.Target !== undefined;
 	}
-
-	// Get object radius
-	getRadius(mass){
-		let dist = Math.sqrt(Math.abs(mass));
-		return dist < 0.25 ? 0.25 : dist;
-	}
-	// Get object screen radius
-	getScreenRad(mass){
-		let screenRad = Math.sqrt(Math.abs(mass)) * this.animZoom;
-		return screenRad < 0.25 ? 0.25 : screenRad;
-	}
 }

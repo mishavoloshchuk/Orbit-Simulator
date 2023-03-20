@@ -46,7 +46,7 @@ export default class Scene {
 			vx: vx, // Velocity X 
 			vy: vy, // Velocity Y 
 			m: mass, // Object mass
-			r: Math.sqrt(Math.abs(mass)), // Object radius
+			r: this.getRadiusFromMass(mass), // Object radius
 			color: color, // Object color
 			lock: objLck, // Object locked (boolean)
 			trace: [], // Array of trace points (traces mode 2-3)
@@ -109,13 +109,14 @@ export default class Scene {
 	forceToCircularOrbit(px, py, obj1Id){
 		if (this.objArr[obj1Id]){
 			const objToOrbMass = Math.abs(this.objArr[obj1Id].m);
-			let R = dist(camera.screenPix(px, 'x'), camera.screenPix(py, 'y'), camera.screenPix(this.objArr[obj1Id].x, 'x'), camera.screenPix(this.objArr[obj1Id].y, 'y'))*camera.animZoom;
-			let V = Math.sqrt((objToOrbMass*5)*(R)/ui.g.state);
-			let a = this.objArr[obj1Id].x - px;
-			let b = this.objArr[obj1Id].y - py;
-			let sin = b/R, cos = a/R;
-			let svx = -(sin/V)*objToOrbMass*5;
-			let svy = (cos/V)*objToOrbMass*5;
+			const mod = 1; // Modificator
+			const R = dist(camera.screenPix(px, 'x'), camera.screenPix(py, 'y'), camera.screenPix(this.objArr[obj1Id].x, 'x'), camera.screenPix(this.objArr[obj1Id].y, 'y'))*camera.animZoom;
+			const V = Math.sqrt(objToOrbMass * 0.5 * R / ui.g.state);
+			const a = this.objArr[obj1Id].x - px;
+			const b = this.objArr[obj1Id].y - py;
+			const sin = b/R, cos = a/R;
+			let svx = -(sin/V)*objToOrbMass*0.5;
+			let svy = (cos/V)*objToOrbMass*0.5;
 
 			if (ui.newObjCreateReverseOrbit.state){
 				svx = -svx;
@@ -159,6 +160,14 @@ export default class Scene {
 		}
 		return sel[1];
 	}
+	// Get object radius
+	getRadius(objId){
+		return this.objArr[objId].r;
+	}
+	// Get object radius from mass
+	getRadiusFromMass(mass){
+		return Math.pow(Math.abs(mass), 1/3);
+	}
 	// Get exponential value if value bigger than 1
 	expVal(F, round = 1000){
 		let val = F > 1 ? Math.pow(F, 8) : F;
@@ -167,6 +176,13 @@ export default class Scene {
 	// Get random range
 	getRandomArbitrary(min, max) {
 		return Math.random() * (max - min) + min;
+	}
+
+	// Reset preview screen positions
+	resetPrevScreenPositions(){
+		for (let obj of this.objArr){
+			obj.prevScreenX = obj.prevScreenY = undefined;
+		}
 	}
 
 	//Cмешивение Цветов===================================

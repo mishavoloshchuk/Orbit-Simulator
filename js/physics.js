@@ -1,5 +1,5 @@
 export default class Physics {
-	collisionCeilSize = 31.6227766016*2; // Ceil collision algorithm ceil size
+	collisionCeilSize = innerWidth; // Ceil collision algorithm ceil size
 	constructor(scene) {
 		// Set scene
 		this.scene = scene;
@@ -19,17 +19,21 @@ export default class Physics {
 			const obj1Pos = [arr[obj1Id * this.constants.objLen], arr[obj1Id * this.constants.objLen + 1]];
 			const obj1Vel = [0.0, 0.0];
 			const obj1Mass = arr[obj1Id * this.constants.objLen + 2];
-			const obj1Lock = arr[obj1Id * this.constants.objLen + 3];
+			const obj1Radius = arr[obj1Id * this.constants.objLen + 3]
+			const obj1Lock = arr[obj1Id * this.constants.objLen + 4];
 
 			for(let obj2Id = 0; obj2Id < len; obj2Id++){
 				if (obj2Id !== obj1Id) {
 					const obj2Pos = [arr[obj2Id * this.constants.objLen], arr[obj2Id * this.constants.objLen + 1]];
 					const obj2Mass = arr[obj2Id * this.constants.objLen + 2];
+					const obj2Radius = arr[obj2Id * this.constants.objLen + 3];
 
 					const D = dist(obj1Pos[0],obj1Pos[1], obj2Pos[0],obj2Pos[1]);
 					const sin = (obj2Pos[1] - obj1Pos[1])/D; // Sin
 					const cos = (obj2Pos[0] - obj1Pos[0])/D; // Cos
+
 					const velocity = gravity_func(sin, cos, D, gravitMode, obj2Mass, obj1Mass, timeSpeed, g);
+					// Add calculated vectors to object 1
 					if (obj1Lock === 0){
 						obj1Vel[0] += velocity[0];
 						obj1Vel[1] += velocity[1];	
@@ -38,7 +42,7 @@ export default class Physics {
 			}
 
 			return [obj1Vel[0], obj1Vel[1]];
-		}, {dynamicOutput: true, dynamicArguments: true, constants: {objLen: 4}})
+		}, {dynamicOutput: true, dynamicArguments: true, constants: {objLen: 5}})
 			.setLoopMaxIterations(1000000);
 	}
 	gpuComputeVelocities = function(
@@ -59,7 +63,7 @@ export default class Physics {
 			// Bounce collision preprocessing
 			ui.collisionMode.state == '1' && this.pullOutFromEachOther();
 
-			const prepairedArr = objArr.map(obj => [obj.x, obj.y, obj.m, obj.lock]);
+			const prepairedArr = objArr.map(obj => [obj.x, obj.y, obj.m, obj.r, obj.lock]);
 			this.computeVelocities.setOutput([objArr.length]);
 			const newVelosities = this.computeVelocities(prepairedArr, objArr.length, timeSpeed, g, gravitMode);
 			// After physics
@@ -108,11 +112,14 @@ export default class Physics {
 	// Runs after finish computing physics
 	afterPhysics = (interactMode, collisionType, timeSpeed) => {
 		// After physics
+		// const obj = this.scene.objArr[this.scene.objArr.length-1]
+		// const pos = [obj.x, obj.y];
 		// Add velocities
 		this.addVelocity(timeSpeed);
 
 		// Bounce collision
 		ui.collisionMode.state == '1' && this.bounceCollision();
+		// console.log(Math.hypot(obj.x - pos[0], obj.y - pos[1]), Math.hypot(obj.vx, obj.vy));
 	}
 
 	makeObjPosMatrix(objArr = this.scene.objArr){
@@ -265,7 +272,7 @@ export default class Physics {
 			obj.vy = (objA.m*objA.vy+objB.m*objB.vy)/(objA.m+objB.m);// Формула абсолютно-неупругого столкновения
 
 			obj.m = objA.m + objB.m; // Set new mass to obj
-			obj.r = Math.sqrt(Math.abs(obj.m));
+			obj.r = this.scene.getRadiusFromMass(obj.m);
 			obj.color = mixedColor;
 
 			// Change camera target

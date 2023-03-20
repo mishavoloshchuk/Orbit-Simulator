@@ -162,8 +162,12 @@ a:hover {
 	top: 130px;
 }
 
+h2 {
+	color: #9B9A9B;
+	text-shadow: 1px 1px 3px rgba(0, 0, 0, 1);
+}
+
 .time_speed h2{
-	color: rgba(255,255,255,0.6);
 	margin: 0;
 	font-family: arial;
 }
@@ -176,7 +180,6 @@ a:hover {
 }
 
 #object_count h2{
-	color: rgba(255,255,255,0.6);
 	margin: 0;
 	font-family: arial;
 	cursor: default;
@@ -262,14 +265,17 @@ a:hover {
 	align-self: flex-start;
 }
 
-.radio_button_menu {
-	border-bottom: 1px dashed rgba(255,255,255,0.16);
+.radio_button_form {
+	padding: .5em 0;
+}
+.radio_button_option {
+/*	border-bottom: 1px dashed rgba(255,255,255,0.16);*/
 	display: flex;
 	align-items: center;
-	padding: 5px 0;
+	padding-bottom: .5em;
 	position: relative;
 }
-.radio_button_menu:last-child {
+.radio_button_option:last-child {
 	border: none;
 	padding-bottom: 0;
 }
@@ -341,6 +347,7 @@ a:hover {
 
 .state img{
 	max-height: 100%;
+	filter: drop-shadow(3px 3px 3px black);
 }
 
 .deleted {
