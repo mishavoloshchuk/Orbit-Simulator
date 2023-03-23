@@ -543,6 +543,10 @@ a:hover {
 	width: 4em;
 }
 
+.numberInputOption {
+	justify-content: space-between;
+}
+
 .additionalOption {
 	display: none;
 }
