@@ -30,10 +30,10 @@ export default class TrajectoryPreview {
 				// Set styles to new object trajectory trace
 				if (trace === newObjId){
 					color  = ui.newObjColor.state;
-					R = 2;
+					R = 2.5;
 				} else {
 					color = otherObjTraceColor;
-					R = 1;
+					R = 0.75;
 				}
 				// ==== Making line dash pattern ===========================
 				const dashPattern = []; // Dashed line pattern array
@@ -205,12 +205,21 @@ export default class TrajectoryPreview {
 			ui.collisionMode.state == '1' && this.physics.pullOutFromEachOther();
 
 			// Physics compute
-			this.physics.physicsCalculate(
-				undefined,
-				+ui.interactMode.state,
-				ui.timeSpeed.state,
-				ui.g.state/accuracity
-			);
+			if (gpuComputeAvailable && ui.gpuCompute.state && objArrCopy.length > 400) { // If objects more than 480, calculate on GPU
+				this.physics.gpuComputeVelocities(
+					undefined,
+					+ui.interactMode.state,
+					ui.timeSpeed.state,
+					ui.g.state/accuracity
+				);
+			} else {
+				this.physics.physicsCalculate(
+					undefined,
+					+ui.interactMode.state,
+					ui.timeSpeed.state,
+					ui.g.state/accuracity
+				);
+			}
 
 			// Add points to trajectory trace array
 			for (let objectId = objArrCopy.length; objectId--;){

@@ -37,16 +37,21 @@
 	"random_color_checkbox": "Випадковий",
 	"mass_input": "Маса:",
 	"negative_mass": "Негативна",
-	"clockwise_input": "За годинниковою",
 	"fixed_object_checkbox": "Нерухомий",
 	"select_main_object_button": "Вибрати головний об'єкт",
 
 	"creation_parameters": "Параметри створення",
+	"object_creation_relative_to": "Створення об'єкта відносно:",
+	"center_of_mass": "Центру мас",
+	"main_object": "Головного об'єкту",
+	"movement_compencation": "Компенсація руху",
 	"circular_orbit_on_click": "Клік - кругова орбіта",
-	"pause_while_new_object_creates": "Пауза при створенні об'єкта",
-	"changed_with_the_mouse_wheel_when_creating_an_object": "Змінюється колесом миші, при створенні об'єкта",
+	"clockwise_input": "За годинниковою",
 	"launch_speed": "Швидкість запуску:",
+	"changed_with_the_mouse_wheel_when_creating_an_object": "Змінюється колесом миші, при створенні об'єкта",
+	"pause_while_new_object_creates": "Пауза при створенні об'єкта",
 	"show_distance_checkbox": "Показувати відстань",
+
 
 	"trajectory_calculate_checkbox": "Прорахунок траєкторій",
 	"affects_the_performance_when_calculating_the_trajectory": "Впливає на швидкодію, при розразунку траєкторій",
@@ -73,6 +78,7 @@
 
 	"extra_options": "Додаткові параметри",
 
+	"disappearance_time": "Час зникання:",
 	"trace_opacity": "Нерозрачність:",
 	"trace_blur": "Розмивання:",
 	"clear_traces": "Очистити сліди",

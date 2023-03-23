@@ -17,85 +17,85 @@
 	<img src="#" class="bg_image" id="background_image">
 	<div class="dimmer"></div>
 	<div class="menu">
-		<div class="btn" id='create'>
+		<button class="btn" id='create'>
 			<l-text alt>object_creation_menu</l-text>
 			<l-text title>object_creation_menu_and_hotkey</l-text>
 			<img src="ico/create.png" alt="Create" title="Создать обьект ( C )">
-		</div>
+		</button>
 
-		<div class="btn" id='delete'>
+		<button class="btn" id='delete'>
 			<l-text alt>delete_menu</l-text>
 			<l-text title>delete_object_menu_and_hotkey</l-text>
 			<img src="ico/delete.png" alt="Delete" title="Удалить обьект ( D )">
-		</div>
+		</button>
 
-		<div class="btn" id='edit'>
+		<button class="btn" id='edit'>
 			<l-text alt>edit_menu</l-text>
 			<l-text title>edit_object_menu_and_hotkey</l-text>
 			<img src="ico/edit.png" alt="Edit" title="Редактировать обьект ( E )">
-		</div>
+		</button>
 		
 		<div class="time_panel">
-			<div class="btn" id='timedown'>
+			<button class="btn" id='timedown'>
 				<l-text alt>slow_down_time</l-text>
 				<l-text title>slow_down_time_and_hotkey</l-text>
 				<img src="ico/speeddown.png" alt="Time speed down" title="Замедлить время ( , )">
-			</div>
+			</button>
 
-			<div class="btn" id='pause'>
+			<button class="btn" id='pause'>
 				<l-text alt>pause_on/off</l-text>
 				<l-text title>pause_on/off_and_hotkey</l-text>
 				<img src="ico/pause.png" alt="Pause/Play" title="Стоп/Старт ( P )">
-			</div>
+			</button>
 
-			<div class="btn" id='play'>
+			<button class="btn" id='play'>
 				<l-text alt>normal_speed_of_time</l-text>
 				<l-text title>normal_speed_of_time_and_hotkey</l-text>
 				<img src="ico/restore.png" alt="Time default" title="Обычная скорость времени ( / )">
-			</div>
+			</button>
 
-			<div class="btn" id='timeup'>
+			<button class="btn" id='timeup'>
 				<l-text alt>time_speed_up</l-text>
 				<l-text title>time_speed_up_and_hotkey</l-text>
 				<img src="ico/speedup.png" alt="Time speed down" title="Ускорить время ( . )">
-			</div>
+			</button>
 		</div>
 
-		<div class="btn" id='move'>
+		<button class="btn" id='move'>
 			<l-text alt>move_object</l-text>
 			<l-text title>move_object_and_hotkey</l-text>
 			<img src="ico/move.png" alt="Move" title="Переместить обьект ( M )">
-		</div>
+		</button>
 
-		<div class="btn" id='trajectory'>
+		<button class="btn" id='trajectory'>
 			<l-text alt>traces_menu</l-text>
 			<l-text title>traces_menu_and_hotkey</l-text>
 			<img src="ico/trajectory.png" alt="Trajectory" title="Траектории ( T )">
-		</div>
+		</button>
 
-		<div class="btn" id='camera'>
+		<button class="btn" id='camera'>
 			<l-text alt>camera_menu</l-text>
 			<l-text title>camera_menu_and_hotkey</l-text>
 			<img src="ico/camera.png" alt="Camera" title="Камера  ( V )">
-		</div>
+		</button>
 
-		<div class="btn" id='world_settings'>
+		<button class="btn" id='world_settings'>
 			<l-text alt>interaction_menu</l-text>
 			<l-text title>interaction_menu_and_hotkey</l-text>
 			<img src="ico/functionX.png" alt="Settings" title="Взаимодейстия ( F )">
-		</div>
+		</button>
 
-		<div class="btn" id='settings'>
+		<button class="btn" id='settings'>
 			<l-text alt>settings_menu</l-text>
 			<l-text title>settings_menu_and_hotkey</l-text>
 			<img src="ico/settings.png" alt="Settings" title="Настройки ( S )">
-		</div>
+		</button>
 
-		<div class="btn" id='help'>
+		<button class="btn" id='help'>
 			<l-text alt>help_menu</l-text>
 			<l-text title>help_menu_and_hotkey</l-text>
 			<img src="ico/help.png" alt="Help" title="Помощь  ( H )">
-		</div>
+		</button>
 
 	</div>
 	<!-- Toggle full screen button -->
@@ -109,135 +109,183 @@
 	<div class="state"></div>
 
 	<div class='menu_container menu_pos' id="options_menu_container">
+
 		<!--Create menu-->
 		<div class="menu_options menu_pos_size" id="menu_options">
 			<section class="options_section">
+
 				<div class='option_item title_option_item'>
 					<l-text>new_object_options</l-text>
-					<span>Параметры нового обьекта:</span>
+					<h2>Параметры нового обьекта:</h2>
 					<div class="close_button">
 						<svg height="70%" width="70%" viewBox="0,0,48,48"><path d="m12.45 38.85-3.3-3.3L20.7 24 9.15 12.45l3.3-3.3L24 20.7 35.55 9.15l3.3 3.3L27.3 24l11.55 11.55-3.3 3.3L24 27.3Z"/></svg>
 					</div>
 				</div>
+
 				<section>
+
 					<!-- Color -->
 					<div class='option_item' style="justify-content: space-between;">
 						<div>
 							<l-text>color_input</l-text>
-							<span>Цвет:</span>
+							<label>Цвет:</label>
 							<div class="option_item_inside_option">
-								<label for="randColorCheck" class="input_click_handler"></label>
 								<input type="checkbox" class='checkbox_smaller' id="randColorCheck">
 								<l-text>random_color_checkbox</l-text>
-								<label>Cлучайный</label>
+								<label for="randColorCheck">Cлучайный</label>
 							</div>
 						</div>
 						<div class="div_col_select">
 							<input class="color_select" type="color" value="#ffffff" id="newObjeColorSelect">
 						</div>
 					</div>
+
 					<!-- Mass -->
 					<div class='option_item option_item_range' id='create_mass'>
 						<div style="display: flex; justify-content: space-between; width: 100%;">
 							<div>
 								<l-text>mass_input</l-text>
-								<span>Масса:</span> 
+								<label>Масса:</label> 
 								<div class="option_item_inside_option">
-									<label for="new_obj_negative_mass" class="input_click_handler"></label>
 									<input id="new_obj_negative_mass" type="checkbox" class="checkbox_smaller">
 									<l-text>negative_mass</l-text>
-									<label>Negative mass</label>
+									<label for="new_obj_negative_mass">Negative mass</label>
 								</div>
 							</div>
-							<span class='title'></span>
+							<label class='title'></label>
 						</div>
 						<input type="range" class="mass_input" min="0" max="1" step="any" value="0.5">
 					</div>
+
 					<!-- Fixed -->
 					<div class='option_item'>
-						<label for="objLckCeck" class="input_click_handler"></label>
 						<input type="checkbox" class="checkbox" id="objLckCeck" onmouseout="this.blur();">		
 						<l-text>fixed_object_checkbox</l-text>
-						<span>Неподвижный: </span>
+						<label for="objLckCeck">Неподвижный:</label>
 					</div>
+
 					<!-- Main object -->
 					<div class='option_item'>
-						<div class="button" id="select_main_obj">
+						<button class="menu_button" id="select_main_obj">
 							<l-text>select_main_object_button</l-text>
-							<span>Выбрать главный обьект</span>
-						</div>
+							<label>Выбрать главный обьект</label>
+						</button>
 					</div>
 				</section>
 			</section>
+
+
 			<section class="options_section">
+
 				<div class='option_item title_option_item'>
 					<l-text>creation_parameters</l-text>
-					<span>Параметры создания:</span>
+					<h2>Параметры создания:</h2>
 				</div>
+
 				<section>
+
+					<!-- Creation relative to -->
+					<div class='multi_option_item'>
+
+						<div class="radio_button_option">
+							<l-text>object_creation_relative_to</l-text>
+							<label>Создание объекта относительно:</label>
+						</div>
+
+						<form id="creation_relative_to" class="radio_form">
+
+							<!-- Center of mass -->
+							<div class="radio_button_box">
+								<input id="creation_relativity_radio_0" class="checkbox" type="radio" name="collision_radio" value=0 checked>					
+								<l-text>center_of_mass</l-text>
+								<label for="creation_relativity_radio_0">Центр масс</label>
+							</div>
+
+							<!-- Main object -->
+							<div class="radio_button_box">
+								<input id="creation_relativity_radio_1" class="checkbox" type="radio" name="collision_radio" value=1>
+								<l-text>main_object</l-text>
+								<label for="creation_relativity_radio_1">Главного объекта</label>
+							</div>
+						</form>					
+					</div>	
+
+					<!-- Movement compencation -->
+					<div class='option_item'>
+						<input type="checkbox" class='checkbox' id="movement_compencation_checkbox">	
+						<l-text>movement_compencation</l-text>
+						<label for="movement_compencation_checkbox">Movement compencation</label>
+						<span></span>
+					</div>
+
+					<!-- Circular orbit -->
+					<div class='option_item'>
+
+						<div class="option_item_inside_option">
+							<input type="checkbox" class="checkbox" id="circleOrbitCheck" onmouseout="this.blur();">		
+							<l-text>circular_orbit_on_click</l-text>
+							<label for="circleOrbitCheck">Click - circular orbit: </label>
+						</div>
+
+						<!-- Circular orbit direction -->
+						<div class="option_item_inside_option">
+							<input type="checkbox" class="checkbox_smaller" id='objReverseCheck'>
+							<l-text>clockwise_input</l-text>
+							<label for="objReverseCheck">Clockwise: </label>
+							
+						</div>
+					</div>
+
 					<!-- Launch speed -->
 					<l-text title>changed_with_the_mouse_wheel_when_creating_an_object</l-text>
 					<div class='option_item option_item_range' title="Изменяется колесом мыши при создании объекта">
 						<label>
 							<l-text>launch_speed</l-text>
-							<span>Скорость запуска: </span> <span id='lnch_pwr_span' class="rangeValue"></span>
+							<label>Launch speed: </label> <label id='lnch_pwr_span' class="rangeValue"></label>
 						</label>
 						<input type="range" list='dPwrInpVal' id="launch_power" min="0" max="2" value="1" step="0.01">
 						<datalist id='dPwrInpVal'><option value="1"></datalist>
 					</div>
-					<!-- Circular orbit -->
-					<div class='option_item'>
-						<div class="option_item_inside_option">
-							<label for="circleOrbitCheck" class="input_click_handler"></label>
-							<input type="checkbox" class="checkbox" id="circleOrbitCheck" onmouseout="this.blur();">		
-							<l-text>circular_orbit_on_click</l-text>
-							<span>Клик - круговая орбита:</span>
-						</div>
-						<!-- Circular orbit direction -->
-						<div class="option_item_inside_option">
-							<label for="objReverseCheck" class="input_click_handler"></label>
-							<input type="checkbox" class="checkbox_smaller" id='objReverseCheck'>
-							<l-text>clockwise_input</l-text>
-							<span>По часовой: </span>
-							
-						</div>
-					</div>
+
 					<!-- Pause while new object creates -->
 					<div class='option_item'>
-						<label for="new_obj_pause" class="input_click_handler"></label>
 						<input type="checkbox" class='checkbox' id="new_obj_pause">	
 						<l-text>pause_while_new_object_creates</l-text>
-						<span>Пауза при создании объекта:</span>
+						<label for="new_obj_pause">Pause when creating an object</label>
 					</div>
+
 					<!-- Show distance -->
 					<div class='option_item'>
-						<label for="vis_distance_check" class="input_click_handler"></label>
 						<input type="checkbox" class='checkbox' id="vis_distance_check">	
 						<l-text>show_distance_checkbox</l-text>
-						<span>Показывать расстояние: </span>
+						<label for="vis_distance_check">Show distance: </label>
 					</div>
-					
 				</section>
 			</section>
+
 			<section class="options_section">
+
 				<!-- Trajectory calculate -->
-				<div class='option_item title_option_item' id="additionalTrajectoryMenu">
+				<div class='option_item title_option_item checkbox_title_option'>
 					<input type="checkbox" class='checkbox' id="traj_prev_check" style="margin-left: 0.5em;">	
 					<l-text>trajectory_calculate_checkbox</l-text>
-					<span>Прощет траекторий</span>
+					<h2>Прощет траекторий</h2>
 				</div>
+
 				<!-- Trajectory calculate extra options -->
 				<section>
+
 					<!-- Trajectory calculate length -->
 					<l-text title>affects_the_performance_when_calculating_the_trajectory</l-text>
-					<div class='option_item' title="Влияет на быстродействие, при расчете траектории">
+					<div class='option_item' title="Affects the performance when calculating trajectories">
 						<l-text>trajectory_calculate_length</l-text>
-						<span>Дальность прощета траектории: </span>
+						<label>Trajectory calculation length: </label>
 						<input type="number" class='input_num' id="traj_calc_samples" value="200">	
 					</div>
+
 					<!-- Trajectory calculate accuracity -->
 					<l-text title>affects_the_performance_when_calculating_the_trajectory</l-text>
-					<div class='option_item option_item_range' title="Влияет на быстродействие, при прощете траектории">
+					<div class='option_item option_item_range' title="Affects the performance when calculating trajectories">
 						<l-text>trajectory_calculate_accuracity</l-text>
 						<label>Точность прощета траектории:</label>
 						<input type="range" id="traj_calc_accuracity" min="0.05" max="1" value="1" step="0.05" width="100%">
@@ -245,43 +293,49 @@
 				</section>
 			</section>
 		</div>
+
+
 		<!--Delete menu-->
 		<div class="del_menu_options menu_pos_size" id="del_menu_options">
 			<section class="options_section">
+
 				<div class='option_item title_option_item'>
 					<l-text>deleting_objects_options</l-text>
-					<span>Параметры удаления обьекта:</span>
+					<h2>Параметры удаления обьекта:</h2>
 					<!-- Close button -->
 					<div class="close_button">
 						<svg height="70%" width="70%" viewBox="0,0,48,48"><path d="m12.45 38.85-3.3-3.3L20.7 24 9.15 12.45l3.3-3.3L24 20.7 35.55 9.15l3.3 3.3L27.3 24l11.55 11.55-3.3 3.3L24 27.3Z"/></svg>
 					</div>
 				</div>
+
 				<section>
+
 					<div class='option_item radio_button_form'>
+
 						<form id="dellMethodRadio">
+
 							<div class="radio_button_option">
-								<label for="radio_button_del_1" class="input_click_handler"></label>
 								<input id="radio_button_del_1" class="checkbox" type="radio" name="del_method" value="nearest" checked="">					
 								<l-text>delete_nearest_to_cursor_object</l-text>
-								<span>Удалить ближайший к курсору обьект </span>
+								<label for="radio_button_del_1">Delete the object closest to the cursor</label>
 							</div>
+
 							<div class="radio_button_option">
-								<label for="radio_button_del_2" class="input_click_handler"></label>
 								<input id="radio_button_del_2" class="checkbox" type="radio" name="del_method" value="furthest">
 								<l-text>delete_further_from_cursor_object</l-text>
-								<span>Удалить дальний от курсора обьект </span>
+								<label for="radio_button_del_2">Delete the object farthest from the cursor</label>
 							</div>
+
 							<div class="radio_button_option">
-								<label for="radio_button_del_3" class="input_click_handler"></label>
 								<input id="radio_button_del_3" class="checkbox" type="radio" name="del_method" value="biggest">
 								<l-text>delete_the_biggest_object</l-text>
-								<span>Удалить наибольший обьект </span>
+								<label for="radio_button_del_3">Delete the biggest object</label>
 							</div>
+
 							<div class="radio_button_option">
-								<label for="radio_button_del_4" class="input_click_handler"></label>
 								<input id="radio_button_del_4" class="checkbox" type="radio" name="del_method" value="last_created">
 								<l-text>delete_last_added_object</l-text>
-								<span title="Ctrl+Z">Удалить последний добавленный обьект </span>
+								<label for="radio_button_del_4">Delete the last added object</label>
 							</div>
 						</form>	
 					</div>
@@ -291,36 +345,41 @@
 		<!--Edit menu-->
 		<div class="edit_menu menu_pos_size" id="edit_menu">
 			<section class="options_section">
+
 				<div class='option_item title_option_item'>
 					<l-text>editing_object_properties</l-text>
-					<span>Редактирование свойств обьекта:</span>
+					<h2>Редактирование свойств обьекта:</h2>
 					<!-- Close button -->
 					<div class="close_button">
 						<svg height="70%" width="70%" viewBox="0,0,48,48"><path d="m12.45 38.85-3.3-3.3L20.7 24 9.15 12.45l3.3-3.3L24 20.7 35.55 9.15l3.3 3.3L27.3 24l11.55 11.55-3.3 3.3L24 27.3Z"/></svg>
 					</div>
 				</div>
+
 				<section>
+
 					<!-- Select edit object -->
 					<div class='option_item'>
-						<div class="button" id="select_edit_obj">
+						<button class="menu_button" id="select_edit_obj">
 							<l-text>select_object_button</l-text>
-							<span>Выбрать объект</span>
-						</div>	
+							<label>Select object</label>
+						</button>	
 					</div>
+
 					<!-- Color -->
 					<div class='option_item' style="justify-content: space-between;">
 						<l-text>color_input</l-text>
-						<span>Цвет: </span>
+						<label>Color</label>
 						<div class="div_col_edit">
 							<input class="color_select" type="color" id="col_edit" value="#ffffff">	
 						</div>
 					</div>
+
 					<!-- Mass -->
 					<div class='option_item option_item_range' id='mass_edit'>
 						<div style="display: flex; justify-content: space-between; width: 100%;">
 							<div>
 								<l-text>mass_input</l-text>
-								<span>Масса:</span> 
+								<label>Mass:</label> 
 								<div class="option_item_inside_option">
 									<label for="edit_obj_negative_mass" class="input_click_handler"></label>
 									<input id="edit_obj_negative_mass" type="checkbox" class="checkbox_smaller">
@@ -328,143 +387,156 @@
 									<label>Negative mass</label>
 								</div>
 							</div>
-							<span class='title'></span>
+							<label class='title'></label>
 						</div>
 						<input type="range" class="mass_input" min="0" max="1" step="any" value="0.5">
 					</div>
+
 					<!-- Fixed -->
 					<div class='option_item'>
 						<label for="lck_edit_chbox" class="input_click_handler"></label>
 						<input type="checkbox" class='checkbox' id='lck_edit_chbox' onmouseout="this.blur();">
 						<l-text>fixed_object_checkbox</l-text>
-						<span>Неподвижный: </span>
+						<label>Fixed: </label>
 					</div>
+
 					<!-- Zero speed -->
 					<div class='option_item'>
-						<div class="button" id="reset_speed_btn">
+						<button class="menu_button" id="reset_speed_btn">
 							<l-text>zero_speed_button</l-text>
-							<span>Обнулить скорость</span>
-						</div>	
+							<label>Reset speed</label>
+						</button>	
 					</div>
 				</section>
 			</section>
-
 		</div>
 
 		<!--Traces menu-->
 		<div class="traj_menu menu_pos_size menu_pos menu_max_s" id="traj_menu">
 			<section class="options_section">
+
 				<div class='option_item title_option_item'>
 					<l-text>traces_settings</l-text>
-					<span>Параметры следа:</span>
+					<h2>Параметры следа:</h2>
 					<!-- Close button -->
 					<div class="close_button">
 						<svg height="70%" width="70%" viewBox="0,0,48,48"><path d="m12.45 38.85-3.3-3.3L20.7 24 9.15 12.45l3.3-3.3L24 20.7 35.55 9.15l3.3 3.3L27.3 24l11.55 11.55-3.3 3.3L24 27.3Z"/></svg>
 					</div>
 				</div>
+
 				<section>
+
+					<!-- Trace modes -->
 					<div class='option_item radio_button_form'>
 						<form id="traj_radio_buttons">
+
 							<div class="radio_button_option">
-								<label for="traj_radio_0" class="input_click_handler"></label>
 								<input id="traj_radio_0" class="checkbox" type="radio" name="traj" value=0>					
 								<l-text>no_traces</l-text>
-								<span>Нет следов </span>
+								<label for="traj_radio_0">No traces</label>
 							</div>
+
 							<div class="radio_button_option">
-								<label for="traj_radio_1" class="input_click_handler"></label>
 								<input id="traj_radio_1" class="checkbox" type="radio" name="traj" value=1>
 								<l-text>traces_mode_1</l-text>
-								<span>Режим следа - 1 </span>
+								<label for="traj_radio_1">Trace mode 1</label>
 							</div>
+
 							<l-text title>affects_performance</l-text>
-							<div class="radio_button_option" title="Влияет на быстродействие">
-								<label for="traj_radio_2" class="input_click_handler"></label>
+							<div class="radio_button_option" title="Affects performance">
 								<input id="traj_radio_2" class="checkbox" type="radio" name="traj" value=2>
 								<l-text>traces_mode_2</l-text>
-								<span>Режим следа - 2 </span>
+								<label for="traj_radio_2">Trace mode 2</label>
 							</div>
+
 							<div class="radio_button_option">
-								<label for="traj_radio_3" class="input_click_handler"></label>
 								<input id="traj_radio_3" class="checkbox" type="radio" name="traj" value=3>
 								<l-text>traces_mode_3</l-text>
-								<span>Режим следа - 3 </span>
+								<label for="traj_radio_3">Trace mode 3</label>
 							</div>
 						</form>
 					</div>
 
 					<!--Extra options 1-->
 					<div id="additionalTrajectoryOptions1" class="additionalOption">
+
 						<div class='option_item option_item_range'>
-							<l-text>trace_length</l-text>
-							<label>Длинна следа: </label>
+							<l-text>disappearance_time</l-text>
+							<label>Disappearance time: </label>
 							<input type="range" id="trace1Lnth" min="0.125" max="1" value="0.9" step="any">
 						</div>
+
+						<!-- If "Max performance" disabled -->
 						<div id="additionalTrajectoryOptionsExtended1">
+
 							<div class='option_item option_item_range'>
 								<l-text>trace_opacity</l-text>
-								<label>Нерозрачность: </label>
+								<label>Trace opacity: </label>
 								<input type="range" id="trace_opacity" min="0" max="1" value="0.8" step="0.01" width="100%">
 							</div>
+
 							<div class='option_item option_item_range'>
 								<l-text>trace_blur</l-text>
-								<label>Размытие: </label>
+								<label>Trace blur: </label>
 								<input type="range" id='trace_blur' min="0" step="0.1" value="0" max="5">
 							</div>
 						</div>
 					</div>
+
 					<!--Extra options 2-->
 					<div id="additionalTrajectoryOptions2" class="additionalOption">
+
 						<l-text title>affects_performance</l-text>
-						<div class='option_item' title="Влияет на быстродействие">
+						<div class='option_item' title="Affects performance">
 							<label for="trc2PrtclsChck" class="input_click_handler"></label>
 							<input type="checkbox" id="trc2PrtclsChck" class='checkbox'>
 							<l-text>trace_particles</l-text>
-							<label>Частицы: </label>
+							<label>Particles: </label>
 						</div>
 
 						<div class='option_item'>
 							<label for="trc2TrembChck" class="input_click_handler"></label>
 							<input type="checkbox" id="trc2TrembChck" class='checkbox'>
 							<l-text>trace_trembling</l-text>
-							<label>Дрожание: </label>
+							<label>Trembling: </label>
 						</div>
 
 						<div class='option_item option_item_range'>
 							<l-text>trace_length</l-text>
-							<label>Длинна следа: </label>	
+							<label>Traces length: </label>	
 							<input type="range" id="trace2Lnth" min="0.8" max="3" value="2.2" step="any">
 						</div>
-
 					</div>
+
 					<!--Extra options 3-->
-					<div id="additionalTrajectoryOptions3" class="additionalOption">					
+					<div id="additionalTrajectoryOptions3" class="additionalOption">	
+
 						<div class='option_item option_item_range'>
 							<l-text>trace_thickness</l-text>
-							<label>Толщина следа: </label>
+							<label>Traces thickness: </label>
 							<input type="range" id="trace3WdInp" list="T3WdInpDL" min="0.8" max="2" value="1.1" step="any" width="100%">
 							<datalist id='T3WdInpDL'><option value="1.1"></datalist>
 						</div>
 
 						<div class='option_item option_item_range'>
 							<l-text>trace_quality</l-text>
-							<label>Качество следа: </label>
+							<label>Traces quality: </label>
 							<input type="range" id="trace3Qu" min="0.01" max="1" value="0.9" step="any">
 						</div>
 
 						<div class='option_item option_item_range'>
 							<l-text>trace_length</l-text>
-							<label>Длинна следа: </label>	
+							<label>Traces length: </label>	
 							<input type="range" id="trace3Lnth" min="1.5" max="3" value="2" step="any">
 						</div>
 						<!-- Fix hr -->
 						<div></div>
 					</div>
 					<div class='option_item'>
-						<div class="button" id="clear_traces">
+						<button class="menu_button" id="clear_traces">
 							<l-text>clear_traces</l-text>
-							<span>Очистить следы</span>
-						</div>
+							<span>Clear traces</span>
+						</button>
 					</div>
 				</section>
 			</section>
@@ -473,40 +545,38 @@
 		<!--Camera menu-->
 		<div class="camera_menu menu_pos_size menu_pos menu_max_s" id="camera_menu">
 			<section class="options_section">
+
 				<div class='option_item title_option_item'>
 					<l-text>camera_options</l-text>
-					<span>Параметры камеры:</span>
+					<h2>Camera options:</h2>
 					<!-- Close button -->
 					<div class="close_button">
 						<svg height="70%" width="70%" viewBox="0,0,48,48"><path d="m12.45 38.85-3.3-3.3L20.7 24 9.15 12.45l3.3-3.3L24 20.7 35.55 9.15l3.3 3.3L27.3 24l11.55 11.55-3.3 3.3L24 27.3Z"/></svg>
 					</div>
 				</div>
+
 				<section>
+
 					<div class='option_item'>
 						<l-text>follow_object</l-text>
-						<span>Следить за объектом: </span>
-						<div class="button" id="select_track">
+						<label>Follow object:</label>
+						<button class="menu_button" id="select_track">
 							<l-text>select_object_button</l-text>
-							<span>
-								Выбрать объект 
-							</span>
-						</div>		
+							<label>Select object</label>
+						</button>
 					</div>
 
 					<div class='option_item'>
-						<label for="chck_zoomToScreenCenter" class="input_click_handler"></label>
 						<input type="checkbox" class="checkbox" id="chck_zoomToScreenCenter">		
 						<l-text>zoom_to_screen_center</l-text>
-						<span>Масштабировать к курсору: </span>
+						<label for="chck_zoomToScreenCenter">Zoom to screen center: </label>
 					</div>
 
 					<div class='option_item'>
-						<div class="button" id="clear_camera_settings">
+						<button class="menu_button" id="clear_camera_settings">
 							<l-text>camera_reset</l-text>
-							<span>
-								Сбросить настройки камеры
-							</span>
-						</div>		
+							<label>Reset camera</label>
+						</button>		
 					</div>
 				</section>			
 			</section>
@@ -515,126 +585,133 @@
 		<!--World Settings-->
 		<div class="world_settings_menu menu_pos_size menu_pos menu_max_s" id="world_settings_menu">
 			<section class="options_section">
+
 				<div class='option_item title_option_item'>
 					<l-text>gravity_force_modes</l-text>
-					<span>Режимы силы притяжения:</span>
+					<h2>Gravity force modes: </h2>
 					<!-- Close button -->
 					<div class="close_button">
 						<svg height="70%" width="70%" viewBox="0,0,48,48"><path d="m12.45 38.85-3.3-3.3L20.7 24 9.15 12.45l3.3-3.3L24 20.7 35.55 9.15l3.3 3.3L27.3 24l11.55 11.55-3.3 3.3L24 27.3Z"/></svg>
 					</div>
 				</div>
+
 				<section>
 					<div class='option_item radio_button_form'>
 						<form id="gravit_mode_radio_buttons">
+
 							<div class="radio_button_option">
-								<label for="Gravit_mode_radio_0" class="input_click_handler"></label>
-								<input id="Gravit_mode_radio_0" class="checkbox" type="radio" name="gravit_mode" value=0>					
+								<input id="Gravit_mode_radio_0" class="checkbox" type="radio" name="gravit_mode" value=0>
 								<l-text>inversely_proportional_to_the_cube_of_the_distance</l-text>
-								<span>Обратно-пропорционально кубу расстояния </span>
+								<label for="Gravit_mode_radio_0">Inversely proportional to the cube of the distance</label>
 							</div>
+
 							<div class="radio_button_option">
-								<input id="Gravit_mode_radio_1" class="checkbox" type="radio" name="gravit_mode" value=1 checked>					
-								<label for="Gravit_mode_radio_1" class="input_click_handler"></label>
+								<input id="Gravit_mode_radio_1" class="checkbox" type="radio" name="gravit_mode" value=1 checked>
 								<l-text>inversely_proportional_to_the_square_of_the_distance_(usually)</l-text>
-								<span>Обратно-пропорционально квадрату расстояния (обычно) </span>
+								<label for="Gravit_mode_radio_1">Inversely proportional to the square of the distance (reality)</label>
 							</div>
+
 							<div class="radio_button_option">
-								<label for="Gravit_mode_radio_2" class="input_click_handler"></label>
 								<input id="Gravit_mode_radio_2" class="checkbox" type="radio" name="gravit_mode" value=2>
 								<l-text>inversely_proportional_to_distance</l-text>
-								<span>Обратно-пропорционально от расстояния </span>
+								<label for="Gravit_mode_radio_2">Inversely proportional to distance</label>
 							</div>
+
 							<div class="radio_button_option">
-								<label for="Gravit_mode_radio_3" class="input_click_handler"></label>
 								<input id="Gravit_mode_radio_3" class="checkbox" type="radio" name="gravit_mode" value=3>
 								<l-text>constant_attraction</l-text>
-								<span>Постоянное притяжение </span>
+								<label for="Gravit_mode_radio_3">Constant attraction</label>
 							</div>
+
 							<div class="radio_button_option">
-								<label for="Gravit_mode_radio_4" class="input_click_handler"></label>
 								<input id="Gravit_mode_radio_4" class="checkbox" type="radio" name="gravit_mode" value=4>
 								<l-text>proportional_to_distance</l-text>
-								<span>Пропорционально от расстояния </span>
+								<label for="Gravit_mode_radio_4">Proportional to distance</label>
 							</div>
 						</form>			
 					</div>
 
+					<!-- Gravity force -->
 					<div class='option_item option_item_range'>
 						<label>
 							<l-text>force_of_gravity</l-text>
-							<span>Сила притяжения: </span> <span id='g_value_title'></span>
+							<label>Force of gravity: </label>
+							<label id='g_value_title'></label>
 						</label>
 						<input type="range" list='gravitationValue' id="g_value" min="0" max="2" value="1" step="0.01" width="100%">
 						<datalist id='gravitationValue'><option value="1"></datalist>
 					</div>
 
+					<!-- Turn back time -->
 					<div class='option_item'>
-						<div class="button" id="wrap_time">
+						<button class="menu_button" id="wrap_time">
 							<l-text>turn_back_time</l-text>
-							<span>
-								Повернуть время вспять
-							</span>
-						</div>		
+							<label>Turn back time</label>
+						</button>		
 					</div>
 				</section>
 			</section>
 			
-			<section class="options_section">	
+			<section class="options_section">
+
 				<div class='option_item title_option_item'>
 					<l-text>collision_modes</l-text>
-					<span>Режимы столкновений:</span>
+					<h2>Collision modes: </h2>
 				</div>
+
 				<section>
 					<div class='option_item radio_button_form'>
 						<form id="collision_radio_buttons">
+
 							<div class="radio_button_option">
-								<label for="collision_radio_0" class="input_click_handler"></label>
-								<input id="collision_radio_0" class="checkbox" type="radio" name="collision_radio" value=0 checked>					
+								<input id="collision_radio_0" class="checkbox" type="radio" name="collision_radio" value=0 checked>
 								<l-text>collision_merge</l-text>
-								<span>Слияние </span>
+								<label for="collision_radio_0">Merge</label>
 							</div>
+
 							<div class="radio_button_option">
-								<label for="collision_radio_1" class="input_click_handler"></label>
 								<input id="collision_radio_1" class="checkbox" type="radio" name="collision_radio" value=1>
 								<l-text>collision_rebound</l-text>
-								<span>Отскасивание </span>
+								<label for="collision_radio_1">Rebound</label>
 							</div>
+
 							<div class="radio_button_option">
-								<label for="collision_radio_2" class="input_click_handler"></label>
 								<input id="collision_radio_2" class="checkbox" type="radio" name="collision_radio" value=2>
 								<l-text>no_collision</l-text>
-								<span>Без столкновений </span>
+								<label for="collision_radio_2">No collisions</label>
 							</div>
 						</form>					
 					</div>
 				</section>
 			</section>
 
-			<section class="options_section">	
+			<section class="options_section">
+
 				<div class='option_item title_option_item'>
 					<l-text>interaction_modes</l-text>
-					<span>Режимы взаимодействия:</span>
+					<h2>Режимы взаимодействия:</h2>
 				</div>
+
 				<section>
 					<div class='option_item radio_button_form'>
 						<form id="interact_radio_buttons">
+
 							<div class="radio_button_option">
-								<label for="Interact_radio_0" class="input_click_handler"></label>
-								<input id="Interact_radio_0" class="checkbox" type="radio" name="interact" value="0" checked>					
+								<input id="Interact_radio_0" class="checkbox" type="radio" name="interact" value="0" checked>
 								<l-text>between_all_objects</l-text>
-								<span>Между всеми объектами </span>
+								<label for="Interact_radio_0">Between all objects</label>
 							</div>
+
 							<div class="radio_button_option">
-								<label for="Interact_radio_1" class="input_click_handler"></label>
 								<input id="Interact_radio_1" class="checkbox" type="radio" name="interact" value="1">
 								<l-text>only_with_parent_object</l-text>
-								<span>Только с родительским объектом </span>
+								<label for="Interact_radio_1">Only with parent object</label>
 							</div>
+
 							<div class="radio_button_option">
-								<label for="Interact_radio_2" class="input_click_handler"></label>
 								<input id="Interact_radio_2" class="checkbox" type="radio" name="interact" value="2">
 								<l-text>no_interactions</l-text>
-								<span>Без взаимодействий </span>
+								<label for="Interact_radio_2">No interactions</label>
 							</div>
 						</form>					
 					</div>
@@ -646,18 +723,22 @@
 		<!--Settings-->
 		<div class="settings_menu menu_pos_size menu_pos menu_max_s" id="settings_menu">
 			<section class="options_section">
+
 				<div class='option_item title_option_item'>
 					<l-text>language</l-text>
-					<span>Язык</span>
+					<h2>Language</h2>
 					<!-- Close button -->
 					<div class="close_button">
 						<svg height="70%" width="70%" viewBox="0,0,48,48"><path d="m12.45 38.85-3.3-3.3L20.7 24 9.15 12.45l3.3-3.3L24 20.7 35.55 9.15l3.3 3.3L27.3 24l11.55 11.55-3.3 3.3L24 27.3Z"/></svg>
 					</div>
 				</div>
+
 				<section>
+
 					<div class="option_item" style="justify-content: space-between;">
 						<l-text>select_language</l-text>
-						<label style="margin-right: 5px;">Выберите язык:</label>
+						<label style="margin-right: 5px;">Select language: </label>
+
 						<!-- Loading animation -->
 						<div class="loader" id="language_loader"></div>
 						<select id="language_selector">
@@ -669,86 +750,89 @@
 				</section>
 			</section>
 			
-			<section class="options_section" id="view_settings">	
+			<section class="options_section" id="view_settings">
+
 				<div class='option_item title_option_item'>
-					<span>
-						<l-text>view</l-text>
-						<span>Вид</span>
-					</span>
+					<l-text>view</l-text>
+					<h2>View</h2>
 				</div>
+
 				<section>
+
 					<div class='option_item'>
 						<div style="width: 100%;">
 							<l-text>background_image</l-text>
-							<span class="text_input_label">Фоновое изображение:</span>
+							<label class="text_input_label">Background image:</label>
 							<!-- Error message -->
 							<div style="color: #ff5555; opacity: 0; font-size: 15px; transition: .3s; max-height: 0px;" id="url_err_message">
 								<l-text>no_image_found_at_this_address</l-text>
-								<span>*Не найдено изображения по этому адресу</span>	
+								<span>*No image found for this URL</span>	
 							</div>
 
 							<l-text placeholder>image_url</l-text>
-							<input type="text" class='input_text' id="img_url_inp" placeholder="URL Изображения" style="margin: 0; margin-top: 10px;">				
+							<input type="text" class='input_text' id="img_url_inp" placeholder="Image URL" style="margin: 0; margin-top: 10px;">				
 						</div>
 					</div>
 					<div class='option_item option_item_range'>
 						<l-text>background_intensity</l-text>
-						<label>Интенсивность фона: </label>
+						<label>Background intensity: </label>
 						<input type="range" id="bg_darkness" min="0" max="1" value="0.8" step="0.01" width="100%" oninput="background_image.style.opacity = this.value">
 					</div>
 
 					<div class='option_item'>
-						<label for="mouse_move_bg" class="input_click_handler"></label>
 						<input type="checkbox" class='checkbox' id="mouse_move_bg">			
 						<l-text>background_movement_on_mouse_movement</l-text>
-						<span>Движение фона при движении мыши: </span>
+						<label for="mouse_move_bg">Background movement</label>
 					</div>
 				</section>
 			</section>
 
 			<section class="options_section">
+
 				<div class='option_item title_option_item'>
 					<l-text>performance</l-text>
-					<span>Производительность:</span>
+					<h2>Performance:</h2>
 				</div>
+
 				<section>
+
 					<div class='option_item' title="F9">
-						<label for="check_fps_swch" class="input_click_handler"></label>
 						<input type="checkbox" class='checkbox' id='check_fps_swch' onmouseout="this.blur();">
 						<l-text>show_fps</l-text>
-						<span>Показывать FPS: </span>
+						<label for="check_fps_swch">Show FPS</label>
 					</div>
 					<div class='option_item'>
-						<label for="gpu_compute" class="input_click_handler"></label>
 						<input type="checkbox" class='checkbox' id='gpu_compute' onmouseout="this.blur();">	
 						<l-text>gpu_compute</l-text>
-						<span>GPU Обработка: </span>
+						<label for="gpu_compute">Hardware acceleration (GPU)</label>
 					</div>
 					<div class='option_item'>
-						<label for="max_performance" class="input_click_handler"></label>
 						<input type="checkbox" class='checkbox' id='max_performance' onmouseout="this.blur();">	
 						<l-text>max_performance</l-text>
-						<span>Максимальная производительность: </span>
+						<label for="max_performance">Max performance</label>
 					</div>
 				</section>
 			</section>
 
 			<section class="options_section">
+
 				<div class='option_item title_option_item'>
 					<l-text>load/save_world</l-text>
-					<span>Загрузить/сохранить мир:</span>
+					<h2>Load/save world:</h2>
 				</div>
+
 				<section>
-					<input class="button file_input" type="file" accept=".json" id="select_file" style="display: none;">
+
+					<input class="menu_button file_input" type="file" accept=".json" id="select_file" style="display: none;">
 					<div class='option_item'>
-						<div class="button" id="sel_file_but">
+						<button class="menu_button" id="sel_file_but">
 							<l-text>load</l-text>
-							<span>Загрузить</span>
-						</div>
-						<div class="button" id="save_file">
+							<label>Load</label>
+						</button>
+						<button class="menu_button" id="save_file">
 							<l-text>save</l-text>
-							<span>Сохранить</span>
-						</div>		
+							<label>Save</label>
+						</button>		
 					</div>
 				</section>
 			</section>
@@ -758,7 +842,7 @@
 			<section class="options_section">
 				<div class='option_item title_option_item'>
 					<l-text>hotkeys</l-text>
-					<span>Горячие клавиши:</span>
+					<h2>Hot keys:</h2>
 					<!-- Close button -->
 					<div class="close_button">
 						<svg height="70%" width="70%" viewBox="0,0,48,48"><path d="m12.45 38.85-3.3-3.3L20.7 24 9.15 12.45l3.3-3.3L24 20.7 35.55 9.15l3.3 3.3L27.3 24l11.55 11.55-3.3 3.3L24 27.3Z"/></svg>
@@ -807,14 +891,14 @@
 				<!-- Contacts -->
 				<div class='option_item title_option_item'>
 					<l-text>contacts</l-text>
-					<span>Контакты</span>
+					<h2>Contacts</h2>
 				</div>
 				<section>
 					<adress>
 						<ul class="list">
 							<li>
 								<l-text>mail</l-text>
-								<span>Почта</span>: <a href="mailto:orbitsimulator1@gmail.com">orbitsimulator1@gmail.com</a>
+								<span>Mail</span>: <a href="mailto:orbitsimulator1@gmail.com">orbitsimulator1@gmail.com</a>
 							</li>
 							<li><a target="_blank" href="https://github.com/mishavoloshchuk">GitHub</a></li>
 						</ul>
@@ -825,7 +909,7 @@
 	</div>
 
 	<div class="time_speed">
-		<h2></h2>
+		<h2 class="transparent_h2"></h2>
 	</div>
 
 	<div class="canvas" id="launchPowerLabel">
@@ -833,9 +917,9 @@
 	</div>
 
 	<div class="canvas" id="object_count" style="z-index: -1;">
-		<h2>
+		<h2 class="transparent_h2">
 			<l-text>number_of_objects</l-text>
-			<span>Количество обьектов</span>: <span id="object_count_value">1</span>
+			<span>Number of objects</span>: <span id="object_count_value">1</span>
 		</h2>
 	</div>
 

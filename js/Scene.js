@@ -1,6 +1,6 @@
 export default class Scene {
 	objArr = Array(); // Scene objects array
-	objIdToOrbit = 0; // The ID of the object around which the new object will orbit
+	objIdToOrbit = null; // The ID of the object around which the new object will orbit
 
 	constructor() {
 		//
@@ -28,19 +28,7 @@ export default class Scene {
 			[x, y] = camera.screenPix2(screenX, screenY);
 		}
 
-		if (circularOrbit && objArr[main_obj]) {
-			[vx, vy] = this.forceToCircularOrbit(x, y, main_obj);
-			if (!objArr[main_obj].lock){
-				vx += objArr[main_obj].vx;
-				vy += objArr[main_obj].vy;
-			}
-			// Circular orbit correction
-			x += vx/2 * ui.timeSpeed.state;
-			y += vy/2 * ui.timeSpeed.state;
-		}
-
-		// Add new object to objArr with parameters
-		objArr[newObjId] = {
+		const newObj = {
 			x: x, // Position X
 			y: y, // Position Y
 			vx: vx, // Velocity X 
@@ -52,6 +40,74 @@ export default class Scene {
 			trace: [], // Array of trace points (traces mode 2-3)
 			main_obj: main_obj // Affects in interaction mode 1 (interact with only main objecgt)
 		};
+
+		let velX, velY, centerOfMass;
+		const mainObj = objArr[main_obj];
+
+		// Creation relative to
+		if (ui.creationRelativeTo.state == 0){
+			centerOfMass = this.getCenterOfMass();
+			// Lock, if more than 50% of global mass maked by locked objects
+			centerOfMass.lock = objArr.reduce((mSum, obj) => obj.lock ? mSum + obj.m : mSum, 0) / centerOfMass.m > 0.5;
+		} else {
+			if (mainObj){
+				centerOfMass = mainObj;
+			} else {
+				centerOfMass = this.getCenterOfMass([]);
+				centerOfMass.lock = false;
+			}
+		}
+
+		if (circularOrbit) {
+			if (newObj.m + centerOfMass.m === 0 && newObj.m !== 0){
+				[velX, velY] = [0, 0];
+			} else {
+				// Force to circular orbit
+				const m = centerOfMass.lock ? 0 : mass;
+				[velX, velY] = this.forceToCircularOrbit({...newObj, m: m}, centerOfMass);
+			}
+		} else {
+			[velX, velY] = [vx, vy];
+		}
+
+		[newObj.vx, newObj.vy] = [velX, velY];
+
+	
+		if (!centerOfMass.lock && ui.interactMode.state == 0){
+			newObj.vx += centerOfMass.vx;
+			newObj.vy += centerOfMass.vy;
+		}
+	
+		// Circular orbit correction
+		if (circularOrbit){
+			newObj.x += velX / 2 * ui.timeSpeed.state;
+			newObj.y += velY / 2 * ui.timeSpeed.state;
+		}
+
+		// Add new object to objArr with parameters
+		objArr[newObjId] = newObj;
+
+		// Movement compensation
+		if (ui.movementCompencation.state && !centerOfMass.lock && ui.interactMode.state == 0){ // If enabled
+			let centerOfMassAfter = ui.creationRelativeTo.state == 0 ? this.getCenterOfMass() : this.getCenterOfMass([newObj, centerOfMass]);
+			const cvx = centerOfMass.vx - centerOfMassAfter.vx;
+			const cvy = centerOfMass.vy - centerOfMassAfter.vy;
+
+			if (ui.creationRelativeTo.state == 0){ // If object creation is relative to the center of mass
+				compensate(objArr);
+			} else { // If object creation is relative to main object
+				if (mainObj && !mainObj.lock) {
+					compensate([newObj, mainObj]);
+				}
+			}
+			function compensate (objArr){
+				for (let obj of objArr){
+					obj.vx += cvx;
+					obj.vy += cvy;
+				}
+			}
+		}
+
 		physics.pullOutFromEachOther(objArr);
 		// Run callback after an object have been created
 		callback && callback(newObjId);
@@ -85,6 +141,7 @@ export default class Scene {
 		if (camera.Target === null) camera.setTarget();
 		this.objIdToOrbit = getIdAfterArrChange([objectId], this.objIdToOrbit, this.objectSelect('biggest'));
 		mov_obj = getIdAfterArrChange([objectId], mov_obj);
+		swch.editObjId = swch.editObjId == objectId ? null : swch.editObjId;
 
 		renderer.allowFrameRender = true;
 		this.show_obj_count(); // Set objects counter indicator
@@ -105,27 +162,32 @@ export default class Scene {
 		}
 		return newScn;
 	}
-	//Необходимая скорость для круговой орбиты
-	forceToCircularOrbit(px, py, obj1Id){
-		if (this.objArr[obj1Id]){
-			const objToOrbMass = Math.abs(this.objArr[obj1Id].m);
-			const mod = 1; // Modificator
-			const R = dist(camera.screenPix(px, 'x'), camera.screenPix(py, 'y'), camera.screenPix(this.objArr[obj1Id].x, 'x'), camera.screenPix(this.objArr[obj1Id].y, 'y'))*camera.animZoom;
-			const V = Math.sqrt(objToOrbMass * 0.5 * R / ui.g.state);
-			const a = this.objArr[obj1Id].x - px;
-			const b = this.objArr[obj1Id].y - py;
-			const sin = b/R, cos = a/R;
-			let svx = -(sin/V)*objToOrbMass*0.5;
-			let svy = (cos/V)*objToOrbMass*0.5;
+	// Force to circular orbit
+	forceToCircularOrbit(objA, objB){
+		if (objB === undefined) return [0, 0];
 
-			if (ui.newObjCreateReverseOrbit.state){
-				svx = -svx;
-				svy = -svy;
-			}
-			return [svx, svy];		
-		} else {
-			return [0, 0];
+		// If mass sum equals zero
+		if (objA.m + objB.m === 0) objA.m = -objA.m;
+		const massCenter = this.getCenterOfMass([objA, objB]);
+
+		// Distance between objA and center of mass
+		const D = dist(objA.x, objA.y, massCenter.x, massCenter.y);
+
+		if (D <= 0) return [0, 0];
+
+		const V = Math.sqrt(ui.g.value * Math.abs(objB.m) / D * 5);
+		const a = massCenter.x - objA.x;
+		const b = massCenter.y - objA.y;
+		const sin = b/D, cos = a/D;
+		let svx = -sin * V;
+		let svy = cos * V;
+
+		if (ui.newObjCreateReverseOrbit.state){
+			svx = -svx;
+			svy = -svy;
 		}
+
+		return [svx, svy];
 	}
 	//Выбор объекта по функции
 	objectSelect(mode = 'nearest', not){
@@ -160,13 +222,52 @@ export default class Scene {
 		}
 		return sel[1];
 	}
+	// Get senter of mass
+	getCenterOfMass(objArr = this.objArr){
+		// Center of mass parameters
+		const centerOfMass = {
+			x: 0, y: 0, // Pos
+			vx: 0, vy: 0, // Vel
+			m: 0 // Mass
+		};
+
+		// Return zero center mass if objArr length is zero
+		if (objArr.length == 0) return centerOfMass;
+
+		// Mass
+		centerOfMass.m = objArr.reduce((mSum, obj) => {
+			return mSum + obj.m;
+		}, 0);
+		let mSum = centerOfMass.m;
+		const absMassSum = objArr.reduce((absMSum, obj) => {
+			return absMSum + Math.abs(obj.m);
+		}, 0);
+
+		if (mSum === 0 && mSum !== absMassSum) centerOfMass.m = mSum = absMassSum;
+
+		for (let obj of objArr){
+			// Center of mass position
+			centerOfMass.x += obj.x * obj.m;
+			centerOfMass.y += obj.y * obj.m;
+
+			// Center of mass velocity
+			const kff = obj.m / mSum;
+			centerOfMass.vx += obj.vx * kff;
+			centerOfMass.vy += obj.vy * kff;
+		}
+		// Divide position by mass sum
+		centerOfMass.x /= mSum;
+		centerOfMass.y /= mSum;
+
+		return centerOfMass;
+	}
 	// Get object radius
 	getRadius(objId){
 		return this.objArr[objId].r;
 	}
 	// Get object radius from mass
 	getRadiusFromMass(mass){
-		return Math.pow(Math.abs(mass), 1/3);
+		return Math.pow(Math.abs(mass), 1/2);
 	}
 	// Get exponential value if value bigger than 1
 	expVal(F, round = 1000){

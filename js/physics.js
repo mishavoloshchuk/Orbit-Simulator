@@ -32,7 +32,9 @@ export default class Physics {
 					const sin = (obj2Pos[1] - obj1Pos[1])/D; // Sin
 					const cos = (obj2Pos[0] - obj1Pos[0])/D; // Cos
 
-					const velocity = gravity_func(sin, cos, D, gravitMode, obj2Mass, obj1Mass, timeSpeed, g);
+					const gMod = D <= obj1Radius + obj2Radius ? 4 : gravitMode;
+
+					const velocity = gravity_func(sin, cos, D, gMod, obj2Mass, obj1Mass, timeSpeed, g);
 					// Add calculated vectors to object 1
 					if (obj1Lock === 0){
 						obj1Vel[0] += velocity[0];
@@ -49,7 +51,7 @@ export default class Physics {
 		callback = this.afterPhysics,
 		interactMode = +ui.interactMode.state, 
 		timeSpeed = ui.timeSpeed.state, 
-		g = ui.g.state, 
+		g = ui.g.value, 
 		gravitMode = +ui.gravitationMode.state, 
 		collisionType = +ui.collisionMode.state
 	){
@@ -80,7 +82,7 @@ export default class Physics {
 		callback = this.afterPhysics,
 		interactMode = +ui.interactMode.state, 
 		timeSpeed = ui.timeSpeed.state, 
-		g = ui.g.state, 
+		g = ui.g.value, 
 		gravitMode = +ui.gravitationMode.state, 
 		collisionType = +ui.collisionMode.state
 	){
@@ -103,7 +105,8 @@ export default class Physics {
 				interactMode: interactMode,
 				gravitMode: gravitMode,
 				g: g,
-				timeSpeed: timeSpeed
+				timeSpeed: timeSpeed,
+				collisionType: collisionType
 			});
 		}
 		callback && callback(interactMode, collisionType, timeSpeed);
@@ -177,15 +180,14 @@ export default class Physics {
 		function checkCollision(obj1Id, obj2Id){
 			const obj1 = objArr[obj1Id];
 			const obj2 = objArr[obj2Id];
-			if (!(obj2.lock === true && obj1.lock === true)) {
-				// Collision
-				const radiusSum = obj1.r + obj2.r;
 
-				if (Math.abs(obj1.x - obj2.x) <= radiusSum && Math.abs(obj1.y - obj2.y) <= radiusSum){
-					const D = dist(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
-					if (D - radiusSum <= 0){
-						collidedPairs.push([obj1Id, obj2Id]);
-					}
+			// Collision
+			const radiusSum = obj1.r + obj2.r;
+
+			if (Math.abs(obj1.x - obj2.x) <= radiusSum && Math.abs(obj1.y - obj2.y) <= radiusSum){
+				const D = dist(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
+				if (D - radiusSum <= 0){
+					collidedPairs.push([obj1Id, obj2Id]);
 				}
 			}
 		}
@@ -257,7 +259,7 @@ export default class Physics {
 			// Swap objects if
 			if ((delObj.m > obj.m && objA.lock === objB.lock)
 				|| (objA.lock !== objB.lock && objA.lock)
-				|| obj1Id < obj2Id
+				|| (objA.m === objB.m && obj1Id < obj2Id)
 			) {
 				obj = objA; delObj = objB;
 				objToDelId = obj2Id;
@@ -366,8 +368,17 @@ export default class Physics {
 					object.vx = 0;
 					object.vy = 0;
 				} else {// If object not locked
-					object.x += object.vx*timeSpeed;
-					object.y += object.vy*timeSpeed;
+					object.x += object.vx * timeSpeed;
+					object.y += object.vy * timeSpeed;
+
+					if (ui.interactMode.state == 1){
+						let mainObj = objArr[object.main_obj];
+						while(mainObj != undefined){
+							object.x += mainObj.vx * timeSpeed;
+							object.y += mainObj.vy * timeSpeed;
+							mainObj = objArr[mainObj.main_obj];
+						}
+					}
 					// Allow frame render if object moves
 					if (object.vx || object.vy) renderer.allowFrameRender = true;
 				}

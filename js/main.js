@@ -112,11 +112,11 @@ window.onload = function(){
 	var zm_cff = null;
 
 	//Debug
-	this.simulationSpeed = 2;
+	this.simulationsPerFrame = 1;
 	this.maxFPS = false;
 	this.nextFrame = false;
 
-	this.simulationDone = simulationSpeed;
+	this.simulationDone = simulationsPerFrame;
 
 	// FPS indicator init
 	this.fpsIndicator = new IndicateFPS();
@@ -153,7 +153,7 @@ window.onload = function(){
 	this.swch = {
 		s_track: true,
 		s_edit: true,
-		edit_obj: false,
+		editObjId: null,
 		s_mainObj: false,
 		allowObjCreating: mbut === 'create',
 		tapCamMove: false
@@ -172,6 +172,7 @@ window.onload = function(){
 			document.dispatchEvent(UserMassInput.inputsUpdate);
 		}
 		static inputsUpdate = new Event('inputsUpdate');
+		wasChanged = false;
 		constructor ({id, stateSaving, initState, negativeMassCheckboxParams, onChange, onInput, onUpdate}){
 			super({type: 'manualInput', id: id, stateSaving: stateSaving, initState: Math.round(getRandomArbitrary(0.5, 100)*10)/10, 
 				callback: (state)=>{
@@ -190,27 +191,32 @@ window.onload = function(){
 			this.valueElem = this.elem.getElementsByClassName('mass_input')[0]; // Input range element
 			// On Input
 			this.valueElem.addEventListener('input', (e)=>{
-				this.event = true;
-				this.state = (Math.pow(Math.pow(this.valueElem.value, 2) / 2 * ( (innerWidth + innerHeight) / 2 / camera.animZoom ), 3)) * (this.negativeMassCheckbox.state ? -1 : 1);
+				this.isInput = true;
+				this.state = (Math.pow(Math.pow(this.valueElem.value, 2) / 2 * ( (innerWidth + innerHeight) / 2 / camera.animZoom ), 2)) * (this.negativeMassCheckbox.state ? -1 : 1);
 				let menuContainer = document.getElementById('options_menu_container');
 				if (!menuContainer.className.includes(" zero_opacity")){
 					this.valueElem.closest('.option_item').className += " nozeroopacity";
 					menuContainer.className += " zero_opacity";
 				}
+				this.wasChanged = true;
 			});
 			// On Change
 			const onchanged = () => {
-				this.event = false;
+				if (!this.wasChanged) return;
+				this.isInput = false;
 				let menuContainer = document.getElementById('options_menu_container');
 				menuContainer.className = menuContainer.className.replace(" zero_opacity", "");
 				this.valueElem.closest('.option_item').className = this.valueElem.closest('.option_item').className.replace(" nozeroopacity", "");
 				onChange && onChange(); // Callback
+				this.wasChanged = false;
 			}
+
 			document.addEventListener('mouseup', onchanged);
 			document.addEventListener('touchend', onchanged);
+			document.addEventListener('keypress', (e) => { if (e.keyCode == 13) onchanged() } ); // On key enter
 			// On Update
 			document.addEventListener('inputsUpdate', () => {
-				if (!this.event){
+				if (!this.isInput){
 					this.valueElem.value = Math.pow(scene.getRadiusFromMass(this.state) * camera.animZoom * 2 / ((innerHeight + innerWidth) / 2), 1/2);
 				}
 			})
@@ -227,20 +233,23 @@ window.onload = function(){
 		}}); // Menu new object's mass input
 		this.newObjLock = new UserInput({type: 'checkbox', id: 'objLckCeck', initState: false}); // Menu lock created object input
 		//
-		this.newObjCircularOrbit = new UserInput({type: 'checkbox', id: 'circleOrbitCheck', stateSaving: true, initState: true}); // Menu circle orbit on click input
-		this.newObjCreateReverseOrbit = new UserInput({type: 'checkbox', id: 'objReverseCheck', stateSaving: true, initState: false}); // Menu reverse ordit direction input
-		this.pauseWhenCreatingObject = new UserInput({type: 'checkbox', id: 'new_obj_pause', stateSaving: true, initState: true, callback: (val, elem)=>{elem.prevPauseState = false}}); // Menu pause when user add object input
 		this.launchForce = new UserInput({type: 'range', id: 'launch_power', stateSaving: true, callback: (val)=>{lnch_pwr_span.innerHTML = expVal(val); mouse.move = true;}, eventName: 'input'}); // Menu launch power value input
+		this.pauseWhenCreatingObject = new UserInput({type: 'checkbox', id: 'new_obj_pause', stateSaving: true, initState: true, callback: (val, elem)=>{elem.prevPauseState = false}}); // Menu pause when user add object input
+		this.movementCompencation = new UserInput({type: 'checkbox', id: 'movement_compencation_checkbox', stateSaving: true, initState: true});
+		this.creationRelativeTo = new UserInput({type: 'radio', id: 'creation_relative_to', stateSaving: true}); // Creation relative mode
+		this.newObjCircularOrbit = new UserInput({type: 'checkbox', id: 'circleOrbitCheck', stateSaving: true, initState: true, callback: (val) => {
+			// Set reverse orbit checkbox disabled state
+			const reverseOrbitCheckbox = document.getElementById('objReverseCheck');
+			if (val){
+				reverseOrbitCheckbox.removeAttribute('disabled');
+			} else {
+				reverseOrbitCheckbox.setAttribute('disabled', '');
+			}
+		}}); // Menu circle orbit on click input
+		this.newObjCreateReverseOrbit = new UserInput({type: 'checkbox', id: 'objReverseCheck', stateSaving: true, initState: false}); // Menu reverse ordit direction input
 		this.showDistanceFromCursorToMainObj = new UserInput({type: 'checkbox', id: 'vis_distance_check', stateSaving: true, callback: ()=>{ launchPowerLabel.style.display = 'none'; renderer.clearLayer2(); }}); // Menu visual distance
 		//
-		this.showNewObjTrajectory = new UserInput({type: 'checkbox', id: 'traj_prev_check', stateSaving: true, initState: true, callback: (val, elem)=>{
-			// Show or hide additional menu
-			if (val){
-				additionalTrajectoryMenu.removeAttribute('disabled');
-			} else {
-				additionalTrajectoryMenu.setAttribute('disabled', '');
-			}
-		}}); // Enable trajectory calculation before create object
+		this.showNewObjTrajectory = new UserInput({type: 'checkbox', id: 'traj_prev_check', stateSaving: true, initState: true}); // Enable trajectory calculation before create object
 		this.newObjTrajLength = new UserInput({type: 'range', id: 'traj_calc_samples', stateSaving: true}); // Trajectory calutulation length input
 		this.newObjTrajAccuracity = new UserInput({type: 'range', id: 'traj_calc_accuracity', stateSaving: true }); // Trajectory accuracity input
 
@@ -259,22 +268,22 @@ window.onload = function(){
 						this.editMass.state = state ? -Math.abs(this.editMass.state) : Math.abs(this.editMass.state);
 						allowRender();
 						addFrameBeginTask(()=>{
-							if (scene.objArr[swch.edit_obj]) scene.objArr[swch.edit_obj].m = this.editMass.state;
+							if (scene.objArr[swch.editObjId]) scene.objArr[swch.editObjId].m = this.editMass.state;
 						});
 					}
 				}
 			},
 			onChange: ()=>{
 				addFrameBeginTask(() => {
-					if (scene.objArr[swch.edit_obj]){ scene.objArr[swch.edit_obj].m = ui.editMass.state; allowRender();}
+					if (scene.objArr[swch.editObjId]){ scene.objArr[swch.editObjId].m = ui.editMass.state; allowRender();}
 				});
 			}
 		});
 		this.editColor = new UserInput({type: 'color', id: 'col_edit', eventName: 'input', callback: (state) => addFrameBeginTask(() => {
-			if (scene.objArr[swch.edit_obj]){ scene.objArr[swch.edit_obj].color = state; allowRender();}
+			if (scene.objArr[swch.editObjId]){ scene.objArr[swch.editObjId].color = state; allowRender();}
 		}), });
 		this.editLock = new UserInput({type: 'checkbox', id: 'lck_edit_chbox', callback: (state) => addFrameBeginTask(() => {
-			if (scene.objArr[swch.edit_obj]){ scene.objArr[swch.edit_obj].lock = state; allowRender();}
+			if (scene.objArr[swch.editObjId]){ scene.objArr[swch.editObjId].lock = state; allowRender();}
 		}), });
 		// Trace settings =====================================================
 		this.tracesMode = new UserInput({type: 'radio', id: 'traj_radio_buttons', stateSaving: true, initState: 1, callback: (val, elem) => {
@@ -313,7 +322,7 @@ window.onload = function(){
 
 		// Physics menu =======================
 		this.gravitationMode = new UserInput({type: 'radio', id: 'gravit_mode_radio_buttons', stateSaving: true}); // Select gravitation mode (radio)
-		this.g = new UserInput({type: 'range', id: 'g_value', eventName: 'input', callback: (val)=>{g_value_title.innerHTML = expVal(val)}, initState: 1}); // Set gravitation (G) value
+		this.g = new UserInput({type: 'range', id: 'g_value', eventName: 'input', callback: (val, ths)=>{g_value_title.innerHTML = ths.value = expVal(val)}, initState: 1}); // Set gravitation (G) value
 		this.interactMode = new UserInput({type: 'radio', id: 'interact_radio_buttons', stateSaving: true}); // Select interactions mode
 		this.collisionMode = new UserInput({type: 'radio', id: 'collision_radio_buttons', stateSaving: true}); // Select collision mode
 
@@ -344,7 +353,7 @@ window.onload = function(){
 				renderer.canv3.style.display = background_image.style.display = 'none';
 				additionalTrajectoryOptionsExtended1.style.display = 'none';
 				renderer.allowFrameRender = true; // Render
-				this.tracesMode.state = 1; // Refresh trace mode menu
+				this.tracesMode.state = 0; // Refresh trace mode menu
 				view_settings.className += ' disabled'; // Hide view settings
 			} else {
 				renderer.ctx1.clearRect(0,0, renderer.resolutionX, renderer.resolutionY);
@@ -356,8 +365,8 @@ window.onload = function(){
 			}
 		}});
 
-		this.timeSpeed = new UserInput({type: 'manualInput', initState: 0.5, callback: (val, inpVar)=>{
-			document.querySelector('.time_speed h2').innerHTML = 'T - X' + (val * simulationSpeed);
+		this.timeSpeed = new UserInput({type: 'manualInput', initState: 1, callback: (val, inpVar)=>{
+			document.querySelector('.time_speed h2').innerHTML = 'T - X' + (val * simulationsPerFrame);
 			let changedVal = val / inpVar.prevState;
 			inpVar.changed = inpVar.changed !== undefined ? inpVar.changed * changedVal : changedVal;
 			addFrameBeginTask(()=>{ // Frame begin taks
@@ -375,7 +384,7 @@ window.onload = function(){
 	}
 	ui.init();
 
-	scene.addNewObject({x: 0, y: 0, vx: 0, vy: 0, mass: 19889, color: '#ffff00', objLck: true, callback: newObjectCreatedCallback}); // First object init
+	scene.addNewObject({x: 0, y: 0, vx: 0, vy: 0, mass: 1000, color: '#ffff00', objLck: false, callback: newObjectCreatedCallback}); // First object init
 	// pauseState = true;
 	// scene.addNewObject({x: 50, y: 0, vx: 0, vy: 0, mass: 1000, color: '#0000ff88', objLck: true, callback: newObjectCreatedCallback}); // First object init
 	// scene.addNewObject({x: innerWidth/2 + 30, y: innerHeight/2, vx: 0, vy: 0, mass: 1000, color: '#00ff0088', callback: newObjectCreatedCallback}); // First object init
@@ -392,7 +401,7 @@ window.onload = function(){
 
 	//Mouse and touches
 	let multiTouch = 0;
-	let avTouchPoint = {x: NaN, y: NaN, xd: NaN, yd: NaN};
+	let avTouchPoint = {x: null, y: null, xd: null, yd: null};
 	let mscam = true;
 
 	window.onresize = function(){
@@ -502,7 +511,6 @@ window.onload = function(){
 				camera.ay = camera.y = prev_cam_y - (avTouchPoint.y - avTouchPoint.yd)/camera.animZoom + (((window.innerHeight/2 - avTouchPoint.yd)/zm_prev)*Math.pow(Math.sqrt(zm_cff) / Math.sqrt(touchZoom), 2) - ((window.innerHeight/2 - avTouchPoint.yd)/zm_prev));
 			}
 		}
-		bgMoving();
 	})
 	// Mouse events =========================================================
 	// Mouse DOWN
@@ -579,14 +587,9 @@ window.onload = function(){
 			}
 			// Object edit select
 			if (mbut == 'edit' && swch.s_edit){
-				swch.edit_obj = scene.objectSelect();
+				swch.editObjId = scene.objectSelect();
 				swch.s_edit = false;
-				if (scene.objArr[swch.edit_obj]){
-					ui.editColor.state = scene.objArr[swch.edit_obj].color;
-					ui.editMass.state = scene.objArr[swch.edit_obj].m;
-					ui.editMass.negativeMassCheckbox.state = scene.objArr[swch.edit_obj].m < 0;
-					document.getElementById('lck_edit_chbox').checked = scene.objArr[swch.edit_obj].lock;
-				}
+				syncEditObjUi();
 			}
 			// // Object move end
 			if (mbut == 'move' && scene.objArr[mov_obj] && mov_obj !== null){
@@ -672,6 +675,28 @@ window.onload = function(){
 		}
 		bgMoving();
 	};
+
+	function syncEditObjUi(){
+		const eObj = scene.objArr[swch.editObjId];
+		if (eObj){
+			const changed = !arraysEqual([eObj.color, eObj.m, eObj.lock], [ui.editColor.state, ui.editMass.state, ui.editLock.state]);
+			if (changed && !ui.editMass.isInput){
+				setEditUiState({color: eObj.color, m: eObj.m, lock: eObj.lock});
+			}
+		} else {
+			swch.editObjId = null;
+			const changed = !arraysEqual(["#FFFFFF", 0, false], [ui.editColor.state, ui.editMass.state, ui.editLock.state]);
+			if (changed){
+				setEditUiState({color: "#FFFFFF", m: 0, lock: false});
+			}
+		}
+		function setEditUiState({color, m, lock}){
+			ui.editColor.state = color;
+			ui.editMass.state = m;
+			ui.editMass.negativeMassCheckbox.state = m < 0;
+			ui.editLock.state = lock;
+		}
+	}
 	// Background movement
 	function bgMoving(){
 		if (ui.backgroundFollowsMouse.state && ui.backgroundDarkness.state && !ui.maxPerformance.state){
@@ -749,13 +774,14 @@ window.onload = function(){
 		}
 
 		setParameterToNewObject();
+		syncEditObjUi(); // Sync edit object ui
 
 		// Set move cursor style
 		if (mouse.middleDown || mbut == 'move' || (mouse.leftDown && swch.tapCamMove)){renderer.layersDiv.style.cursor = "move";}else{renderer.layersDiv.style.cursor = "default";};
 
 		swch.tapCamMove = mbut !== 'create' && !renderer.canv2.visualSelect;
 
-		simulationDone = simulationSpeed;
+		simulationDone = simulationsPerFrame;
 		if (scene.objArr.length){
 			// Set objects radiuses
 			let maxDiameter = 0;
@@ -768,9 +794,10 @@ window.onload = function(){
 
 			// Physics calculating...
 			if (!pauseState || nextFrame){
-				scene.simulationsPerFrame = 1; // Simulations per frame (only multithread)
-				for(let i = simulationSpeed; i--;){
-					if (gpuComputeAvailable && ui.gpuCompute.state && ui.interactMode.state === '0'){
+				for(let i = simulationsPerFrame; i--;){
+					// Enable GPU compute, if GPU available, GPU computing is allowed and scene objects count is bigger than 200
+					if ((gpuComputeAvailable && ui.gpuCompute.state && scene.objArr.length > 200)
+						&& ui.interactMode.state === '0'){
 						physics.gpuComputeVelocities();
 					} else {
 						physics.physicsCalculate(); // Scene physics calculations (1 step)
@@ -847,12 +874,12 @@ window.onload = function(){
 		}
 
 		// Visualize new object mass
-		if (ui.newObjMass.event){
+		if (ui.newObjMass.isInput){
 			renderer.visObjMass(ui.newObjMass.state, ui.newObjColor.state);
 		}
 		// Visualize edit object mass
-		if (ui.editMass.event && scene.objArr[swch.edit_obj]){
-			renderer.visObjMass(ui.editMass.state, ui.editColor.state, ...renderer.crd2(scene.objArr[swch.edit_obj].x, scene.objArr[swch.edit_obj].y));
+		if (ui.editMass.isInput && scene.objArr[swch.editObjId]){
+			renderer.visObjMass(ui.editMass.state, ui.editColor.state, ...renderer.crd2(scene.objArr[swch.editObjId].x, scene.objArr[swch.editObjId].y));
 		}
 
 		renderer.allowFrameRender = false;
@@ -1017,15 +1044,15 @@ window.onload = function(){
 			}
 			// (+) Simulation speed up withoud lost accuracity. Max limit is computer performance
 			if (e.keyCode == 187 || e.keyCode == 61){
-				simulationSpeed *= 2;
-				console.log(simulationSpeed);
-				document.querySelector('.time_speed h2').innerHTML = 'T - X'+ui.timeSpeed.state*simulationSpeed;
+				simulationsPerFrame *= 2;
+				console.log(simulationsPerFrame);
+				document.querySelector('.time_speed h2').innerHTML = 'T - X'+ui.timeSpeed.state*simulationsPerFrame;
 			} else
 			// (-) Simulation speed down withoud lost accuracity. Min value is realtime
 			if (e.keyCode == 189 || e.keyCode == 173){
-				if (simulationSpeed > 1){simulationSpeed /= 2;}
-				console.log(simulationSpeed);
-				document.querySelector('.time_speed h2').innerHTML = 'T - X'+ui.timeSpeed.state*simulationSpeed;
+				if (simulationsPerFrame > 1){simulationsPerFrame /= 2;}
+				console.log(simulationsPerFrame);
+				document.querySelector('.time_speed h2').innerHTML = 'T - X'+ui.timeSpeed.state*simulationsPerFrame;
 			}
 		}
 		//Ctrl keys
@@ -1090,7 +1117,7 @@ window.onload = function(){
 				// Play
 				if (mbut == 'play'){
 					if (ui.timeSpeed.state != 1 || pauseState){ // If time speed == 1 or pause == true
-						simulationSpeed = 1;
+						simulationsPerFrame = 1;
 						pauseState = false;
 						ui.timeSpeed.state = 1;
 						document.querySelector('#pause img').setAttribute('src', 'ico/pause.png');
@@ -1125,9 +1152,9 @@ window.onload = function(){
 	}
 
 	// Buttons events
-	byClassElementsLoop('button', (buttonElement) => {
+	byClassElementsLoop('menu_button', (buttonElement) => {
 		buttonElement.addEventListener('mouseup', function(e){
-			cbut = e.target.closest('.button').getAttribute('id');
+			cbut = e.target.closest('.menu_button').getAttribute('id');
 			// console.log(cbut);
 			switch (cbut) { // Pressed button id
 				case 'select_track': // Visual select object to select camera target
@@ -1147,9 +1174,9 @@ window.onload = function(){
 					swch.s_edit = !swch.s_edit;			
 					break;
 				case 'reset_speed_btn': // Edit menu, set object velocity to 0
-					if (scene.objArr[swch.edit_obj]){
-						scene.objArr[swch.edit_obj].vx = 0;
-						scene.objArr[swch.edit_obj].vy = 0;	
+					if (scene.objArr[swch.editObjId]){
+						scene.objArr[swch.editObjId].vx = 0;
+						scene.objArr[swch.editObjId].vy = 0;	
 					}
 					break;
 				case 'select_main_obj': // Visual select object to select main object
@@ -1214,6 +1241,22 @@ window.onload = function(){
 		});
 	});
 
+	// Show or hide menu
+	byClassElementsLoop('checkbox_title_option', (element) => {
+		element.getElementsByTagName('input')[0].addEventListener('change', (e) => {
+			const titleOptionItem = e.target.closest('.checkbox_title_option');
+			if (e.target.checked){
+				titleOptionItem.removeAttribute('disabled');
+			} else {
+				titleOptionItem.setAttribute('disabled', '');
+			}
+		});
+		// Load initial state, after page is loaded
+		if (!element.getElementsByTagName('input')[0].checked) {
+			element.setAttribute('disabled', '');
+		}
+	});
+
 	let objDeletedMessageTimeout;
 
 	function close_all_menus(e){
@@ -1239,6 +1282,17 @@ window.onload = function(){
 		let sum = 0;
 		for (let val of arr){ sum += val }
 		return sum;
+	}
+
+	function arraysEqual(a, b) {
+		if (a === b) return true;
+		if (a == null || b == null) return false;
+		if (a.length !== b.length) return false;
+
+		for (let i = a.length; i--;) {
+			if (a[i] !== b[i]) return false;
+		}
+		return true;
 	}
 
 	// Get exponential value if value bigger than 1
@@ -1324,7 +1378,7 @@ window.onload = function(){
 			  	scene.objArr = file_data.objArr;
 			  	ui.interactMode.state = file_data.interactMode || 0;
 			  	ui.gravitationMode.state = file_data.gravitationMode || 1;
-			  	ui.g.state = file_data.g ? file_data.g : 1;
+			  	ui.g.state = file_data.g || 1;
 			  	ui.collisionMode.state = file_data.collisionMode || 0;
 			  	ui.timeSpeed.state = file_data.timeSpeed ? file_data.timeSpeed : 1;
 			  	scene.show_obj_count();

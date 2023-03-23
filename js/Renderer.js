@@ -90,16 +90,39 @@ export default class Renderer {
 	//Draw objects
 	renderObjects(){
 		// console.log('Render objects');
-		let scn = this.scene;
-		if (ui.tracesMode.state === '1'){
+		const scn = this.scene;
+
+		const tracesMode = +ui.tracesMode.state;
+		const maxPerformance = ui.maxPerformance.state;
+
+		const {
+			ctx1: c1,
+			ctx2: c2,
+			ctx3: c3
+		} = this;
+
+		// Trace mode 2 UI
+		const traceMode2Particles = ui.traceMode2Particles.state;
+		const traceMode2Trembling = ui.traceMode2Trembling.state;
+		const traceMode2Length = ui.traceMode2Length.state;
+
+		// Trace mode 3 UI
+		const traceMode3Width = ui.traceMode3Width.state;
+		const traceMode3Quality = ui.traceMode3Quality.state;
+		const traceMode3Length = ui.traceMode3Length.state;
+
+		if (tracesMode === 1){
 			this.tracesMode1Wiping();
 		} else {
 			this.clearLayer3();
 		}
-		if (!ui.maxPerformance.state) this.clearLayer1();
-		// Camera target velocity
-		const targetVx = scn.objArr[this.camera.Target] ? scn.objArr[this.camera.Target].vx : 0;
-		const targetVy = scn.objArr[this.camera.Target] ? scn.objArr[this.camera.Target].vy : 0;
+
+		if (!maxPerformance) this.clearLayer1();
+
+		// If max performance is enabled and traces mode is 1
+		const maxPerformanceAndTrcMd1 = maxPerformance === true && tracesMode === 1;
+
+
 		for (let objectId = scn.objArr.length; objectId--;){
 			let obj = scn.objArr[objectId]; // Object to draw
 
@@ -121,163 +144,188 @@ export default class Renderer {
 				enoughObjMove = dist(screenX, screenY, obj.prevScreenX, obj.prevScreenY) > 0.3 ? true : false;
 			}
 
+			const traceDrawRadius = Math.min(drawRadius, obj.prevScreenR);
+
 			// If object out of screen space
-			let isObjOutOfScreen = false;
-			let isPrevPosObjOutOfScreen = false;
-			const screenPrevPos = this.crd2(obj.x - obj.vx, obj.y - obj.vy);
-			if (screenX < 0 - drawRadius || screenX > innerWidth + drawRadius || screenY < 0 - drawRadius || screenY > innerHeight + drawRadius){
-				isObjOutOfScreen = true; // If out of screen
-			}
-			if (screenPrevPos[0] < 0 - drawRadius || screenPrevPos[0] > innerWidth + drawRadius || screenPrevPos[1] < 0 - drawRadius || screenPrevPos[1] > innerHeight + drawRadius){
-				isPrevPosObjOutOfScreen = true; // If previous position is out of screen
-			}
+			const isObjOutOfScreen = this.isOutOfScreen(screenX, screenY, drawRadius);
+			const isPrevPosObjOutOfScreen = this.isOutOfScreen(obj.prevScreenX, obj.prevScreenY, traceDrawRadius);
 
 			const obCol = obj.color; // Object draw color
 
-			// Fix object anti-aliasing when maxPerformance is enabled
-			if (ui.tracesMode.state == 1 
-				&& ui.maxPerformance.state 
-				&& !enoughObjMove 
-				&& !isObjOutOfScreen
-			){	
-				this.ctx1.save();
-				this.ctx1.beginPath();
-				this.ctx1.fillStyle = '#FFF';
-				this.ctx1.globalCompositeOperation = 'destination-out';
-				this.ctx1.arc(screenX, screenY, drawRadius + 0.4, 0, 7);
-				this.ctx1.fill();
-				this.ctx1.restore();
-			}
 
 			let traceLength = false;
 			let traceResolution = 1;
 
-			const traceDrawRadius = Math.min(drawRadius, obj.prevScreenR);
-
 			// Traces mode 1 =====
-			if (ui.tracesMode.state == 1 
-				&& (enoughObjMove || (ui.maxPerformance.state === true && ui.tracesMode.state == 1 && enoughObjMove))
-				&& !(isObjOutOfScreen && isPrevPosObjOutOfScreen)
-			){
-				let canv = ui.maxPerformance.state ? this.ctx1 : this.ctx3;
-				canv.strokeStyle = obCol;
-				canv.lineWidth = traceDrawRadius * 2;
-				canv.lineCap = traceDrawRadius > 1 ? 'round' : 'butt';
-				canv.beginPath();
-				canv.moveTo(obj.prevScreenX, obj.prevScreenY);
-				canv.lineTo(screenX, screenY);
-				canv.stroke();
-				canv.lineCap = 'butt';
-			} else
-			// Traces mode 2 =====
-			if (ui.tracesMode.state == 2 && !obj.lock){
-				let randKff = 0.8;
-				let TLength = obj.trace.length; //Length of trace array
-				let prev_randX = 0, prev_randY = 0;
-				let randX = 0, randY = 0;
-				traceLength = Math.round(Math.pow(8, ui.traceMode2Length.state));
-
-				this.ctx1.fillStyle = obCol;
-				this.ctx1.strokeStyle = obCol;
-				this.ctx1.globalCompositeOperation = 'destination-over';
-				if (obj.trace[0]){
-					this.ctx1.lineWidth = drawRadius*2;
-					this.ctx1.beginPath();
-					this.ctx1.moveTo(screenX + randX, screenY + randY);
-					this.ctx1.lineTo(this.crd(obj.trace[0][0], 'x')+prev_randX, this.crd(obj.trace[0][1], 'y')+prev_randY);
-					this.ctx1.stroke();				
+			if (tracesMode === 1){
+				// Fix object anti-aliasing when maxPerformance is enabled
+				if (maxPerformance
+					&& !enoughObjMove 
+					&& !isObjOutOfScreen
+				){	
+					c1.save();
+					c1.beginPath();
+					c1.fillStyle = '#FFF';
+					c1.globalCompositeOperation = 'destination-out';
+					c1.arc(screenX, screenY, drawRadius + 0.4, 0, 7);
+					c1.fill();
+					c1.restore();
 				}
-				for (let i in obj.trace){
-					let itr = i-1;
-					itr = itr < 0?0:itr;
-					prev_randX = randX; prev_randY = randY;
-					let rnd_lim = drawRadius*(i/TLength)*randKff;
-					if (ui.traceMode2Trembling.state === true || ui.traceMode2Particles.state === true){
-						randX = scn.getRandomArbitrary(-rnd_lim, rnd_lim);
-						randY = scn.getRandomArbitrary(-rnd_lim, rnd_lim);
-					}
-					this.ctx1.lineWidth = drawRadius * (1-i/TLength) * 1.8;
-					// Particles
-					if (ui.traceMode2Particles.state){
-						this.ctx1.beginPath();
-						this.ctx1.translate(
-							Math.floor(this.crd(obj.trace[itr][0],'x')+randX*2), 
-							Math.floor(this.crd(obj.trace[itr][1],'y')+randY*2));
-						this.ctx1.rotate(Math.random()*3.14);
-						this.ctx1.fillRect(0-this.ctx1.lineWidth/2, 0-this.ctx1.lineWidth/2, this.ctx1.lineWidth, this.ctx1.lineWidth);
-						this.ctx1.fill();
-						this.ctx1.resetTransform();
-					}
-					// Line
-					if (ui.traceMode2Trembling.state === false) randX = randY = 0;
-					this.ctx1.globalAlpha = (TLength-i/1.5)/TLength;
-					this.ctx1.beginPath();
-					this.ctx1.moveTo(this.crd(obj.trace[i][0], 'x')+randX, this.crd(obj.trace[i][1], 'y')+randY);
-					this.ctx1.lineTo(this.crd(obj.trace[itr][0], 'x')+prev_randX, this.crd(obj.trace[itr][1], 'y')+prev_randY);
-					this.ctx1.stroke();
-					this.ctx1.globalAlpha = 1;
+				// Draw trace
+				if ((enoughObjMove || maxPerformanceAndTrcMd1)
+					&& !(isObjOutOfScreen && isPrevPosObjOutOfScreen)
+				){
+					let canv = maxPerformance ? c1 : c3;
+					canv.strokeStyle = obCol;
+					canv.lineWidth = traceDrawRadius * 2;
+					canv.lineCap = traceDrawRadius > 1 ? 'round' : 'butt';
+					canv.beginPath();
+					canv.moveTo(obj.prevScreenX, obj.prevScreenY);
+					canv.lineTo(screenX, screenY);
+					canv.stroke();
+					canv.lineCap = 'butt';
 				}
-				this.ctx1.globalCompositeOperation = 'source-over';
-			} else
-			// Traces mode 3 =====
-			if (ui.tracesMode.state == 3 && !obj.lock){
-				traceResolution = 61 - Math.round(Math.pow(ui.traceMode3Quality.state, 1/8)*60);
-				traceLength = Math.ceil(scn.expVal(ui.traceMode3Length.state) / traceResolution);
-				this.ctx1.strokeStyle = obCol;
-				this.ctx1.lineWidth = Math.min(drawRadius*1.7, Math.pow(ui.traceMode3Width.state, 10));
-				this.ctx1.globalCompositeOperation = 'destination-over';
-				if (obj.trace.length > 0){
-					// Smooth the end cut of the trace
-					if (obj.trace.length === traceLength && !pauseState){
-						let point = obj.trace[obj.trace.length-1];
-						let pPoint = obj.trace[obj.trace.length-2];
-						// The difference between the last and pre-last trace array points divided by traceResolution
-						point[2] = point[2] === undefined ? (point[0] - pPoint[0]) / traceResolution : point[2];
-						point[3] = point[3] === undefined ? (point[1] - pPoint[1]) / traceResolution : point[3];
-						point[0] = point[0] - point[2];
-						point[1] = point[1] - point[3];
-					}
-					// Draw line
-					// Round end of trace if the line width is enough
-					if (this.ctx1.lineWidth > 3) {
-						this.ctx1.lineCap = 'round';
-						this.ctx1.lineJoin = 'round';
-					}
-					this.ctx1.beginPath();
-					this.ctx1.moveTo(this.crd(obj.x, 'x'), this.crd(obj.y, 'y'));
-					for (let i in obj.trace){
-						let itr = i;
-						this.ctx1.lineTo(this.crd(obj.trace[itr][0], 'x'), this.crd(obj.trace[itr][1], 'y'));
-					}
-					this.ctx1.stroke();
-					this.ctx1.lineCap = 'butt';
-					this.ctx1.lineJoin = 'bevel';
-				}
-				// Separate the traces of objects
-				this.ctx1.globalCompositeOperation = 'destination-out';
-				this.ctx1.fillStyle = "#ffffff";
-				this.ctx1.beginPath();
-				this.ctx1.arc(screenX, screenY, drawRadius+1.5, 0, 7);
-				this.ctx1.fill();
-				this.ctx1.globalCompositeOperation = 'source-over';
 			}
+			// Traces mode 2 =====
+			else if (tracesMode === 2){
+				if (!obj.lock){
+					let randKff = 0.8;
+					const TLength = obj.trace.length; // Length of trace array
+					let prev_randX = 0, prev_randY = 0;
+					let randX = 0, randY = 0;
+					traceLength = Math.round(Math.pow(8, traceMode2Length));
+
+					c1.save(); // Save canvas
+
+					c1.fillStyle = obCol;
+					c1.strokeStyle = obCol;
+					c1.globalCompositeOperation = 'destination-over';
+					if (obj.trace[0]){
+						c1.lineWidth = drawRadius*2;
+						c1.beginPath();
+						c1.moveTo(screenX + randX, screenY + randY);
+						c1.lineTo(this.crd(obj.trace[0][0], 'x')+prev_randX, this.crd(obj.trace[0][1], 'y')+prev_randY);
+						c1.stroke();				
+					}
+					for (let i = obj.trace.length; i--;){
+						let itr = i-1;
+						itr = itr < 0 ? 0 : itr;
+
+						// Set prev random point
+						prev_randX = randX; prev_randY = randY;
+
+						// Random limit
+						const rnd_lim = drawRadius*(i/TLength)*randKff;
+						if (traceMode2Trembling === true || traceMode2Particles === true){
+							randX = scn.getRandomArbitrary(-rnd_lim, rnd_lim);
+							randY = scn.getRandomArbitrary(-rnd_lim, rnd_lim);
+						}
+
+						// Line width
+						const lineWidth = drawRadius * (1-i/TLength) * 1.8;
+
+						// Point screen position
+						const [point1ScreenX, point1ScreenY] = this.crd2(obj.trace[i][0], obj.trace[i][1]);
+						const [point2ScreenX, point2ScreenY] = this.crd2(obj.trace[itr][0], obj.trace[itr][1]);
+
+						// Is point out of screen
+						const point1OutOfScreen = this.isOutOfScreen(point1ScreenX, point1ScreenY);
+						const point2OutOfScreen = this.isOutOfScreen(point2ScreenX, point2ScreenY);
+
+						// Particles drawing
+						if (traceMode2Particles 
+							&& i % 4 === 0 // Draw particle in every 5-th point in trace array
+							&& drawRadius > 1.5
+							&& !point2OutOfScreen
+						){
+							c1.beginPath();
+							c1.arc(
+								Math.floor(point2ScreenX + randX * 2), 
+								Math.floor(point2ScreenY + randY * 2),
+								lineWidth / 2,
+								0,
+								7
+							);
+							c1.fill();
+							c1.resetTransform();
+						}
+						// Line drawing
+						if (!(point1OutOfScreen === true && point2OutOfScreen === true)){ // If both points not out of screen
+							c1.lineWidth = lineWidth;
+							if (traceMode2Trembling === false) randX = randY = 0;
+							c1.globalAlpha = (TLength-i/1.5)/TLength;
+							c1.beginPath();
+							c1.moveTo(point1ScreenX + randX, point1ScreenY + randY);
+							c1.lineTo(point2ScreenX + prev_randX, point2ScreenY + prev_randY);
+							c1.stroke();
+							c1.globalAlpha = 1;
+						}
+					}
+					c1.restore(); // Restore canvas
+				}
+			}
+			// Traces mode 3 =====
+			else if (tracesMode === 3){
+				if (!obj.lock){
+					traceResolution = 61 - Math.round(Math.pow(traceMode3Quality, 1/8)*60);
+					traceLength = Math.ceil(scn.expVal(traceMode3Length) / traceResolution);
+					c1.strokeStyle = obCol;
+					c1.lineWidth = Math.min(drawRadius*1.7, Math.pow(traceMode3Width, 10));
+					c1.globalCompositeOperation = 'destination-over';
+					if (obj.trace.length > 0){
+						// Smooth the end cut of the trace
+						if (obj.trace.length === traceLength && !pauseState){
+							let point = obj.trace[obj.trace.length-1];
+							let pPoint = obj.trace[obj.trace.length-2];
+							// The difference between the last and pre-last trace array points divided by traceResolution
+							point[2] = point[2] === undefined ? (point[0] - pPoint[0]) / traceResolution : point[2];
+							point[3] = point[3] === undefined ? (point[1] - pPoint[1]) / traceResolution : point[3];
+							point[0] = point[0] - point[2];
+							point[1] = point[1] - point[3];
+						}
+						// Draw line
+						// Round end of trace if the line width is enough
+						if (c1.lineWidth > 3) {
+							c1.lineCap = 'round';
+							c1.lineJoin = 'round';
+						}
+						c1.beginPath();
+						c1.moveTo(this.crd(obj.x, 'x'), this.crd(obj.y, 'y'));
+						for (let i in obj.trace){
+							let itr = i;
+							c1.lineTo(this.crd(obj.trace[itr][0], 'x'), this.crd(obj.trace[itr][1], 'y'));
+						}
+						c1.stroke();
+						c1.lineCap = 'butt';
+						c1.lineJoin = 'bevel';
+					}
+					// Separate the traces of objects
+					c1.globalCompositeOperation = 'destination-out';
+					c1.fillStyle = "#ffffff";
+					c1.beginPath();
+					c1.arc(screenX, screenY, drawRadius+1.5, 0, 7);
+					c1.fill();
+					c1.globalCompositeOperation = 'source-over';
+				}
+			}
+
 			if (!isObjOutOfScreen) {
-				if (!(ui.maxPerformance.state === true && ui.tracesMode.state == 1 && enoughObjMove)){
-					this.ctx1.fillStyle = obCol;
-					this.ctx1.beginPath();
-					this.ctx1.arc(screenX, screenY, drawRadius, 0, 7);
-					this.ctx1.fill();
+				if (!maxPerformanceAndTrcMd1){
+					c1.fillStyle = obCol;
+					c1.beginPath();
+					c1.arc(screenX, screenY, drawRadius, 0, 7);
+					c1.fill();
 				}
 
 				if (obj.m < 0){
-					this.ctx1.strokeStyle = "#000";
-					this.ctx1.lineWidth = drawRadius/10;
-					this.ctx1.beginPath();
-					this.ctx1.arc(screenX, screenY, drawRadius*0.6, 0, 7);
+					c1.strokeStyle = "#000";
+					c1.lineWidth = drawRadius/10;
+					c1.beginPath();
+					c1.arc(screenX, screenY, drawRadius*0.6, 0, 7);
 
-					this.ctx1.moveTo(screenX-drawRadius*0.4, screenY);
-					this.ctx1.lineTo(screenX+drawRadius*0.4, screenY)
-					this.ctx1.stroke();
+					c1.moveTo(screenX-drawRadius*0.4, screenY);
+					c1.lineTo(screenX+drawRadius*0.4, screenY)
+					c1.stroke();
 				}
 			}
 
@@ -305,8 +353,8 @@ export default class Renderer {
 		let offsY = -30;
 		if (['mobile', 'tablet'].includes(getDeviceType()) ){ offsX = -25; offsY = -70; } // If device is mobile or tablet
 		Object.assign(launchPowerLabel.style, {left: (mouse.x+offsX)+'px', top: (mouse.y+offsY)+'px', display: 'block', color: ui.newObjColor.state});
-		launchPowerLabel.innerHTML = Math.round(dist(mouse.leftDownX, mouse.leftDownY, mouse.x, mouse.y) * this.scene.expVal(ui.launchForce.state) * 100)/100;
-		let D = this.getScreenRad(ui.newObjMass.state)*2;
+		launchPowerLabel.innerHTML = Math.round(Math.hypot(newObjParams.vx, newObjParams.vy)*10000)/1000;
+		const D = this.getScreenRad(ui.newObjMass.state)*2;
 
 		// Gradient
 		let gradient = this.ctx2.createLinearGradient(
@@ -389,6 +437,10 @@ export default class Renderer {
 				0, 7);
 			this.ctx2.stroke();
 		}
+	}
+
+	isOutOfScreen(x, y, r = 0){
+		return x + r < 0 || x - r > this.resolutionX || y + r < 0 || y - r > this.resolutionY;
 	}
 
 	// Visualize new object mass

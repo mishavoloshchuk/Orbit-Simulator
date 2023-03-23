@@ -41,12 +41,17 @@
 	"select_main_object_button": "Select main object",
 
 	"creation_parameters": "Creation options",
+	"object_creation_relative_to": "Object creation relative to:",
+	"center_of_mass": "Center of mass",
+	"main_object": "Main object",
+	"movement_compencation": "Movement compencation",
 	"circular_orbit_on_click": "Circular orbit on left click",
 	"clockwise_input": "Clockwise",
-	"pause_while_new_object_creates": "Pause when creating an object",
-	"changed_with_the_mouse_wheel_when_creating_an_object": "Changed by the mouse wheel when creating an object",
 	"launch_speed": "Launch speed:",
+	"changed_with_the_mouse_wheel_when_creating_an_object": "Changed by the mouse wheel when creating an object",
+	"pause_while_new_object_creates": "Pause when creating an object",
 	"show_distance_checkbox": "Show distance",
+
 
 	"trajectory_calculate_checkbox": "Calculate trajectories",
 	"affects_the_performance_when_calculating_the_trajectory": "Affects the performance when calculating trajectories",
@@ -73,6 +78,7 @@
 
 	"extra_options": "Extra options",
 
+	"disappearance_time": "Disappearance time:",
 	"trace_opacity": "Opacity:",
 	"trace_blur": "Blur:",
 	"clear_traces": "Clear traces",

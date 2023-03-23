@@ -41,12 +41,17 @@
 	"select_main_object_button": "Выбрать родительский объект",
 
 	"creation_parameters": "Параметры создания",
+	"object_creation_relative_to": "Создание объекта относительно:",
+	"center_of_mass": "Центра масс",
+	"main_object": "Главного объекта",
+	"movement_compencation": "Компенсация движения",
 	"circular_orbit_on_click": "Клик - круговая орбита",
 	"clockwise_input": "По часовой",
-	"pause_while_new_object_creates": "Пауза при создании объекта",
-	"changed_with_the_mouse_wheel_when_creating_an_object": "Изменяется колесом мыши при создании объекта",
 	"launch_speed": "Скорость запуска:",
+	"changed_with_the_mouse_wheel_when_creating_an_object": "Изменяется колесом мыши при создании объекта",
+	"pause_while_new_object_creates": "Пауза при создании объекта",
 	"show_distance_checkbox": "Показывать расстояние",
+
 
 	"trajectory_calculate_checkbox": "Прощет траекторий",
 	"affects_the_performance_when_calculating_the_trajectory": "Влияет на быстродействие, при расчете траектории",
@@ -73,6 +78,7 @@
 
 	"extra_options": "Дополнительные параметры",
 
+	"disappearance_time": "Время исчезновения:",
 	"trace_opacity": "Нерозрачность:",
 	"trace_blur": "Размытие:",
 	"clear_traces": "Очистить следы",
