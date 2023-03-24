@@ -74,16 +74,17 @@ window.onload = function(){
 
 	this.gpuComputeAvailable = [GPU.isGPUSupported, GPU.isSinglePrecisionSupported, GPU.isWebGLSupported].every(exp => exp);
 
-	var mbut = 'create';
-	var menu_state = true; // Menu state (Opened/Closed)
+	let mbut = 'create';
+	let menu_state = true; // Menu state (Opened/Closed)
 	if (sessionStorage['mbut'] && sessionStorage['menu_state']){
 		mbut = sessionStorage['mbut'];
 		menu_state = sessionStorage['menu_state'] == 'true';
 	}
+	setMenuStateIcon(mbut);
 	//Buttons
-	var cbut = '';
-	var chck = '';
-	var pfb = mbut;
+	let cbut = '';
+	let chck = '';
+	let pfb = mbut;
 
 	let anyTextInputHasFocus = false;
 
@@ -106,28 +107,24 @@ window.onload = function(){
 	}
 
 	// Camera touch control
-	var prev_cam_x = 0;
-	var prev_cam_y = 0;
-	var zm_prev = 1;
-	var zm_cff = null;
+	let prev_cam_x = 0;
+	let prev_cam_y = 0;
+	let zm_prev = 1;
+	let zm_cff = null;
 
 	//Debug
-	this.simulationsPerFrame = 1;
 	this.maxFPS = false;
 	this.nextFrame = false;
-
-	this.simulationDone = simulationsPerFrame;
 
 	// FPS indicator init
 	this.fpsIndicator = new IndicateFPS();
 
 	// Scene init
 	this.scene = new Scene();
+	scene.frame = frame;
 
 	// Init camera
 	this.camera = new Camera();
-
-	scene.frame = frame;
 
 	// Physics init
 	this.physics = new Physics(scene);
@@ -139,6 +136,7 @@ window.onload = function(){
 	this.trajectoryPreview = new TrajectoryPreview({scene: scene, renderer: renderer, physics: physics, camera: camera});
 
 	this.pauseState = false; // Global pause state
+	this.simulationsPerFrame = 1; // Physics simulations per one frame
 
 	// After new object created function
 	let newObjectCreatedCallback = function() {
@@ -147,7 +145,7 @@ window.onload = function(){
 		if (ui.newObjRandColor.state) ui.newObjColor.state = scene.randomColor();
 	}
 
-	var switcher = {device: 'desktop',
+	const switcher = {device: 'desktop',
 		visT: false}; // Collisions: repulsion merge none
 
 	this.swch = {
@@ -159,7 +157,7 @@ window.onload = function(){
 		tapCamMove: false
 	};
 
-	var menu_names = {create: 'menu_options', delete: 'del_menu_options', edit: 'edit_menu',
+	const menu_names = {create: 'menu_options', delete: 'del_menu_options', edit: 'edit_menu',
 		help: 'help_menu', settings: 'settings_menu', camera: 'camera_menu', trajectory: 'traj_menu',
 		world_settings: 'world_settings_menu'}
 
@@ -385,12 +383,6 @@ window.onload = function(){
 	ui.init();
 
 	scene.addNewObject({x: 0, y: 0, vx: 0, vy: 0, mass: 1000, color: '#ffff00', objLck: false, callback: newObjectCreatedCallback}); // First object init
-	// pauseState = true;
-	// scene.addNewObject({x: 50, y: 0, vx: 0, vy: 0, mass: 1000, color: '#0000ff88', objLck: true, callback: newObjectCreatedCallback}); // First object init
-	// scene.addNewObject({x: innerWidth/2 + 30, y: innerHeight/2, vx: 0, vy: 0, mass: 1000, color: '#00ff0088', callback: newObjectCreatedCallback}); // First object init
-	// scene.addNewObject({x: innerWidth/2 - 30, y: innerHeight/2, vx: 0, vy: 0, mass: 1000, color: '#ff000088', callback: newObjectCreatedCallback}); // First object init
-
-	change_state(mbut);
 
 	function menu_open_restore(){
 		if (menu_state){
@@ -605,7 +597,7 @@ window.onload = function(){
 						scene.addNewObject(newObjParams);
 					});
 				}
-				var mort = setTimeout(menu_open_restore, 200);
+				let mort = setTimeout(menu_open_restore, 200);
 				if (ui.pauseWhenCreatingObject.state){
 					pauseState = ui.pauseWhenCreatingObject.prevPauseState;
 				}
@@ -750,11 +742,7 @@ window.onload = function(){
 			if (!frameInterval) frameInterval = setInterval(()=>{frame(); frameControl();}, 1000/maxFPS);
 		} else {
 			clearInterval(frameInterval);
-			if ( !scene.workersJobDone ) { // If workers job done, render frame
-				frame();
-			} else { // If workers are still working, allow them to call the frame (if fps < 60)
-				allowCompute = true;
-			}
+			frame();
 			window.requestAnimationFrame(frameControl);
 		}
 	}
@@ -762,12 +750,11 @@ window.onload = function(){
 		// Measure FPS
 		fpsIndicator.measure();
 		// Run all functions from frameTasks array
-		if (!scene.workersJobDone){
-			frameTasks.forEach((task)=>{
-				task.func(...task.args);
-			});
-			frameTasks = []; // Clear frameTasks array
-		}
+		frameTasks.forEach((task)=>{
+			task.func(...task.args);
+		});
+		frameTasks = []; // Clear frameTasks array
+
 		// Select object to orbit
 		if (!scene.objArr[scene.objIdToOrbit]){
 			scene.objIdToOrbit = scene.objectSelect('biggest');		
@@ -781,7 +768,6 @@ window.onload = function(){
 
 		swch.tapCamMove = mbut !== 'create' && !renderer.canv2.visualSelect;
 
-		simulationDone = simulationsPerFrame;
 		if (scene.objArr.length){
 			// Set objects radiuses
 			let maxDiameter = 0;
@@ -901,33 +887,34 @@ window.onload = function(){
 	//addObjects(100);
 
 	// Show distance to main object
-	function vis_distance(obj_cord, col = '#888888', targ_obj = scene.objIdToOrbit){
-		if (scene.objArr[targ_obj]){
-			let obCoords = [scene.objArr[targ_obj].x, scene.objArr[targ_obj].y];
-			let size = dist(obj_cord[0], obj_cord[1], ...renderer.crd2(obCoords[0], obCoords[1]));
-			if (size > renderer.getScreenRad(scene.objArr[targ_obj].m)){
-				renderer.ctx2.strokeStyle = col;
-				renderer.ctx2.lineWidth = 2;
+	function vis_distance(obj_cord, color = '#888888', objId = scene.objIdToOrbit){
+		const tObj = scene.objArr[objId];
+		if (tObj){
+			const radius = dist(obj_cord[0], obj_cord[1], ...renderer.crd2(tObj.x, tObj.y));
+			const ctx = renderer.ctx2;
+			if (radius > renderer.getScreenRad(tObj.m)){
+				ctx.strokeStyle = color;
+				ctx.lineWidth = 2;
 				// Line
-				renderer.ctx2.beginPath();
-				renderer.ctx2.moveTo(obj_cord[0], obj_cord[1]);
-				renderer.ctx2.lineTo(...renderer.crd2(obCoords[0], obCoords[1]));
-				renderer.ctx2.stroke();
+				ctx.beginPath();
+				ctx.moveTo(obj_cord[0], obj_cord[1]);
+				ctx.lineTo(...renderer.crd2(tObj.x, tObj.y));
+				ctx.stroke();
 				// Circle
-				renderer.ctx2.lineWidth = 0.5;
-				renderer.ctx2.beginPath();
-				renderer.ctx2.arc(...renderer.crd2(obCoords[0], obCoords[1]), size, 0, 7);
-				renderer.ctx2.stroke();
+				ctx.lineWidth = 0.5;
+				ctx.beginPath();
+				ctx.arc(...renderer.crd2(tObj.x, tObj.y), radius, 0, 7);
+				ctx.stroke();
 				// Points
-				renderer.ctx2.beginPath();
-				renderer.ctx2.fillStyle = col;
-				renderer.ctx2.arc(...renderer.crd2(obCoords[0], obCoords[1]), 3, 0, 7);
-				renderer.ctx2.arc(obj_cord[0], obj_cord[1], 3, 0, 7);
-				renderer.ctx2.fill();
-				renderer.ctx2.beginPath();
+				ctx.beginPath();
+				ctx.fillStyle = color;
+				ctx.arc(...renderer.crd2(tObj.x, tObj.y), 3, 0, 7);
+				ctx.arc(obj_cord[0], obj_cord[1], 3, 0, 7);
+				ctx.fill();
+				ctx.beginPath();
 
-				Object.assign(launchPowerLabel.style, {left: `calc(${mouse.x}px + 1em)`, top: `calc(${mouse.y}px - 1em)`, display: 'block', color: col});
-				launchPowerLabel.innerHTML = Math.round(size/camera.animZoom*1000)/1000;
+				Object.assign(launchPowerLabel.style, {left: `calc(${mouse.x}px + 1em)`, top: `calc(${mouse.y}px - 1em)`, display: 'block', color: color});
+				launchPowerLabel.innerHTML = Math.round(radius / camera.animZoom*1000)/1000;
 			} else {
 				if (!mouse.leftDown){
 					launchPowerLabel.style.display = 'none';	
@@ -950,7 +937,7 @@ window.onload = function(){
 		}
 		// Change the launch force when mouse wheel spins
 		if (mouse.leftDown && swch.allowObjCreating) {
-			let launchForceChangeValue = 0.1;
+			const launchForceChangeValue = 0.1;
 			if (!mouse.middleDown){
 				if (e.deltaY > 0){
 					ui.launchForce.state = ui.launchForce.state > 0 ? ui.launchForce.state - launchForceChangeValue : 0;
@@ -1080,59 +1067,57 @@ window.onload = function(){
 
 	let noMenuBtns = ['timedown', 'play', 'pause', 'timeup'];
 	// Menu buttons handler
-	byClassElementsLoop('btn', (btnElement) => {
-		btnElement.addEventListener('click', function(e){
-			// console.log(e.target.closest('.btn').getAttribute('id'));
-			pfb = mbut; // Prev clicked menu button
-			let btn_elem = e.target.closest('.btn');
-			mbut = btn_elem.getAttribute('id'); // Clicked menu
-			let btn_id = mbut;
-			// Menu buttons
-			if (!noMenuBtns.includes(btn_id)){
-				if (menu_state && btn_id == pfb){
-					byClassElementsLoop(menu_names[mbut], (el) => { el.style.display = 'none' });
-				}else{
-					close_all_menus();
-					byClassElementsLoop(menu_names[mbut], (el) => { el.style.display = 'inline-block' });
-				}
-				menu_state = !menu_state;
-				change_state(mbut);
-			} else { // Time controls
-				// Change time speed
-				if (mbut == 'timedown' || mbut == 'timeup'){
-					ui.timeSpeed.state *= mbut == 'timedown' ? 0.5 : 2;
-				} else
-				// Pause
-				if (mbut == 'pause'){
-					let img_name = pauseState ? 'pause' : 'play';
-					if (pauseState){
-						change_state('play');
-						setTimeout(function(){change_state(pfb);}, 500);			
-					} else {
-						change_state('pause');	
-					}
-					pauseState = !pauseState;
-					btn_elem.querySelector('img').setAttribute('src', 'ico/'+img_name+'.png');
-				} else
-				// Play
-				if (mbut == 'play'){
-					if (ui.timeSpeed.state != 1 || pauseState){ // If time speed == 1 or pause == true
-						simulationsPerFrame = 1;
-						pauseState = false;
-						ui.timeSpeed.state = 1;
-						document.querySelector('#pause img').setAttribute('src', 'ico/pause.png');
-						change_state('restore');
-						setTimeout(function(){change_state(pfb);}, 500);
-					}
-				}		
+	document.getElementById("navigation_menu").addEventListener('click', function(e){
+		// console.log(e.target.closest('.btn').getAttribute('id'));
+		pfb = mbut; // Prev clicked menu button
+		let btn_elem = e.target.closest('.btn');
+		mbut = btn_elem.getAttribute('id'); // Clicked menu
+		let btn_id = mbut;
+		// Menu buttons
+		if (!noMenuBtns.includes(btn_id)){
+			if (menu_state && btn_id == pfb){
+				byClassElementsLoop(menu_names[mbut], (el) => { el.style.display = 'none' });
+			}else{
+				close_all_menus();
+				byClassElementsLoop(menu_names[mbut], (el) => { el.style.display = 'inline-block' });
 			}
-			if (noMenuBtns.includes(mbut)) mbut = pfb;
-			swch.allowObjCreating = mbut === 'create' && !swch.s_mainObj; // Allow object creating if menu is "Creation menu"
-			if (ui.showDistanceFromCursorToMainObj.state) renderer.clearLayer2();
+			menu_state = !menu_state;
+			setMenuStateIcon(mbut);
+		} else { // Time controls
+			// Change time speed
+			if (mbut == 'timedown' || mbut == 'timeup'){
+				ui.timeSpeed.state *= mbut == 'timedown' ? 0.5 : 2;
+			} else
+			// Pause
+			if (mbut == 'pause'){
+				let img_name = pauseState ? 'pause' : 'play';
+				if (pauseState){
+					setMenuStateIcon('play');
+					setTimeout(function(){setMenuStateIcon(pfb);}, 500);			
+				} else {
+					setMenuStateIcon('pause');	
+				}
+				pauseState = !pauseState;
+				btn_elem.querySelector('img').setAttribute('src', 'ico/'+img_name+'.png');
+			} else
+			// Play
+			if (mbut == 'play'){
+				if (ui.timeSpeed.state != 1 || pauseState){ // If time speed == 1 or pause == true
+					simulationsPerFrame = 1;
+					pauseState = false;
+					ui.timeSpeed.state = 1;
+					document.querySelector('#pause img').setAttribute('src', 'ico/pause.png');
+					setMenuStateIcon('restore');
+					setTimeout(function(){setMenuStateIcon(pfb);}, 500);
+				}
+			}		
+		}
+		if (noMenuBtns.includes(mbut)) mbut = pfb;
+		swch.allowObjCreating = mbut === 'create' && !swch.s_mainObj; // Allow object creating if menu is "Creation menu"
+		if (ui.showDistanceFromCursorToMainObj.state) renderer.clearLayer2();
 
-			sessionStorage['mbut'] = mbut;
-			sessionStorage['menu_state'] = menu_state;
-		});
+		sessionStorage['mbut'] = mbut;
+		sessionStorage['menu_state'] = menu_state;
 	});
 
 	background_image.onerror = function(){
@@ -1152,74 +1137,69 @@ window.onload = function(){
 	}
 
 	// Buttons events
-	byClassElementsLoop('menu_button', (buttonElement) => {
-		buttonElement.addEventListener('mouseup', function(e){
-			cbut = e.target.closest('.menu_button').getAttribute('id');
-			// console.log(cbut);
-			switch (cbut) { // Pressed button id
-				case 'select_track': // Visual select object to select camera target
-					if (swch.s_track){
-						swch.s_track = false;
-					} else {
-						swch.s_track = true;
-					}
-					break;
-				case 'clear_camera_settings': // Restore camera defaults
-					camera.setTarget(); // Unset camera target
-					camera.x = 0; camera.y = 0; // Set default camera position
-					camera.zoom = 1; // Set default camera zoom value
-					zm_prev = 1;
-					break;
-				case 'select_edit_obj': // Visual select object to select edit object
-					swch.s_edit = !swch.s_edit;			
-					break;
-				case 'reset_speed_btn': // Edit menu, set object velocity to 0
-					if (scene.objArr[swch.editObjId]){
-						scene.objArr[swch.editObjId].vx = 0;
-						scene.objArr[swch.editObjId].vy = 0;	
-					}
-					break;
-				case 'select_main_obj': // Visual select object to select main object
-					swch.allowObjCreating = swch.s_mainObj;
-					swch.s_mainObj = !swch.s_mainObj;
-					break;
-				case 'wrap_time': // Wrap time
-					ui.timeSpeed.state = -ui.timeSpeed.state;
-					break;
-				case 'save_file': // Save button
-					pauseState = true;
-					change_state('pause');
-					let objArrWrite = JSON.parse(JSON.stringify(scene.objArr));
-					for(let i in objArrWrite){
-						objArrWrite[i].trace = [];
-						delete objArrWrite[i].prevScreenX;
-						delete objArrWrite[i].prevScreenY;
-						delete objArrWrite[i].prevScreenR;
-					}
-					let my_data = {
-						objArr: objArrWrite, 
-						timeSpeed: ui.timeSpeed.state, 
-						interactMode: ui.interactMode.state, 
-						collisionMode: ui.collisionMode.state,
-						gravitationMode: ui.gravitationMode.state,
-						g: ui.g.state,
-					};
-					my_data = JSON.stringify(my_data);
-					writeFile("Orbit Simulator - "+lanwich.getTranslatedText("my_world")+".json", my_data);
-					objArrWrite = null;
-					//saveFile(name, forat, value, event);
-					break;
-				case 'sel_file_but': // Load button
-					document.querySelector('#select_file').click();
-					break;
-				case 'clear_traces': // Clear traces
-					renderer.clearLayer3();			
-					for (let i in scene.objArr){
-						scene.objArr[i].trace = [];
-					}
-					break;
-			}
-		});
+	document.addEventListener('click', function(e){
+		const target = e.target.closest('.menu_button');
+		if (!target) return;
+		const cbut = target.getAttribute('id');
+		// console.log(cbut);
+		switch (cbut) { // Pressed button id
+			case 'select_track': // Visual select object to select camera target
+				swch.s_track = !swch.s_track;
+				break;
+			case 'clear_camera_settings': // Restore camera defaults
+				camera.setTarget(); // Unset camera target
+				camera.x = 0; camera.y = 0; // Set default camera position
+				camera.zoom = 1; // Set default camera zoom value
+				zm_prev = 1;
+				break;
+			case 'select_edit_obj': // Visual select object to select edit object
+				swch.s_edit = !swch.s_edit;			
+				break;
+			case 'reset_speed_btn': // Edit menu, set object velocity to 0
+				if (scene.objArr[swch.editObjId]){
+					scene.objArr[swch.editObjId].vx = 0;
+					scene.objArr[swch.editObjId].vy = 0;	
+				}
+				break;
+			case 'select_main_obj': // Visual select object to select main object
+				swch.allowObjCreating = swch.s_mainObj;
+				swch.s_mainObj = !swch.s_mainObj;
+				break;
+			case 'wrap_time': // Wrap time
+				ui.timeSpeed.state = -ui.timeSpeed.state;
+				break;
+			case 'save_file': // Save button
+				pauseState = true;
+				setMenuStateIcon('pause');
+				const objArrWrite = JSON.parse(JSON.stringify(scene.objArr));
+				for(let i in objArrWrite){
+					objArrWrite[i].trace = [];
+					delete objArrWrite[i].prevScreenX;
+					delete objArrWrite[i].prevScreenY;
+					delete objArrWrite[i].prevScreenR;
+				}
+				let my_data = {
+					objArr: objArrWrite, 
+					timeSpeed: ui.timeSpeed.state, 
+					interactMode: ui.interactMode.state, 
+					collisionMode: ui.collisionMode.state,
+					gravitationMode: ui.gravitationMode.state,
+					g: ui.g.state,
+				};
+				my_data = JSON.stringify(my_data);
+				writeFile("Orbit Simulator - "+lanwich.getTranslatedText("my_world")+".json", my_data);
+				//saveFile(name, forat, value, event);
+				break;
+			case 'sel_file_but': // Load button
+				document.querySelector('#select_file').click();
+				break;
+			case 'clear_traces': // Clear traces
+				renderer.clearLayer3();			
+				for (let i in scene.objArr){
+					scene.objArr[i].trace = [];
+				}
+				break;
+		}
 	});
 	// Close menu button handler
 	document.querySelectorAll('.close_button').forEach(function(element){
@@ -1269,7 +1249,7 @@ window.onload = function(){
 	}
 	document.getElementById(mbut).setAttribute('selected', '');
 	
-	function change_state(img, format = "png", path = "ico/"){
+	function setMenuStateIcon(img, format = "png", path = "ico/"){
 		if (img == 'world_settings'){ img = 'functionX'; }
 		document.querySelector('.state').innerHTML = '<img src="'+path+img+'.'+format+'" alt="">';
 	}
