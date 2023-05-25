@@ -1,9 +1,43 @@
 export default class Scene {
-	objArr = Array(); // Scene objects array
+	objArr = new Object; // Scene objects array
 	objIdToOrbit = null; // The ID of the object around which the new object will orbit
+	objIdCounter = 0;
 
 	constructor() {
-		//
+		Object.defineProperty(this.objArr, 'length', {
+			value: 0,
+			enumerable: false,
+			writable: true
+		})
+	}
+
+	getOptimizedObjArr = function (paramsArr){
+		// Return if argument is not of an array type
+		if (!Array.isArray(paramsArr)) return [];
+
+		const optimizedObjArr = new Array();
+
+		for (let objId in this.objArr){
+			const obj = this.objArr[objId];
+
+			const optimizedObj = new Object();
+			for (let param of paramsArr){
+				if (obj[param] !== undefined){
+					optimizedObj[param] = obj[param]; // Set param
+				} else {
+					// Add "id" parameter
+					if (param === "id"){
+						optimizedObj.id = objId;
+						continue;
+					}
+
+					console.error("There is no parameter: " + param + " in object", obj);
+				}
+			}
+			optimizedObjArr.push(optimizedObj);
+		};
+
+		return optimizedObjArr;
 	}
 	//Создание нового объекта
 	addNewObject({
@@ -20,8 +54,8 @@ export default class Scene {
 		circularOrbit = false,
 		callback
 	}){
-		const objArr = this.objArr;
-		const newObjId = objArr.length; // The ID of a new object
+		const objArr = this.getOptimizedObjArr(['x', 'y', 'vx', 'vy', 'm']);
+		const newObjId = this.objIdCounter; // The ID of a new object
 
 		// If received a screen coordinates convert it to a world coordinates
 		if (screenX !== undefined && screenY !== undefined){
@@ -46,7 +80,7 @@ export default class Scene {
 
 		// Creation relative to
 		if (ui.creationRelativeTo.state == 0){
-			centerOfMass = this.getCenterOfMass();
+			centerOfMass = this.getCenterOfMass(objArr);
 			// Lock, if more than 50% of global mass maked by locked objects
 			centerOfMass.lock = objArr.reduce((mSum, obj) => obj.lock ? mSum + obj.m : mSum, 0) / centerOfMass.m > 0.5;
 		} else {
@@ -86,10 +120,11 @@ export default class Scene {
 
 		// Add new object to objArr with parameters
 		objArr[newObjId] = newObj;
+		this.objArr[newObjId] = newObj;
 
 		// Movement compensation
 		if (ui.movementCompencation.state && !centerOfMass.lock && ui.interactMode.state == 0){ // If enabled
-			let centerOfMassAfter = ui.creationRelativeTo.state == 0 ? this.getCenterOfMass() : this.getCenterOfMass([newObj, centerOfMass]);
+			let centerOfMassAfter = ui.creationRelativeTo.state == 0 ? this.getCenterOfMass(objArr) : this.getCenterOfMass([newObj, centerOfMass]);
 			const cvx = centerOfMass.vx - centerOfMassAfter.vx;
 			const cvy = centerOfMass.vy - centerOfMassAfter.vy;
 
@@ -111,6 +146,10 @@ export default class Scene {
 		physics.pullOutFromEachOther(objArr);
 		// Run callback after an object have been created
 		callback && callback(newObjId);
+
+		this.objIdCounter ++; // Increase objects ID counter
+		this.objArr.length ++;
+
 		// If object created return its ID, else return false
 		return objArr[newObjId] ? newObjId : false;
 	}
@@ -132,6 +171,7 @@ export default class Scene {
 				}
 			}
 			deletedObjectsList = deletedObjectsList.concat(objArr.splice(objectId, 1));
+			this.objArr.length --;
 			eachObjectCallback && eachObjectCallback(objectId);
 		}
 		return deletedObjectsList;
@@ -223,7 +263,8 @@ export default class Scene {
 		return sel[1];
 	}
 	// Get senter of mass
-	getCenterOfMass(objArr = this.objArr){
+	getCenterOfMass(objArr){
+
 		// Center of mass parameters
 		const centerOfMass = {
 			x: 0, y: 0, // Pos
@@ -245,6 +286,7 @@ export default class Scene {
 
 		if (mSum === 0 && mSum !== absMassSum) centerOfMass.m = mSum = absMassSum;
 
+		console.log(objArr)
 		for (let obj of objArr){
 			// Center of mass position
 			centerOfMass.x += obj.x * obj.m;

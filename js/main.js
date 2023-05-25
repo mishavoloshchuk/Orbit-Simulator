@@ -7,6 +7,11 @@ import IndicateFPS from './IndicateFPS.js';
 import TrajectoryPreview from './TrajectoryPreview.js';
 
 self.ui = new Object();
+
+self.isObjEmpty = function(obj) {
+	return Object.keys(obj).length === 0;
+}
+
 window.onload = function(){
 	//Mouse
 	this.mouse = {
@@ -370,7 +375,8 @@ window.onload = function(){
 			addFrameBeginTask(()=>{ // Frame begin taks
 				// Change time speed correction
 				if (this.timeSpeed.changed !== undefined){
-					for (let object of scene.objArr){
+					for (let objId in scene.objArr){
+						const object = scene.objArr[objId];
 						object.x += (object.vx * this.timeSpeed.state - object.vx * (this.timeSpeed.state / this.timeSpeed.changed))/2;
 						object.y += (object.vy * this.timeSpeed.state - object.vy * (this.timeSpeed.state / this.timeSpeed.changed))/2;
 					}
@@ -768,10 +774,11 @@ window.onload = function(){
 
 		swch.tapCamMove = mbut !== 'create' && !renderer.canv2.visualSelect;
 
-		if (scene.objArr.length){
+		if (!isObjEmpty(scene.objArr)){
 			// Set objects radiuses
 			let maxDiameter = 0;
-			for (let obj of scene.objArr){
+			for (let objId in scene.objArr){
+				const obj = scene.objArr[objId];
 				obj.r = scene.getRadiusFromMass(obj.m);
 				maxDiameter = Math.max(maxDiameter, Math.abs(obj.r) * 2);
 			}
@@ -1375,4 +1382,4 @@ window.onload = function(){
 			alert("Ошибка чтения файла!");
 		};
 	}
-};
+}

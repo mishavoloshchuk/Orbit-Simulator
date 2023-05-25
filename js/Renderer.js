@@ -123,7 +123,7 @@ export default class Renderer {
 		const maxPerformanceAndTrcMd1 = maxPerformance === true && tracesMode === 1;
 
 
-		for (let objectId = scn.objArr.length; objectId--;){
+		for (let objectId in scn.objArr){
 			let obj = scn.objArr[objectId]; // Object to draw
 
 			let drawRadius = this.getScreenRad(obj.m) // Object draw radius
