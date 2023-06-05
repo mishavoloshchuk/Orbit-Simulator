@@ -72,7 +72,10 @@ window.onload = function(){
 		 }, objId);
 	}
 
-	this.gpuComputeAvailable = [GPU.isGPUSupported, GPU.isSinglePrecisionSupported, GPU.isWebGLSupported].every(exp => exp);
+	// Fix GPU in Chrome
+	this.GPUJS = typeof GPU === 'function' ? GPU : GPU.GPU;
+
+	this.gpuComputeAvailable = [GPUJS.isGPUSupported, GPUJS.isSinglePrecisionSupported, GPUJS.isWebGLSupported].every(exp => exp);
 
 	let mbut = 'create';
 	let menu_state = true; // Menu state (Opened/Closed)
@@ -526,7 +529,9 @@ window.onload = function(){
 			mouse.leftDown = true;
 
 			if (swch.allowObjCreating){
-				try{clearTimeout(mort)}catch(err){};
+				try {
+					clearTimeout(mort);
+				} catch(err) {  }
 				// If pause when creating object enabled
 				if (event.type === 'touchstart'){
 					if (ui.pauseWhenCreatingObject.state && multiTouch == 1){

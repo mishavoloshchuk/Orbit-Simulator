@@ -6,7 +6,7 @@ export default class Physics {
 	}
 	// Init GPU.js
 	initGPUjs(){
-		this.gpu = new GPU();
+		this.gpu = new GPUJS();
 		// The distance between two points
 		this.gpu.addFunction(dist);
 		// Gravitation function
