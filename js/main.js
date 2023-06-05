@@ -354,16 +354,15 @@ window.onload = function(){
 				renderer.canv3.style.display = background_image.style.display = 'none';
 				additionalTrajectoryOptionsExtended1.style.display = 'none';
 				renderer.allowFrameRender = true; // Render
-				this.tracesMode.state = 0; // Refresh trace mode menu
 				view_settings.className += ' disabled'; // Hide view settings
 			} else {
 				renderer.ctx1.clearRect(0,0, renderer.resolutionX, renderer.resolutionY);
 				renderer.canv3.style.display = background_image.style.display = '';
 				additionalTrajectoryOptionsExtended1.style.display = 'initial';
 				renderer.allowFrameRender = true; // Render
-				this.tracesMode.state = this.tracesMode.state; // Refresh trace mode menu
 				view_settings.className = view_settings.className.replace('disabled', ''); // Hide view settings
 			}
+			this.tracesMode.state = this.tracesMode.state; // Refresh trace mode menu
 		}});
 
 		this.timeSpeed = new UserInput({type: 'manualInput', initState: 1, callback: (val, inpVar)=>{
@@ -384,6 +383,12 @@ window.onload = function(){
 		}, eventName: 'input'}); // Time speed control
 	}
 	ui.init();
+
+	ui.maxPerformance.element.addEventListener('change', (e)=>{
+		// In Chrome-based browsers the fastest traces mode is 1
+		const isChromium = navigator.userAgent.match(/Chrome\/\d+/) !== null;
+		if (e.target.checked) ui.tracesMode.state = isChromium ? 1 : 0; // Set fastest traces mode
+	});
 
 	scene.addNewObject({x: 0, y: 0, vx: 0, vy: 0, mass: 1000, color: '#ffff00', objLck: false, callback: newObjectCreatedCallback}); // First object init
 
