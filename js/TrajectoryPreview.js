@@ -209,15 +209,15 @@ export default class TrajectoryPreview {
 				this.physics.gpuComputeVelocities(
 					undefined,
 					+ui.interactMode.state,
-					ui.timeSpeed.state,
-					ui.g.state/accuracity
+					ui.timeSpeed.state / accuracity,
+					ui.g.state
 				);
 			} else {
 				this.physics.physicsCalculate(
 					undefined,
 					+ui.interactMode.state,
-					ui.timeSpeed.state,
-					ui.g.state/accuracity
+					ui.timeSpeed.state / accuracity,
+					ui.g.state
 				);
 			}
 
