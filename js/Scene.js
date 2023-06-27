@@ -2,6 +2,7 @@ export default class Scene {
 	objArr = Array(); // Scene objects array
 	objIdToOrbit = null; // The ID of the object around which the new object will orbit
 
+
 	constructor() {
 		//
 	}
@@ -58,8 +59,8 @@ export default class Scene {
 			}
 		}
 
-		if (circularOrbit) {
-			if (newObj.m + centerOfMass.m === 0 && newObj.m !== 0){
+		if (circularOrbit && centerOfMass.m > 0) {
+			if (newObj.m + centerOfMass.m === 0 && newObj.m !== 0){ // Spawn object with negative mass that equals to the total positive mass of all objects
 				[velX, velY] = [0, 0];
 			} else {
 				// Force to circular orbit
@@ -73,22 +74,24 @@ export default class Scene {
 		[newObj.vx, newObj.vy] = [velX, velY];
 
 	
-		if (!centerOfMass.lock && ui.interactMode.state == 0){
-			newObj.vx += centerOfMass.vx;
-			newObj.vy += centerOfMass.vy;
-		}
-	
-		// Circular orbit correction
+		// Circular orbit
 		if (circularOrbit){
+			// Circular orbit correction
 			newObj.x += velX / 2 * ui.timeSpeed.state;
 			newObj.y += velY / 2 * ui.timeSpeed.state;
+
+			// Circular orbit relative to the center of mass
+			if (!centerOfMass.lock && ui.interactMode.state == 0){
+				newObj.vx += centerOfMass.vx;
+				newObj.vy += centerOfMass.vy;
+			}
 		}
 
 		// Add new object to objArr with parameters
 		objArr[newObjId] = newObj;
 
 		// Movement compensation
-		if (ui.movementCompencation.state && !centerOfMass.lock && ui.interactMode.state == 0){ // If enabled
+		if (ui.movementCompencation.state && !centerOfMass.lock && ui.interactMode.state == 0 && centerOfMass.m > 0){ // If enabled
 			let centerOfMassAfter = ui.creationRelativeTo.state == 0 ? this.getCenterOfMass() : this.getCenterOfMass([newObj, centerOfMass]);
 			const cvx = centerOfMass.vx - centerOfMassAfter.vx;
 			const cvy = centerOfMass.vy - centerOfMassAfter.vy;
@@ -242,6 +245,8 @@ export default class Scene {
 		const absMassSum = objArr.reduce((absMSum, obj) => {
 			return absMSum + Math.abs(obj.m);
 		}, 0);
+
+		if (mSum === 0 && absMassSum === 0) return centerOfMass;
 
 		if (mSum === 0 && mSum !== absMassSum) centerOfMass.m = mSum = absMassSum;
 

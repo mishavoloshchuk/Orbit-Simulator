@@ -7,6 +7,7 @@ import IndicateFPS from './IndicateFPS.js';
 import TrajectoryPreview from './TrajectoryPreview.js';
 
 self.ui = new Object();
+
 window.onload = function(){
 	//Mouse
 	this.mouse = {
@@ -786,7 +787,7 @@ window.onload = function(){
 				maxDiameter = Math.max(maxDiameter, Math.abs(obj.r) * 2);
 			}
 			// Set collision ceil size
-			physics.collisionCeilSize = maxDiameter;
+			physics.collisionCeilSize = maxDiameter || innerWidth; // If max radius of the all objects is zero, set collision ceil size to window inner width 
 
 			// Physics calculating...
 			if (!pauseState || nextFrame){
