@@ -140,10 +140,10 @@ export default class Scene {
 		return deletedObjectsList;
 	}
 	delObjectCallback(objectId){
-		camera.Target = getIdAfterArrChange([objectId], camera.Target);
+		camera.Target = UtilityMethods.getIdAfterArrChange([objectId], camera.Target);
 		if (camera.Target === null) camera.setTarget();
-		this.objIdToOrbit = getIdAfterArrChange([objectId], this.objIdToOrbit, this.objectSelect('biggest'));
-		mov_obj = getIdAfterArrChange([objectId], mov_obj);
+		this.objIdToOrbit = UtilityMethods.getIdAfterArrChange([objectId], this.objIdToOrbit, this.objectSelect('biggest'));
+		mov_obj = UtilityMethods.getIdAfterArrChange([objectId], mov_obj);
 		swch.editObjId = swch.editObjId == objectId ? null : swch.editObjId;
 
 		renderer.allowFrameRender = true;
@@ -154,7 +154,7 @@ export default class Scene {
 		document.querySelector('#object_count_value').innerHTML = this.objArr.length;
 	}
 
-	makeCopy (){
+	makeCopy(){
 		const newScn = new Scene();
 		for (let key in this){
 			const prop = this[key];
@@ -274,15 +274,6 @@ export default class Scene {
 	getRadiusFromMass(mass){
 		return Math.pow(Math.abs(mass), 1/2);
 	}
-	// Get exponential value if value bigger than 1
-	expVal(F, round = 1000){
-		let val = F > 1 ? Math.pow(F, 8) : F;
-		return Math.round(val * round) / round;
-	}
-	// Get random range
-	getRandomArbitrary(min, max) {
-		return Math.random() * (max - min) + min;
-	}
 
 	// Reset preview screen positions
 	resetPrevScreenPositions(){
@@ -290,45 +281,14 @@ export default class Scene {
 			obj.prevScreenX = obj.prevScreenY = undefined;
 		}
 	}
-
-	//Cмешивение Цветов===================================
-	toHexInt(i){
-		return parseInt(i, 16);
-	}
-	_mixColors(color1, color2, m1, m2){
-
-		let color = "";
-		/*
-		 * Сначала считаем среднее по красному цвету - xx---- + yy----
-		 * Затем по зеленому --xx-- + --yy--
-		 * И по синему ----xx + ----yy
-		 */
-		for(let i = 0; i < color1.length; i += 2){
-		    let partColor = Math.round((this.toHexInt(color1.slice(i, i+2))*m1 + this.toHexInt(color2.slice(i, i+2))*m2)/(m1+m2)).toString(16);
-
-		    color += (partColor.length === 1 ? "0" + partColor : partColor);
+	addObjects = function(count = 100){
+		for (let i = 0; i < count; i++){
+		  	addFrameBeginTask(()=>{ 
+				scene.addNewObject({...newObjParams,
+					screenX: Math.random() * innerWidth,
+					screenY: Math.random() * innerHeight
+				});
+			});
 		}
-		return color;
-	}
-
-	mixColors(color1, color2, m1 = 50, m2 = 50){
-		let c1 = color1[0] === "#" ? color1.slice(1) : color1;
-		let c2 = color2[0] === "#" ? color2.slice(1) : color2;
-
-		return "#" + this._mixColors(c1, c2, Math.abs(m1), Math.abs(m2));
-	}
-
-	randomColor() {
-		let r = Math.floor(this.getRandomArbitrary(40, 255)),
-			g = Math.floor(this.getRandomArbitrary(40, 255)),
-			b = Math.floor(this.getRandomArbitrary(40, 255));
-
-		r = r.toString(16); g = g.toString(16); b = b.toString(16);
-
-		r = r.length < 2 ? '0'+r.toString(16) : r.toString(16);
-		g = g.length < 2 ? '0'+g.toString(16) : g.toString(16);
-		b = b.length < 2 ? '0'+b.toString(16) : b.toString(16);
-		let color = '#' + r + g + b;
-		return color;
 	}
 }

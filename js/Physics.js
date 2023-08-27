@@ -250,7 +250,7 @@ export default class Physics {
 				continue;
 			}
 
-			let mixedColor = this.scene.mixColors(objA.color, objB.color, objA.m, objB.m);
+			let mixedColor = UtilityMethods.mixColors(objA.color, objB.color, objA.m, objB.m);
 
 			let obj = objB, delObj = objA;
 			let objToDelId = obj1Id;
@@ -309,8 +309,8 @@ export default class Physics {
 			}
 			const radiusSum = objA.r + objB.r;
 
-			let v1 = this.gipot(objA.vx, objA.vy); // Scallar velocity
-			let v2 = this.gipot(objB.vx, objB.vy); // Scallar velocity
+			let v1 = UtilityMethods.gipot(objA.vx, objA.vy); // Scallar velocity
+			let v2 = UtilityMethods.gipot(objB.vx, objB.vy); // Scallar velocity
 			let vcos1 = v1 == 0?0:objA.vx/v1; // cos vx 1
 			let vsin1 = v1 == 0?0:objA.vy/v1; // sin vy 1
 			let vcos2 = v2 == 0?0:objB.vx/v2; // cos vx 2
@@ -387,6 +387,4 @@ export default class Physics {
 			}
 		}
 	}
-	// Pythagorean theorem
-	gipot(a,b){return Math.sqrt(a*a + b*b) }
 }

@@ -2,7 +2,7 @@ import Scene from './Scene.js';
 import Camera from './Camera.js';
 import Physics from './Physics.js';
 import Renderer from './Renderer.js';
-import UserInput from './UserInput.js';
+import * as UIConnect from './UIConnect.js';
 import IndicateFPS from './IndicateFPS.js';
 import TrajectoryPreview from './TrajectoryPreview.js';
 
@@ -49,28 +49,8 @@ window.onload = function(){
 
 	// Tasks to frame begin
 	this.frameTasks = new Array(); // Functions array
-	function addFrameBeginTask(func, ...args){
+	self.addFrameBeginTask = function (func, ...args){
 		frameTasks.push({func: func, args: args});
-	}
-
-	this.getDeviceType = () => {
-		const ua = navigator.userAgent;
-		if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
-			return "tablet";
-		} else
-		if ( /Mobile|iP(hone|od)|Android|BlackBerry|IEMobile|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(ua) ) {
-		  return "mobile";
-		}
-		return "desktop";
-	};
-
-	// Get new object id, when objects array changed
-	this.getIdAfterArrChange = (delArr, objId, defaultValue = null) => {
-		return delArr.reduce((newObjId, currId) => { 
-			if (objId > currId) return newObjId - 1;
-			else if (objId === currId) return defaultValue;
-			return newObjId; // If objId less than any of delArr
-		 }, objId);
 	}
 
 	// Fix GPU in Chrome
@@ -95,7 +75,7 @@ window.onload = function(){
 	// === ...
 	this.mov_obj = null; // Moving object id
 	this.movingObjectPosition = []; // Moving object position and velocity
-	this.minMouseMove = getDeviceType() == 'desktop' ? 5 : 10; // Minimal mouse move to show new object trajectory preview in pixels
+	this.minMouseMove = UtilityMethods.getDeviceType() == 'desktop' ? 5 : 10; // Minimal mouse move to show new object trajectory preview in pixels
 	this.isMinMouseMove = false; // If mouse moved minMouseMove pix from last mouse down
 	let renderStopLatency; // Frames to render after render disabled
 	// Parameters of new object that will be created, if user will want to create an object
@@ -146,7 +126,7 @@ window.onload = function(){
 	let newObjectCreatedCallback = function() {
 		scene.show_obj_count();
 		renderer.allowFrameRender = true;
-		if (ui.newObjRandColor.state) ui.newObjColor.state = scene.randomColor();
+		if (ui.newObjRandColor.state) ui.newObjColor.state = UtilityMethods.randomColor();
 	}
 
 	const switcher = {device: 'desktop',
@@ -169,77 +149,21 @@ window.onload = function(){
 		renderer.allowFrameRender = true;
 	}
 
-	class UserMassInput extends UserInput {
-		static update = function (){
-			document.dispatchEvent(UserMassInput.inputsUpdate);
-		}
-		static inputsUpdate = new Event('inputsUpdate');
-		wasChanged = false;
-		constructor ({id, stateSaving, initState, negativeMassCheckboxParams, onChange, onInput, onUpdate}){
-			super({type: 'manualInput', id: id, stateSaving: stateSaving, initState: Math.round(getRandomArbitrary(0.5, 100)*10)/10, 
-				callback: (state)=>{
-					const ths = document.getElementById(id);
-					ths.getElementsByClassName('title')[0].innerHTML = Math.round(state*1000)/1000;
-				}
-			});
-			this.elem = document.getElementById(id); // Option item DOM element
-			// Negative mass checkbox
-			this.negativeMassCheckbox = new UserInput({
-				type: 'checkbox', 
-				stateSaving: true, 
-				callback: (state) => {this.state = state ? -Math.abs(this.state) : Math.abs(this.state)}, 
-				...negativeMassCheckboxParams
-			});
-			this.valueElem = this.elem.getElementsByClassName('mass_input')[0]; // Input range element
-			// On Input
-			this.valueElem.addEventListener('input', (e)=>{
-				this.isInput = true;
-				this.state = (Math.pow(Math.pow(this.valueElem.value, 2) / 2 * ( (innerWidth + innerHeight) / 2 / camera.animZoom ), 2)) * (this.negativeMassCheckbox.state ? -1 : 1);
-				let menuContainer = document.getElementById('options_menu_container');
-				if (!menuContainer.className.includes(" zero_opacity")){
-					this.valueElem.closest('.option_item').className += " nozeroopacity";
-					menuContainer.className += " zero_opacity";
-				}
-				this.wasChanged = true;
-			});
-			// On Change
-			const onchanged = () => {
-				if (!this.wasChanged) return;
-				this.isInput = false;
-				let menuContainer = document.getElementById('options_menu_container');
-				menuContainer.className = menuContainer.className.replace(" zero_opacity", "");
-				this.valueElem.closest('.option_item').className = this.valueElem.closest('.option_item').className.replace(" nozeroopacity", "");
-				onChange && onChange(); // Callback
-				this.wasChanged = false;
-			}
-
-			document.addEventListener('mouseup', onchanged);
-			document.addEventListener('touchend', onchanged);
-			document.addEventListener('keypress', (e) => { if (e.keyCode == 13) onchanged() } ); // On key enter
-			// On Update
-			document.addEventListener('inputsUpdate', () => {
-				if (!this.isInput){
-					this.valueElem.value = Math.pow(scene.getRadiusFromMass(this.state) * camera.animZoom * 2 / ((innerHeight + innerWidth) / 2), 1/2);
-				}
-			})
-		}
-	}
-
 	// Init user interface
 	ui.init = function (){
 		// Create object menu ================================================ 
-		this.newObjColor = new UserInput({type: 'color', id: 'newObjeColorSelect', stateSaving: true, initState: scene.randomColor()}); // Menu color select input
-		this.newObjRandColor = new UserInput({type: 'checkbox', id: 'randColorCheck', stateSaving: true, initState: true}); // Menu new object random color input
-		this.newObjMass = new UserMassInput({id: 'create_mass', stateSaving: true, initState: Math.round(getRandomArbitrary(0.5, 100)*10)/10, negativeMassCheckboxParams: {id: "new_obj_negative_mass"}, callback: (state)=>{
+		this.newObjColor = new UIConnect.ColorInput({id: 'newObjeColorSelect', stateSaving: true, initState: UtilityMethods.randomColor()}); // Menu color select input
+		this.newObjRandColor = new UIConnect.CheckboxInput({id: 'randColorCheck', stateSaving: true, initState: true}); // Menu new object random color input
+		this.newObjMass = new UIConnect.MassInput({id: 'create_mass', stateSaving: true, initState: Math.round(UtilityMethods.getRandomArbitrary(0.5, 100)*10)/10, negativeMassCheckboxParams: {id: "new_obj_negative_mass"}, callback: (state)=>{
 			document.getElementById('newObjMassSpan').innerHTML = Math.round(state*1000)/1000;
 		}}); // Menu new object's mass input
-		this.newObjLock = new UserInput({type: 'checkbox', id: 'objLckCeck', initState: false}); // Menu lock created object input
+		this.newObjLock = new UIConnect.CheckboxInput({type: 'checkbox', id: 'objLckCeck', initState: false}); // Menu lock created object input
 		//
-		this.launchForce = new UserInput({type: 'range', id: 'launch_power', stateSaving: true, callback: (val)=>{lnch_pwr_span.innerHTML = expVal(val); mouse.move = true;}, eventName: 'input'}); // Menu launch power value input
-		this.pauseWhenCreatingObject = new UserInput({type: 'checkbox', id: 'new_obj_pause', stateSaving: true, initState: true, callback: (val, elem)=>{elem.prevPauseState = false}}); // Menu pause when user add object input
-		this.movementCompencation = new UserInput({type: 'checkbox', id: 'movement_compencation_checkbox', stateSaving: true, initState: true});
-		this.creationRelativeTo = new UserInput({type: 'radio', id: 'creation_relative_to', stateSaving: true}); // Creation relative mode
-		this.newObjCircularOrbit = new UserInput({type: 'checkbox', id: 'circleOrbitCheck', stateSaving: true, initState: true, callback: (val) => {
+		this.launchForce = new UIConnect.RangeInput({id: 'launch_power', stateSaving: true, callback: (val)=>{lnch_pwr_span.innerHTML = UtilityMethods.expVal(val); mouse.move = true;}, eventName: 'input'}); // Menu launch power value input
+		this.pauseWhenCreatingObject = new UIConnect.CheckboxInput({id: 'new_obj_pause', stateSaving: true, initState: true, callback: (val, elem)=>{elem.prevPauseState = false}}); // Menu pause when user add object input
+		this.movementCompencation = new UIConnect.CheckboxInput({id: 'movement_compencation_checkbox', stateSaving: true, initState: true});
+		this.creationRelativeTo = new UIConnect.RadioInput({id: 'creation_relative_to', stateSaving: true}); // Creation relative mode
+		this.newObjCircularOrbit = new UIConnect.CheckboxInput({id: 'circleOrbitCheck', stateSaving: true, initState: true, callback: (val) => {
 			// Set reverse orbit checkbox disabled state
 			const reverseOrbitCheckbox = document.getElementById('objReverseCheck');
 			if (val){
@@ -248,18 +172,18 @@ window.onload = function(){
 				reverseOrbitCheckbox.setAttribute('disabled', '');
 			}
 		}}); // Menu circle orbit on click input
-		this.newObjCreateReverseOrbit = new UserInput({type: 'checkbox', id: 'objReverseCheck', stateSaving: true, initState: false}); // Menu reverse ordit direction input
-		this.showDistanceFromCursorToMainObj = new UserInput({type: 'checkbox', id: 'vis_distance_check', stateSaving: true, callback: ()=>{ launchPowerLabel.style.display = 'none'; renderer.clearLayer2(); }}); // Menu visual distance
+		this.newObjCreateReverseOrbit = new UIConnect.CheckboxInput({id: 'objReverseCheck', stateSaving: true, initState: false}); // Menu reverse ordit direction input
+		this.showDistanceFromCursorToMainObj = new UIConnect.CheckboxInput({id: 'vis_distance_check', stateSaving: true, callback: ()=>{ launchPowerLabel.style.display = 'none'; renderer.clearLayer2(); }}); // Menu visual distance
 		//
-		this.showNewObjTrajectory = new UserInput({type: 'checkbox', id: 'traj_prev_check', stateSaving: true, initState: true}); // Enable trajectory calculation before create object
-		this.newObjTrajLength = new UserInput({type: 'range', id: 'traj_calc_samples', stateSaving: true}); // Trajectory calutulation length input
-		this.newObjTrajAccuracity = new UserInput({type: 'range', id: 'traj_calc_accuracity', stateSaving: true }); // Trajectory accuracity input
+		this.showNewObjTrajectory = new UIConnect.CheckboxInput({id: 'traj_prev_check', stateSaving: true, initState: true}); // Enable trajectory calculation before create object
+		this.newObjTrajLength = new UIConnect.RangeInput({id: 'traj_calc_samples', stateSaving: true}); // Trajectory calutulation length input
+		this.newObjTrajAccuracity = new UIConnect.RangeInput({id: 'traj_calc_accuracity', stateSaving: true }); // Trajectory accuracity input
 
 		// Delete object menu =================================================
-		this.deletingMode = new UserInput({type: 'radio', id: 'dellMethodRadio'}); // Deleting method
+		this.deletingMode = new UIConnect.RadioInput({id: 'dellMethodRadio'}); // Deleting method
 
 		// Edit object menu ===================================================
-		this.editMass = new UserMassInput({id: 'mass_edit', stateSaving: false, initState: 1000, callback: (state) => {
+		this.editMass = new UIConnect.MassInput({id: 'mass_edit', stateSaving: false, initState: 1000, callback: (state) => {
 				document.getElementById('editObjMassSpan').innerHTML = Math.round(state*1000)/1000;
 			},
 			negativeMassCheckboxParams: {
@@ -281,14 +205,14 @@ window.onload = function(){
 				});
 			}
 		});
-		this.editColor = new UserInput({type: 'color', id: 'col_edit', eventName: 'input', callback: (state) => addFrameBeginTask(() => {
+		this.editColor = new UIConnect.ColorInput({id: 'col_edit', eventName: 'input', callback: (state) => addFrameBeginTask(() => {
 			if (scene.objArr[swch.editObjId]){ scene.objArr[swch.editObjId].color = state; allowRender();}
 		}), });
-		this.editLock = new UserInput({type: 'checkbox', id: 'lck_edit_chbox', callback: (state) => addFrameBeginTask(() => {
+		this.editLock = new UIConnect.CheckboxInput({id: 'lck_edit_chbox', callback: (state) => addFrameBeginTask(() => {
 			if (scene.objArr[swch.editObjId]){ scene.objArr[swch.editObjId].lock = state; allowRender();}
 		}), });
 		// Trace settings =====================================================
-		this.tracesMode = new UserInput({type: 'radio', id: 'traj_radio_buttons', stateSaving: true, initState: 1, callback: (val, elem) => {
+		this.tracesMode = new UIConnect.RadioInput({id: 'traj_radio_buttons', stateSaving: true, initState: 1, callback: (val, elem) => {
 			for (let element of traj_menu.getElementsByClassName('additionalOption')){
 				// Show additional options by radio value
 				if ( element.id.includes(val.toString()) && !element.hasAttribute('disabled')) { 
@@ -307,49 +231,49 @@ window.onload = function(){
 
 		} });
 		// Mode 1
-		this.traceMode1Length = new UserInput({type: 'range', id: 'trace1Lnth', stateSaving: true, eventName: 'input', callback: (val, ths) => {ths.value = Math.pow(1 - val, 2)} });
-		this.traceMode1Opacity = new UserInput({type: 'range', id: 'trace_opacity', stateSaving: true, eventName: 'input', callback: (val)=>{renderer.canv3.style.opacity = val; allowRender();} });
-		this.traceMode1Blur = new UserInput({type: 'range', id: 'trace_blur', stateSaving: true, eventName: 'input', callback: (val)=>{renderer.canv3.style.filter = `blur(${val*val}px)`; allowRender();} });
+		this.traceMode1Length = new UIConnect.RangeInput({id: 'trace1Lnth', stateSaving: true, eventName: 'input', callback: (val, ths) => {ths.value = Math.pow(1 - val, 2)} });
+		this.traceMode1Opacity = new UIConnect.RangeInput({id: 'trace_opacity', stateSaving: true, eventName: 'input', callback: (val)=>{renderer.canv3.style.opacity = val; allowRender();} });
+		this.traceMode1Blur = new UIConnect.RangeInput({id: 'trace_blur', stateSaving: true, eventName: 'input', callback: (val)=>{renderer.canv3.style.filter = `blur(${val*val}px)`; allowRender();} });
 		// Mode 2
-		this.traceMode2Particles = new UserInput({type: 'checkbox', id: 'trc2PrtclsChck', stateSaving: true, initState: true, callback: allowRender});
-		this.traceMode2Trembling = new UserInput({type: 'checkbox', id: 'trc2TrembChck', stateSaving: true, initState: true, callback: allowRender});
-		this.traceMode2Length = new UserInput({type: 'range', id: 'trace2Lnth', stateSaving: true, eventName: 'input', callback: allowRender});
+		this.traceMode2Particles = new UIConnect.CheckboxInput({id: 'trc2PrtclsChck', stateSaving: true, initState: true, callback: allowRender});
+		this.traceMode2Trembling = new UIConnect.CheckboxInput({id: 'trc2TrembChck', stateSaving: true, initState: true, callback: allowRender});
+		this.traceMode2Length = new UIConnect.RangeInput({id: 'trace2Lnth', stateSaving: true, eventName: 'input', callback: allowRender});
 		// Mode 3 
-		this.traceMode3Width = new UserInput({type: 'range', id: 'trace3WdInp', stateSaving: true, eventName: 'input', callback: allowRender});
-		this.traceMode3Quality = new UserInput({type: 'range', id: 'trace3Qu', stateSaving: true, eventName: 'input', callback: allowRender});
-		this.traceMode3Length = new UserInput({type: 'range', id: 'trace3Lnth', stateSaving: true, eventName: 'input', callback: allowRender});
+		this.traceMode3Width = new UIConnect.RangeInput({id: 'trace3WdInp', stateSaving: true, eventName: 'input', callback: allowRender});
+		this.traceMode3Quality = new UIConnect.RangeInput({id: 'trace3Qu', stateSaving: true, eventName: 'input', callback: allowRender});
+		this.traceMode3Length = new UIConnect.RangeInput({id: 'trace3Lnth', stateSaving: true, eventName: 'input', callback: allowRender});
 
 		// Camera menu ========================================================
-		this.zoomToScreenCenter = new UserInput({type: 'checkbox', id: 'chck_zoomToScreenCenter', stateSaving: true, initState: false}); // Zoom to cursor as default. If enabled zoom, zooming to screen center
+		this.zoomToScreenCenter = new UIConnect.CheckboxInput({id: 'chck_zoomToScreenCenter', stateSaving: true, initState: false}); // Zoom to cursor as default. If enabled zoom, zooming to screen center
 
 		// Physics menu =======================
-		this.gravitationMode = new UserInput({type: 'radio', id: 'gravit_mode_radio_buttons', stateSaving: true}); // Select gravitation mode (radio)
-		this.g = new UserInput({type: 'range', id: 'g_value', eventName: 'input', callback: (val, ths)=>{g_value_title.innerHTML = ths.value = expVal(val)}, initState: 1}); // Set gravitation (G) value
-		this.interactMode = new UserInput({type: 'radio', id: 'interact_radio_buttons', stateSaving: true}); // Select interactions mode
-		this.collisionMode = new UserInput({type: 'radio', id: 'collision_radio_buttons', stateSaving: true}); // Select collision mode
+		this.gravitationMode = new UIConnect.RadioInput({id: 'gravit_mode_radio_buttons', stateSaving: true}); // Select gravitation mode (radio)
+		this.g = new UIConnect.RangeInput({id: 'g_value', eventName: 'input', callback: (val, ths)=>{g_value_title.innerHTML = ths.value = UtilityMethods.expVal(val)}, initState: 1}); // Set gravitation (G) value
+		this.interactMode = new UIConnect.RadioInput({id: 'interact_radio_buttons', stateSaving: true}); // Select interactions mode
+		this.collisionMode = new UIConnect.RadioInput({id: 'collision_radio_buttons', stateSaving: true}); // Select collision mode
 
 		// Settings menu ======================================================
 		// Select background image
-		this.backgroundImageURL = new UserInput({type: 'text', id: 'img_url_inp', stateSaving: true, callback: (value)=>{
+		this.backgroundImageURL = new UIConnect.TextInput({id: 'img_url_inp', stateSaving: true, callback: (value)=>{
 			value = value == '' ? 'background/background.jpg' : value;
 			document.getElementById('background_image').setAttribute('src', value);
 		}, });
 		// Set background darkness
-		this.backgroundDarkness = new UserInput({type: 'range', id: 'bg_darkness', stateSaving: true, eventName: 'input', callback: (state, elem)=>{
+		this.backgroundDarkness = new UIConnect.RangeInput({id: 'bg_darkness', stateSaving: true, eventName: 'input', callback: (state, elem)=>{
 			background_image.style.opacity = state;
 		}, });
-		this.backgroundFollowsMouse = new UserInput({type: 'checkbox', id: 'mouse_move_bg', stateSaving: true, initState: true}), // If true, background follows the cursor
+		this.backgroundFollowsMouse = new UIConnect.CheckboxInput({id: 'mouse_move_bg', stateSaving: true, initState: true}), // If true, background follows the cursor
 			// Show FPS
-		this.showFPS = new UserInput({type: 'checkbox', id: 'check_fps_swch', stateSaving: true, callback: (val)=>{
+		this.showFPS = new UIConnect.CheckboxInput({id: 'check_fps_swch', stateSaving: true, callback: (val)=>{
 			if (val){ fpsIndicator.turnOn() }
 			else { fpsIndicator.turnOff() }
 		}, });
-		this.gpuCompute = new UserInput({type: 'checkbox', id: 'gpu_compute', stateSaving: true, initState: true, callback: (val, input)=>{
+		this.gpuCompute = new UIConnect.CheckboxInput({id: 'gpu_compute', stateSaving: true, initState: true, callback: (val, input)=>{
 			if (!gpuComputeAvailable) {
 				input.element.parentElement.style.display = 'none'; // Hide multithread option, if gpu not supported
 			}
 		}});
-		this.maxPerformance = new UserInput({type: 'checkbox', id: 'max_performance', stateSaving: true, callback: (state)=>{
+		this.maxPerformance = new UIConnect.CheckboxInput({id: 'max_performance', stateSaving: true, callback: (state)=>{
 			if (state) {
 				renderer.ctx3.clearRect(0,0, renderer.resolutionX, renderer.resolutionY);
 				renderer.canv3.style.display = background_image.style.display = 'none';
@@ -366,7 +290,7 @@ window.onload = function(){
 			this.tracesMode.state = this.tracesMode.state; // Refresh trace mode menu
 		}});
 
-		this.timeSpeed = new UserInput({type: 'manualInput', initState: 1, callback: (val, inpVar)=>{
+		this.timeSpeed = new UIConnect.ManualInput({initState: 1, callback: (val, inpVar)=>{
 			document.querySelector('.time_speed h2').innerHTML = 'T - X' + (val * simulationsPerFrame);
 			let changedVal = val / inpVar.prevState;
 			inpVar.changed = inpVar.changed !== undefined ? inpVar.changed * changedVal : changedVal;
@@ -412,7 +336,7 @@ window.onload = function(){
 		camera.centerX = innerWidth / 2;
 		camera.centerY = innerHeight / 2;
 		setFullScreenIcon(); // Check full screen mode and set the button icon
-		UserMassInput.update();
+		MassInput.update();
 		scene.resetPrevScreenPositions(); // Reset objects prev screen positions 'cause they're not relevant
 	}
 	// Touch events ======================================
@@ -470,8 +394,8 @@ window.onload = function(){
 				av_touch_y.push(event.changedTouches[i].clientY);
 			} 
 			// Averrage point of touchs
-			avTouchPoint.x = sumArray(av_touch_x)/av_touch_x.length;
-			avTouchPoint.y = sumArray(av_touch_y)/av_touch_x.length;
+			avTouchPoint.x = UtilityMethods.sumArray(av_touch_x)/av_touch_x.length;
+			avTouchPoint.y = UtilityMethods.sumArray(av_touch_y)/av_touch_x.length;
 			 // Distance between touchs
 			let touchZoom = dist(event.changedTouches[0].clientX, event.changedTouches[0].clientY, event.changedTouches[1].clientX, event.changedTouches[1].clientY);
 			 // Clear launch power label display
@@ -682,13 +606,13 @@ window.onload = function(){
 	function syncEditObjUi(){
 		const eObj = scene.objArr[swch.editObjId];
 		if (eObj){
-			const changed = !arraysEqual([eObj.color, eObj.m, eObj.lock], [ui.editColor.state, ui.editMass.state, ui.editLock.state]);
+			const changed = !UtilityMethods.isArrsEqual([eObj.color, eObj.m, eObj.lock], [ui.editColor.state, ui.editMass.state, ui.editLock.state]);
 			if (changed && !ui.editMass.isInput){
 				setEditUiState({color: eObj.color, m: eObj.m, lock: eObj.lock});
 			}
 		} else {
 			swch.editObjId = null;
-			const changed = !arraysEqual(["#FFFFFF", 0, false], [ui.editColor.state, ui.editMass.state, ui.editLock.state]);
+			const changed = !UtilityMethods.isArrsEqual(["#FFFFFF", 0, false], [ui.editColor.state, ui.editMass.state, ui.editLock.state]);
 			if (changed){
 				setEditUiState({color: "#FFFFFF", m: 0, lock: false});
 			}
@@ -718,8 +642,8 @@ window.onload = function(){
 				} else {
 					const [mcx, mcy] = mouse.ctrlModificatedMousePosition();
 					if (!ui.newObjLock.state){
-						svx = ((mouse.leftDownX-mcx)/30) * expVal(ui.launchForce.state);
-						svy = ((mouse.leftDownY-mcy)/30) * expVal(ui.launchForce.state);	
+						svx = ((mouse.leftDownX-mcx)/30) * UtilityMethods.expVal(ui.launchForce.state);
+						svy = ((mouse.leftDownY-mcy)/30) * UtilityMethods.expVal(ui.launchForce.state);	
 					}
 				}
 				newObjParams = {
@@ -806,13 +730,13 @@ window.onload = function(){
 		// Frame rendering...
 		if (renderer.allowFrameRender){
 			renderer.renderObjects();
-			UserMassInput.update();
+			UIConnect.MassInput.update();
 			renderStopLatency = 125; // Count of frames to render after render is disabled
 		} else {
 			// If traces mode is 1 render ${renderStopLatency} frames after render disabled
 			if (renderStopLatency && ui.tracesMode.state == 1 && !pauseState){
 				renderStopLatency --;
-				UserMassInput.update();
+				UIConnect.MassInput.update();
 				renderer.renderObjects();
 			}
 		}
@@ -884,18 +808,6 @@ window.onload = function(){
 		nextFrame = false;
 		return true;
 	}
-	//scene.frame();
-	this.addObjects = function(count = 100){
-		for (let i = 0; i < count; i++){
-		  	addFrameBeginTask(()=>{ 
-				scene.addNewObject({...newObjParams,
-					screenX: Math.random() * innerWidth,
-					screenY: Math.random() * innerHeight
-				});
-			});
-		}
-	}
-	//addObjects(100);
 
 	// Show distance to main object
 	function vis_distance(obj_cord, color = '#888888', objId = scene.objIdToOrbit){
@@ -1263,33 +1175,6 @@ window.onload = function(){
 	function setMenuStateIcon(img, format = "png", path = "ico/"){
 		if (img == 'world_settings'){ img = 'functionX'; }
 		document.querySelector('.state').innerHTML = '<img src="'+path+img+'.'+format+'" alt="">';
-	}
-
-	function getRandomArbitrary(min, max) {
-		return Math.random() * (max - min) + min;
-	}
-
-	function sumArray(arr){
-		let sum = 0;
-		for (let val of arr){ sum += val }
-		return sum;
-	}
-
-	function arraysEqual(a, b) {
-		if (a === b) return true;
-		if (a == null || b == null) return false;
-		if (a.length !== b.length) return false;
-
-		for (let i = a.length; i--;) {
-			if (a[i] !== b[i]) return false;
-		}
-		return true;
-	}
-
-	// Get exponential value if value bigger than 1
-	function expVal(F, round = 1000){
-		let val = F > 1 ? Math.pow(F, 8) : F;
-		return Math.round(val * round) / round;
 	}
 
 	// Toggle full screen

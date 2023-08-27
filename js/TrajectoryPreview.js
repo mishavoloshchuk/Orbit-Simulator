@@ -199,7 +199,7 @@ export default class TrajectoryPreview {
 				deletedObjectsList.push(...deletedObjsData.objArr);
 
 				// Change newObjId after delete some objects after collision
-				newObjId = getIdAfterArrChange(deletedObjsData.idArr, newObjId);
+				newObjId = UtilityMethods.getIdAfterArrChange(deletedObjsData.idArr, newObjId);
 			}
 			// Bounce collision preprocessing
 			ui.collisionMode.state == '1' && this.physics.pullOutFromEachOther();

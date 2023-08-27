@@ -217,8 +217,8 @@ export default class Renderer {
 						// Random limit
 						const rnd_lim = drawRadius*(i/TLength)*randKff;
 						if (traceMode2Trembling === true || traceMode2Particles === true){
-							randX = scn.getRandomArbitrary(-rnd_lim, rnd_lim);
-							randY = scn.getRandomArbitrary(-rnd_lim, rnd_lim);
+							randX = UtilityMethods.getRandomArbitrary(-rnd_lim, rnd_lim);
+							randY = UtilityMethods.getRandomArbitrary(-rnd_lim, rnd_lim);
 						}
 
 						// Line width
@@ -268,7 +268,7 @@ export default class Renderer {
 			else if (tracesMode === 3){
 				if (!obj.lock){
 					traceResolution = 61 - Math.round(Math.pow(traceMode3Quality, 1/8)*60);
-					traceLength = Math.ceil(scn.expVal(traceMode3Length) / traceResolution);
+					traceLength = Math.ceil(UtilityMethods.expVal(traceMode3Length) / traceResolution);
 					c1.strokeStyle = obCol;
 					c1.lineWidth = Math.min(drawRadius*1.7, Math.pow(traceMode3Width, 10));
 					c1.globalCompositeOperation = 'destination-over';
@@ -351,7 +351,7 @@ export default class Renderer {
 
 		let offsX = 0;
 		let offsY = -30;
-		if (['mobile', 'tablet'].includes(getDeviceType()) ){ offsX = -25; offsY = -70; } // If device is mobile or tablet
+		if (['mobile', 'tablet'].includes(UtilityMethods.getDeviceType()) ){ offsX = -25; offsY = -70; } // If device is mobile or tablet
 		Object.assign(launchPowerLabel.style, {left: (mouse.x+offsX)+'px', top: (mouse.y+offsY)+'px', display: 'block', color: ui.newObjColor.state});
 		launchPowerLabel.innerHTML = Math.round(Math.hypot(newObjParams.vx, newObjParams.vy)*10000)/1000;
 		const D = this.getScreenRad(ui.newObjMass.state)*2;
