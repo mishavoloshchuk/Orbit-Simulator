@@ -88,5 +88,13 @@ class UtilityMethods {
 		  return "mobile";
 		}
 		return "desktop";
-	};
+	}
+
+	// Get elements by class name iterator
+	static byClassElementsLoop = function (className, callback){
+		let elements = document.getElementsByClassName(className);
+		for (let el = elements.length; el--;){
+			callback(elements[el]);
+		}
+	}
 }

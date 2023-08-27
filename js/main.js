@@ -26,6 +26,7 @@ self.mov_obj = null; // Moving object id
 self.minMouseMove = UtilityMethods.getDeviceType() == 'desktop' ? 5 : 10; // Minimal mouse move to show new object trajectory preview in pixels
 self.isMinMouseMove = false; // If mouse moved minMouseMove pix from last mouse down
 let renderStopLatency; // Frames to render after render disabled
+
 // Parameters of new object that will be created, if user will want to create an object
 self.newObjParams = {
 	screenX: 0, // Position X
@@ -82,7 +83,7 @@ self.swch = {
 	s_edit: true,
 	editObjId: null,
 	s_mainObj: false,
-	allowObjCreating: mbut === 'create',
+	allowObjCreating: navMenu.menuSelected === 'create',
 	tapCamMove: false
 };
 
@@ -93,28 +94,6 @@ ui.maxPerformance.element.addEventListener('change', (e)=>{
 });
 
 scene.addNewObject({x: 0, y: 0, vx: 0, vy: 0, mass: 1000, color: '#ffff00', objLck: false, callback: newObjectCreatedCallback}); // First object init
-
-function syncEditObjUi(){
-	const eObj = scene.objArr[swch.editObjId];
-	if (eObj){
-		const changed = !UtilityMethods.isArrsEqual([eObj.color, eObj.m, eObj.lock], [ui.editColor.state, ui.editMass.state, ui.editLock.state]);
-		if (changed && !ui.editMass.isInput){
-			setEditUiState({color: eObj.color, m: eObj.m, lock: eObj.lock});
-		}
-	} else {
-		swch.editObjId = null;
-		const changed = !UtilityMethods.isArrsEqual(["#FFFFFF", 0, false], [ui.editColor.state, ui.editMass.state, ui.editLock.state]);
-		if (changed){
-			setEditUiState({color: "#FFFFFF", m: 0, lock: false});
-		}
-	}
-	function setEditUiState({color, m, lock}){
-		ui.editColor.state = color;
-		ui.editMass.state = m;
-		ui.editMass.negativeMassCheckbox.state = m < 0;
-		ui.editLock.state = lock;
-	}
-}
 
 // Set params to the new object
 function setParameterToNewObject(){
@@ -195,9 +174,9 @@ function frame(){
 	syncEditObjUi(); // Sync edit object ui
 
 	// Set move cursor style
-	if (mouse.middleDown || mbut == 'move' || (mouse.leftDown && swch.tapCamMove)){renderer.layersDiv.style.cursor = "move";}else{renderer.layersDiv.style.cursor = "default";};
+	if (mouse.middleDown || navMenu.menuSelected == 'move' || (mouse.leftDown && swch.tapCamMove)){renderer.layersDiv.style.cursor = "move";}else{renderer.layersDiv.style.cursor = "default";};
 
-	swch.tapCamMove = mbut !== 'create' && !renderer.canv2.visualSelect;
+	swch.tapCamMove = navMenu.menuSelected !== 'create' && !renderer.canv2.visualSelect;
 
 	if (scene.objArr.length){
 		// Set objects radiuses
@@ -238,7 +217,7 @@ function frame(){
 	}
 
 	// Show distance
-	if (mbut == 'create' && !mouse.leftDown && ui.showDistanceFromCursorToMainObj.state && !renderer.canv2.visualSelect){
+	if (navMenu.menuSelected == 'create' && !mouse.leftDown && ui.showDistanceFromCursorToMainObj.state && !renderer.canv2.visualSelect){
 		renderer.clearLayer2();
 		vis_distance([mouse.x, mouse.y], '#888888');
 	}
@@ -252,16 +231,16 @@ function frame(){
 		delete renderer.canv2.visualSelect;
 	}
 	const nearObjId = scene.objectSelect('nearest');
-	if (mbut == 'delete'){
+	if (navMenu.menuSelected == 'delete'){
 		renderer.visualObjectSelect(scene.objectSelect(ui.deletingMode.state), '#ff0000');
 	} else
-	if (mbut == 'camera' && swch.s_track){
+	if (navMenu.menuSelected == 'camera' && swch.s_track){
 		renderer.visualObjectSelect(scene.objectSelect('nearest', camera.Target),'#0af');
 	} else
-	if (mbut == 'move'){
+	if (navMenu.menuSelected == 'move'){
 		renderer.visualObjectSelect(nearObjId,'#bbb');
 	} else
-	if (mbut == 'edit' && swch.s_edit){
+	if (navMenu.menuSelected == 'edit' && swch.s_edit){
 		renderer.visualObjectSelect(nearObjId, '#f81', 0);
 	} else
 	if (swch.s_mainObj){
@@ -284,9 +263,7 @@ function frame(){
 				});
 			}
 			// Hide menu while creating new object
-			let mstate = menu_state;
-			close_all_menus();
-			menu_state = mstate;
+			navMenu.menuVisibility(false);
 		}
 	}
 
@@ -376,26 +353,8 @@ background_image.onerror = function(){
 	setTimeout(function(){ err_mess_el.style.opacity = '0'; err_mess_el.style.maxHeight = '0';}, 2000);
 }
 
-// Get elements by class name iterator
-self.byClassElementsLoop = function (className, callback){
-	let elements = document.getElementsByClassName(className);
-	for (let el = elements.length; el--;){
-		callback(elements[el]);
-	}
-}
-
-// Close menu button handler
-document.querySelectorAll('.close_button').forEach(function(element){
-	element.addEventListener('click', (event) => {
-		close_all_menus();
-		event.stopPropagation();
-		sessionStorage['mbut'] = mbut;
-		sessionStorage['menu_state'] = menu_state;
-	})
-});
-
 // If texinput "input" event
-byClassElementsLoop('input_text', (inp) => {
+UtilityMethods.byClassElementsLoop('input_text', (inp) => {
 	inp.addEventListener('focus', (event) => {
 		anyTextInputHasFocus = true;
 	});
@@ -405,7 +364,7 @@ byClassElementsLoop('input_text', (inp) => {
 });
 
 // Show or hide menu
-byClassElementsLoop('checkbox_title_option', (element) => {
+UtilityMethods.byClassElementsLoop('checkbox_title_option', (element) => {
 	element.getElementsByTagName('input')[0].addEventListener('change', (e) => {
 		const titleOptionItem = e.target.closest('.checkbox_title_option');
 		if (e.target.checked){
@@ -421,13 +380,6 @@ byClassElementsLoop('checkbox_title_option', (element) => {
 });
 
 let objDeletedMessageTimeout;
-
-self.setMenuStateIcon = function (img, format = "png", path = "ico/"){
-	if (img == 'world_settings'){ img = 'functionX'; }
-	document.querySelector('.state').innerHTML = '<img src="'+path+img+'.'+format+'" alt="">';
-}
-
-setMenuStateIcon(mbut);
 
 // Toggle full screen
 document.getElementById('toggle_fullscreen').addEventListener('click', toggleFullScreen);
@@ -477,49 +429,3 @@ document.getElementById('language_selector').addEventListener('change', function
 	setTimeout(()=> loader.style.opacity = 1, 16);
 	lanwich.setLanguage(event.target.value);
 });
-// File select listener
-document.getElementById('select_file').addEventListener('change', function(e){
-	let selectedFile = document.querySelector('#select_file').files[0];
-	if (selectedFile !== undefined){
-		readFile(selectedFile);
-		this.value = '';
-	}		
-});
-// Write file
-function writeFile(name, data = '') {
-	let download = document.createElement("a");
-	download.href = 'data:application/txt;charset=utf-8,' + encodeURIComponent(data);
-	download.download = name;
-	download.style.display = "none";
-	download.id = "download";
-	document.body.appendChild(download);
-	document.getElementById("download").click();
-	document.body.removeChild(download);
-}
-// Read file
-function readFile(file) {
-	let reader = new FileReader();
-	reader.readAsText(file);
-	reader.onload = function() {
-		try {
-		  	let file_data = JSON.parse(reader.result);
-		  	scene.objArr = file_data.objArr;
-		  	ui.interactMode.state = file_data.interactMode || 0;
-		  	ui.gravitationMode.state = file_data.gravitationMode || 1;
-		  	ui.g.state = file_data.g || 1;
-		  	ui.collisionMode.state = file_data.collisionMode || 0;
-		  	ui.timeSpeed.state = file_data.timeSpeed ? file_data.timeSpeed : 1;
-		  	scene.show_obj_count();
-		  	renderer.allowFrameRender = true;
-		  	renderer.clearLayer3();
-			console.log('File loaded successfully!');
-		} catch(err){
-			console.error(err);
-			alert('Несовместимый файл!');
-		}
-	};
-	reader.onerror = function(err) {
-		console.error(err);
-		alert("Ошибка чтения файла!");
-	};
-}
