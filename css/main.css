@@ -229,7 +229,7 @@ a:hover {
 	padding-bottom: .5em;
 }
 .option_item label {
-	text-align: center;
+	text-align: left;
 }
 
 .option_item_inside_option {

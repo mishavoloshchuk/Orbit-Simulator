@@ -681,11 +681,11 @@ class NavigationMenu {
 		setMenuStateIcon(this.menuSelected);
 
 		this.menuElem.addEventListener('click', (e) => {
-			// console.log(e.target.closest('.btn').getAttribute('id'));
 			this.prevMenuSelect = this.menuSelected; // Prev clicked menu button
 			let eventButton = e.target.closest('.btn');
 			if (!eventButton) return;
 			this.menuSelected = eventButton.getAttribute('id'); // Clicked menu
+			// console.log(this.menuSelected);
 			// Menu buttons
 			if (!noMenuBtns.includes(this.menuSelected)){
 				if (this.menuSelected === this.prevMenuSelect){
@@ -725,8 +725,6 @@ class NavigationMenu {
 			if (noMenuBtns.includes(this.menuSelected)) this.menuSelected = this.prevMenuSelect;
 			swch.allowObjCreating = this.menuSelected === 'create' && !swch.s_mainObj; // Allow object creating if menu is "Creation menu"
 			if (ui.showDistanceFromCursorToMainObj.state) renderer.clearLayer2();
-
-			this.#saveState();
 		});
 	}
 
@@ -735,9 +733,10 @@ class NavigationMenu {
 	}
 
 	#loadState(){
-		if (!(sessionStorage['menuSelected'] && sessionStorage['menuState'])) return;
-		this.selectMenu(sessionStorage['menuSelected']);
-		sessionStorage['menuState'] === 'false' && this.hideMenu();
+		const {'menuSelected': menuSelected, 'menuState': menuState} = sessionStorage;
+		if ( !(menuSelected && menuState) ) return;
+		this.selectMenu(menuSelected);
+		menuState === 'false' && this.hideMenu();
 	}
 
 	#saveState(){
@@ -750,12 +749,14 @@ class NavigationMenu {
 		document.getElementById(menu_names[this.#openedMenu]).style.display = 'none';
 		this.menuState = false;
 		this.#openedMenu = false;
+		this.#saveState();
 	}
 
 	showMenu(){
 		this.#openedMenu = this.menuSelected;
 		document.getElementById(menu_names[this.#openedMenu]).style.display = 'inline-block';
 		this.menuState = true;
+		this.#saveState();
 	}
 
 	selectMenu(menuId){
@@ -779,7 +780,7 @@ class NavigationMenu {
 	menuVisibility(bool, timeout = 0){
 		if (!this.menuState) return;
 		clearTimeout(this.#menuVisibleTimeout);
-		this.#menuVisibleTimeout = setTimeout(()=> {
+		this.#menuVisibleTimeout = setTimeout(() => {
 			if (bool){
 				document.getElementById(menu_names[this.#openedMenu]).style.display = 'inline-block';
 			} else {
