@@ -62,7 +62,6 @@ self.renderer = new Renderer({camera: camera, scene: scene});
 // Init trajectory preview
 self.trajectoryPreview = new TrajectoryPreview({scene: scene, renderer: renderer, physics: physics, camera: camera});
 
-self.pauseState = false; // Global pause state
 self.simulationsPerFrame = 1; // Physics simulations per one frame
 
 // UI Initialization

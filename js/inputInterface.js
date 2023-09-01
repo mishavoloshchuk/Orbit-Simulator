@@ -16,6 +16,8 @@ let allowClick = true; // If touches > 1 cancel the click event. If true - allow
 
 let movingObjectPosition = []; // Moving object position and velocity
 
+self.pauseState = false; // Global pause state
+
 function allowRender(){
 	renderer.allowFrameRender = true;
 }
@@ -594,6 +596,32 @@ document.addEventListener('keydown', function(e){
 	}
 });
 
+class SelectedMenuStateIcon {
+	#timeout = null;
+	state = null;
+	constructor ({iconId, format, path}) {
+		this.format = format;
+		this.path = path;
+		this.element = document.getElementById(iconId);
+		this.imgElem = this.element.querySelector('img');
+	}
+
+	#setStateImage(imageName) {
+		clearTimeout(this.#timeout);
+		this.imgElem.setAttribute('src', this.path + imageName + '.' + this.format);
+	}
+	temporaryReplace(temporaryStateName, liveTime, permanentStateName){
+		if (permanentStateName) this.setState(permanentStateName);
+		this.#setStateImage(temporaryStateName);
+		this.#timeout = setTimeout(this.#setStateImage.bind(this), liveTime, this.state);
+	}
+	setState(stateName){
+		this.state = stateName;
+		this.#setStateImage(stateName);
+	}
+}
+
+self.menuStateIcon = new SelectedMenuStateIcon({iconId: 'menuSelectedIcon', format: 'png', path: 'ico/'});
 
 // Buttons events
 document.addEventListener('click', function(e){
@@ -629,7 +657,7 @@ document.addEventListener('click', function(e){
 			break;
 		case 'save_file': // Save button
 			pauseState = true;
-			setMenuStateIcon('pause');
+			menuStateIcon.setState('pause');
 			const objArrWrite = JSON.parse(JSON.stringify(scene.objArr));
 			for(let i in objArrWrite){
 				objArrWrite[i].trace = [];
@@ -661,70 +689,36 @@ document.addEventListener('click', function(e){
 	}
 });
 
-function setMenuStateIcon(img, format = "png", path = "ico/"){
-	if (img == 'world_settings'){ img = 'functionX'; }
-	document.querySelector('.state').innerHTML = '<img src="'+path+img+'.'+format+'" alt="">';
-}
-
 // Menu buttons handler
 class NavigationMenu {
 	menuSelected = 'create';
 	prevMenuSelect = 'create';
 	menuState = false; // Menu state (Opened/Closed)
-	menuHide = false;
 
 	#openedMenu = false;
-	#menuVisibleTimeout = '';
-	constructor({menuId}){
+	#menuVisibleTimeout = null;
+	constructor({menuId, buttonsClassName, buttonsHandler}){
 		this.#findMenuElement(menuId);
 		this.#loadState();
-		setMenuStateIcon(this.menuSelected);
+		menuStateIcon.setState(this.menuSelected);
 
 		this.menuElem.addEventListener('click', (e) => {
-			this.prevMenuSelect = this.menuSelected; // Prev clicked menu button
-			let eventButton = e.target.closest('.btn');
+			let eventButton = e.target.closest('.' + buttonsClassName);
 			if (!eventButton) return;
-			this.menuSelected = eventButton.getAttribute('id'); // Clicked menu
-			// console.log(this.menuSelected);
+			const menuSelected = eventButton.getAttribute('id'); // Clicked menu
+			const menuName = eventButton.getAttribute('menuId'); // ID of menu page
+			// console.log(menuSelected);
 			// Menu buttons
-			if (!noMenuBtns.includes(this.menuSelected)){
-				if (this.menuSelected === this.prevMenuSelect){
+			if (menuName){
+				this.prevMenuSelect = this.menuSelected; // Prev clicked menu button
+				this.menuSelected = menuSelected;
+				if (menuSelected === this.prevMenuSelect){
 					this.switchMenuState();
 				} else {
-					this.selectMenu(this.menuSelected);
+					this.selectMenu(menuSelected);
 				}
-			} else { // Time controls
-				// Change time speed
-				if (this.menuSelected === 'timedown' || this.menuSelected === 'timeup'){
-					ui.timeSpeed.state *= this.menuSelected == 'timedown' ? 0.5 : 2;
-				} else
-				// Pause
-				if (this.menuSelected === 'pause'){
-					let img_name = pauseState ? 'pause' : 'play';
-					if (pauseState){
-						setMenuStateIcon('play');
-						setTimeout(() => {setMenuStateIcon(this.prevMenuSelect);}, 500);			
-					} else {
-						setMenuStateIcon('pause');	
-					}
-					pauseState = !pauseState;
-					eventButton.querySelector('img').setAttribute('src', 'ico/'+img_name+'.png');
-				} else
-				// Play
-				if (this.menuSelected === 'play'){
-					if (ui.timeSpeed.state != 1 || pauseState){ // If time speed == 1 or pause == true
-						simulationsPerFrame = 1;
-						pauseState = false;
-						ui.timeSpeed.state = 1;
-						document.querySelector('#pause img').setAttribute('src', 'ico/pause.png');
-						setMenuStateIcon('restore');
-						setTimeout(() => {setMenuStateIcon(this.prevMenuSelect);}, 500);
-					}
-				}		
 			}
-			if (noMenuBtns.includes(this.menuSelected)) this.menuSelected = this.prevMenuSelect;
-			swch.allowObjCreating = this.menuSelected === 'create' && !swch.s_mainObj; // Allow object creating if menu is "Creation menu"
-			if (ui.showDistanceFromCursorToMainObj.state) renderer.clearLayer2();
+			buttonsHandler(menuSelected);
 		});
 	}
 
@@ -744,9 +738,13 @@ class NavigationMenu {
 		sessionStorage['menuState'] = this.menuState;		
 	}
 
+	#getOpenedMenuId(){
+		return document.getElementById(this.#openedMenu).getAttribute('menuId');;
+	}
+
 	hideMenu(){
 		if (!this.menuState) return;
-		document.getElementById(menu_names[this.#openedMenu]).style.display = 'none';
+		document.getElementById(this.#getOpenedMenuId()).style.display = 'none';
 		this.menuState = false;
 		this.#openedMenu = false;
 		this.#saveState();
@@ -754,7 +752,7 @@ class NavigationMenu {
 
 	showMenu(){
 		this.#openedMenu = this.menuSelected;
-		document.getElementById(menu_names[this.#openedMenu]).style.display = 'inline-block';
+		document.getElementById(this.#getOpenedMenuId()).style.display = 'inline-block';
 		this.menuState = true;
 		this.#saveState();
 	}
@@ -764,7 +762,11 @@ class NavigationMenu {
 		this.menuSelected = menuId;
 		this.showMenu();
 		this.#openedMenu = menuId;
-		setMenuStateIcon(menuId);
+		if (pauseState){
+			menuStateIcon.temporaryReplace(menuId, 700);
+		} else {
+			menuStateIcon.setState(menuId);
+		}
 		document.getElementById(this.prevMenuSelect).removeAttribute('selected');
 		document.getElementById(this.menuSelected).setAttribute('selected', '');
 	}
@@ -782,21 +784,55 @@ class NavigationMenu {
 		clearTimeout(this.#menuVisibleTimeout);
 		this.#menuVisibleTimeout = setTimeout(() => {
 			if (bool){
-				document.getElementById(menu_names[this.#openedMenu]).style.display = 'inline-block';
+				document.getElementById(this.#getOpenedMenuId()).style.display = 'inline-block';
 			} else {
-				document.getElementById(menu_names[this.#openedMenu]).style.display = 'none';
+				document.getElementById(this.#getOpenedMenuId()).style.display = 'none';
 			}
 		}, timeout);
 	}
 }
 
-const menu_names = {create: 'menu_options', delete: 'del_menu_options', edit: 'edit_menu',
-	help: 'help_menu', settings: 'settings_menu', camera: 'camera_menu', trajectory: 'traj_menu',
-	world_settings: 'world_settings_menu', move: 'move_menu'}
-
-const noMenuBtns = ['timedown', 'play', 'pause', 'timeup'];
-
-self.navMenu = new NavigationMenu({menuId: 'navigation_menu'});
+self.navMenu = new NavigationMenu({
+	menuId: 'navigation_menu',
+	buttonsClassName: 'btn',
+	buttonsHandler: function (buttonId) {
+		switch (buttonId){
+		// Change time speed DOWN
+		case 'timedown': 
+			ui.timeSpeed.state *= 0.5;
+			break;
+		// Change time speed UP
+		case 'timeup':
+			ui.timeSpeed.state *= 2;
+			break;
+		// Pause
+		case 'pause':
+			if (pauseState){
+				menuStateIcon.temporaryReplace('play', 500, navMenu.menuSelected);			
+			} else {
+				menuStateIcon.setState('pause');	
+			}
+			document.getElementById(buttonId)
+				.querySelector('img')
+				.setAttribute('src', 'ico/' + (pauseState ? 'pause' : 'play') + '.png'); // Change pause button icon
+			pauseState = !pauseState;
+			break;
+		// Play
+		case 'play':
+			if (ui.timeSpeed.state != 1 || pauseState){ // If time speed == 1 or pause == true
+				simulationsPerFrame = 1;
+				pauseState = false;
+				ui.timeSpeed.state = 1;
+				document.querySelector('#pause img').setAttribute('src', 'ico/pause.png');
+				menuStateIcon.temporaryReplace('restore', 500, navMenu.menuSelected);
+			}
+			break;
+		default:
+			swch.allowObjCreating = (buttonId === 'create' && !swch.s_mainObj); // Allow object creating if menu is "Creation menu"
+		}
+		if (ui.showDistanceFromCursorToMainObj.state) renderer.clearLayer2();
+	}
+});
 
 // Close menu button handler
 UtilityMethods.byClassElementsLoop('close_button', function(element){

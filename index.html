@@ -18,19 +18,19 @@
 	<img src="#" class="bg_image" id="background_image">
 	<div class="dimmer"></div>
 	<div class="menu" id="navigation_menu">
-		<button class="btn" id='create'>
+		<button class="btn" id='create' menuId="menu_options">
 			<l-text alt>object_creation_menu</l-text>
 			<l-text title>object_creation_menu_and_hotkey</l-text>
 			<img src="ico/create.png" alt="Create" title="Создать обьект ( C )">
 		</button>
 
-		<button class="btn" id='delete'>
+		<button class="btn" id='delete' menuId="del_menu_options">
 			<l-text alt>delete_menu</l-text>
 			<l-text title>delete_object_menu_and_hotkey</l-text>
 			<img src="ico/delete.png" alt="Delete" title="Удалить обьект ( D )">
 		</button>
 
-		<button class="btn" id='edit'>
+		<button class="btn" id='edit' menuId="edit_menu">
 			<l-text alt>edit_menu</l-text>
 			<l-text title>edit_object_menu_and_hotkey</l-text>
 			<img src="ico/edit.png" alt="Edit" title="Редактировать обьект ( E )">
@@ -62,37 +62,37 @@
 			</button>
 		</div>
 
-		<button class="btn" id='move'>
+		<button class="btn" id='move' menuId="move_menu">
 			<l-text alt>move_object</l-text>
 			<l-text title>move_object_and_hotkey</l-text>
 			<img src="ico/move.png" alt="Move" title="Переместить обьект ( M )">
 		</button>
 
-		<button class="btn" id='trajectory'>
+		<button class="btn" id='trajectory' menuId="traj_menu">
 			<l-text alt>traces_menu</l-text>
 			<l-text title>traces_menu_and_hotkey</l-text>
 			<img src="ico/trajectory.png" alt="Trajectory" title="Траектории ( T )">
 		</button>
 
-		<button class="btn" id='camera'>
+		<button class="btn" id='camera' menuId="camera_menu">
 			<l-text alt>camera_menu</l-text>
 			<l-text title>camera_menu_and_hotkey</l-text>
 			<img src="ico/camera.png" alt="Camera" title="Камера  ( V )">
 		</button>
 
-		<button class="btn" id='world_settings'>
+		<button class="btn" id='world_settings' menuId="world_settings_menu">
 			<l-text alt>interaction_menu</l-text>
 			<l-text title>interaction_menu_and_hotkey</l-text>
-			<img src="ico/functionX.png" alt="Settings" title="Взаимодейстия ( F )">
+			<img src="ico/world_settings.png" alt="Settings" title="Взаимодейстия ( F )">
 		</button>
 
-		<button class="btn" id='settings'>
+		<button class="btn" id='settings' menuId="settings_menu">
 			<l-text alt>settings_menu</l-text>
 			<l-text title>settings_menu_and_hotkey</l-text>
 			<img src="ico/settings.png" alt="Settings" title="Настройки ( S )">
 		</button>
 
-		<button class="btn" id='help'>
+		<button class="btn" id='help' menuId="help_menu">
 			<l-text alt>help_menu</l-text>
 			<l-text title>help_menu_and_hotkey</l-text>
 			<img src="ico/help.png" alt="Help" title="Помощь  ( H )">
@@ -107,7 +107,7 @@
 		<svg xmlns="http://www.w3.org/2000/svg" height="48" width="48"><path d="M18.15 38.35q-.75 0-1.225-.5-.475-.5-.475-1.2v-5.1h-5.1q-.7 0-1.2-.5t-.5-1.2q0-.75.5-1.225.5-.475 1.2-.475h6.8q.7 0 1.2.5t.5 1.2v6.8q0 .7-.5 1.2t-1.2.5Zm-6.8-18.5q-.7 0-1.2-.5t-.5-1.2q0-.75.5-1.225.5-.475 1.2-.475h5.1v-5.1q0-.7.5-1.2t1.2-.5q.75 0 1.225.5.475.5.475 1.2v6.8q0 .7-.5 1.2t-1.2.5Zm18.5 18.5q-.75 0-1.225-.5-.475-.5-.475-1.2v-6.8q0-.7.5-1.2t1.2-.5h6.8q.7 0 1.2.5t.5 1.2q0 .75-.5 1.225-.5.475-1.2.475h-5.1v5.1q0 .7-.5 1.2t-1.2.5Zm0-18.5q-.7 0-1.2-.5t-.5-1.2v-6.8q0-.7.5-1.2t1.2-.5q.75 0 1.225.5.475.5.475 1.2v5.1h5.1q.7 0 1.2.5t.5 1.2q0 .75-.5 1.225-.5.475-1.2.475Z"/></svg>
 	</div>
 	<!-- Menu state indicator -->
-	<div class="state"></div>
+	<div class="state" id="menuSelectedIcon"><img alt="Selected menu image" src="ico/create.png"></div>
 
 	<div class='menu_container menu_pos' id="options_menu_container">
 
