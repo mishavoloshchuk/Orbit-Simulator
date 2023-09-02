@@ -565,12 +565,16 @@ document.addEventListener('keydown', function(e){
 			simulationsPerFrame *= 2;
 			console.log(simulationsPerFrame);
 			document.querySelector('.time_speed h2').innerHTML = 'T - X'+ui.timeSpeed.state*simulationsPerFrame;
+			menuStateIcon.temporaryReplace('speedup', 300);
 		} else
 		// (-) Simulation speed down withoud lost accuracity. Min value is realtime
 		if (e.keyCode == 189 || e.keyCode == 173){
-			if (simulationsPerFrame > 1){simulationsPerFrame /= 2;}
-			console.log(simulationsPerFrame);
-			document.querySelector('.time_speed h2').innerHTML = 'T - X'+ui.timeSpeed.state*simulationsPerFrame;
+			if (simulationsPerFrame > 1){
+				simulationsPerFrame /= 2;
+				menuStateIcon.temporaryReplace('speeddown', 300);
+				console.log(simulationsPerFrame);
+				document.querySelector('.time_speed h2').innerHTML = 'T - X'+ui.timeSpeed.state*simulationsPerFrame;
+			}
 		}
 	}
 	//Ctrl keys
@@ -691,13 +695,15 @@ document.addEventListener('click', function(e){
 
 // Menu buttons handler
 class NavigationMenu {
-	menuSelected = 'create';
-	prevMenuSelect = 'create';
 	menuState = false; // Menu state (Opened/Closed)
+	menuSelected;
+	prevMenuSelect;
 
 	#openedMenu = false;
 	#menuVisibleTimeout = null;
-	constructor({menuId, buttonsClassName, buttonsHandler}){
+	#initMenuSelected;
+	constructor({menuId, buttonsClassName, initMenuSelected, buttonsHandler}){
+		this.#initMenuSelected = initMenuSelected;
 		this.#findMenuElement(menuId);
 		this.#loadState();
 		menuStateIcon.setState(this.menuSelected);
@@ -728,9 +734,13 @@ class NavigationMenu {
 
 	#loadState(){
 		const {'menuSelected': menuSelected, 'menuState': menuState} = sessionStorage;
-		if ( !(menuSelected && menuState) ) return;
-		this.selectMenu(menuSelected);
-		menuState === 'false' && this.hideMenu();
+		if (menuSelected && menuState) {
+			this.selectMenu(menuSelected);
+			menuState === 'false' && this.hideMenu();
+		} else {
+			this.selectMenu(this.#initMenuSelected);
+		}
+
 	}
 
 	#saveState(){
@@ -767,8 +777,8 @@ class NavigationMenu {
 		} else {
 			menuStateIcon.setState(menuId);
 		}
-		document.getElementById(this.prevMenuSelect).removeAttribute('selected');
-		document.getElementById(this.menuSelected).setAttribute('selected', '');
+		this.prevMenuSelect && document.getElementById(this.prevMenuSelect).removeAttribute('selected');
+		this.menuSelected && document.getElementById(this.menuSelected).setAttribute('selected', '');
 	}
 
 	switchMenuState(){
@@ -795,15 +805,18 @@ class NavigationMenu {
 self.navMenu = new NavigationMenu({
 	menuId: 'navigation_menu',
 	buttonsClassName: 'btn',
+	initMenuSelected: 'create',
 	buttonsHandler: function (buttonId) {
 		switch (buttonId){
 		// Change time speed DOWN
 		case 'timedown': 
 			ui.timeSpeed.state *= 0.5;
+			menuStateIcon.temporaryReplace('speeddown', 300);
 			break;
 		// Change time speed UP
 		case 'timeup':
 			ui.timeSpeed.state *= 2;
+			menuStateIcon.temporaryReplace('speedup', 300);
 			break;
 		// Pause
 		case 'pause':

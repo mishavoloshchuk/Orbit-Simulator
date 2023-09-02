@@ -574,6 +574,7 @@ a:hover {
 }
 
 #toggle_fullscreen {
+    filter: drop-shadow(2px 2px 1px black);
 	position: absolute;
 	bottom: 1vmin;
 	right: 1vmin;
