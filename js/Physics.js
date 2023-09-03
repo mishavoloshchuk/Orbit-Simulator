@@ -370,6 +370,8 @@ export default class Physics {
 				} else {// If object not locked
 					object.x += object.vx * timeSpeed;
 					object.y += object.vy * timeSpeed;
+					object.vx *= ui.movementResistance.getResistance(timeSpeed);
+					object.vy *= ui.movementResistance.getResistance(timeSpeed);
 
 					if (ui.interactMode.state == 1){
 						let mainObj = objArr[object.main_obj];

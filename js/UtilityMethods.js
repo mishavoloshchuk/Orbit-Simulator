@@ -3,6 +3,11 @@ class UtilityMethods {
 	static getRandomArbitrary(min, max) {
 		return Math.random() * (max - min) + min;
 	}
+	// Digits after point
+	static roundTo(number, afterPoint) {
+		const digintsCount = Math.pow(10, afterPoint);
+		return Math.round((number * digintsCount))/digintsCount;
+	}
 	//Cмешивение Цветов===================================
 	static toHexInt(i){
 		return parseInt(i, 16);

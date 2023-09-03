@@ -18,7 +18,7 @@ let movingObjectPosition = []; // Moving object position and velocity
 
 self.pauseState = false; // Global pause state
 
-function allowRender(){
+self.allowRender = function(){
 	renderer.allowFrameRender = true;
 }
 
@@ -122,6 +122,8 @@ ui.init = function (){
 	// Physics menu =======================
 	this.gravitationMode = new UIConnect.RadioInput({id: 'gravit_mode_radio_buttons', stateSaving: true}); // Select gravitation mode (radio)
 	this.g = new UIConnect.RangeInput({id: 'g_value', eventName: 'input', callback: (val, ths)=>{g_value_title.innerHTML = ths.value = UtilityMethods.expVal(val)}, initState: 1}); // Set gravitation (G) value
+	this.movementResistance = new UIConnect.RangeInput({id: 'movement_resistance_value', stateSaving: true, eventName: 'input', callback: (val, ths)=>{m_resistance_value_title.innerHTML = ths.value = UtilityMethods.roundTo(Math.pow(val, 3), 5); ths.value = 1 - ths.value; }, initState: 0}); // Set gravitation (G) value
+	this.movementResistance.getResistance = function (timeSpeed) { return 1 - (1 - this.value) * timeSpeed; } // Get working resistance value
 	this.interactMode = new UIConnect.RadioInput({id: 'interact_radio_buttons', stateSaving: true}); // Select interactions mode
 	this.collisionMode = new UIConnect.RadioInput({id: 'collision_radio_buttons', stateSaving: true}); // Select collision mode
 

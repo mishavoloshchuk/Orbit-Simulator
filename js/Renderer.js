@@ -123,7 +123,7 @@ export default class Renderer {
 		const maxPerformanceAndTrcMd1 = maxPerformance === true && tracesMode === 1;
 
 
-		for (let objectId = scn.objArr.length; objectId--;){
+		for (let objectId = 0; objectId < scn.objArr.length; objectId++){
 			let obj = scn.objArr[objectId]; // Object to draw
 
 			let drawRadius = this.getScreenRad(obj.m) // Object draw radius
@@ -180,7 +180,8 @@ export default class Renderer {
 					canv.lineWidth = traceDrawRadius * 2;
 					canv.lineCap = traceDrawRadius > 1 ? 'round' : 'butt';
 					canv.beginPath();
-					canv.moveTo(obj.prevScreenX, obj.prevScreenY);
+					const pixelShiftX = obj.prevScreenX === screenX ? 0.001 : 0;
+					canv.moveTo(obj.prevScreenX + pixelShiftX, obj.prevScreenY);
 					canv.lineTo(screenX, screenY);
 					canv.stroke();
 					canv.lineCap = 'butt';

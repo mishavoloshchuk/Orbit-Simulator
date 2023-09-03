@@ -635,25 +635,6 @@
 							</div>
 						</form>			
 					</div>
-
-					<!-- Gravity force -->
-					<div class='option_item option_item_range'>
-						<label>
-							<l-text>force_of_gravity</l-text>
-							<label>Force of gravity: </label>
-							<label id='g_value_title'></label>
-						</label>
-						<input type="range" list='gravitationValue' id="g_value" min="0" max="2" value="1" step="0.01" width="100%">
-						<datalist id='gravitationValue'><option value="1"></datalist>
-					</div>
-
-					<!-- Turn back time -->
-					<div class='option_item'>
-						<button class="menu_button" id="wrap_time">
-							<l-text>turn_back_time</l-text>
-							<label>Turn back time</label>
-						</button>		
-					</div>
 				</section>
 			</section>
 			
@@ -686,6 +667,46 @@
 								<label for="collision_radio_2">No collisions</label>
 							</div>
 						</form>					
+					</div>
+				</section>
+			</section>
+
+			<section class="options_section">
+
+				<div class='option_item title_option_item'>
+					<l-text>constants</l-text>
+					<h2>Constants: </h2>
+				</div>
+
+				<section>
+					<!-- Gravity force -->
+					<div class='option_item option_item_range'>
+						<label>
+							<l-text>force_of_gravity</l-text>
+							<label>Force of gravity: </label>
+							<label id='g_value_title'></label>
+						</label>
+						<input type="range" list='gravitationValue' id="g_value" min="0" max="2" value="1" step="0.01" width="100%">
+						<datalist id='gravitationValue'><option value="1"></datalist>
+					</div>
+
+					<!-- Resistance force -->
+					<div class='option_item option_item_range'>
+						<label>
+							<l-text>movement_resistance</l-text>
+							<label>Movement resistance: </label>
+							<label id='m_resistance_value_title'></label>
+						</label>
+						<input type="range" list='gravitationValue' id="movement_resistance_value" min="0" max="1" value="0" step="any" width="100%">
+						<datalist id='gravitationValue'><option value="1"></datalist>
+					</div>
+
+					<!-- Turn back time -->
+					<div class='option_item'>
+						<button class="menu_button" id="wrap_time">
+							<l-text>turn_back_time</l-text>
+							<label>Turn back time</label>
+						</button>		
 					</div>
 				</section>
 			</section>
@@ -747,9 +768,9 @@
 						<!-- Loading animation -->
 						<div class="loader" id="language_loader"></div>
 						<select id="language_selector">
-							<option value="en">English</option>
-							<option value="ru">Русский</option>
 							<option value="uk">Українська</option>
+							<option value="ru">Русский</option>
+							<option value="en">English</option>
 						</select>
 					</div>
 				</section>

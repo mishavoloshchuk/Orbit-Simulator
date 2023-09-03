@@ -103,6 +103,8 @@
 	"constant_attraction": "Постоянное притяжение",
 	"proportional_to_distance": "Пропорционально расстоянию",
 
+	"constants": "Константы",
+	"movement_resistance": "Сопротивление движения:",
 	"force_of_gravity": "Сила притяжения:",
 
 	"interaction_modes": "Режимы взаимодействия",
