@@ -6,7 +6,7 @@ let prev_cam_y = 0;
 let zm_cff = null;
 let zm_prev = 1;
 
-//Mouse and touches
+// Mouse and touches
 let multiTouch = 0;
 let avTouchPoint = {x: null, y: null, xd: null, yd: null};
 let mscam = true;
@@ -14,7 +14,7 @@ let mscam = true;
 // Touch
 let allowClick = true; // If touches > 1 cancel the click event. If true - allow click
 
-let movingObjectPosition = []; // Moving object position and velocity
+const movingObjectsPosAndVel = []; // Moving object position and velocity
 
 self.pauseState = false; // Global pause state
 
@@ -28,9 +28,7 @@ ui.init = function (){
 	// Create object menu ================================================ 
 	this.newObjColor = new UIConnect.ColorInput({id: 'newObjeColorSelect', stateSaving: true, initState: UtilityMethods.randomColor()}); // Menu color select input
 	this.newObjRandColor = new UIConnect.CheckboxInput({id: 'randColorCheck', stateSaving: true, initState: true}); // Menu new object random color input
-	this.newObjMass = new UIConnect.MassInput({id: 'create_mass', stateSaving: true, initState: Math.round(UtilityMethods.getRandomArbitrary(0.5, 100)*10)/10, negativeMassCheckboxParams: {id: "new_obj_negative_mass"}, callback: (state)=>{
-		document.getElementById('newObjMassSpan').innerHTML = Math.round(state*1000)/1000;
-	}}); // Menu new object's mass input
+	this.newObjMass = new UIConnect.MassInput({id: 'create_mass', stateSaving: true, initState: UtilityMethods.roundTo(UtilityMethods.getRandomArbitrary(0.5, 100), 1), negativeMassCheckboxParams: {id: "new_obj_negative_mass"}}); // Menu new object's mass input
 	this.newObjLock = new UIConnect.CheckboxInput({type: 'checkbox', id: 'objLckCeck', initState: false}); // Menu lock created object input
 	//
 	this.launchForce = new UIConnect.RangeInput({id: 'launch_power', stateSaving: true, callback: (val)=>{lnch_pwr_span.innerHTML = UtilityMethods.expVal(val); mouse.move = true;}, eventName: 'input'}); // Menu launch power value input
@@ -57,14 +55,11 @@ ui.init = function (){
 	this.deletingMode = new UIConnect.RadioInput({id: 'dellMethodRadio'}); // Deleting method
 
 	// Edit object menu ===================================================
-	this.editMass = new UIConnect.MassInput({id: 'mass_edit', stateSaving: false, initState: 1000, callback: (state) => {
-			document.getElementById('editObjMassSpan').innerHTML = Math.round(state*1000)/1000;
-		},
+	this.editMass = new UIConnect.MassInput({id: 'mass_edit', stateSaving: false, initState: 1000, 
 		negativeMassCheckboxParams: {
 			id: 'edit_obj_negative_mass',
 			callback: (state) => {
 				if (this.editMass){
-					this.editMass.state = state ? -Math.abs(this.editMass.state) : Math.abs(this.editMass.state);
 					allowRender();
 					addFrameBeginTask(()=>{
 						if (scene.objArr[swch.editObjId]) scene.objArr[swch.editObjId].m = this.editMass.state;
@@ -105,8 +100,8 @@ ui.init = function (){
 	} });
 	// Mode 1
 	this.traceMode1Length = new UIConnect.RangeInput({id: 'trace1Lnth', stateSaving: true, eventName: 'input', callback: (val, ths) => {ths.value = Math.pow(1 - val, 2)} });
-	this.traceMode1Opacity = new UIConnect.RangeInput({id: 'trace_opacity', stateSaving: true, eventName: 'input', callback: (val)=>{renderer.canv3.style.opacity = val; allowRender();} });
-	this.traceMode1Blur = new UIConnect.RangeInput({id: 'trace_blur', stateSaving: true, eventName: 'input', callback: (val)=>{renderer.canv3.style.filter = `blur(${val*val}px)`; allowRender();} });
+	this.traceMode1Opacity = new UIConnect.RangeInput({id: 'trace_opacity', stateSaving: true, eventName: 'input', callback: (val)=>{renderer.canv2.style.opacity = val; allowRender();} });
+	this.traceMode1Blur = new UIConnect.RangeInput({id: 'trace_blur', stateSaving: true, eventName: 'input', callback: (val)=>{renderer.canv2.style.filter = `blur(${val*val}px)`; allowRender();} });
 	// Mode 2
 	this.traceMode2Particles = new UIConnect.CheckboxInput({id: 'trc2PrtclsChck', stateSaving: true, initState: true, callback: allowRender});
 	this.traceMode2Trembling = new UIConnect.CheckboxInput({id: 'trc2TrembChck', stateSaving: true, initState: true, callback: allowRender});
@@ -150,14 +145,14 @@ ui.init = function (){
 	}});
 	this.maxPerformance = new UIConnect.CheckboxInput({id: 'max_performance', stateSaving: true, callback: (state)=>{
 		if (state) {
-			renderer.ctx3.clearRect(0,0, renderer.resolutionX, renderer.resolutionY);
-			renderer.canv3.style.display = background_image.style.display = 'none';
+			renderer.ctx2.clearRect(0,0, renderer.resolutionX, renderer.resolutionY);
+			renderer.canv2.style.display = background_image.style.display = 'none';
 			additionalTrajectoryOptionsExtended1.style.display = 'none';
 			renderer.allowFrameRender = true; // Render
 			view_settings.className += ' disabled'; // Hide view settings
 		} else {
-			renderer.ctx1.clearRect(0,0, renderer.resolutionX, renderer.resolutionY);
-			renderer.canv3.style.display = background_image.style.display = '';
+			renderer.ctx0.clearRect(0,0, renderer.resolutionX, renderer.resolutionY);
+			renderer.canv2.style.display = background_image.style.display = '';
 			additionalTrajectoryOptionsExtended1.style.display = 'initial';
 			renderer.allowFrameRender = true; // Render
 			view_settings.className = view_settings.className.replace('disabled', ''); // Hide view settings
@@ -252,17 +247,17 @@ document.getElementById('renderLayers').addEventListener('touchmove', function(e
 	// Object move start/end
 	if (navMenu.menuSelected == 'move'){
 		if (multiTouch == 1 && allowClick) {
-			movingObjectBegin(); // Object move start
+			moveObjectBegin(); // Object move start
 		} else {
 			// Object move end
 			if (scene.objArr[mov_obj]){
-				scene.objArr[mov_obj].vx = movingObjectPosition[2];
-				scene.objArr[mov_obj].vy = movingObjectPosition[3];
+				scene.objArr[mov_obj].vx = movingObjectsPosAndVel[2];
+				scene.objArr[mov_obj].vy = movingObjectsPosAndVel[3];
 				mov_obj = null;
 			}
 		}
 	}
-	movingObject(); // Moving object if mouse down && navMenu.menuSelected == "move"
+	moveObject(); // Moving object if mouse down && navMenu.menuSelected == "move"
 	if (event.changedTouches.length == 2){ // If multitouch
 		//All touch points array
 		for (let i = 0; i < event.changedTouches.length; i++){
@@ -367,34 +362,15 @@ function mouseDownHandler(event){
 	}
 }
 // Moving object function
-function movingObject(){
+function moveObject(){
 	if (mouse.leftDown && navMenu.menuSelected == 'move' && mov_obj !== null){ // Moving object
-		let newX = (mouse.x - mouse.leftDownX)/camera.animZoom + movingObjectPosition[0]; // New object X
-		let newY = (mouse.y - mouse.leftDownY)/camera.animZoom + movingObjectPosition[1]; // New object Y
-		// Draw trace while user moving object
-		if (scene.objArr[mov_obj]){
-			if (ui.tracesMode.state == 1){ // If traces mode == 1
-				let dCanv = ui.maxPerformance.state ? renderer.ctx1 : renderer.ctx3;
-				dCanv.strokeStyle = scene.objArr[mov_obj].color;
-				dCanv.fillStyle = scene.objArr[mov_obj].color;	
-				dCanv.lineWidth = renderer.getScreenRad(scene.objArr[mov_obj].m)*2;
-				// Line
-				dCanv.beginPath();
-				dCanv.lineCap = 'round';
-				dCanv.moveTo(...renderer.crd2(scene.objArr[mov_obj].x, scene.objArr[mov_obj].y));
-				// Set position to user's moving objec
-				scene.objArr[mov_obj].x = newX; // New position X
-				scene.objArr[mov_obj].y = newY; // New position Y
+		let newX = (mouse.x - mouse.leftDownX)/camera.animZoom + movingObjectsPosAndVel[0]; // New object X
+		let newY = (mouse.y - mouse.leftDownY)/camera.animZoom + movingObjectsPosAndVel[1]; // New object Y
+		if (!scene.objArr[mov_obj]) return;
 
-				dCanv.lineTo(...renderer.crd2(scene.objArr[mov_obj].x, scene.objArr[mov_obj].y));
-				dCanv.stroke();
-				dCanv.lineCap = 'butt';
-			} else {
-				scene.objArr[mov_obj].x = newX; // New position X
-				scene.objArr[mov_obj].y = newY; // New position Y
-			}
-			renderer.allowFrameRender = true;
-		}
+		scene.objArr[mov_obj].x = newX; // New position X
+		scene.objArr[mov_obj].y = newY; // New position Y
+		renderer.allowFrameRender = true;
 	}	
 }
 // Background movement
@@ -404,15 +380,16 @@ function bgMoving(){
 	}
 }
 // Start moving object
-function movingObjectBegin(){
+function moveObjectBegin(){
 	// Перемещение ближайшео объекта
 	if (navMenu.menuSelected == 'move' && mov_obj === null){
 		mov_obj = scene.objectSelect();
-		if (scene.objArr[mov_obj]){
-			movingObjectPosition[0] = scene.objArr[mov_obj].x; movingObjectPosition[1] = scene.objArr[mov_obj].y; //Координаты перемещяемого объекта
-			movingObjectPosition[2] = scene.objArr[mov_obj].vx; movingObjectPosition[3] = scene.objArr[mov_obj].vy;	// Вектор перемещяемого объекта
-			scene.objArr[mov_obj].vx = 0; scene.objArr[mov_obj].vy = 0;
-		}
+		const movingObject = scene.objArr[mov_obj];
+		if (!movingObject) return;
+
+		movingObjectsPosAndVel[0] = movingObject.x; movingObjectsPosAndVel[1] = movingObject.y; //Координаты перемещяемого объекта
+		movingObjectsPosAndVel[2] = movingObject.vx; movingObjectsPosAndVel[3] = movingObject.vy;	// Вектор перемещяемого объекта
+		movingObject.vx = 0; movingObject.vy = 0;
 	}
 }
 // Mouse UP
@@ -443,8 +420,8 @@ function mouseUpHandler(event){
 		}
 		// // Object move end
 		if (navMenu.menuSelected == 'move' && scene.objArr[mov_obj] && mov_obj !== null){
-			scene.objArr[mov_obj].vx = movingObjectPosition[2];
-			scene.objArr[mov_obj].vy = movingObjectPosition[3];
+			scene.objArr[mov_obj].vx = movingObjectsPosAndVel[2];
+			scene.objArr[mov_obj].vy = movingObjectsPosAndVel[3];
 			mov_obj = null;
 		}
 
@@ -498,10 +475,10 @@ function mouseUpHandler(event){
 document.onmousemove = function(event){
 	mouse.move = true;
 	if (mouse.leftDown) {
-		movingObjectBegin();
+		moveObjectBegin();
 		isMinMouseMove = isMinMouseMove ? true : dist(mouse.x, mouse.y, mouse.leftDownX, mouse.leftDownY) >= minMouseMove;
 	}
-	movingObject(); // Moving object if mouse down && navMenu.menuSelected == "move"
+	moveObject(); // Moving object if mouse down && navMenu.menuSelected == "move"
 	if (
 		mouse.middleDown 
 		|| (swch.tapCamMove && mouse.leftDown)
@@ -602,7 +579,7 @@ document.addEventListener('keydown', function(e){
 	}
 });
 
-class SelectedMenuStateIcon {
+class MenuStateIcon {
 	#timeout = null;
 	state = null;
 	constructor ({iconId, format, path}) {
@@ -627,7 +604,7 @@ class SelectedMenuStateIcon {
 	}
 }
 
-self.menuStateIcon = new SelectedMenuStateIcon({iconId: 'menuSelectedIcon', format: 'png', path: 'ico/'});
+self.menuStateIcon = new MenuStateIcon({iconId: 'menuSelectedIcon', format: 'png', path: 'ico/'});
 
 // Buttons events
 document.addEventListener('click', function(e){
@@ -920,9 +897,9 @@ function readFile(file) {
 			console.error(err);
 			alert('Несовместимый файл!');
 		}
-	};
+	}
 	reader.onerror = function(err) {
 		console.error(err);
 		alert("Ошибка чтения файла!");
-	};
+	}
 }

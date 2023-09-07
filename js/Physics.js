@@ -357,7 +357,7 @@ export default class Physics {
 		// Add the vectors
 		for (let objId = objArr.length; objId--;){
 			let object = objArr[objId];
-			// let can = this.activCam.ctx3;
+			// let can = this.activCam.ctx2;
 			// can.beginPath();
 			// can.fillStyle = object.color;
 			// can.arc(...this.activCam.crd2(object.x, object.y), 2, 0, 7);

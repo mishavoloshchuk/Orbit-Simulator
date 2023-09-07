@@ -31,7 +31,7 @@ export default class IndicateFPS{
 		IndicateFPS.indicatorId ++;
 	}
 	measure(){
-		let timeStamp = performance.now(); // Time now
+		const timeStamp = performance.now(); // Time now
 		this.#frameTime = timeStamp - this.#lastFrameTimestamp; // Calculate frame time
 		this.#lastFrameTimestamp = timeStamp; // Set the #lastFrameTimestamp
 		this.#fps = 1000/this.#frameTime; // Calculate FPS value

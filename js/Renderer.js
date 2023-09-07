@@ -5,10 +5,10 @@ export default class Renderer {
 	#resolutionY = window.innerHeight;
 
 	set resolutionX (resolutionX){
-		this.#resolutionX = this.canv0.width = this.canv2.width = this.canv3.width = resolutionX;
+		this.#resolutionX = this.canv0.width = this.canv1.width = this.canv2.width = resolutionX;
 	}
 	set resolutionY (resolutionY){
-		this.#resolutionY = this.canv0.height = this.canv2.height = this.canv3.height = resolutionY;
+		this.#resolutionY = this.canv0.height = this.canv1.height = this.canv2.height = resolutionY;
 	}
 	get resolutionX (){
 		return this.#resolutionX;
@@ -31,37 +31,7 @@ export default class Renderer {
 		this.camera = camera;
 
 		this.rendererId = Renderer.rendererId;
-		this.layersDiv = document.createElement('div');
-		this.layersDiv.setAttribute('id', 'renderLayers_renderer_' + Renderer.rendererId);
-
-		// Init render layer 1
-		this.canv0 = document.createElement('canvas');
-		this.canv0.id = 'layer0_renderer' + this.rendererId;
-		this.canv0.className = 'renderLayer';
-		this.canv0.style.zIndex = -4;
-		this.canv0.innerHTML = 'Your browser does not support canvas!';
-		this.layersDiv.appendChild(this.canv0);
-		this.ctx1 = this.canv0.getContext('2d',{willReadFrequently: false});
-
-		// Init render layer 2
-		this.canv2 = document.createElement('canvas');
-		this.canv2.id = 'layer1_renderer' + this.rendererId;
-		this.canv2.className = 'renderLayer';
-		this.canv2.style.zIndex = -2;
-		this.canv2.innerHTML = 'Your browser does not support canvas!';
-		this.layersDiv.appendChild(this.canv2);
-		this.ctx2 = this.canv2.getContext('2d', {willReadFrequently: false});
-
-		// Init render layer 3
-		this.canv3 = document.createElement('canvas');
-		this.canv3.id = 'layer2_renderer' + this.rendererId;
-		this.canv3.className = 'renderLayer';
-		this.canv3.style.zIndex = -6;
-		this.canv3.style.filter = 'blur(0px)';
-		this.canv3.style.opacity = 0.7;
-		this.canv3.innerHTML = 'Your browser does not support canvas!';
-		this.layersDiv.appendChild(this.canv3);
-		this.ctx3 = this.canv3.getContext('2d',{willReadFrequently: false});
+		this.#initLayers();
 
 		// Camera resolution
 		this.resolutionX = window.innerWidth;
@@ -71,22 +41,67 @@ export default class Renderer {
 
 		Renderer.rendererId ++;
 	}
-	crd (coord, axis){ // Get object screen position
-		const sCtrX = this.resolutionX/2 - this.camera.ax;
-		const sCtrY = this.resolutionY/2 - this.camera.ay;
 
+	#initLayers() {
+		this.layersDiv = document.createElement('div');
+		this.layersDiv.setAttribute('id', 'renderLayers_renderer_' + Renderer.rendererId);
+
+		// Init render layer 1
+		this.#makeLayer(this.layersDiv, {
+			zIndex: -4
+		});
+
+		// Init render layer 2
+		this.#makeLayer(this.layersDiv, {
+			zIndex: -2
+		});
+
+		// Init render layer 3
+		this.#makeLayer(this.layersDiv, {
+			zIndex: -6,
+			filter: 'blur(0px)',
+			opacity: 0.7
+		});
+	}
+
+	#layersCount = 0;
+	#makeLayer(targetNode, styles){
+		const className = 'renderLayer';
+		const canvas = document.createElement('canvas');
+		canvas.id = 'renderer' + this.rendererId + '-layer' + this.#layersCount;
+		canvas.className = className;
+		canvas.innerHTML = 'Your browser does not support canvas!';
+		Object.assign(canvas.style, styles);
+		targetNode.appendChild(canvas);
+
+		this['canv' + this.#layersCount] = canvas;
+		this['ctx' + this.#layersCount] = canvas.getContext('2d',{willReadFrequently: false});
+		this.#layersCount ++;
+	}
+
+	// World to screen position. One axis
+	crd (coord, axis){
 		switch (axis){
-			case 'x': return coord*this.camera.animZoom + sCtrX - this.camera.ax*(this.camera.animZoom-1);
-			case 'y': return coord*this.camera.animZoom + sCtrY - this.camera.ay*(this.camera.animZoom-1);
+			case 'x': 
+				const sCtrX = this.resolutionX/2 - this.camera.ax;
+				return coord*this.camera.animZoom + sCtrX - this.camera.ax*(this.camera.animZoom-1);
+			case 'y': 
+				const sCtrY = this.resolutionY/2 - this.camera.ay;
+				return coord*this.camera.animZoom + sCtrY - this.camera.ay*(this.camera.animZoom-1);
 		}		
 	}
 
-	crd2 (xpos, ypos){ // Get object screen position
+	// World to screen position
+	crd2 (xpos, ypos){
 		const sCtrX = this.resolutionX/2 - this.camera.ax;
 		const sCtrY = this.resolutionY/2 - this.camera.ay;
 
-		return [xpos * this.camera.animZoom + sCtrX - this.camera.ax*(this.camera.animZoom-1), ypos * this.camera.animZoom + sCtrY - this.camera.ay*(this.camera.animZoom-1)];		
+		return [
+			xpos * this.camera.animZoom + sCtrX - this.camera.ax*(this.camera.animZoom-1), 
+			ypos * this.camera.animZoom + sCtrY - this.camera.ay*(this.camera.animZoom-1)
+		];		
 	}
+
 	//Draw objects
 	renderObjects(){
 		// console.log('Render objects');
@@ -96,9 +111,9 @@ export default class Renderer {
 		const maxPerformance = ui.maxPerformance.state;
 
 		const {
-			ctx1: c1,
-			ctx2: c2,
-			ctx3: c3
+			ctx0: c1,
+			ctx1: c2,
+			ctx2: c3
 		} = this;
 
 		// Trace mode 2 UI
@@ -358,36 +373,36 @@ export default class Renderer {
 		const D = this.getScreenRad(ui.newObjMass.state)*2;
 
 		// Gradient
-		let gradient = this.ctx2.createLinearGradient(
+		let gradient = this.ctx1.createLinearGradient(
 			mouse.leftDownX,//   X1
 			mouse.leftDownY,//   Y1
 			mcx,//  X2
 			mcy);// Y2
 		gradient.addColorStop(0, ui.newObjColor.state); // New object color
 		gradient.addColorStop(1, "#0000"); // Alpha
-		this.ctx2.strokeStyle = gradient;
+		this.ctx1.strokeStyle = gradient;
 
-		this.ctx2.lineWidth = D < 1 ? 1 : D;
-		this.ctx2.beginPath();
-		this.ctx2.moveTo(mouse.leftDownX, mouse.leftDownY);
-		this.ctx2.lineTo(mcx, mcy);
-		this.ctx2.stroke();
-		this.ctx2.globalAlpha = 1;
+		this.ctx1.lineWidth = D < 1 ? 1 : D;
+		this.ctx1.beginPath();
+		this.ctx1.moveTo(mouse.leftDownX, mouse.leftDownY);
+		this.ctx1.lineTo(mcx, mcy);
+		this.ctx1.stroke();
+		this.ctx1.globalAlpha = 1;
 
-		this.ctx2.beginPath();
-		this.ctx2.fillStyle = ui.newObjColor.state;
-		this.ctx2.arc(mouse.leftDownX, mouse.leftDownY, D/2, 0, 7);
-		this.ctx2.fill();
+		this.ctx1.beginPath();
+		this.ctx1.fillStyle = ui.newObjColor.state;
+		this.ctx1.arc(mouse.leftDownX, mouse.leftDownY, D/2, 0, 7);
+		this.ctx1.fill();
 
 		if (ui.newObjMass.state < 0){
-			this.ctx2.strokeStyle = "#000";
-			this.ctx2.lineWidth = D/2/10;
-			this.ctx2.beginPath();
-			this.ctx2.arc(mouse.leftDownX, mouse.leftDownY, D/2*0.6, 0, 7);
+			this.ctx1.strokeStyle = "#000";
+			this.ctx1.lineWidth = D/2/10;
+			this.ctx1.beginPath();
+			this.ctx1.arc(mouse.leftDownX, mouse.leftDownY, D/2*0.6, 0, 7);
 
-			this.ctx2.moveTo(mouse.leftDownX-D/2*0.4, mouse.leftDownY);
-			this.ctx2.lineTo(mouse.leftDownX+D/2*0.4, mouse.leftDownY)
-			this.ctx2.stroke();
+			this.ctx1.moveTo(mouse.leftDownX-D/2*0.4, mouse.leftDownY);
+			this.ctx1.lineTo(mouse.leftDownX+D/2*0.4, mouse.leftDownY)
+			this.ctx1.stroke();
 		}
 	}
 
@@ -396,7 +411,7 @@ export default class Renderer {
 		// console.log(objectId)
 		const obj = this.scene.objArr[objectId];
 		if (obj){ // If there are target object
-			this.canv2.visualSelect = true;
+			this.canv1.visualSelect = true;
 			this.clearLayer2();
 			let selectObjId = objectId;
 
@@ -418,25 +433,25 @@ export default class Renderer {
 
 			// Fill circle
 			if (alpha > 0){
-				this.ctx2.beginPath();
-				this.ctx2.globalAlpha = alpha;
-				this.ctx2.fillStyle = color;
-				this.ctx2.arc(
+				this.ctx1.beginPath();
+				this.ctx1.globalAlpha = alpha;
+				this.ctx1.fillStyle = color;
+				this.ctx1.arc(
 					...this.crd2(obj.x, obj.y), 
 					drawRadius + this.#visualObjectSelectAnimation, 
 					0, 7);
-				this.ctx2.fill();
+				this.ctx1.fill();
 			}
 			// Stroke circle
-			this.ctx2.beginPath();
-			this.ctx2.globalAlpha = 1;
-			this.ctx2.strokeStyle = color;
-			this.ctx2.lineWidth = 2;
-			this.ctx2.arc(
+			this.ctx1.beginPath();
+			this.ctx1.globalAlpha = 1;
+			this.ctx1.strokeStyle = color;
+			this.ctx1.lineWidth = 2;
+			this.ctx1.arc(
 				...this.crd2(obj.x, obj.y), 
 				drawRadius + this.#visualObjectSelectAnimation, 
 				0, 7);
-			this.ctx2.stroke();
+			this.ctx1.stroke();
 		}
 	}
 
@@ -448,45 +463,86 @@ export default class Renderer {
 	visObjMass(mass, color, posX = innerWidth/2, posY = innerHeight/2){
 		// Fill circle
 		let drawRadius = this.getScreenRad(mass);
-		this.canv2.visualSelect = true;
+		this.canv1.visualSelect = true;
 		this.clearLayer2();
 
 		// Darken background
-		this.ctx2.globalAlpha = 0.5;
-		this.ctx2.beginPath();
-		this.ctx2.fillStyle = this.dimmColor;
-		this.ctx2.fillRect(0, 0, this.resolutionX, this.resolutionY);
+		this.ctx1.globalAlpha = 0.5;
+		this.ctx1.beginPath();
+		this.ctx1.fillStyle = this.dimmColor;
+		this.ctx1.fillRect(0, 0, this.resolutionX, this.resolutionY);
 
 		// Draw object size
-		this.ctx2.globalAlpha = 0.8;
-		this.ctx2.beginPath();
-		this.ctx2.fillStyle = color;
-		this.ctx2.arc(posX, posY, this.getScreenRad(mass), 0, 7);
-		this.ctx2.fill();
+		this.ctx1.globalAlpha = 0.8;
+		this.ctx1.beginPath();
+		this.ctx1.fillStyle = color;
+		this.ctx1.arc(posX, posY, this.getScreenRad(mass), 0, 7);
+		this.ctx1.fill();
 
-		this.ctx2.strokeStyle = "#fff";
-		this.ctx2.lineWidth = 1;
-		this.ctx2.beginPath();
-		this.ctx2.arc(posX, posY, drawRadius, 0, 7);
-		this.ctx2.stroke();	
+		this.ctx1.strokeStyle = "#fff";
+		this.ctx1.lineWidth = 1;
+		this.ctx1.beginPath();
+		this.ctx1.arc(posX, posY, drawRadius, 0, 7);
+		this.ctx1.stroke();	
 
 		// Draw object negative mass indication
 		if (mass < 0){
-			this.ctx2.strokeStyle = "#000";
-			this.ctx2.lineWidth = drawRadius/10;
-			this.ctx2.beginPath();
-			this.ctx2.arc(posX, posY, drawRadius*0.6, 0, 7);
+			this.ctx1.strokeStyle = "#000";
+			this.ctx1.lineWidth = drawRadius/10;
+			this.ctx1.beginPath();
+			this.ctx1.arc(posX, posY, drawRadius*0.6, 0, 7);
 
-			this.ctx2.moveTo(posX-drawRadius*0.4, posY);
-			this.ctx2.lineTo(posX+drawRadius*0.4, posY)
-			this.ctx2.stroke();
+			this.ctx1.moveTo(posX-drawRadius*0.4, posY);
+			this.ctx1.lineTo(posX+drawRadius*0.4, posY)
+			this.ctx1.stroke();
 		}
-		this.ctx2.globalAlpha = 1;
+		this.ctx1.globalAlpha = 1;
+	}
+
+	// Show distance to main object
+	visDistance(obj_cord, color = '#888888', objId = scene.objIdToOrbit){
+		const tObj = scene.objArr[objId];
+		if (tObj){
+			const radius = dist(obj_cord[0], obj_cord[1], ...this.crd2(tObj.x, tObj.y));
+			const ctx = this.ctx1;
+			if (radius > this.getScreenRad(tObj.m)){
+				ctx.strokeStyle = color;
+				ctx.lineWidth = 2;
+				// Line
+				ctx.beginPath();
+				ctx.moveTo(obj_cord[0], obj_cord[1]);
+				ctx.lineTo(...this.crd2(tObj.x, tObj.y));
+				ctx.stroke();
+				// Circle
+				ctx.lineWidth = 0.5;
+				ctx.beginPath();
+				ctx.arc(...this.crd2(tObj.x, tObj.y), radius, 0, 7);
+				ctx.stroke();
+				// Points
+				ctx.beginPath();
+				ctx.fillStyle = color;
+				ctx.arc(...this.crd2(tObj.x, tObj.y), 3, 0, 7);
+				ctx.arc(obj_cord[0], obj_cord[1], 3, 0, 7);
+				ctx.fill();
+				ctx.beginPath();
+
+				Object.assign(launchPowerLabel.style, {
+					left: `calc(${mouse.x}px + 1em)`,
+					top: `calc(${mouse.y}px - 1em)`,
+					display: 'block', color: color
+				});
+				launchPowerLabel.innerHTML = Math.round(radius / camera.animZoom*1000)/1000;
+			} else {
+				if (!mouse.leftDown){
+					launchPowerLabel.style.display = 'none';	
+				}
+			}		
+		}
 	}
 
 	tracesMode1Wiping(){
 		//console.log('clear layer 1');
-		let canvas = ui.maxPerformance.state ? this.ctx1 : this.ctx3;
+		let canvas = ui.maxPerformance.state ? this.ctx0 : this.ctx2;
 		canvas.save();
 		canvas.globalAlpha = ui.traceMode1Length.value;
 		canvas.globalCompositeOperation = 'destination-out';
@@ -496,20 +552,20 @@ export default class Renderer {
 	}
 	clearLayer1(col){
 		//console.log('clear layer 1');
-		this.ctx1.clearRect(0, 0, this.resolutionX, this.resolutionY);
+		this.ctx0.clearRect(0, 0, this.resolutionX, this.resolutionY);
 	}
 	clearLayer2(){
 		// console.log('clear layer 2');
-		this.ctx2.clearRect(0, 0, this.resolutionX, this.resolutionY);
-		delete this.canv2.changed;
+		this.ctx1.clearRect(0, 0, this.resolutionX, this.resolutionY);
+		delete this.canv1.changed;
 	}
 	clearLayer3(){
 		//console.log('clear layer 3');
-		let canvas = ui.maxPerformance.state ? this.ctx1 : this.ctx3;
+		let canvas = ui.maxPerformance.state ? this.ctx0 : this.ctx2;
 		canvas.clearRect(0, 0, this.resolutionX, this.resolutionY);
 	}
 	//Draw cross function
-	drawCross(x, y, width = 1, size = 5, color = '#ff0000', canvObj = this.ctx2){
+	drawCross(x, y, width = 1, size = 5, color = '#ff0000', canvObj = this.ctx1){
 		canvObj.strokeStyle = this.dimmColor;
 		canvObj.lineWidth = width;
 		canvObj.lineCap = 'round';

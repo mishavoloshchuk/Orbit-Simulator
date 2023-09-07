@@ -16,7 +16,7 @@ export default class TrajectoryPreview {
 	}
 
 	render({tracesArray, deletedObjectsList, distances, minDistance}){
-		const ctx2 = this.renderer.ctx2;
+		const ctx2 = this.renderer.ctx1;
 		const newObjId = tracesArray.length - 1; // Created object id
 		const otherObjTraceColor = "#999999"; // The trace color for non new object
 		// Line dash settings

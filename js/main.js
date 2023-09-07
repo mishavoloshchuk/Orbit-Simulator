@@ -175,7 +175,7 @@ function frame(){
 	// Set move cursor style
 	if (mouse.middleDown || navMenu.menuSelected == 'move' || (mouse.leftDown && swch.tapCamMove)){renderer.layersDiv.style.cursor = "move";}else{renderer.layersDiv.style.cursor = "default";};
 
-	swch.tapCamMove = navMenu.menuSelected !== 'create' && !renderer.canv2.visualSelect;
+	swch.tapCamMove = navMenu.menuSelected !== 'create' && !renderer.canv1.visualSelect;
 
 	if (scene.objArr.length){
 		// Set objects radiuses
@@ -216,18 +216,18 @@ function frame(){
 	}
 
 	// Show distance
-	if (navMenu.menuSelected == 'create' && !mouse.leftDown && ui.showDistanceFromCursorToMainObj.state && !renderer.canv2.visualSelect){
+	if (navMenu.menuSelected == 'create' && !mouse.leftDown && ui.showDistanceFromCursorToMainObj.state && !renderer.canv1.visualSelect){
 		renderer.clearLayer2();
-		vis_distance([mouse.x, mouse.y], '#888888');
+		renderer.visDistance([mouse.x, mouse.y], '#888888');
 	}
 	// Hide launch power label
-	if (!swch.allowObjCreating || renderer.canv2.visualSelect){
+	if (!swch.allowObjCreating || renderer.canv1.visualSelect){
 		launchPowerLabel.style.display = 'none';
 	}
 
-	if (renderer.canv2.visualSelect){
+	if (renderer.canv1.visualSelect){
 		renderer.clearLayer2();
-		delete renderer.canv2.visualSelect;
+		delete renderer.canv1.visualSelect;
 	}
 	const nearObjId = scene.objectSelect('nearest');
 	if (navMenu.menuSelected == 'delete'){
@@ -281,42 +281,6 @@ function frame(){
 	return true;
 }
 
-// Show distance to main object
-function vis_distance(obj_cord, color = '#888888', objId = scene.objIdToOrbit){
-	const tObj = scene.objArr[objId];
-	if (tObj){
-		const radius = dist(obj_cord[0], obj_cord[1], ...renderer.crd2(tObj.x, tObj.y));
-		const ctx = renderer.ctx2;
-		if (radius > renderer.getScreenRad(tObj.m)){
-			ctx.strokeStyle = color;
-			ctx.lineWidth = 2;
-			// Line
-			ctx.beginPath();
-			ctx.moveTo(obj_cord[0], obj_cord[1]);
-			ctx.lineTo(...renderer.crd2(tObj.x, tObj.y));
-			ctx.stroke();
-			// Circle
-			ctx.lineWidth = 0.5;
-			ctx.beginPath();
-			ctx.arc(...renderer.crd2(tObj.x, tObj.y), radius, 0, 7);
-			ctx.stroke();
-			// Points
-			ctx.beginPath();
-			ctx.fillStyle = color;
-			ctx.arc(...renderer.crd2(tObj.x, tObj.y), 3, 0, 7);
-			ctx.arc(obj_cord[0], obj_cord[1], 3, 0, 7);
-			ctx.fill();
-			ctx.beginPath();
-
-			Object.assign(launchPowerLabel.style, {left: `calc(${mouse.x}px + 1em)`, top: `calc(${mouse.y}px - 1em)`, display: 'block', color: color});
-			launchPowerLabel.innerHTML = Math.round(radius / camera.animZoom*1000)/1000;
-		} else {
-			if (!mouse.leftDown){
-				launchPowerLabel.style.display = 'none';	
-			}
-		}		
-	}
-}
 //Scene scale
 renderer.layersDiv.addEventListener('wheel', function(e){
 	if (!e.ctrlKey && !mov_obj && !(mouse.leftDown && swch.allowObjCreating)){

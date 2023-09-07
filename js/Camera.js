@@ -98,12 +98,8 @@ export default class Camera{
 			this.cameraChangedState();
 		}
 
-		// Camera position
-		if (scene.objArr[this.Target]){
-			this.x = scene.objArr[this.Target].x;
-			this.y = scene.objArr[this.Target].y;
-		}
-		
+		this.setPositionToTarget();
+
 		this.animFunc(); // Camera animation
 	}
 
@@ -121,5 +117,12 @@ export default class Camera{
 
 	hasTarget(){
 		return this.Target !== undefined;
+	}
+
+	setPositionToTarget(){
+		if (scene.objArr[this.Target]){
+			this.x = scene.objArr[this.Target].x;
+			this.y = scene.objArr[this.Target].y;
+		}
 	}
 }
