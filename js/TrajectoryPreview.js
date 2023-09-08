@@ -16,7 +16,7 @@ export default class TrajectoryPreview {
 	}
 
 	render({tracesArray, deletedObjectsList, distances, minDistance}){
-		const ctx2 = this.renderer.ctx1;
+		const ctx1 = this.renderer.ctx1;
 		const newObjId = tracesArray.length - 1; // Created object id
 		const otherObjTraceColor = "#999999"; // The trace color for non new object
 		// Line dash settings
@@ -67,16 +67,16 @@ export default class TrajectoryPreview {
 						}
 					}
 				}
-				ctx2.beginPath();
-				ctx2.setLineDash(dashPattern); // Dash line
-				ctx2.strokeStyle = color;
-				ctx2.lineWidth = R;
-				ctx2.moveTo(...this.renderer.crd2(tracesArray[trace][0][0], tracesArray[trace][0][1]));
+				ctx1.beginPath();
+				ctx1.setLineDash(dashPattern); // Dash line
+				ctx1.strokeStyle = color;
+				ctx1.lineWidth = R;
+				ctx1.moveTo(...this.renderer.crd2(tracesArray[trace][0][0], tracesArray[trace][0][1]));
 				for (let point of tracesArray[trace]){
-					ctx2.lineTo(...this.renderer.crd2(point[0], point[1]));
+					ctx1.lineTo(...this.renderer.crd2(point[0], point[1]));
 				}
-				ctx2.stroke();
-				ctx2.setLineDash([]); // Solid line
+				ctx1.stroke();
+				ctx1.setLineDash([]); // Solid line
 			}
 		}
 		// Proximity display
@@ -85,59 +85,59 @@ export default class TrajectoryPreview {
 				// New object arc
 				const isNearest = distance.D === minDistance;
 				if (isNearest){
-					ctx2.globalAlpha = 0.7;
-					ctx2.fillStyle = ui.newObjColor.state;
-					ctx2.beginPath();
+					ctx1.globalAlpha = 0.7;
+					ctx1.fillStyle = ui.newObjColor.state;
+					ctx1.beginPath();
 					let drawRadius = this.renderer.getScreenRad(ui.newObjMass.state);
 					drawRadius = drawRadius < 2 ? 2 : drawRadius;
-					ctx2.arc(this.renderer.crd(dObj.x, 'x'), this.renderer.crd(dObj.y, 'y'), drawRadius, 0, 7);
-					ctx2.fill();
+					ctx1.arc(this.renderer.crd(dObj.x, 'x'), this.renderer.crd(dObj.y, 'y'), drawRadius, 0, 7);
+					ctx1.fill();
 					// Second object arc
-					ctx2.beginPath();
-					ctx2.fillStyle = this.scene.objArr[dObj.obj2Id].color;
+					ctx1.beginPath();
+					ctx1.fillStyle = this.scene.objArr[dObj.obj2Id].color;
 					drawRadius = this.renderer.getScreenRad(this.scene.objArr[dObj.obj2Id].m);
 					drawRadius = drawRadius < 2 ? 2 : drawRadius;
-					ctx2.arc(this.renderer.crd(dObj.x2, 'x'), this.renderer.crd(dObj.y2, 'y'), drawRadius, 0, 7);
-					ctx2.fill();
+					ctx1.arc(this.renderer.crd(dObj.x2, 'x'), this.renderer.crd(dObj.y2, 'y'), drawRadius, 0, 7);
+					ctx1.fill();
 				} else {
-					ctx2.globalAlpha = 0.3;
+					ctx1.globalAlpha = 0.3;
 				}
 
 				// The line between approachment points	
 				if (isNearest){
-					let gradient = ctx2.createLinearGradient(// Line gradient
+					let gradient = ctx1.createLinearGradient(// Line gradient
 						this.renderer.crd(dObj.x, 'x'),//   X1
 						this.renderer.crd(dObj.y, 'y'),//   Y1
 						this.renderer.crd(dObj.x2, 'x'),//  X2
 						this.renderer.crd(dObj.y2, 'y'));// Y2
 					gradient.addColorStop(0, ui.newObjColor.state); // New object color
 					gradient.addColorStop(1, this.scene.objArr[dObj.obj2Id].color); // Second object color
-					ctx2.strokeStyle = gradient;
-					ctx2.lineWidth = 2; // Line width between approachment points
+					ctx1.strokeStyle = gradient;
+					ctx1.lineWidth = 2; // Line width between approachment points
 				} else {
-					ctx2.strokeStyle = otherObjTraceColor;
-					ctx2.lineWidth = 1; // Line width between approachment points
+					ctx1.strokeStyle = otherObjTraceColor;
+					ctx1.lineWidth = 1; // Line width between approachment points
 				}
-				ctx2.beginPath();
-				ctx2.moveTo(this.renderer.crd(dObj.x, 'x'), this.renderer.crd(dObj.y, 'y'));
-				ctx2.lineTo(this.renderer.crd(dObj.x2, 'x'), this.renderer.crd(dObj.y2, 'y'));
-				ctx2.stroke();
-				ctx2.globalAlpha = 1;
+				ctx1.beginPath();
+				ctx1.moveTo(this.renderer.crd(dObj.x, 'x'), this.renderer.crd(dObj.y, 'y'));
+				ctx1.lineTo(this.renderer.crd(dObj.x2, 'x'), this.renderer.crd(dObj.y2, 'y'));
+				ctx1.stroke();
+				ctx1.globalAlpha = 1;
 		}
 		// Draw the cross if object(s) deleted after collision
 		for (let deletedObj of deletedObjectsList){
 			const size = this.renderer.getScreenRad(deletedObj.m)*0.7 < 3? 3 : this.renderer.getScreenRad(deletedObj.m)*0.7;
 			// Circle
-			ctx2.save();
-			ctx2.beginPath();
-			ctx2.globalAlpha = 0.3;
-			ctx2.fillStyle = '#f30';
+			ctx1.save();
+			ctx1.beginPath();
+			ctx1.globalAlpha = 0.3;
+			ctx1.fillStyle = '#f30';
 			let drawRadius = this.renderer.getScreenRad(deletedObj.m);
 			drawRadius = drawRadius < 2 ? 2 : drawRadius;
-			ctx2.arc(...this.renderer.crd2(deletedObj.x, deletedObj.y), drawRadius, 0, 7);
-			ctx2.fill();
+			ctx1.arc(...this.renderer.crd2(deletedObj.x, deletedObj.y), drawRadius, 0, 7);
+			ctx1.fill();
 
-			ctx2.restore();
+			ctx1.restore();
 			this.renderer.drawCross(
 				this.renderer.crd(deletedObj.x, 'x'),
 				this.renderer.crd(deletedObj.y, 'y'), 

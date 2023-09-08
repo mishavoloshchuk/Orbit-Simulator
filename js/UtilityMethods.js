@@ -72,6 +72,15 @@ class UtilityMethods {
 		return true;
 	}
 
+	/**
+	 * Deep object clone
+	 * Note
+	 * @link https://developer.mozilla.org/en-US/docs/Glossary/Deep_copy
+	 * **/
+	static deepClone(instance){
+		return JSON.parse(JSON.stringify(instance));
+	}
+
 	// Pythagorean theorem
 	static gipot(a,b){return Math.sqrt(a*a + b*b) }
 

@@ -142,5 +142,8 @@
 	"mail": "Почта",
 	"number_of_objects": "Количество объектов",
 	"deleted": "Удален!",
-	"my_world": "Мой мир"
+	"my_world": "Мой мир",
+
+	"incompatible_file": "Несовместимый файл!",
+	"file_read_error": "Ошибка при чтения файла!"
 }

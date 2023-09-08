@@ -159,7 +159,7 @@ export default class Scene {
 		for (let key in this){
 			const prop = this[key];
 			if (typeof prop !== 'function'){
-				newScn[key] = JSON.parse(JSON.stringify(prop));
+				newScn[key] = UtilityMethods.deepClone(prop);
 			}
 
 		}

@@ -142,5 +142,8 @@
 	"mail": "Mail",
 	"number_of_objects": "Number of objects",
 	"deleted": "Deleted!",
-	"my_world": "My world"
+	"my_world": "My world",
+
+	"incompatible_file": "Incompatible file!",
+	"file_read_error": "File read error!"
 }

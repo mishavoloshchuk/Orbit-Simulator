@@ -111,9 +111,9 @@ export default class Renderer {
 		const maxPerformance = ui.maxPerformance.state;
 
 		const {
-			ctx0: c1,
-			ctx1: c2,
-			ctx2: c3
+			ctx0: c0,
+			ctx1: c1,
+			ctx2: c2
 		} = this;
 
 		// Trace mode 2 UI
@@ -178,19 +178,19 @@ export default class Renderer {
 					&& !enoughObjMove 
 					&& !isObjOutOfScreen
 				){	
-					c1.save();
-					c1.beginPath();
-					c1.fillStyle = '#FFF';
-					c1.globalCompositeOperation = 'destination-out';
-					c1.arc(screenX, screenY, drawRadius + 0.4, 0, 7);
-					c1.fill();
-					c1.restore();
+					c0.save();
+					c0.beginPath();
+					c0.fillStyle = '#FFF';
+					c0.globalCompositeOperation = 'destination-out';
+					c0.arc(screenX, screenY, drawRadius + 0.4, 0, 7);
+					c0.fill();
+					c0.restore();
 				}
 				// Draw trace
 				if ((enoughObjMove || maxPerformanceAndTrcMd1)
 					&& !(isObjOutOfScreen && isPrevPosObjOutOfScreen)
 				){
-					let canv = maxPerformance ? c1 : c3;
+					let canv = maxPerformance ? c0 : c2;
 					canv.strokeStyle = obCol;
 					canv.lineWidth = traceDrawRadius * 2;
 					canv.lineCap = traceDrawRadius > 1 ? 'round' : 'butt';
@@ -211,17 +211,17 @@ export default class Renderer {
 					let randX = 0, randY = 0;
 					traceLength = Math.round(Math.pow(8, traceMode2Length));
 
-					c1.save(); // Save canvas
+					c0.save(); // Save canvas
 
-					c1.fillStyle = obCol;
-					c1.strokeStyle = obCol;
-					c1.globalCompositeOperation = 'destination-over';
+					c0.fillStyle = obCol;
+					c0.strokeStyle = obCol;
+					c0.globalCompositeOperation = 'destination-over';
 					if (obj.trace[0]){
-						c1.lineWidth = drawRadius*2;
-						c1.beginPath();
-						c1.moveTo(screenX + randX, screenY + randY);
-						c1.lineTo(this.crd(obj.trace[0][0], 'x')+prev_randX, this.crd(obj.trace[0][1], 'y')+prev_randY);
-						c1.stroke();				
+						c0.lineWidth = drawRadius*2;
+						c0.beginPath();
+						c0.moveTo(screenX + randX, screenY + randY);
+						c0.lineTo(this.crd(obj.trace[0][0], 'x')+prev_randX, this.crd(obj.trace[0][1], 'y')+prev_randY);
+						c0.stroke();				
 					}
 					for (let i = obj.trace.length; i--;){
 						let itr = i-1;
@@ -254,30 +254,30 @@ export default class Renderer {
 							&& drawRadius > 1.5
 							&& !point2OutOfScreen
 						){
-							c1.beginPath();
-							c1.arc(
+							c0.beginPath();
+							c0.arc(
 								Math.floor(point2ScreenX + randX * 2), 
 								Math.floor(point2ScreenY + randY * 2),
 								lineWidth / 2,
 								0,
 								7
 							);
-							c1.fill();
-							c1.resetTransform();
+							c0.fill();
+							c0.resetTransform();
 						}
 						// Line drawing
 						if (!(point1OutOfScreen === true && point2OutOfScreen === true)){ // If both points not out of screen
-							c1.lineWidth = lineWidth;
+							c0.lineWidth = lineWidth;
 							if (traceMode2Trembling === false) randX = randY = 0;
-							c1.globalAlpha = (TLength-i/1.5)/TLength;
-							c1.beginPath();
-							c1.moveTo(point1ScreenX + randX, point1ScreenY + randY);
-							c1.lineTo(point2ScreenX + prev_randX, point2ScreenY + prev_randY);
-							c1.stroke();
-							c1.globalAlpha = 1;
+							c0.globalAlpha = (TLength-i/1.5)/TLength;
+							c0.beginPath();
+							c0.moveTo(point1ScreenX + randX, point1ScreenY + randY);
+							c0.lineTo(point2ScreenX + prev_randX, point2ScreenY + prev_randY);
+							c0.stroke();
+							c0.globalAlpha = 1;
 						}
 					}
-					c1.restore(); // Restore canvas
+					c0.restore(); // Restore canvas
 				}
 			}
 			// Traces mode 3 =====
@@ -285,9 +285,9 @@ export default class Renderer {
 				if (!obj.lock){
 					traceResolution = 61 - Math.round(Math.pow(traceMode3Quality, 1/8)*60);
 					traceLength = Math.ceil(UtilityMethods.expVal(traceMode3Length) / traceResolution);
-					c1.strokeStyle = obCol;
-					c1.lineWidth = Math.min(drawRadius*1.7, Math.pow(traceMode3Width, 10));
-					c1.globalCompositeOperation = 'destination-over';
+					c0.strokeStyle = obCol;
+					c0.lineWidth = Math.min(drawRadius*1.7, Math.pow(traceMode3Width, 10));
+					c0.globalCompositeOperation = 'destination-over';
 					if (obj.trace.length > 0){
 						// Smooth the end cut of the trace
 						if (obj.trace.length === traceLength && !pauseState){
@@ -301,47 +301,47 @@ export default class Renderer {
 						}
 						// Draw line
 						// Round end of trace if the line width is enough
-						if (c1.lineWidth > 3) {
-							c1.lineCap = 'round';
-							c1.lineJoin = 'round';
+						if (c0.lineWidth > 3) {
+							c0.lineCap = 'round';
+							c0.lineJoin = 'round';
 						}
-						c1.beginPath();
-						c1.moveTo(this.crd(obj.x, 'x'), this.crd(obj.y, 'y'));
+						c0.beginPath();
+						c0.moveTo(this.crd(obj.x, 'x'), this.crd(obj.y, 'y'));
 						for (let i in obj.trace){
 							let itr = i;
-							c1.lineTo(this.crd(obj.trace[itr][0], 'x'), this.crd(obj.trace[itr][1], 'y'));
+							c0.lineTo(this.crd(obj.trace[itr][0], 'x'), this.crd(obj.trace[itr][1], 'y'));
 						}
-						c1.stroke();
-						c1.lineCap = 'butt';
-						c1.lineJoin = 'bevel';
+						c0.stroke();
+						c0.lineCap = 'butt';
+						c0.lineJoin = 'bevel';
 					}
 					// Separate the traces of objects
-					c1.globalCompositeOperation = 'destination-out';
-					c1.fillStyle = "#ffffff";
-					c1.beginPath();
-					c1.arc(screenX, screenY, drawRadius+1.5, 0, 7);
-					c1.fill();
-					c1.globalCompositeOperation = 'source-over';
+					c0.globalCompositeOperation = 'destination-out';
+					c0.fillStyle = "#ffffff";
+					c0.beginPath();
+					c0.arc(screenX, screenY, drawRadius+1.5, 0, 7);
+					c0.fill();
+					c0.globalCompositeOperation = 'source-over';
 				}
 			}
 
 			if (!isObjOutOfScreen) {
 				if (!maxPerformanceAndTrcMd1){
-					c1.fillStyle = obCol;
-					c1.beginPath();
-					c1.arc(screenX, screenY, drawRadius, 0, 7);
-					c1.fill();
+					c0.fillStyle = obCol;
+					c0.beginPath();
+					c0.arc(screenX, screenY, drawRadius, 0, 7);
+					c0.fill();
 				}
 
 				if (obj.m < 0){
-					c1.strokeStyle = "#000";
-					c1.lineWidth = drawRadius/10;
-					c1.beginPath();
-					c1.arc(screenX, screenY, drawRadius*0.6, 0, 7);
+					c0.strokeStyle = "#000";
+					c0.lineWidth = drawRadius/10;
+					c0.beginPath();
+					c0.arc(screenX, screenY, drawRadius*0.6, 0, 7);
 
-					c1.moveTo(screenX-drawRadius*0.4, screenY);
-					c1.lineTo(screenX+drawRadius*0.4, screenY)
-					c1.stroke();
+					c0.moveTo(screenX-drawRadius*0.4, screenY);
+					c0.lineTo(screenX+drawRadius*0.4, screenY)
+					c0.stroke();
 				}
 			}
 

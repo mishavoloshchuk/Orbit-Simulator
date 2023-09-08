@@ -16,7 +16,37 @@ let allowClick = true; // If touches > 1 cancel the click event. If true - allow
 
 const movingObjectsPosAndVel = []; // Moving object position and velocity
 
+// Pause logic ====================================
 self.pauseState = false; // Global pause state
+
+const setPauseState = (state) => {
+	if (state == pauseState) return; // Do nothing if state the same as previous
+	// Set pause
+	pauseState = (state === true);
+	// Set menu state icon
+	if (state){
+		menuStateIcon.setState('pause');
+	} else {
+		menuStateIcon.temporaryReplace('play', 500, navMenu.menuSelected);
+	}
+	// Change pause button icon
+	document.getElementById('pause').querySelector('img').setAttribute('src', 'ico/' + (state ? 'play' : 'pause') + '.png'); // Change pause button icon
+}
+
+let timeFreeze = false;
+let pauseStateSavedValue = undefined;
+const setTimeFreeze = (state) => {
+	if (timeFreeze == state) return; // Do nothing if state the same as previous
+	// Set freeze time
+	timeFreeze = state;
+	if (state){
+		pauseStateSavedValue = pauseState;
+		pauseState = true;
+	} else {
+		pauseState = pauseStateSavedValue;
+		pauseStateSavedValue = undefined;
+	}
+}
 
 self.allowRender = function(){
 	renderer.allowFrameRender = true;
@@ -32,7 +62,7 @@ ui.init = function (){
 	this.newObjLock = new UIConnect.CheckboxInput({type: 'checkbox', id: 'objLckCeck', initState: false}); // Menu lock created object input
 	//
 	this.launchForce = new UIConnect.RangeInput({id: 'launch_power', stateSaving: true, callback: (val)=>{lnch_pwr_span.innerHTML = UtilityMethods.expVal(val); mouse.move = true;}, eventName: 'input'}); // Menu launch power value input
-	this.pauseWhenCreatingObject = new UIConnect.CheckboxInput({id: 'new_obj_pause', stateSaving: true, initState: true, callback: (val, elem)=>{elem.prevPauseState = false}}); // Menu pause when user add object input
+	this.pauseWhenCreatingObject = new UIConnect.CheckboxInput({id: 'new_obj_pause', stateSaving: true, initState: true}); // Menu pause when user add object input
 	this.movementCompencation = new UIConnect.CheckboxInput({id: 'movement_compencation_checkbox', stateSaving: true, initState: true});
 	this.creationRelativeTo = new UIConnect.RadioInput({id: 'creation_relative_to', stateSaving: true}); // Creation relative mode
 	this.newObjCircularOrbit = new UIConnect.CheckboxInput({id: 'circleOrbitCheck', stateSaving: true, initState: true, callback: (val) => {
@@ -73,12 +103,15 @@ ui.init = function (){
 			});
 		}
 	});
+	this.editMass.dontSaveToFile = true; // Don't save this parameter when saving file
 	this.editColor = new UIConnect.ColorInput({id: 'col_edit', eventName: 'input', callback: (state) => addFrameBeginTask(() => {
 		if (scene.objArr[swch.editObjId]){ scene.objArr[swch.editObjId].color = state; allowRender();}
 	}), });
+	this.editColor.dontSaveToFile = true; // Don't save this parameter when saving file
 	this.editLock = new UIConnect.CheckboxInput({id: 'lck_edit_chbox', callback: (state) => addFrameBeginTask(() => {
 		if (scene.objArr[swch.editObjId]){ scene.objArr[swch.editObjId].lock = state; allowRender();}
 	}), });
+	this.editLock.dontSaveToFile = true; // Don't save this parameter when saving file
 	// Trace settings =====================================================
 	this.tracesMode = new UIConnect.RadioInput({id: 'traj_radio_buttons', stateSaving: true, initState: 1, callback: (val, elem) => {
 		for (let element of traj_menu.getElementsByClassName('additionalOption')){
@@ -138,11 +171,13 @@ ui.init = function (){
 		if (val){ fpsIndicator.turnOn() }
 		else { fpsIndicator.turnOff() }
 	}, });
+	this.showFPS.dontSaveToFile = true; // Don't save this parameter when saving file
 	this.gpuCompute = new UIConnect.CheckboxInput({id: 'gpu_compute', stateSaving: true, initState: true, callback: (val, input)=>{
 		if (!gpuComputeAvailable) {
 			input.element.parentElement.style.display = 'none'; // Hide multithread option, if gpu not supported
 		}
 	}});
+	this.gpuCompute.dontSaveToFile = true; // Don't save this parameter when saving file
 	this.maxPerformance = new UIConnect.CheckboxInput({id: 'max_performance', stateSaving: true, callback: (state)=>{
 		if (state) {
 			renderer.ctx2.clearRect(0,0, renderer.resolutionX, renderer.resolutionY);
@@ -274,7 +309,7 @@ document.getElementById('renderLayers').addEventListener('touchmove', function(e
 
 		if (swch.allowObjCreating && mouse.leftDown){
 			if (ui.pauseWhenCreatingObject.state){
-				pauseState = ui.pauseWhenCreatingObject.prevPauseState;
+				setTimeFreeze(false);
 			}
 			renderer.clearLayer2();
 		}
@@ -332,18 +367,13 @@ function mouseDownHandler(event){
 
 		if (swch.allowObjCreating){
 			// If pause when creating object enabled
-			if (event.type === 'touchstart'){
-				if (ui.pauseWhenCreatingObject.state && multiTouch == 1){
-					ui.pauseWhenCreatingObject.prevPauseState = pauseState;
-					pauseState = true;
-				}
-			} else {
-				if (ui.pauseWhenCreatingObject.state){
-					ui.pauseWhenCreatingObject.prevPauseState = pauseState;
-					pauseState = true;
-				}
+			if (ui.pauseWhenCreatingObject.state
+				&& (event.type !== 'touchstart' || multiTouch == 1)
+				){
+				setTimeFreeze(true);
 			}
-			if (event.ctrlKey){ // If Ctrl pressed
+			// Ctrl precision modificator
+			if (event.ctrlKey){
 				mouse.ctrlTriggerModificator();
 			}
 		}
@@ -434,7 +464,7 @@ function mouseUpHandler(event){
 			}
 			navMenu.menuVisibility(true, 200);
 			if (ui.pauseWhenCreatingObject.state){
-				pauseState = ui.pauseWhenCreatingObject.prevPauseState;
+				setTimeFreeze(false);
 			}
 			renderer.clearLayer2();
 		}
@@ -639,26 +669,8 @@ document.addEventListener('click', function(e){
 			ui.timeSpeed.state = -ui.timeSpeed.state;
 			break;
 		case 'save_file': // Save button
-			pauseState = true;
-			menuStateIcon.setState('pause');
-			const objArrWrite = JSON.parse(JSON.stringify(scene.objArr));
-			for(let i in objArrWrite){
-				objArrWrite[i].trace = [];
-				delete objArrWrite[i].prevScreenX;
-				delete objArrWrite[i].prevScreenY;
-				delete objArrWrite[i].prevScreenR;
-			}
-			let my_data = {
-				objArr: objArrWrite, 
-				timeSpeed: ui.timeSpeed.state, 
-				interactMode: ui.interactMode.state, 
-				collisionMode: ui.collisionMode.state,
-				gravitationMode: ui.gravitationMode.state,
-				g: ui.g.state,
-			};
-			my_data = JSON.stringify(my_data);
-			writeFile("Orbit Simulator - "+lanwich.getTranslatedText("my_world")+".json", my_data);
-			//saveFile(name, forat, value, event);
+			setPauseState(true);
+			worldSave();
 			break;
 		case 'sel_file_but': // Load button
 			document.querySelector('#select_file').click();
@@ -799,24 +811,14 @@ self.navMenu = new NavigationMenu({
 			break;
 		// Pause
 		case 'pause':
-			if (pauseState){
-				menuStateIcon.temporaryReplace('play', 500, navMenu.menuSelected);			
-			} else {
-				menuStateIcon.setState('pause');	
-			}
-			document.getElementById(buttonId)
-				.querySelector('img')
-				.setAttribute('src', 'ico/' + (pauseState ? 'pause' : 'play') + '.png'); // Change pause button icon
-			pauseState = !pauseState;
+			setPauseState(!pauseState);
 			break;
 		// Play
 		case 'play':
 			if (ui.timeSpeed.state != 1 || pauseState){ // If time speed == 1 or pause == true
 				simulationsPerFrame = 1;
-				pauseState = false;
 				ui.timeSpeed.state = 1;
-				document.querySelector('#pause img').setAttribute('src', 'ico/pause.png');
-				menuStateIcon.temporaryReplace('restore', 500, navMenu.menuSelected);
+				setPauseState(false);
 			}
 			break;
 		default:
@@ -865,9 +867,39 @@ self.syncEditObjUi = function(){
 	}
 }
 
+function worldSave(){
+	// Objects array saving
+	const objArrWrite = UtilityMethods.deepClone(scene.objArr);
+	// Remove unnecessary data from objects array
+	for(let i in objArrWrite){
+		objArrWrite[i].trace = [];
+		delete objArrWrite[i].prevScreenX;
+		delete objArrWrite[i].prevScreenY;
+		delete objArrWrite[i].prevScreenR;
+	}
+
+	// Simulation state saving
+	const uiToSave = {};
+	for (let uiId in ui){
+		const uiElem = ui[uiId];
+		// Dont save
+		if (uiElem.dontSaveToFile) continue;
+
+		uiToSave[uiId] = uiElem.state;
+	}
+
+	// Data preparing
+	let saveData = {
+		objArr: objArrWrite, 
+		ui: uiToSave
+	};
+	saveData = JSON.stringify(saveData);
+	writeFile("Orbit Simulator - "+lanwich.getTranslatedText("my_world")+".json", saveData);
+}
+
 // Write file
 function writeFile(name, data = '') {
-	let download = document.createElement("a");
+	const download = document.createElement("a");
 	download.href = 'data:application/txt;charset=utf-8,' + encodeURIComponent(data);
 	download.download = name;
 	download.style.display = "none";
@@ -882,24 +914,31 @@ function readFile(file) {
 	reader.readAsText(file);
 	reader.onload = function() {
 		try {
-		  	let file_data = JSON.parse(reader.result);
-		  	scene.objArr = file_data.objArr;
-		  	ui.interactMode.state = file_data.interactMode || 0;
-		  	ui.gravitationMode.state = file_data.gravitationMode || 1;
-		  	ui.g.state = file_data.g || 1;
-		  	ui.collisionMode.state = file_data.collisionMode || 0;
-		  	ui.timeSpeed.state = file_data.timeSpeed ? file_data.timeSpeed : 1;
-		  	scene.show_obj_count();
-		  	renderer.allowFrameRender = true;
-		  	renderer.clearLayer3();
+			const fileData = JSON.parse(reader.result);
+			// Sync objects array to the saved objects array
+			scene.objArr = fileData.objArr;
+
+			// Sync user interface state
+			for (let uiId in fileData.ui){
+				const uiValue = fileData.ui[uiId];
+				if (!ui[uiId]) {
+					console.log('Parameter "' + uiId + '" is not supported! Continue without the parameter.');
+					continue;
+				}
+				ui[uiId].setInputState(uiValue);
+			}
+
+			scene.show_obj_count();
+			renderer.allowFrameRender = true;
+			renderer.clearLayer3();
 			console.log('File loaded successfully!');
 		} catch(err){
 			console.error(err);
-			alert('Несовместимый файл!');
+			alert(lanwich.getTranslatedText('incompatible_file'));
 		}
 	}
 	reader.onerror = function(err) {
 		console.error(err);
-		alert("Ошибка чтения файла!");
+		alert(lanwich.getTranslatedText('file_read_error'));
 	}
 }
