@@ -71,8 +71,10 @@ ui.init();
 let newObjectCreatedCallback = function() {
 	scene.show_obj_count();
 	renderer.allowFrameRender = true;
-	if (ui.newObjRandColor.state) ui.newObjColor.state = UtilityMethods.randomColor();
+	if (ui.newObjRandColor.state) ui.newObjColor.state = UtilityMethods.randomColor(ui.backgroundColor.state, 240);
 }
+
+document.getElementById('background_color_select').addEventListener('change', newObjectCreatedCallback);
 
 const switcher = {device: 'desktop',
 	visT: false}; // Collisions: repulsion merge none
@@ -85,12 +87,6 @@ self.swch = {
 	allowObjCreating: navMenu.menuSelected === 'create',
 	tapCamMove: false
 };
-
-ui.maxPerformance.element.addEventListener('change', (e)=>{
-	// In Chrome-based browsers the fastest traces mode is 1
-	const isChromium = navigator.userAgent.match(/Chrome\/\d+/) !== null;
-	if (e.target.checked) ui.tracesMode.state = isChromium ? 1 : 0; // Set fastest traces mode
-});
 
 scene.addNewObject({x: 0, y: 0, vx: 0, vy: 0, mass: 1000, color: '#ffff00', objLck: false, callback: newObjectCreatedCallback}); // First object init
 
@@ -217,7 +213,7 @@ function frame(){
 
 	// Show distance
 	if (navMenu.menuSelected == 'create' && !mouse.leftDown && ui.showDistanceFromCursorToMainObj.state && !renderer.canv1.visualSelect){
-		renderer.clearLayer2();
+		renderer.clearLayer1();
 		renderer.visDistance([mouse.x, mouse.y], '#888888');
 	}
 	// Hide launch power label
@@ -226,7 +222,7 @@ function frame(){
 	}
 
 	if (renderer.canv1.visualSelect){
-		renderer.clearLayer2();
+		renderer.clearLayer1();
 		delete renderer.canv1.visualSelect;
 	}
 	const nearObjId = scene.objectSelect('nearest');

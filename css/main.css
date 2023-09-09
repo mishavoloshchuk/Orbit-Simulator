@@ -1,7 +1,7 @@
 body {
 	margin: 0;
 	padding: 0;
-	background-color: black;
+	background-color: #000;
 	background-image: none;
 	background-size: cover;
 	text-align: center;
@@ -185,6 +185,7 @@ a:hover {
 	overflow: auto;
 	z-index: 2;
 	word-wrap: normal;
+	padding-right: 4px;
 }
 
 .check_menu {
@@ -269,6 +270,10 @@ a:hover {
 	font-size: 1.05em;
 	text-shadow: none;
 	position: relative;	
+}
+.multi_option_item:last-child {
+	border: none;
+	padding-bottom: .5em;
 }
 
 .radio_button_form {
@@ -361,6 +366,7 @@ a:hover {
 	overflow: hidden;
 	margin: 5px 0;
 	background-color: rgba(62,62,62,0.68);
+	box-shadow: 2px 2px 2px #0004;
 }
 
 .state {
@@ -418,9 +424,10 @@ a:hover {
 	font-size: inherit;
 	background-color: rgba(255,255,255,0.08);
 	border-radius: 0.7em;
-	padding: 0.5em 0;
+	padding: 0.5em 8px;
 	text-shadow: none;
 	margin: 0 0.25em;
+	box-shadow: 2px 2px 5px #0006;
 	-moz-user-select: none;
 	-ms-user-select: none;
 	-o-user-select: none;
@@ -470,6 +477,7 @@ a:hover {
 	border-color: rgba(0,0,0,0);
 	color: rgba(0,0,0,0);
 	fill: rgba(0,0,0,0);
+	box-shadow: none;
 }
 .zero_opacity input:not(.nozeroopacity *, .nozeroopacity) {
 	opacity: 0;
@@ -519,14 +527,6 @@ a:hover {
 	border: 3px solid #FFFFFF77;
 	border-top: none;
 	border-bottom: none;
-}
-
-.dimmer {
-	position: absolute;
-	top: 0; bottom: 0; left: 0; right: 0;
-	background-color: #000000;
-	z-index: -9;
-	opacity: 0.5;
 }
 
 .bg_image {
@@ -625,6 +625,7 @@ select {
 
 	.menu_pos_size {
 		width: 100%;
+		padding-right: 0px;
 	}
 
 	.menu {

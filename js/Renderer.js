@@ -20,10 +20,6 @@ export default class Renderer {
 	allowFrameRender = true; // Forces render frame if true and frame not render
 	renderedSceneFrames = 0; // Total rendered frames
 
-	#visualObjectSelectAnimation = 10;
-	#visualObjectSelectAnimDir = 0;
-
-	dimmColor = '#000000';
 	constructor({scene, camera}) {
 		// Set scene
 		this.scene = scene;
@@ -103,12 +99,12 @@ export default class Renderer {
 	}
 
 	//Draw objects
+	#optimalTraceParams = false;
 	renderObjects(){
 		// console.log('Render objects');
 		const scn = this.scene;
 
 		const tracesMode = +ui.tracesMode.state;
-		const maxPerformance = ui.maxPerformance.state;
 
 		const {
 			ctx0: c0,
@@ -126,80 +122,87 @@ export default class Renderer {
 		const traceMode3Quality = ui.traceMode3Quality.state;
 		const traceMode3Length = ui.traceMode3Length.state;
 
+		// Optimized canvas clearing
 		if (tracesMode === 1){
 			this.tracesMode1Wiping();
+			if (!this.#optimalTraceParams) this.clearLayer0();
 		} else {
-			this.clearLayer3();
+			this.clearLayer0();
 		}
 
-		if (!maxPerformance) this.clearLayer1();
+		this.#optimalTraceParams = (ui.traceMode1Blur.state === 0 && ui.traceMode1Opacity.state === 1 && ui.traceMode1Width.state === 1);
 
-		// If max performance is enabled and traces mode is 1
-		const maxPerformanceAndTrcMd1 = maxPerformance === true && tracesMode === 1;
-
+		const pixelsToEnoughMove = 0.3;
+		const minScreenRadius = 0.5;
 
 		for (let objectId = 0; objectId < scn.objArr.length; objectId++){
 			let obj = scn.objArr[objectId]; // Object to draw
 
-			let drawRadius = this.getScreenRad(obj.m) // Object draw radius
-			drawRadius = drawRadius < 0.5 ? 0.5 : drawRadius; // Minimal draw radius
-
-			if (!obj.prevScreenR) {
-				obj.prevScreenR = drawRadius;
-			}
-
 			// Object screen position
 			const [screenX, screenY] = this.crd2(obj.x, obj.y);
 
-			let enoughObjMove = true; // If object screen speed is enough to render or anything else
-			// Set prev screen position if there is no prev screen position
-			if (obj.prevScreenX === undefined || obj.prevScreenY === undefined){
-				[obj.prevScreenX, obj.prevScreenY] = [screenX, screenY];
-			} else {
-				enoughObjMove = dist(screenX, screenY, obj.prevScreenX, obj.prevScreenY) > 0.3 ? true : false;
-			}
-
+			const screenRadius = this.getScreenRad(obj.m) // Object draw radius
+			const drawRadius = screenRadius < minScreenRadius ? minScreenRadius : screenRadius; // Minimal draw radius
+			const obCol = obj.color; // Object draw color
+			if (obj.prevScreenR === undefined) obj.prevScreenR = drawRadius;
 			const traceDrawRadius = Math.min(drawRadius, obj.prevScreenR);
 
+			// Distance between current and previous screen position
+			const currPrevDistance = dist(screenX, screenY, obj.prevScreenX, obj.prevScreenY);
+
+			let enoughObjMove = true; // If object screen speed is enough to render or anything else
+
+			if (obj.prevScreenX === undefined || obj.prevScreenY === undefined){
+				// Set prev screen position if there is no prev screen position
+				[obj.prevScreenX, obj.prevScreenY] = [screenX, screenY];
+			} else {
+				enoughObjMove = (currPrevDistance > pixelsToEnoughMove);
+			}
+
 			// If object out of screen space
-			const isObjOutOfScreen = this.isOutOfScreen(screenX, screenY, drawRadius);
-			const isPrevPosObjOutOfScreen = this.isOutOfScreen(obj.prevScreenX, obj.prevScreenY, traceDrawRadius);
-
-			const obCol = obj.color; // Object draw color
-
+			const objOutOfScreen = this.isOutOfScreen(screenX, screenY, drawRadius);
+			const prevPosObjOutOfScreen = this.isOutOfScreen(obj.prevScreenX, obj.prevScreenY, traceDrawRadius);
 
 			let traceLength = false;
 			let traceResolution = 1;
 
 			// Traces mode 1 =====
 			if (tracesMode === 1){
-				// Fix object anti-aliasing when maxPerformance is enabled
-				if (maxPerformance
-					&& !enoughObjMove 
-					&& !isObjOutOfScreen
-				){	
-					c0.save();
-					c0.beginPath();
-					c0.fillStyle = '#FFF';
-					c0.globalCompositeOperation = 'destination-out';
-					c0.arc(screenX, screenY, drawRadius + 0.4, 0, 7);
-					c0.fill();
-					c0.restore();
+				// Fix object anti-aliasing while optimal trace mode 1 parameters
+				if (!enoughObjMove && !objOutOfScreen && this.#optimalTraceParams && drawRadius !== minScreenRadius){	
+					c2.save();
+					c2.beginPath();
+					c2.fillStyle = '#FFF';
+					c2.globalCompositeOperation = 'destination-out';
+					c2.arc(screenX, screenY, drawRadius + 0.4, 0, 7);
+					c2.fill();
+					c2.restore();
 				}
 				// Draw trace
-				if ((enoughObjMove || maxPerformanceAndTrcMd1)
-					&& !(isObjOutOfScreen && isPrevPosObjOutOfScreen)
+				if ((enoughObjMove || this.#optimalTraceParams) 
+					&& !(objOutOfScreen && prevPosObjOutOfScreen)
 				){
-					let canv = maxPerformance ? c0 : c2;
-					canv.strokeStyle = obCol;
-					canv.lineWidth = traceDrawRadius * 2;
-					canv.lineCap = traceDrawRadius > 1 ? 'round' : 'butt';
-					canv.beginPath();
-					const pixelShiftX = obj.prevScreenX === screenX ? 0.001 : 0;
-					canv.moveTo(obj.prevScreenX + pixelShiftX, obj.prevScreenY);
-					canv.lineTo(screenX, screenY);
-					canv.stroke();
-					canv.lineCap = 'butt';
+					const lineOptimizedWidth = 0.75;
+					c2.strokeStyle = obCol;
+					c2.lineWidth = Math.max(traceDrawRadius * 2 * ui.traceMode1Width.state, minScreenRadius * 2);
+					c2.lineCap = traceDrawRadius > lineOptimizedWidth ? 'round' : 'butt'; // Line cap optimization
+					c2.beginPath();
+
+					// Fix darken dots when objects very small
+					const minScreenDiameter = minScreenRadius * 2;
+					if (currPrevDistance < minScreenDiameter && drawRadius < lineOptimizedWidth){
+						const CPD = currPrevDistance;
+						const koeficient = CPD === 0 ? 1 : (minScreenDiameter / CPD / 2);
+						const diffX = CPD === 0 ? minScreenRadius : (obj.prevScreenX - screenX);
+						const diffY = CPD === 0 ? minScreenRadius : (obj.prevScreenY - screenY);
+						c2.moveTo(screenX + diffX*koeficient, screenY + diffY*koeficient);
+						c2.lineTo(screenX - diffX*koeficient, screenY - diffY*koeficient);
+					} else {
+						c2.moveTo(obj.prevScreenX, obj.prevScreenY);
+						c2.lineTo(screenX, screenY);
+					}
+					c2.stroke();
+					c2.lineCap = 'butt';
 				}
 			}
 			// Traces mode 2 =====
@@ -325,14 +328,11 @@ export default class Renderer {
 				}
 			}
 
-			if (!isObjOutOfScreen) {
-				if (!maxPerformanceAndTrcMd1){
-					c0.fillStyle = obCol;
-					c0.beginPath();
-					c0.arc(screenX, screenY, drawRadius, 0, 7);
-					c0.fill();
-				}
-
+			if (!objOutOfScreen && !(this.#optimalTraceParams && tracesMode == '1')) {
+				c0.fillStyle = obCol;
+				c0.beginPath();
+				c0.arc(screenX, screenY, drawRadius, 0, 7);
+				c0.fill();
 				if (obj.m < 0){
 					c0.strokeStyle = "#000";
 					c0.lineWidth = drawRadius/10;
@@ -362,7 +362,7 @@ export default class Renderer {
 	}
 
 	visualizeLaunchPower(){
-		this.clearLayer2();
+		this.clearLayer1();
 		let [mcx, mcy] = mouse.ctrlModificatedMousePosition(); // CTRL mouse precision modificator
 
 		let offsX = 0;
@@ -379,7 +379,7 @@ export default class Renderer {
 			mcx,//  X2
 			mcy);// Y2
 		gradient.addColorStop(0, ui.newObjColor.state); // New object color
-		gradient.addColorStop(1, "#0000"); // Alpha
+		gradient.addColorStop(1, ui.backgroundColor.state + "00"); // Alpha
 		this.ctx1.strokeStyle = gradient;
 
 		this.ctx1.lineWidth = D < 1 ? 1 : D;
@@ -407,12 +407,14 @@ export default class Renderer {
 	}
 
 	//Визуальное выделение объекта
+	#visualObjectSelectAnimation = 10;
+	#visualObjectSelectAnimDir = 0;
 	visualObjectSelect(objectId, color, alpha = 0.3) {
 		// console.log(objectId)
 		const obj = this.scene.objArr[objectId];
 		if (obj){ // If there are target object
 			this.canv1.visualSelect = true;
-			this.clearLayer2();
+			this.clearLayer1();
 			let selectObjId = objectId;
 
 			// Animation
@@ -464,12 +466,12 @@ export default class Renderer {
 		// Fill circle
 		let drawRadius = this.getScreenRad(mass);
 		this.canv1.visualSelect = true;
-		this.clearLayer2();
+		this.clearLayer1();
 
 		// Darken background
 		this.ctx1.globalAlpha = 0.5;
 		this.ctx1.beginPath();
-		this.ctx1.fillStyle = this.dimmColor;
+		this.ctx1.fillStyle = "#000000";
 		this.ctx1.fillRect(0, 0, this.resolutionX, this.resolutionY);
 
 		// Draw object size
@@ -542,31 +544,28 @@ export default class Renderer {
 
 	tracesMode1Wiping(){
 		//console.log('clear layer 1');
-		let canvas = ui.maxPerformance.state ? this.ctx0 : this.ctx2;
-		canvas.save();
-		canvas.globalAlpha = ui.traceMode1Length.value;
-		canvas.globalCompositeOperation = 'destination-out';
-		canvas.fillStyle = "#FFF";
-		canvas.fillRect(0, 0, this.resolutionX, this.resolutionY);
-		canvas.restore();
+		this.ctx2.save();
+		this.ctx2.globalAlpha = ui.traceMode1Length.value;
+		this.ctx2.globalCompositeOperation = 'destination-out';
+		this.ctx2.fillStyle = "#FFF";
+		this.ctx2.fillRect(0, 0, this.resolutionX, this.resolutionY);
+		this.ctx2.restore();
 	}
-	clearLayer1(col){
+	clearLayer0(){
 		//console.log('clear layer 1');
 		this.ctx0.clearRect(0, 0, this.resolutionX, this.resolutionY);
 	}
-	clearLayer2(){
+	clearLayer1(){
 		// console.log('clear layer 2');
 		this.ctx1.clearRect(0, 0, this.resolutionX, this.resolutionY);
-		delete this.canv1.changed;
 	}
-	clearLayer3(){
+	clearLayer2(){
 		//console.log('clear layer 3');
-		let canvas = ui.maxPerformance.state ? this.ctx0 : this.ctx2;
-		canvas.clearRect(0, 0, this.resolutionX, this.resolutionY);
+		this.ctx2.clearRect(0, 0, this.resolutionX, this.resolutionY);
 	}
 	//Draw cross function
 	drawCross(x, y, width = 1, size = 5, color = '#ff0000', canvObj = this.ctx1){
-		canvObj.strokeStyle = this.dimmColor;
+		canvObj.strokeStyle = ui.backgroundColor.state;
 		canvObj.lineWidth = width;
 		canvObj.lineCap = 'round';
 		for (let i = 0; i < 2; i++){

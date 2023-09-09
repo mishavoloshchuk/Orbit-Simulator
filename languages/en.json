@@ -123,10 +123,11 @@
 	"select_language": "Select language:",
 
 	"view": "View",
+	"background_color": "Background color:",
 	"background_image": "Backgroud image:",
 	"no_image_found_at_this_address": "*No image found for this URL",
 	"image_url": "Image URL",
-	"background_intensity": "Background intensity:",
+	"background_image_opacity": "Background image opacity:",
 	"background_movement_on_mouse_movement": "Background movement",
 
 	"performance": "Performance",

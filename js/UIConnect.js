@@ -129,6 +129,7 @@ export class MassInput extends ManualInput {
 	constructor ({id, stateSaving, initState, negativeMassCheckboxParams, onChange, onInput, onUpdate}){
 		super({id: id, stateSaving: stateSaving, initState: UtilityMethods.roundTo(UtilityMethods.getRandomArbitrary(0.5, 100), 1), 
 			callback: (state, ths)=>{
+				// Set label value
 				ths.element.querySelector('.title').innerHTML = UtilityMethods.roundTo(state, 4);
 			}
 		});
@@ -156,6 +157,8 @@ export class MassInput extends ManualInput {
 		});
 
 		this.valueElem.addEventListener('change', this.#onchanged);
+		document.addEventListener('mouseup', this.#onchanged);
+		document.addEventListener('touchend', this.#onchanged);
 		
 		// On Update
 		document.addEventListener('inputsUpdate', () => {

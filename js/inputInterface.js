@@ -56,7 +56,7 @@ self.ui = new Object();
 // Init user interface
 ui.init = function (){
 	// Create object menu ================================================ 
-	this.newObjColor = new UIConnect.ColorInput({id: 'newObjeColorSelect', stateSaving: true, initState: UtilityMethods.randomColor()}); // Menu color select input
+	this.newObjColor = new UIConnect.ColorInput({id: 'newObjeColorSelect', stateSaving: true, initState: UtilityMethods.randomColor("#000000", 240)}); // Menu color select input
 	this.newObjRandColor = new UIConnect.CheckboxInput({id: 'randColorCheck', stateSaving: true, initState: true}); // Menu new object random color input
 	this.newObjMass = new UIConnect.MassInput({id: 'create_mass', stateSaving: true, initState: UtilityMethods.roundTo(UtilityMethods.getRandomArbitrary(0.5, 100), 1), negativeMassCheckboxParams: {id: "new_obj_negative_mass"}}); // Menu new object's mass input
 	this.newObjLock = new UIConnect.CheckboxInput({type: 'checkbox', id: 'objLckCeck', initState: false}); // Menu lock created object input
@@ -75,7 +75,7 @@ ui.init = function (){
 		}
 	}}); // Menu circle orbit on click input
 	this.newObjCreateReverseOrbit = new UIConnect.CheckboxInput({id: 'objReverseCheck', stateSaving: true, initState: false}); // Menu reverse ordit direction input
-	this.showDistanceFromCursorToMainObj = new UIConnect.CheckboxInput({id: 'vis_distance_check', stateSaving: true, callback: ()=>{ launchPowerLabel.style.display = 'none'; renderer.clearLayer2(); }}); // Menu visual distance
+	this.showDistanceFromCursorToMainObj = new UIConnect.CheckboxInput({id: 'vis_distance_check', stateSaving: true, callback: ()=>{ launchPowerLabel.style.display = 'none'; renderer.clearLayer1(); }}); // Menu visual distance
 	//
 	this.showNewObjTrajectory = new UIConnect.CheckboxInput({id: 'traj_prev_check', stateSaving: true, initState: true}); // Enable trajectory calculation before create object
 	this.newObjTrajLength = new UIConnect.RangeInput({id: 'traj_calc_samples', stateSaving: true}); // Trajectory calutulation length input
@@ -124,8 +124,8 @@ ui.init = function (){
 		}
 		if (elem.prevState != val){ // If state changed
 			addFrameBeginTask(()=>{
-				renderer.clearLayer1();
-				renderer.clearLayer3();
+				renderer.clearLayer0();
+				renderer.clearLayer2();
 				allowRender();
 			}); // Clear render layers
 		}
@@ -133,7 +133,11 @@ ui.init = function (){
 	} });
 	// Mode 1
 	this.traceMode1Length = new UIConnect.RangeInput({id: 'trace1Lnth', stateSaving: true, eventName: 'input', callback: (val, ths) => {ths.value = Math.pow(1 - val, 2)} });
-	this.traceMode1Opacity = new UIConnect.RangeInput({id: 'trace_opacity', stateSaving: true, eventName: 'input', callback: (val)=>{renderer.canv2.style.opacity = val; allowRender();} });
+	this.traceMode1Opacity = new UIConnect.RangeInput({id: 'trace_opacity', stateSaving: true, eventName: 'input', callback: (val)=>{
+		renderer.canv2.style.opacity = val;
+		allowRender();
+	} });
+	this.traceMode1Width = new UIConnect.RangeInput({id: 'trace1WdInp', stateSaving: true, initState: 1, eventName: 'input', callback: allowRender});
 	this.traceMode1Blur = new UIConnect.RangeInput({id: 'trace_blur', stateSaving: true, eventName: 'input', callback: (val)=>{renderer.canv2.style.filter = `blur(${val*val}px)`; allowRender();} });
 	// Mode 2
 	this.traceMode2Particles = new UIConnect.CheckboxInput({id: 'trc2PrtclsChck', stateSaving: true, initState: true, callback: allowRender});
@@ -156,13 +160,20 @@ ui.init = function (){
 	this.collisionMode = new UIConnect.RadioInput({id: 'collision_radio_buttons', stateSaving: true}); // Select collision mode
 
 	// Settings menu ======================================================
+	// Select background color
+	this.backgroundColor = new UIConnect.TextInput({id: 'background_color_select', eventName: 'input', initState: '#000000', stateSaving: true, callback: (color)=>{
+		document.querySelector('body').style.backgroundColor = color;
+		if (this.backgroundDarkness && this.backgroundDarkness.state > 0.9) this.backgroundDarkness.state = 0.7;
+	}, });
 	// Select background image
 	this.backgroundImageURL = new UIConnect.TextInput({id: 'img_url_inp', stateSaving: true, callback: (value)=>{
 		value = value == '' ? 'background/background.jpg' : value;
-		document.getElementById('background_image').setAttribute('src', value);
+		const backgroundImgElement = document.getElementById('background_image');
+		backgroundImgElement.setAttribute('src', value);
 	}, });
 	// Set background darkness
 	this.backgroundDarkness = new UIConnect.RangeInput({id: 'bg_darkness', stateSaving: true, eventName: 'input', callback: (state, elem)=>{
+		background_image.style.display = state === 0 ?'none' : 'initial';
 		background_image.style.opacity = state;
 	}, });
 	this.backgroundFollowsMouse = new UIConnect.CheckboxInput({id: 'mouse_move_bg', stateSaving: true, initState: true}), // If true, background follows the cursor
@@ -178,22 +189,6 @@ ui.init = function (){
 		}
 	}});
 	this.gpuCompute.dontSaveToFile = true; // Don't save this parameter when saving file
-	this.maxPerformance = new UIConnect.CheckboxInput({id: 'max_performance', stateSaving: true, callback: (state)=>{
-		if (state) {
-			renderer.ctx2.clearRect(0,0, renderer.resolutionX, renderer.resolutionY);
-			renderer.canv2.style.display = background_image.style.display = 'none';
-			additionalTrajectoryOptionsExtended1.style.display = 'none';
-			renderer.allowFrameRender = true; // Render
-			view_settings.className += ' disabled'; // Hide view settings
-		} else {
-			renderer.ctx0.clearRect(0,0, renderer.resolutionX, renderer.resolutionY);
-			renderer.canv2.style.display = background_image.style.display = '';
-			additionalTrajectoryOptionsExtended1.style.display = 'initial';
-			renderer.allowFrameRender = true; // Render
-			view_settings.className = view_settings.className.replace('disabled', ''); // Hide view settings
-		}
-		this.tracesMode.state = this.tracesMode.state; // Refresh trace mode menu
-	}});
 
 	this.timeSpeed = new UIConnect.ManualInput({initState: 1, callback: (val, inpVar)=>{
 		document.querySelector('.time_speed h2').innerHTML = 'T - X' + (val * simulationsPerFrame);
@@ -311,7 +306,7 @@ document.getElementById('renderLayers').addEventListener('touchmove', function(e
 			if (ui.pauseWhenCreatingObject.state){
 				setTimeFreeze(false);
 			}
-			renderer.clearLayer2();
+			renderer.clearLayer1();
 		}
 
 		mouse.leftDown = false;
@@ -387,7 +382,7 @@ function mouseDownHandler(event){
 		mouse.rightDown = true;
 		if (swch.allowObjCreating && mouse.leftDown){
 			launchPowerLabel.style.display = 'none';
-			renderer.clearLayer2();		
+			renderer.clearLayer1();		
 		}
 	}
 }
@@ -405,7 +400,7 @@ function moveObject(){
 }
 // Background movement
 function bgMoving(){
-	if (ui.backgroundFollowsMouse.state && ui.backgroundDarkness.state && !ui.maxPerformance.state){
+	if (ui.backgroundFollowsMouse.state && ui.backgroundDarkness.state){
 		Object.assign(document.getElementById('background_image').style, {top: (-mouse.y/25)+'px', left: (-mouse.x/25)+'px'});	
 	}
 }
@@ -466,7 +461,7 @@ function mouseUpHandler(event){
 			if (ui.pauseWhenCreatingObject.state){
 				setTimeFreeze(false);
 			}
-			renderer.clearLayer2();
+			renderer.clearLayer1();
 		}
 		if (navMenu.menuSelected == 'camera' && swch.s_track){
 			camera.setTarget(scene.objectSelect('nearest', camera.Target));
@@ -676,13 +671,36 @@ document.addEventListener('click', function(e){
 			document.querySelector('#select_file').click();
 			break;
 		case 'clear_traces': // Clear traces
-			renderer.clearLayer3();			
+			renderer.clearLayer2();			
 			for (let i in scene.objArr){
 				scene.objArr[i].trace = [];
 			}
 			break;
+		case 'max_performance_btn':
+			setMaxPerformance();
+			break;
 	}
 });
+
+function setMaxPerformance(){
+	// In Chrome-based browsers the fastest traces mode is 1
+	const isChromium = navigator.userAgent.match(/Chrome\/\d+/) !== null;
+	ui.tracesMode.state = isChromium ? 1 : 0; // Set fastest traces mode
+
+	// Trace mode 1 optimal parameters
+	ui.traceMode1Opacity.state = 1;
+	ui.traceMode1Width.state = 1;
+	ui.traceMode1Blur.state = 0;
+
+	// Trace mode 2 optimal parameters
+	ui.traceMode2Particles.state = false;
+
+	// Trace mode 3 optimal parameters
+	ui.traceMode3Width.state = 1;
+
+	// Disable background movement
+	ui.backgroundFollowsMouse.state = false;
+}
 
 // Menu buttons handler
 class NavigationMenu {
@@ -824,7 +842,7 @@ self.navMenu = new NavigationMenu({
 		default:
 			swch.allowObjCreating = (buttonId === 'create' && !swch.s_mainObj); // Allow object creating if menu is "Creation menu"
 		}
-		if (ui.showDistanceFromCursorToMainObj.state) renderer.clearLayer2();
+		if (ui.showDistanceFromCursorToMainObj.state) renderer.clearLayer1();
 	}
 });
 
@@ -842,7 +860,7 @@ document.getElementById('select_file').addEventListener('change', function(e){
 	if (selectedFile !== undefined){
 		readFile(selectedFile);
 		this.value = '';
-	}		
+	}
 });
 
 self.syncEditObjUi = function(){
@@ -930,7 +948,7 @@ function readFile(file) {
 
 			scene.show_obj_count();
 			renderer.allowFrameRender = true;
-			renderer.clearLayer3();
+			renderer.clearLayer2();
 			console.log('File loaded successfully!');
 		} catch(err){
 			console.error(err);

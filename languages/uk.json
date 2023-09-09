@@ -79,7 +79,7 @@
 	"extra_options": "Додаткові параметри",
 
 	"disappearance_time": "Час зникання:",
-	"trace_opacity": "Непрозорість:",
+	"trace_opacity": "Прозорість:",
 	"trace_blur": "Розмивання:",
 	"clear_traces": "Очистити сліди",
 
@@ -123,10 +123,11 @@
 	"select_language": "Виберіть мову:",
 
 	"view": "Вигляд",
+	"background_color": "Колір фону:",
 	"background_image": "Фонове зображення:",
 	"no_image_found_at_this_address": "*Не знайдено зображення за цією адресою",
 	"image_url": "URL зображення",
-	"background_intensity": "Інтенсивність фону:",
+	"background_image_opacity": "Прозорість фонового зображення:",
 	"background_movement_on_mouse_movement": "Рух фону під час руху миші",
 
 	"performance": "Продуктивність",

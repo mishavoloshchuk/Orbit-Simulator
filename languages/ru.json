@@ -79,7 +79,7 @@
 	"extra_options": "Дополнительные параметры",
 
 	"disappearance_time": "Время исчезновения:",
-	"trace_opacity": "Нерозрачность:",
+	"trace_opacity": "Прозрачность:",
 	"trace_blur": "Размытие:",
 	"clear_traces": "Очистить следы",
 
@@ -123,10 +123,11 @@
 	"select_language": "Выберите язык:",
 
 	"view": "Вид",
+	"background_color": "Цвет фона:",
 	"background_image": "Фоновое изображение:",
 	"no_image_found_at_this_address": "*Не найдено изображения по этому адресу",
 	"image_url": "URL изображения",
-	"background_intensity": "Интенсивность фона:",
+	"background_image_opacity": "Прозрачность фонового изображения:",
 	"background_movement_on_mouse_movement": "Движение фона при движении мыши",
 
 	"performance": "Производительность",

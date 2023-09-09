@@ -16,7 +16,6 @@
 </head>
 <body oncontextmenu="return false;">
 	<img src="#" class="bg_image" id="background_image">
-	<div class="dimmer"></div>
 	<div class="menu" id="navigation_menu">
 		<button class="btn" id='create' menuId="menu_options">
 			<l-text alt>object_creation_menu</l-text>
@@ -481,6 +480,13 @@
 							</div>
 
 							<div class='option_item option_item_range'>
+								<l-text>trace_thickness</l-text>
+								<label>Traces thickness: </label>
+								<input type="range" id="trace1WdInp" list="T3WdInpDL" min="0" max="1" value="1" step="any" width="100%">
+								<datalist id='T3WdInpDL'><option value="1.1"></datalist>
+							</div>
+
+							<div class='option_item option_item_range'>
 								<l-text>trace_blur</l-text>
 								<label>Trace blur: </label>
 								<input type="range" id='trace_blur' min="0" step="0.1" value="0" max="5">
@@ -776,7 +782,7 @@
 				</section>
 			</section>
 			
-			<section class="options_section" id="view_settings">
+			<section class="options_section">
 
 				<div class='option_item title_option_item'>
 					<l-text>view</l-text>
@@ -785,6 +791,18 @@
 
 				<section>
 
+					<!-- Background color -->
+					<div class='option_item' style="justify-content: space-between;">
+						<div>
+							<l-text>background_color</l-text>
+							<label>Background color:</label>
+						</div>
+						<div class="div_col_select">
+							<input class="color_select" type="color" value="#ffffff" id="background_color_select">
+						</div>
+					</div>
+
+					<!-- Background image -->
 					<div class='option_item'>
 						<div style="width: 100%;">
 							<l-text>background_image</l-text>
@@ -799,16 +817,25 @@
 							<input type="text" class='input_text' id="img_url_inp" placeholder="Image URL" style="margin: 0; margin-top: 10px;">				
 						</div>
 					</div>
+
+					<!-- Background image opacity -->
 					<div class='option_item option_item_range'>
-						<l-text>background_intensity</l-text>
-						<label>Background intensity: </label>
+						<l-text>background_image_opacity</l-text>
+						<label>Background image opacity: </label>
 						<input type="range" id="bg_darkness" min="0" max="1" value="0.8" step="0.01" width="100%" oninput="background_image.style.opacity = this.value">
 					</div>
 
+					<!-- Background movement -->
 					<div class='option_item'>
 						<input type="checkbox" class='checkbox' id="mouse_move_bg">			
 						<l-text>background_movement_on_mouse_movement</l-text>
 						<label for="mouse_move_bg">Background movement</label>
+					</div>
+					<div class='option_item'>
+						<button class="menu_button" id="max_performance_btn">
+							<l-text>max_performance</l-text>
+							<label>Max performance</label>
+						</button>		
 					</div>
 				</section>
 			</section>
@@ -831,11 +858,6 @@
 						<input type="checkbox" class='checkbox' id='gpu_compute' onmouseout="this.blur();">	
 						<l-text>gpu_compute</l-text>
 						<label for="gpu_compute">Hardware acceleration (GPU)</label>
-					</div>
-					<div class='option_item'>
-						<input type="checkbox" class='checkbox' id='max_performance' onmouseout="this.blur();">	
-						<l-text>max_performance</l-text>
-						<label for="max_performance">Max performance</label>
 					</div>
 				</section>
 			</section>

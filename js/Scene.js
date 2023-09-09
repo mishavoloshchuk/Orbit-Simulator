@@ -144,7 +144,7 @@ export default class Scene {
 		if (camera.Target === null) camera.setTarget();
 		this.objIdToOrbit = UtilityMethods.getIdAfterArrChange([objectId], this.objIdToOrbit, this.objectSelect('biggest'));
 		mov_obj = UtilityMethods.getIdAfterArrChange([objectId], mov_obj);
-		swch.editObjId = swch.editObjId == objectId ? null : swch.editObjId;
+		swch.editObjId = UtilityMethods.getIdAfterArrChange([objectId], swch.editObjId);
 
 		renderer.allowFrameRender = true;
 		this.show_obj_count(); // Set objects counter indicator

@@ -35,18 +35,30 @@ class UtilityMethods {
 		return "#" + this._mixColors(c1, c2, Math.abs(m1), Math.abs(m2));
 	}
 
-	static randomColor() {
-		let r = Math.floor(UtilityMethods.getRandomArbitrary(40, 255)),
-			g = Math.floor(UtilityMethods.getRandomArbitrary(40, 255)),
-			b = Math.floor(UtilityMethods.getRandomArbitrary(40, 255));
+	static randomColor(avoidColor, minCloseness) {
+		const maxClosenes = 420; // Cube diagonal with sides 255
+		minCloseness = this.limit(minCloseness, 0, maxClosenes);
+		const distanceToGray = UtilityMethods.calculateDistance([127.5, 127.5, 127.5], UtilityMethods.hexToRgb(avoidColor));
+		minCloseness = Math.min(maxClosenes/2 + distanceToGray, minCloseness);
+		let color = [0, 0, 0];
+		const currentDistance = () => UtilityMethods.calculateDistance(color, UtilityMethods.hexToRgb(avoidColor));
+		do {
+			color = color.map(val => Math.round(UtilityMethods.getRandomArbitrary(0, 255)));
+		} while (currentDistance() < minCloseness);
+		const hexColor = this.rgbToHex(color)
+		return hexColor;
+	}
 
-		r = r.toString(16); g = g.toString(16); b = b.toString(16);
+	static hexToRgb(hex) {
+		let rgb = parseInt(hex.substring(1), 16);
+		const red   = (rgb >> 16) & 0xFF;
+		const green = (rgb >> 8) & 0xFF;
+		const blue  = rgb & 0xFF;
+		return [red, green, blue];
+	}
 
-		r = r.length < 2 ? '0'+r.toString(16) : r.toString(16);
-		g = g.length < 2 ? '0'+g.toString(16) : g.toString(16);
-		b = b.length < 2 ? '0'+b.toString(16) : b.toString(16);
-		let color = '#' + r + g + b;
-		return color;
+	static rgbToHex(rgb) {
+		return "#" + rgb.reduce((hex, col) => hex + col.toString(16).padStart(2, '0'), '');
 	}
 
 	static sumArray(arr){
@@ -72,6 +84,12 @@ class UtilityMethods {
 		return true;
 	}
 
+	static limit(num, min, max){
+		if (num >= max) return max;
+		else if (num <= min) return min;
+		return num;
+	}
+
 	/**
 	 * Deep object clone
 	 * Note
@@ -81,6 +99,21 @@ class UtilityMethods {
 		return JSON.parse(JSON.stringify(instance));
 	}
 
+	// A distance between two points in n dimentions
+	static calculateDistance(point1, point2) {
+		if (point1.length !== point2.length) {
+			throw new Error('Both points should have the same number of dimensions');
+		}
+
+		let sumOfSquares = 0;
+
+		for (let i = 0; i < point1.length; i++) {
+			sumOfSquares += Math.pow(point2[i] - point1[i], 2);
+		}
+
+		const distance = Math.sqrt(sumOfSquares);
+		return distance;
+	}
 	// Pythagorean theorem
 	static gipot(a,b){return Math.sqrt(a*a + b*b) }
 
