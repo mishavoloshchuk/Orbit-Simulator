@@ -71,7 +71,7 @@ ui.init();
 let newObjectCreatedCallback = function() {
 	scene.show_obj_count();
 	renderer.allowFrameRender = true;
-	if (ui.newObjRandColor.state) ui.newObjColor.state = UtilityMethods.randomColor(ui.backgroundColor.state, 240);
+	if (ui.newObjRandColor.state) ui.newObjColor.state = UtilityMethods.randomColor(ui.backgroundColor.state, 220);
 }
 
 document.getElementById('background_color_select').addEventListener('change', newObjectCreatedCallback);

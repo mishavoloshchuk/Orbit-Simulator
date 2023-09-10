@@ -846,6 +846,8 @@ self.navMenu = new NavigationMenu({
 	}
 });
 
+document.getElementById('launchPowerLabel').addEventListener('mouseup', mouseUpHandler);
+
 // Close menu button handler
 UtilityMethods.byClassElementsLoop('close_button', function(element){
 	element.addEventListener('click', (event) => {

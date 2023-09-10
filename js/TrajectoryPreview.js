@@ -82,47 +82,48 @@ export default class TrajectoryPreview {
 		// Proximity display
 		for (let distance of distances){
 			const dObj = distance.obj;
-				// New object arc
-				const isNearest = distance.D === minDistance;
-				if (isNearest){
-					ctx1.globalAlpha = 0.7;
-					ctx1.fillStyle = ui.newObjColor.state;
-					ctx1.beginPath();
-					let drawRadius = this.renderer.getScreenRad(ui.newObjMass.state);
-					drawRadius = drawRadius < 2 ? 2 : drawRadius;
-					ctx1.arc(this.renderer.crd(dObj.x, 'x'), this.renderer.crd(dObj.y, 'y'), drawRadius, 0, 7);
-					ctx1.fill();
-					// Second object arc
-					ctx1.beginPath();
-					ctx1.fillStyle = this.scene.objArr[dObj.obj2Id].color;
-					drawRadius = this.renderer.getScreenRad(this.scene.objArr[dObj.obj2Id].m);
-					drawRadius = drawRadius < 2 ? 2 : drawRadius;
-					ctx1.arc(this.renderer.crd(dObj.x2, 'x'), this.renderer.crd(dObj.y2, 'y'), drawRadius, 0, 7);
-					ctx1.fill();
-				} else {
-					ctx1.globalAlpha = 0.3;
-				}
-
-				// The line between approachment points	
-				if (isNearest){
-					let gradient = ctx1.createLinearGradient(// Line gradient
-						this.renderer.crd(dObj.x, 'x'),//   X1
-						this.renderer.crd(dObj.y, 'y'),//   Y1
-						this.renderer.crd(dObj.x2, 'x'),//  X2
-						this.renderer.crd(dObj.y2, 'y'));// Y2
-					gradient.addColorStop(0, ui.newObjColor.state); // New object color
-					gradient.addColorStop(1, this.scene.objArr[dObj.obj2Id].color); // Second object color
-					ctx1.strokeStyle = gradient;
-					ctx1.lineWidth = 2; // Line width between approachment points
-				} else {
-					ctx1.strokeStyle = otherObjTraceColor;
-					ctx1.lineWidth = 1; // Line width between approachment points
-				}
+			// New object arc
+			const isNearest = distance.D === minDistance;
+			if (isNearest){
+				ctx1.globalAlpha = 0.7;
+				ctx1.fillStyle = ui.newObjColor.state;
 				ctx1.beginPath();
-				ctx1.moveTo(this.renderer.crd(dObj.x, 'x'), this.renderer.crd(dObj.y, 'y'));
-				ctx1.lineTo(this.renderer.crd(dObj.x2, 'x'), this.renderer.crd(dObj.y2, 'y'));
-				ctx1.stroke();
-				ctx1.globalAlpha = 1;
+				let drawRadius = this.renderer.getScreenRad(ui.newObjMass.state);
+				drawRadius = drawRadius < 2 ? 2 : drawRadius;
+				ctx1.arc(this.renderer.crd(dObj.x, 'x'), this.renderer.crd(dObj.y, 'y'), drawRadius, 0, 7);
+				ctx1.fill();
+				// Second object arc
+				ctx1.beginPath();
+				ctx1.fillStyle = this.scene.objArr[dObj.obj2Id].color;
+				drawRadius = this.renderer.getScreenRad(this.scene.objArr[dObj.obj2Id].m);
+				drawRadius = drawRadius < 2 ? 2 : drawRadius;
+				ctx1.arc(this.renderer.crd(dObj.x2, 'x'), this.renderer.crd(dObj.y2, 'y'), drawRadius, 0, 7);
+				ctx1.fill();
+			} else {
+				ctx1.globalAlpha = 0.3;
+				if (this.renderer.isOutOfScreen(...this.renderer.crd2(dObj.x2, dObj.y2), 0)) continue;
+			}
+
+			// The line between approachment points	
+			if (isNearest){
+				let gradient = ctx1.createLinearGradient(// Line gradient
+					this.renderer.crd(dObj.x, 'x'),//   X1
+					this.renderer.crd(dObj.y, 'y'),//   Y1
+					this.renderer.crd(dObj.x2, 'x'),//  X2
+					this.renderer.crd(dObj.y2, 'y'));// Y2
+				gradient.addColorStop(0, ui.newObjColor.state); // New object color
+				gradient.addColorStop(1, this.scene.objArr[dObj.obj2Id].color); // Second object color
+				ctx1.strokeStyle = gradient;
+				ctx1.lineWidth = 2; // Line width between approachment points
+			} else {
+				ctx1.strokeStyle = otherObjTraceColor;
+				ctx1.lineWidth = 1; // Line width between approachment points
+			}
+			ctx1.beginPath();
+			ctx1.moveTo(this.renderer.crd(dObj.x, 'x'), this.renderer.crd(dObj.y, 'y'));
+			ctx1.lineTo(this.renderer.crd(dObj.x2, 'x'), this.renderer.crd(dObj.y2, 'y'));
+			ctx1.stroke();
+			ctx1.globalAlpha = 1;
 		}
 		// Draw the cross if object(s) deleted after collision
 		for (let deletedObj of deletedObjectsList){
@@ -207,14 +208,14 @@ export default class TrajectoryPreview {
 			// Physics compute
 			if (gpuComputeAvailable && ui.gpuCompute.state && objArrCopy.length > 400) { // If objects more than 480, calculate on GPU
 				this.physics.gpuComputeVelocities(
-					undefined,
+					undefined, // Call default after physics function
 					+ui.interactMode.state,
 					ui.timeSpeed.state / accuracity,
 					ui.g.state
 				);
 			} else {
 				this.physics.physicsCalculate(
-					undefined,
+					undefined, // Call default after physics function
 					+ui.interactMode.state,
 					ui.timeSpeed.state / accuracity,
 					ui.g.state

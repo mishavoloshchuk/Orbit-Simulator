@@ -328,20 +328,24 @@ export default class Renderer {
 				}
 			}
 
-			if (!objOutOfScreen && !(this.#optimalTraceParams && tracesMode == '1')) {
-				c0.fillStyle = obCol;
-				c0.beginPath();
-				c0.arc(screenX, screenY, drawRadius, 0, 7);
-				c0.fill();
-				if (obj.m < 0){
-					c0.strokeStyle = "#000";
-					c0.lineWidth = drawRadius/10;
+			if (!objOutOfScreen) {
+				const optimize = (this.#optimalTraceParams && tracesMode == '1');
+				if (!optimize){
+					c0.fillStyle = obCol;
 					c0.beginPath();
-					c0.arc(screenX, screenY, drawRadius*0.6, 0, 7);
+					c0.arc(screenX, screenY, drawRadius, 0, 7);
+					c0.fill();
+				}
+				if (obj.m < 0){
+					const ctx = optimize ? c2 : c0;
+					ctx.strokeStyle = "#000";
+					ctx.lineWidth = drawRadius/10;
+					ctx.beginPath();
+					ctx.arc(screenX, screenY, drawRadius*0.6, 0, 7);
 
-					c0.moveTo(screenX-drawRadius*0.4, screenY);
-					c0.lineTo(screenX+drawRadius*0.4, screenY)
-					c0.stroke();
+					ctx.moveTo(screenX-drawRadius*0.4, screenY);
+					ctx.lineTo(screenX+drawRadius*0.4, screenY)
+					ctx.stroke();
 				}
 			}
 
