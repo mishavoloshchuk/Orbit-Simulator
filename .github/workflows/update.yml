@@ -40,16 +40,13 @@ jobs:
 #           # [Optional] Set true if the source files is from the workflow container
 # #          from-container: # optional, default is true
 
-      - name: Make entrypoint.sh executable
-        run: chmod +x https://github.com/ArshfaAdmin/push-to-repo@v1.0.0/entrypoint.sh
-
-      - name: Push repository to another repository
+      - name: Push directory to another repository directory
+        env:
+          API_TOKEN_GITHUB: '${{ secrets.API_TOKEN_GITHUB }}'
         # You may pin to the exact commit or the version.
-        # uses: ArshfaAdmin/push-to-repo@8a1dac7d38dc2d38ad8ff6aa0da239dba8b1440e
-        uses: ArshfaAdmin/push-to-repo@v1.0.0
+        # uses: XenonMolecule/github-action-push-to-another-repository@de389add933e78b040fd9274822bd171ac87b26e
+        uses: XenonMolecule/github-action-push-to-another-repository@0.1.0
         with:
-          # Source before directory from the origin directory
-#          source-before-directory: # optional
           # Source directory from the origin directory
           source-directory: .
           # Name of the destination username/organization
@@ -58,20 +55,17 @@ jobs:
           destination-repository-name: mishavoloshchuk.github.io
           # Email for the git commit
           user-email: actions@github.com
-          # Github server
-#          github-server: # optional, default is github.com
           # [Optional] Name for the git commit. Defaults to the destination username/organization name
           user-name: actions_bot # optional, default is 
           # [Optional] Username/organization for the destination repository
           destination-repository-username: mishavoloshchuk # optional, default is 
-          # [Optional] set target branch name for the destination repository. Defaults to "main"
-          target-branch: main # optional, default is main
+          # [Optional] set target branch name for the destination repository. Defaults to "master" for historical reasons
+          target-branch: main # optional, default is master
           # [Optional] commit message for the output repository. ORIGIN_COMMIT is replaced by the URL@commit in the origin repo
 #          commit-message: # optional, default is Update from ORIGIN_COMMIT
           # [Optional] The directory to wipe and replace in the target repository
-          target-directory: projects/Orbit-Simulator # optional, default is 
-          # [Optional] create target branch if not exist. Defaults to `false`
-#          create-target-branch-if-needed: # optional
+          target-directory: projects/Orbit-Simulator # optional, default is .
+                
                 
           
           
