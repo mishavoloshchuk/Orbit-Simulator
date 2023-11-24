@@ -14,32 +14,62 @@ jobs:
       - name: Checkout Orbit-Simulator Repository
         uses: actions/checkout@v2
       
-      - name: Copy files from workflow container or repository to another repository
-        env:
-          API_TOKEN_GITHUB: '${{ secrets.API_TOKEN_GITHUB }}'
+#       - name: Copy files from workflow container or repository to another repository
+#         env:
+#           API_TOKEN_GITHUB: '${{ secrets.API_TOKEN_GITHUB }}'
+#         # You may pin to the exact commit or the version.
+#         # uses: lubu12/copy-files-to-repository@3e2aaabda1807e599bf1c614ff57d3abc3f19aca
+#         uses: lubu12/copy-files-to-repository@v1
+#         with:
+#           # The files/directories to copy to the destination repository. Can have multiple space-separated filenames and globbing
+#           source-files: .
+#           # Name of the destination username/organization
+#           destination-username: mishavoloshchuk
+#           # Name of the destination repository
+#           destination-repository: mishavoloshchuk.github.io
+#           # [Optional] set target branch name for the destination repository
+#           destination-branch: main # optional, default is master
+#           # [Opitonal] Directory to copy files into in the destination repository
+#           destination-directory: projects/Orbit-Simulator # optional, default is .
+#           # [Optional] Username for the commit. Defaults to the destination username
+#           commit-username: actions_bot # optional, default is 
+#           # Email for the commit
+#           commit-email: actions@github.com
+#           # [Optional] commit message for the output repository. ORIGIN_COMMIT is replaced by the URL@commit in the origin repo
+# #          commit-message: # optional, default is Update from ORIGIN_COMMIT
+#           # [Optional] Set true if the source files is from the workflow container
+# #          from-container: # optional, default is true
+
+
+
+      - name: Push repository to another repository
         # You may pin to the exact commit or the version.
-        # uses: lubu12/copy-files-to-repository@3e2aaabda1807e599bf1c614ff57d3abc3f19aca
-        uses: lubu12/copy-files-to-repository@v1
+        # uses: ArshfaAdmin/push-to-repo@8a1dac7d38dc2d38ad8ff6aa0da239dba8b1440e
+        uses: ArshfaAdmin/push-to-repo@v1.0.0
         with:
-          # The files/directories to copy to the destination repository. Can have multiple space-separated filenames and globbing
-          source-files: .
+          # Source before directory from the origin directory
+#          source-before-directory: # optional
+          # Source directory from the origin directory
+          source-directory: .
           # Name of the destination username/organization
-          destination-username: mishavoloshchuk
-          # Name of the destination repository
-          destination-repository: mishavoloshchuk.github.io
-          # [Optional] set target branch name for the destination repository
-          destination-branch: main # optional, default is master
-          # [Opitonal] Directory to copy files into in the destination repository
-          destination-directory: projects/Orbit-Simulator # optional, default is .
-          # [Optional] Username for the commit. Defaults to the destination username
-          commit-username: actions_bot # optional, default is 
-          # Email for the commit
-          commit-email: actions@github.com
+          destination-github-username: mishavoloshchuk
+          # Destination repository
+          destination-repository-name: mishavoloshchuk.github.io
+          # Email for the git commit
+          user-email: actions@github.com
+          # Github server
+#          github-server: # optional, default is github.com
+          # [Optional] Name for the git commit. Defaults to the destination username/organization name
+          user-name: actions_bot # optional, default is 
+          # [Optional] Username/organization for the destination repository
+          destination-repository-username: mishavoloshchuk # optional, default is 
+          # [Optional] set target branch name for the destination repository. Defaults to "main"
+          target-branch: main # optional, default is main
           # [Optional] commit message for the output repository. ORIGIN_COMMIT is replaced by the URL@commit in the origin repo
 #          commit-message: # optional, default is Update from ORIGIN_COMMIT
-          # [Optional] Set true if the source files is from the workflow container
-#          from-container: # optional, default is true
-          
-          
-          
-          
+          # [Optional] The directory to wipe and replace in the target repository
+          target-directory: projects/Orbit-Simulator # optional, default is 
+          # [Optional] create target branch if not exist. Defaults to `false`
+#          create-target-branch-if-needed: # optional
+                
+      
