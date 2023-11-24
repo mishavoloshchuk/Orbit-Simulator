@@ -1,4 +1,0 @@
-AuthType Basic
-AuthName "Password Protected Area"
-AuthUserFile D:\Program\OSPanel\domains\sushirolls\.htpasswd
-Require valid-user
