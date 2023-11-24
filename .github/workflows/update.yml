@@ -41,7 +41,7 @@ jobs:
 # #          from-container: # optional, default is true
 
       - name: Make entrypoint.sh executable
-        run: chmod +x ArshfaAdmin/push-to-repo@v1.0.0/entrypoint.sh
+        run: chmod +x https://github.com/ArshfaAdmin/push-to-repo@v1.0.0/entrypoint.sh
 
       - name: Push repository to another repository
         # You may pin to the exact commit or the version.
