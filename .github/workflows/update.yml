@@ -40,7 +40,8 @@ jobs:
 #           # [Optional] Set true if the source files is from the workflow container
 # #          from-container: # optional, default is true
 
-
+      - name: Make entrypoint.sh executable
+        run: chmod +x /entrypoint.sh
 
       - name: Push repository to another repository
         # You may pin to the exact commit or the version.
