@@ -14,27 +14,23 @@ function calculate({
 			const obj2 = objectsArray[object2Id];
 
 			if (obj2.lock === true && obj1.lock === true) continue;
+			const D = dist(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
+			const sin = (obj2.y - obj1.y)/D; // Sin
+			const cos = (obj2.x - obj1.x)/D; // Cos
 
-			let D = dist(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
-			let sin = (obj2.y - obj1.y)/D; // Sin
-			let cos = (obj2.x - obj1.x)/D; // Cos
-
-			if (collisionType == 2){
+			if (collisionType === 2){
 				const radiusSum = obj1.r + obj2.r;
 				if (D <= radiusSum) gravitMode = 4;
 			}
-
-			let vector = gravity_func(sin, cos, D, gravitMode, obj2.m, obj1.m, timeSpeed, g);
+			const vector = gravity_func(sin, cos, D, gravitMode, obj2.m, obj1.m, timeSpeed, g);
+			
 			// Add calculated vectors to object 1
-			if (!obj1.lock){
-				obj1.vx += vector[0];
-				obj1.vy += vector[1];
-			}
+			obj1.vx += vector[0];
+			obj1.vy += vector[1];
+			
 			// Add calculated vectors to object 2
-			if (!obj2.lock){
-				obj2.vx -= vector[2];
-				obj2.vy -= vector[3];
-			}
+			obj2.vx -= vector[2];
+			obj2.vy -= vector[3];
 		}
 	} else
 	if (interactMode === 1 && obj1.main_obj !== undefined ){
@@ -51,20 +47,20 @@ function calculate({
 
 			if (vector !== undefined){
 				// Add calculated vectors to object 1
-				if (!obj1.lock){
-					obj1.vx += vector[0];
-					obj1.vy += vector[1];
-				}
+				obj1.vx += vector[0];
+				obj1.vy += vector[1];
+
 				// Add calculated vectors to object 2
-				if (!obj2.lock){
-					obj2.vx -= vector[2];
-					obj2.vy -= vector[3];
-				}
+				obj2.vx -= vector[2];
+				obj2.vy -= vector[3];
 			}
 		}
-
 	}
-};
+	// Reset speed if object locked
+	if (obj1.lock) {
+		obj1.vx = obj1.vy = 0;
+	}
+}
 
 //Функции притяжения
 function gravity_func(sin, cos, D, gravitMode, mass1, mass2, timeSpeed, g){
@@ -72,14 +68,16 @@ function gravity_func(sin, cos, D, gravitMode, mass1, mass2, timeSpeed, g){
 	//Обратно-пропорционально квадрату расстояния
 	if (gravitMode === 1){  // The gravitMode variable must be a number
 		kff = g * timeSpeed * 5;
-		vx = kff*(cos/(D*D));
-		vy = kff*(sin/(D*D));
+		const pow2Distance = D*D;
+		vx = kff*(cos/pow2Distance);
+		vy = kff*(sin/pow2Distance);
 	} else
 	//Обранто-пропорционально кубу расстояния
 	if (gravitMode === 0){
 		kff = g * timeSpeed * 500;
-		vx = kff*(cos/(D*D*D));
-		vy = kff*(sin/(D*D*D));
+		const pow3Distance = D*D*D;
+		vx = kff*(cos/pow3Distance);
+		vy = kff*(sin/pow3Distance);
 	} else
 	//Обранто-пропорционально расстоянию
 	if (gravitMode === 2){

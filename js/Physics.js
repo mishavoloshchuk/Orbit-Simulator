@@ -11,8 +11,6 @@ export default class Physics {
 		this.gpu.addFunction(dist);
 		// Gravitation function
 		this.gpu.addFunction(gravity_func);
-		// Gipotenuse
-		this.gpu.addFunction(function gipot(a,b){return Math.sqrt(a*a + b*b) });
 		// Compute function
 		this.computeVelocities = this.gpu.createKernel(function(arr, len, timeSpeed, g, gravitMode) {
 			const obj1Id = this.thread.x;

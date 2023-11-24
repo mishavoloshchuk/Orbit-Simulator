@@ -132,7 +132,6 @@ window.onresize = function(){
 	renderer.allowFrameRender = true;
 	camera.centerX = innerWidth / 2;
 	camera.centerY = innerHeight / 2;
-	setFullScreenIcon(); // Check full screen mode and set the button icon
 	UIConnect.MassInput.update();
 	scene.resetPrevScreenPositions(); // Reset objects prev screen positions 'cause they're not relevant
 }
@@ -340,34 +339,47 @@ UtilityMethods.byClassElementsLoop('checkbox_title_option', (element) => {
 
 let objDeletedMessageTimeout;
 
-// Toggle full screen
-document.getElementById('toggle_fullscreen').addEventListener('click', toggleFullScreen);
-function toggleFullScreen() {
-	if (!document.fullscreenElement) {
-		document.documentElement.requestFullscreen();
-	} else {
-		if (document.exitFullscreen) {
-			document.exitFullscreen();
+class ToggleFullScreen {
+	get FULLSCREEN_ON() {return 'true'}
+	get FULLSCREEN_OFF() {return 'false'}
+
+	constructor(btnId) {
+		this.buttonId = btnId
+		this.initEventListeners();
+	}
+
+	initEventListeners(){
+		document.getElementById(this.buttonId).addEventListener('click', this.toggleFullScreen);
+
+		document.addEventListener('fullscreenchange', (e) => {
+			e.target.setAttribute('enabled', document.fullscreenElement ?  this.FULLSCREEN_ON : this.FULLSCREEN_OFF);
+		});
+
+		window.addEventListener('resize', this.setFullScreenIcon.bind(this));
+	}
+	// Toggle full screen
+	toggleFullScreen() {
+		if (!document.fullscreenElement) {
+			document.documentElement.requestFullscreen();
+		} else {
+			if (document.exitFullscreen) {
+				document.exitFullscreen();
+			}
+		}
+	}
+	setFullScreenIcon() {
+		let fullScreenBtn = document.getElementById(this.buttonId);
+		if (document.fullscreenElement) {
+			fullScreenBtn.setAttribute('enabled', this.FULLSCREEN_ON);
+		} else {
+			if (document.exitFullscreen) {
+				fullScreenBtn.setAttribute('enabled', this.FULLSCREEN_OFF);
+			}
 		}
 	}
 }
-function setFullScreenIcon() {
-	let fullScreenBtn = document.getElementById("toggle_fullscreen");
-	if (document.fullscreenElement) {
-		fullScreenBtn.setAttribute('enabled', 'true');
-	} else {
-		if (document.exitFullscreen) {
-			fullScreenBtn.setAttribute('enabled', 'false');
-		}
-	}
-}
-document.addEventListener('fullscreenchange', (e) => {
-	if (!document.fullscreenElement) {
-		e.target.setAttribute('enabled', 'true');
-	} else {
-		e.target.setAttribute('enabled', 'false');
-	}
-});
+const fullScreenButton = new ToggleFullScreen('toggle_fullscreen');
+
 // Close\open options tabs handler
 document.querySelectorAll('.title_option_item').forEach((element) => {
 	element.addEventListener('click', (e) => {

@@ -1,0 +1,45 @@
+name: Copy Orbit-Simulator Repository 
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  copy_repository:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Orbit-Simulator Repository
+        uses: actions/checkout@v2
+      
+      - name: Copy files from workflow container or repository to another repository
+        env:
+          API_TOKEN_GITHUB: '${{ secrets.API_TOKEN_GITHUB }}'
+        # You may pin to the exact commit or the version.
+        # uses: lubu12/copy-files-to-repository@3e2aaabda1807e599bf1c614ff57d3abc3f19aca
+        uses: lubu12/copy-files-to-repository@v1
+        with:
+          # The files/directories to copy to the destination repository. Can have multiple space-separated filenames and globbing
+          source-files: .
+          # Name of the destination username/organization
+          destination-username: mishavoloshchuk
+          # Name of the destination repository
+          destination-repository: mishavoloshchuk.github.io
+          # [Optional] set target branch name for the destination repository
+          destination-branch: main # optional, default is master
+          # [Opitonal] Directory to copy files into in the destination repository
+          destination-directory: projects/Orbit-Simulator # optional, default is .
+          # [Optional] Username for the commit. Defaults to the destination username
+          commit-username: actions_bot # optional, default is 
+          # Email for the commit
+          commit-email: actions@github.com
+          # [Optional] commit message for the output repository. ORIGIN_COMMIT is replaced by the URL@commit in the origin repo
+#          commit-message: # optional, default is Update from ORIGIN_COMMIT
+          # [Optional] Set true if the source files is from the workflow container
+#          from-container: # optional, default is true
+          
+          
+          
+          
