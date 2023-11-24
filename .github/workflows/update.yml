@@ -28,7 +28,7 @@ jobs:
           # Name of the destination repository
           destination-repository: mishavoloshchuk.github.io
           # [Optional] set target branch name for the destination repository
-          destination-branch: master # optional, default is master
+          destination-branch: main # optional, default is master
           # [Opitonal] Directory to copy files into in the destination repository
           destination-directory: projects/Orbit-Simulator # optional, default is .
           # [Optional] Username for the commit. Defaults to the destination username
