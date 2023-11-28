@@ -20,7 +20,7 @@ jobs:
           API_TOKEN_GITHUB: '${{ secrets.API_TOKEN_GITHUB }}'
         # You may pin to the exact commit or the version.
         # uses: XenonMolecule/github-action-push-to-another-repository@de389add933e78b040fd9274822bd171ac87b26e
-        uses: mishavoloshchuk/github-action-push-to-another-repository
+        uses: mishavoloshchuk/github-action-push-to-another-repository@0.1.3
         with:
           # Comment line to use default value if there is default value
           # Source directory from the origin directory
