@@ -14,119 +14,30 @@ jobs:
       - name: Checkout Orbit-Simulator Repository
         uses: actions/checkout@v2
 
-      - name: Create a folder, if there is no folder)
-        run: |
-          #!/bin/sh -l
-
-          set -e  # if a command fails it stops the execution
-          set -u  # script fails if trying to access to an undefined variable
-          
-          echo "Starts"
-          SOURCE_DIRECTORY="."
-          DESTINATION_GITHUB_USERNAME="mishavoloshchuk"
-          DESTINATION_REPOSITORY_NAME="mishavoloshchuk.github.io"
-          USER_EMAIL="actions@github.com"
-          USER_NAME="actions_bot"
-          DESTINATION_REPOSITORY_USERNAME="mishavoloshchuk"
-          TARGET_BRANCH="main"
-          COMMIT_MESSAGE=""
-          TARGET_DIRECTORY="projects/Orbit-Simulator"
-          
-          if [ -z "$DESTINATION_REPOSITORY_USERNAME" ]
-          then
-            DESTINATION_REPOSITORY_USERNAME="$DESTINATION_GITHUB_USERNAME"
-          fi
-          
-          if [ -z "$USER_NAME" ]
-          then
-            USER_NAME="$DESTINATION_GITHUB_USERNAME"
-          fi
-          
-          CLONE_DIR=$(mktemp -d)
-          
-          echo "Cloning destination git repository"
-          # Setup git
-          git config --global user.email "$USER_EMAIL"
-          git config --global user.name "$USER_NAME"
-          git clone --single-branch --branch "$TARGET_BRANCH" "https://$USER_NAME:${{ secrets.API_TOKEN_GITHUB }}@github.com/$DESTINATION_REPOSITORY_USERNAME/$DESTINATION_REPOSITORY_NAME.git" "$CLONE_DIR"
-          ls -la "$CLONE_DIR"
-          
-          TEMP_DIR=$(mktemp -d)
-          # This mv has been the easier way to be able to remove files that were there
-          # but not anymore. Otherwise we had to remove the files from "$CLONE_DIR",
-          # including "." and with the exception of ".git/"
-          mv "$CLONE_DIR/.git" "$TEMP_DIR/.git"
-          
-          # Remove contents of target directory and create a new empty one
-          rm -R "$CLONE_DIR/$TARGET_DIRECTORY/"
-          mkdir "$CLONE_DIR/$TARGET_DIRECTORY"
-          
-          mv "$TEMP_DIR/.git" "$CLONE_DIR/.git"
-          
-          
-          if [ ! -d "$SOURCE_DIRECTORY" ]
-          then
-            echo "ERROR: $SOURCE_DIRECTORY does not exist"
-            echo "This directory needs to exist when push-to-another-repository is executed"
-            echo
-            echo "In the example it is created by ./build.sh: https://github.com/cpina/push-to-another-repository-example/blob/main/.github/workflows/ci.yml#L19"
-            echo
-            echo "If you want to copy a directory that exist in the source repository"
-            echo "to the target repository: you need to clone the source repository"
-            echo "in a previous step in the same build section. For example using"
-            echo "actions/checkout@v2. See: https://github.com/cpina/push-to-another-repository-example/blob/main/.github/workflows/ci.yml#L16"
-            exit 1
-          fi
-          
-          echo "Copy contents to target git repository"
-          cp -ra "$SOURCE_DIRECTORY"/. "$CLONE_DIR/$TARGET_DIRECTORY"
-          cd "$CLONE_DIR"
-          
-          echo "Files that will be pushed:"
-          ls -la
-          
-          ORIGIN_COMMIT="https://github.com/$GITHUB_REPOSITORY/commit/$GITHUB_SHA"
-          COMMIT_MESSAGE="${COMMIT_MESSAGE/ORIGIN_COMMIT/$ORIGIN_COMMIT}"
-          COMMIT_MESSAGE="${COMMIT_MESSAGE/\$GITHUB_REF/$GITHUB_REF}"
-          
-          echo "git add:"
-          git add .
-          
-          echo "git status:"
-          git status
-          
-          echo "git diff-index:"
-          # git diff-index : to avoid doing the git commit failing if there are no changes to be commit
-          git diff-index --quiet HEAD || git commit --message "$COMMIT_MESSAGE"
-          
-          echo "git push origin:"
-          # --set-upstream: sets de branch when pushing to a branch that does not exist
-          git push "https://$USER_NAME:$API_TOKEN_GITHUB@github.com/$DESTINATION_REPOSITORY_USERNAME/$DESTINATION_REPOSITORY_NAME.git" --set-upstream "$TARGET_BRANCH"
-
-  #     - name: Push directory to another repository directory
-  #       # GitHub access token
-  #       env:
-  #         API_TOKEN_GITHUB: '${{ secrets.API_TOKEN_GITHUB }}'
-  #       # You may pin to the exact commit or the version.
-  #       # uses: XenonMolecule/github-action-push-to-another-repository@de389add933e78b040fd9274822bd171ac87b26e
-  #       uses: XenonMolecule/github-action-push-to-another-repository@0.1.0
-  #       with:
-  #         # Comment line to use default value if there is default value
-  #         # Source directory from the origin directory
-  #         source-directory: '.'
-  #         # Name of the destination username/organization
-  #         destination-github-username: 'mishavoloshchuk'
-  #         # Destination repository
-  #         destination-repository-name: 'mishavoloshchuk.github.io'
-  #         # Email for the git commit
-  #         user-email: 'actions@github.com'
-  #         # [Optional] Name for the git commit. Defaults to the destination username/organization name
-  #         user-name: 'actions_bot' # optional, default is 
-  #         # [Optional] Username/organization for the destination repository
-  #         destination-repository-username: 'mishavoloshchuk' # optional, default is 
-  #         # [Optional] set target branch name for the destination repository. Defaults to "master" for historical reasons
-  #         target-branch: 'main' # Set the destination branch (default is master)
-  #         # [Optional] commit message for the output repository. ORIGIN_COMMIT is replaced by the URL@commit in the origin repo
-  # #          commit-message: # optional, default is Update from ORIGIN_COMMIT
-  #         # [Optional] The directory to wipe and replace in the target repository
-  #         target-directory: 'projects/Orbit-Simulator' # optional, default is .
+      - name: Push directory to another repository directory
+        # GitHub access token
+        env:
+          API_TOKEN_GITHUB: '${{ secrets.API_TOKEN_GITHUB }}'
+        # You may pin to the exact commit or the version.
+        # uses: XenonMolecule/github-action-push-to-another-repository@de389add933e78b040fd9274822bd171ac87b26e
+        uses: mishavoloshchuk/github-action-push-to-another-repository@0.1.0
+        with:
+          # Comment line to use default value if there is default value
+          # Source directory from the origin directory
+          source-directory: '.'
+          # Name of the destination username/organization
+          destination-github-username: 'mishavoloshchuk'
+          # Destination repository
+          destination-repository-name: 'mishavoloshchuk.github.io'
+          # Email for the git commit
+          user-email: 'actions@github.com'
+          # [Optional] Name for the git commit. Defaults to the destination username/organization name
+          user-name: 'actions_bot' # optional, default is 
+          # [Optional] Username/organization for the destination repository
+          destination-repository-username: 'mishavoloshchuk' # optional, default is 
+          # [Optional] set target branch name for the destination repository. Defaults to "master" for historical reasons
+          target-branch: 'main' # Set the destination branch (default is master)
+          # [Optional] commit message for the output repository. ORIGIN_COMMIT is replaced by the URL@commit in the origin repo
+  #          commit-message: # optional, default is Update from ORIGIN_COMMIT
+          # [Optional] The directory to wipe and replace in the target repository
+          target-directory: 'projects/Orbit-Simulator' # optional, default is .
