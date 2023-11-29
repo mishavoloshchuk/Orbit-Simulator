@@ -20,7 +20,7 @@ jobs:
           API_TOKEN_GITHUB: '${{ secrets.API_TOKEN_GITHUB }}'
         # You may pin to the exact commit or the version.
         # uses: notpresident35/copy_large_folder_to_another_repo_action@80f614525ae4ffb75699ae3f543f26979353924c
-        uses: datalbry/copy_folder_to_another_repo_action@1.0.0
+        uses: crykn/copy_folder_to_another_repo_action@v1.0.6
         with:
           # Comment line to use default value if there is default value
           # Source directory from the origin directory
