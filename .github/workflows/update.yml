@@ -20,20 +20,20 @@ jobs:
           API_TOKEN_GITHUB: '${{ secrets.API_TOKEN_GITHUB }}'
         # You may pin to the exact commit or the version.
         # uses: notpresident35/copy_large_folder_to_another_repo_action@80f614525ae4ffb75699ae3f543f26979353924c
-        uses: crykn/copy_folder_to_another_repo_action@v1.0.6
+        uses: lubu12/copy-files-to-repository@v1
         with:
           # Comment line to use default value if there is default value
           # Source directory from the origin directory
-          source_folder: '.'
+          source-files: '.'
           # Destination repository
-          destination_repo: 'mishavoloshchuk/mishavoloshchuk.github.io'
+          destination-repository: 'mishavoloshchuk.github.io'
           # [Optional] The directory to wipe and replace in the target repository
-          destination_folder: 'projects/Orbit-Simulator' # optional, default is .
+          destination-directory: 'projects/Orbit-Simulator' # optional, default is .
           # Email for the git commit
-          user_email: 'voloshchuk123@gmail.com'
+          commit-email: 'voloshchuk123@gmail.com'
           # Name of the destination
-          user_name: 'mishavoloshchuk'
+          destination-username: 'mishavoloshchuk'
           # [Optional] set target branch name for the destination repository. Defaults to "master" for historical reasons
-          destination_branch: 'main' # optional, default is master
+          destination-branch: 'main' # optional, default is master
           # [Optional] commit message for the output repository. ORIGIN_COMMIT is replaced by the URL@commit in the origin repo
   #          commit_msg: # optional, default is Update from ORIGIN_COMMIT
