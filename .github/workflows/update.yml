@@ -38,6 +38,6 @@ jobs:
           # [Optional] set target branch name for the destination repository. Defaults to "master" for historical reasons
           target-branch: 'main' # Set the destination branch (default is master)
           # [Optional] commit message for the output repository. ORIGIN_COMMIT is replaced by the URL@commit in the origin repo
-          commit-message: Auto repository copy # optional, default is Update from ORIGIN_COMMIT
+#          commit-message: Auto repository copy # optional, default is Update from ORIGIN_COMMIT
           # [Optional] The directory to wipe and replace in the target repository
           target-directory: 'projects/Orbit-Simulator' # optional, default is .
