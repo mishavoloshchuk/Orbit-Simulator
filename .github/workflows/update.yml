@@ -3,7 +3,7 @@ name: Copy Orbit-Simulator Repository
 on:
   push:
     branches:
-      - master # Change if you want to copy another branch of your repository
+      - master
   workflow_dispatch:
 
 jobs:
@@ -19,25 +19,21 @@ jobs:
         env:
           API_TOKEN_GITHUB: '${{ secrets.API_TOKEN_GITHUB }}'
         # You may pin to the exact commit or the version.
-        # uses: XenonMolecule/github-action-push-to-another-repository@de389add933e78b040fd9274822bd171ac87b26e
-        uses: mishavoloshchuk/github-action-push-to-another-repository@0.1.9
+        # uses: notpresident35/copy_large_folder_to_another_repo_action@80f614525ae4ffb75699ae3f543f26979353924c
+        uses: datalbry/copy_folder_to_another_repo_action@1.0.0
         with:
           # Comment line to use default value if there is default value
           # Source directory from the origin directory
-          source-directory: '.'
-          # Name of the destination username/organization
-          destination-github-username: 'mishavoloshchuk'
+          source_folder: '.'
           # Destination repository
-          destination-repository-name: 'mishavoloshchuk.github.io'
-          # Email for the git commit
-          user-email: 'actions@github.com'
-          # [Optional] Name for the git commit. Defaults to the destination username/organization name
-          user-name: 'actions_bot' # optional, default is 
-          # [Optional] Username/organization for the destination repository
-          destination-repository-username: 'mishavoloshchuk' # optional, default is 
-          # [Optional] set target branch name for the destination repository. Defaults to "master" for historical reasons
-          target-branch: 'main' # Set the destination branch (default is master)
-          # [Optional] commit message for the output repository. ORIGIN_COMMIT is replaced by the URL@commit in the origin repo
-          commit-message: Auto repository copy # optional, default is Update from ORIGIN_COMMIT
+          destination_repo: 'mishavoloshchuk/mishavoloshchuk.github.io'
           # [Optional] The directory to wipe and replace in the target repository
-          target-directory: 'projects/Orbit-Simulator' # optional, default is .
+          destination_folder: 'projects/Orbit-Simulator' # optional, default is .
+          # Email for the git commit
+          user_email: 'voloshchuk123@gmail.com'
+          # Name of the destination
+          user_name: 'mishavoloshchuk'
+          # [Optional] set target branch name for the destination repository. Defaults to "master" for historical reasons
+          destination_branch: 'main' # optional, default is master
+          # [Optional] commit message for the output repository. ORIGIN_COMMIT is replaced by the URL@commit in the origin repo
+  #          commit_msg: # optional, default is Update from ORIGIN_COMMIT
