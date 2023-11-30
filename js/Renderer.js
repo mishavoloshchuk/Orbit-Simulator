@@ -336,7 +336,9 @@ export default class Renderer {
 					c0.arc(screenX, screenY, drawRadius, 0, 7);
 					c0.fill();
 				}
-				if (obj.m < 0){
+
+				// If negative mass, show minus sign on the object
+				if (obj.m < 0 && drawRadius > 2){
 					const ctx = optimize ? c2 : c0;
 					ctx.strokeStyle = "#000";
 					ctx.lineWidth = drawRadius/10;
