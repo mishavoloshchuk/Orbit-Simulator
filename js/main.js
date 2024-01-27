@@ -76,9 +76,6 @@ let newObjectCreatedCallback = function() {
 
 document.getElementById('background_color_select').addEventListener('change', newObjectCreatedCallback);
 
-const switcher = {device: 'desktop',
-	visT: false}; // Collisions: repulsion merge none
-
 self.swch = {
 	s_track: true,
 	s_edit: true,
@@ -336,8 +333,6 @@ UtilityMethods.byClassElementsLoop('checkbox_title_option', (element) => {
 		element.setAttribute('disabled', '');
 	}
 });
-
-let objDeletedMessageTimeout;
 
 class ToggleFullScreen {
 	get FULLSCREEN_ON() {return 'true'}
