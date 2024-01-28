@@ -62,16 +62,19 @@ export default class Renderer {
 
 	#layersCount = 0;
 	#makeLayer(targetNode, styles){
-		const className = 'renderLayer';
 		const canvas = document.createElement('canvas');
 		canvas.id = 'renderer' + this.rendererId + '-layer' + this.#layersCount;
-		canvas.className = className;
+		canvas.className = 'renderLayer';
 		canvas.innerHTML = 'Your browser does not support canvas!';
 		Object.assign(canvas.style, styles);
 		targetNode.appendChild(canvas);
 
-		this['canv' + this.#layersCount] = canvas;
-		this['ctx' + this.#layersCount] = canvas.getContext('2d',{willReadFrequently: false});
+		const canvasName = 'canv' + this.#layersCount;
+		const contextName = 'ctx' + this.#layersCount;
+
+		this[canvasName] = canvas;
+		this[contextName] = canvas.getContext('2d',{willReadFrequently: false});
+
 		this.#layersCount ++;
 	}
 
@@ -170,13 +173,9 @@ export default class Renderer {
 			if (tracesMode === 1){
 				// Fix object anti-aliasing while optimal trace mode 1 parameters
 				if (!enoughObjMove && !objOutOfScreen && this.#optimalTraceParams && drawRadius !== minScreenRadius){	
-					c2.save();
-					c2.beginPath();
-					c2.fillStyle = '#FFF';
-					c2.globalCompositeOperation = 'destination-out';
-					c2.arc(screenX, screenY, drawRadius + 0.4, 0, 7);
-					c2.fill();
-					c2.restore();
+					Painter.fillCircle(c2, screenX, screenY, drawRadius + 0.4, '#FFF', {
+						"globalCompositeOperation": 'destination-out'
+					});
 				}
 				// Draw trace
 				if ((enoughObjMove || this.#optimalTraceParams) 
@@ -257,16 +256,13 @@ export default class Renderer {
 							&& drawRadius > 1.5
 							&& !point2OutOfScreen
 						){
-							c0.beginPath();
-							c0.arc(
+							Painter.fillCircle(
+								c0, 
 								Math.floor(point2ScreenX + randX * 2), 
 								Math.floor(point2ScreenY + randY * 2),
 								lineWidth / 2,
-								0,
-								7
+								obCol
 							);
-							c0.fill();
-							c0.resetTransform();
 						}
 						// Line drawing
 						if (!(point1OutOfScreen === true && point2OutOfScreen === true)){ // If both points not out of screen
@@ -319,35 +315,22 @@ export default class Renderer {
 						c0.lineJoin = 'bevel';
 					}
 					// Separate the traces of objects
-					c0.globalCompositeOperation = 'destination-out';
-					c0.fillStyle = "#ffffff";
-					c0.beginPath();
-					c0.arc(screenX, screenY, drawRadius+1.5, 0, 7);
-					c0.fill();
-					c0.globalCompositeOperation = 'source-over';
+					Painter.fillCircle(c0, screenX, screenY, drawRadius + 1.5, "#ffffff", {
+						globalCompositeOperation: 'destination-out'
+					});
 				}
 			}
 
 			if (!objOutOfScreen) {
 				const optimize = (this.#optimalTraceParams && tracesMode == '1');
 				if (!optimize){
-					c0.fillStyle = obCol;
-					c0.beginPath();
-					c0.arc(screenX, screenY, drawRadius, 0, 7);
-					c0.fill();
+					Painter.fillCircle(c0, screenX, screenY, drawRadius, obCol);
 				}
 
 				// If negative mass, show minus sign on the object
 				if (obj.m < 0 && drawRadius > 2){
 					const ctx = optimize ? c2 : c0;
-					ctx.strokeStyle = "#000";
-					ctx.lineWidth = drawRadius/10;
-					ctx.beginPath();
-					ctx.arc(screenX, screenY, drawRadius*0.6, 0, 7);
-
-					ctx.moveTo(screenX-drawRadius*0.4, screenY);
-					ctx.lineTo(screenX+drawRadius*0.4, screenY)
-					ctx.stroke();
+					Painter.drawMinusSign(ctx, screenX, screenY, drawRadius * 0.6, "#000")
 				}
 			}
 
@@ -395,20 +378,10 @@ export default class Renderer {
 		this.ctx1.stroke();
 		this.ctx1.globalAlpha = 1;
 
-		this.ctx1.beginPath();
-		this.ctx1.fillStyle = ui.newObjColor.state;
-		this.ctx1.arc(mouse.leftDownX, mouse.leftDownY, D/2, 0, 7);
-		this.ctx1.fill();
+		Painter.fillCircle(this.ctx1, mouse.leftDownX, mouse.leftDownY, D/2, ui.newObjColor.state);
 
 		if (ui.newObjMass.state < 0){
-			this.ctx1.strokeStyle = "#000";
-			this.ctx1.lineWidth = D/2/10;
-			this.ctx1.beginPath();
-			this.ctx1.arc(mouse.leftDownX, mouse.leftDownY, D/2*0.6, 0, 7);
-
-			this.ctx1.moveTo(mouse.leftDownX-D/2*0.4, mouse.leftDownY);
-			this.ctx1.lineTo(mouse.leftDownX+D/2*0.4, mouse.leftDownY)
-			this.ctx1.stroke();
+			Painter.drawMinusSign(this.ctx1, mouse.leftDownX, mouse.leftDownY, D/2*0.6, "#000");
 		}
 	}
 
@@ -441,14 +414,13 @@ export default class Renderer {
 
 			// Fill circle
 			if (alpha > 0){
-				this.ctx1.beginPath();
-				this.ctx1.globalAlpha = alpha;
-				this.ctx1.fillStyle = color;
-				this.ctx1.arc(
+				Painter.fillCircle(
+					this.ctx1, 
 					...this.crd2(obj.x, obj.y), 
 					drawRadius + this.#visualObjectSelectAnimation, 
-					0, 7);
-				this.ctx1.fill();
+					color,
+					{ globalAlpha: alpha }
+				)
 			}
 			// Stroke circle
 			this.ctx1.beginPath();
@@ -476,16 +448,21 @@ export default class Renderer {
 
 		// Darken background
 		this.ctx1.globalAlpha = 0.5;
+		
 		this.ctx1.beginPath();
 		this.ctx1.fillStyle = "#000000";
 		this.ctx1.fillRect(0, 0, this.resolutionX, this.resolutionY);
 
-		// Draw object size
+		// Set alpha
 		this.ctx1.globalAlpha = 0.8;
-		this.ctx1.beginPath();
-		this.ctx1.fillStyle = color;
-		this.ctx1.arc(posX, posY, this.getScreenRad(mass), 0, 7);
-		this.ctx1.fill();
+
+		// Draw object size
+		Painter.fillCircle(
+			this.ctx1, 
+			posX, posY, 
+			this.getScreenRad(mass), 
+			color
+		);
 
 		this.ctx1.strokeStyle = "#fff";
 		this.ctx1.lineWidth = 1;
@@ -495,14 +472,12 @@ export default class Renderer {
 
 		// Draw object negative mass indication
 		if (mass < 0){
-			this.ctx1.strokeStyle = "#000";
-			this.ctx1.lineWidth = drawRadius/10;
-			this.ctx1.beginPath();
-			this.ctx1.arc(posX, posY, drawRadius*0.6, 0, 7);
-
-			this.ctx1.moveTo(posX-drawRadius*0.4, posY);
-			this.ctx1.lineTo(posX+drawRadius*0.4, posY)
-			this.ctx1.stroke();
+			Painter.drawMinusSign(
+				this.ctx1,
+				posX, posY,
+				drawRadius * 0.6,
+				"#000"
+			);
 		}
 		this.ctx1.globalAlpha = 1;
 	}
@@ -527,12 +502,8 @@ export default class Renderer {
 				ctx.arc(...this.crd2(tObj.x, tObj.y), radius, 0, 7);
 				ctx.stroke();
 				// Points
-				ctx.beginPath();
-				ctx.fillStyle = color;
-				ctx.arc(...this.crd2(tObj.x, tObj.y), 3, 0, 7);
-				ctx.arc(obj_cord[0], obj_cord[1], 3, 0, 7);
-				ctx.fill();
-				ctx.beginPath();
+				Painter.fillCircle(ctx, ...this.crd2(tObj.x, tObj.y), 3, color);
+				Painter.fillCircle(ctx, obj_cord[0], obj_cord[1], 3, color);
 
 				Object.assign(launchPowerLabel.style, {
 					left: `calc(${mouse.x}px + 1em)`,
@@ -569,27 +540,55 @@ export default class Renderer {
 		//console.log('clear layer 3');
 		this.ctx2.clearRect(0, 0, this.resolutionX, this.resolutionY);
 	}
-	//Draw cross function
-	drawCross(x, y, width = 1, size = 5, color = '#ff0000', canvObj = this.ctx1){
-		canvObj.strokeStyle = ui.backgroundColor.state;
-		canvObj.lineWidth = width;
-		canvObj.lineCap = 'round';
-		for (let i = 0; i < 2; i++){
-			canvObj.beginPath();
-			canvObj.moveTo(x - size, y - size);
-			canvObj.lineTo(x + size, y + size);
-			canvObj.moveTo(x + size, y - size);
-			canvObj.lineTo(x - size, y + size);
-			canvObj.stroke();
-			canvObj.strokeStyle = color;
-			canvObj.lineWidth = width;
-		}
-		canvObj.lineCap = 'butt';
-	}
 
 	// Get object screen radius
 	getScreenRad(mass){
 		let screenRad = this.scene.getRadiusFromMass(mass) * this.camera.animZoom;
 		return screenRad < 0.25 ? 0.25 : screenRad;
+	}
+}
+
+export class Painter {
+	static fillCircle(tctx, x, y, radius, color, options = {}) {
+		tctx.save();
+	
+		tctx.fillStyle = color;
+		Object.assign(tctx, options);
+		tctx.beginPath();
+		tctx.arc(x, y, radius, 0, 6.3);
+		tctx.fill();
+		tctx.restore();		
+	}
+
+	static drawCross(tctx, x, y, width = 1, size = 5, color = '#ff0000'){
+		tctx.save();
+		tctx.strokeStyle = ui.backgroundColor.state;
+		tctx.lineWidth = width;
+		tctx.lineCap = 'round';
+		for (let i = 0; i < 2; i++){
+			tctx.beginPath();
+			tctx.moveTo(x - size, y - size);
+			tctx.lineTo(x + size, y + size);
+			tctx.moveTo(x + size, y - size);
+			tctx.lineTo(x - size, y + size);
+			tctx.stroke();
+			tctx.strokeStyle = color;
+			tctx.lineWidth = width;
+		}
+		tctx.restore();	
+	}
+
+	static drawMinusSign(tctx, x, y, radius, color, options = {}) {
+		tctx.save();
+		tctx.strokeStyle = color;
+		tctx.lineWidth = radius / 5;
+		Object.assign(tctx, options);
+		tctx.beginPath();
+		tctx.arc(x, y, radius, 0, 6.3);
+
+		tctx.moveTo(x - (radius * 0.66), y);
+		tctx.lineTo(x + (radius * 0.66), y)
+		tctx.stroke();
+		tctx.restore();
 	}
 }

@@ -1,4 +1,4 @@
-import Physics from './Physics.js';
+import { Painter } from './Renderer.js';
 export default class TrajectoryPreview {
 	constructor ({scene, renderer, camera, physics}){
 		this.scene = scene;
@@ -85,20 +85,24 @@ export default class TrajectoryPreview {
 			// New object arc
 			const isNearest = distance.D === minDistance;
 			if (isNearest){
-				ctx1.globalAlpha = 0.7;
-				ctx1.fillStyle = ui.newObjColor.state;
-				ctx1.beginPath();
+				// New object
 				let drawRadius = this.renderer.getScreenRad(ui.newObjMass.state);
 				drawRadius = drawRadius < 2 ? 2 : drawRadius;
-				ctx1.arc(this.renderer.crd(dObj.x, 'x'), this.renderer.crd(dObj.y, 'y'), drawRadius, 0, 7);
-				ctx1.fill();
+				Painter.fillCircle(ctx1, 
+					...this.renderer.crd2(dObj.x, dObj.y), 
+					drawRadius, 
+					ui.newObjColor.state,
+					{ globalAlpha: 0.7 }
+				);
 				// Second object arc
-				ctx1.beginPath();
-				ctx1.fillStyle = this.scene.objArr[dObj.obj2Id].color;
 				drawRadius = this.renderer.getScreenRad(this.scene.objArr[dObj.obj2Id].m);
 				drawRadius = drawRadius < 2 ? 2 : drawRadius;
-				ctx1.arc(this.renderer.crd(dObj.x2, 'x'), this.renderer.crd(dObj.y2, 'y'), drawRadius, 0, 7);
-				ctx1.fill();
+				Painter.fillCircle(ctx1, 
+					...this.renderer.crd2(dObj.x2, dObj.y2), 
+					drawRadius, 
+					this.scene.objArr[dObj.obj2Id].color,
+					{ globalAlpha: 0.7 }
+				);
 			} else {
 				ctx1.globalAlpha = 0.3;
 				if (this.renderer.isOutOfScreen(...this.renderer.crd2(dObj.x2, dObj.y2), 0)) continue;
@@ -129,17 +133,17 @@ export default class TrajectoryPreview {
 		for (let deletedObj of deletedObjectsList){
 			const size = this.renderer.getScreenRad(deletedObj.m)*0.7 < 3? 3 : this.renderer.getScreenRad(deletedObj.m)*0.7;
 			// Circle
-			ctx1.save();
-			ctx1.beginPath();
-			ctx1.globalAlpha = 0.3;
-			ctx1.fillStyle = '#f30';
 			let drawRadius = this.renderer.getScreenRad(deletedObj.m);
 			drawRadius = drawRadius < 2 ? 2 : drawRadius;
-			ctx1.arc(...this.renderer.crd2(deletedObj.x, deletedObj.y), drawRadius, 0, 7);
-			ctx1.fill();
+			Painter.fillCircle(ctx1,
+				...this.renderer.crd2(deletedObj.x, deletedObj.y), 
+				drawRadius,
+				'#f30',
+				{ globalAlpha: 0.3 }
+			);
 
-			ctx1.restore();
-			this.renderer.drawCross(
+			Painter.drawCross(
+				this.renderer.ctx1,
 				this.renderer.crd(deletedObj.x, 'x'),
 				this.renderer.crd(deletedObj.y, 'y'), 
 				1.5, 

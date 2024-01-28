@@ -245,7 +245,6 @@ self.mouse = {
 
 // Touch events ======================================
 // Touch START
-let touchStartEvent = false;
 document.getElementById('renderLayers').addEventListener('touchstart', function(event){
 	event.preventDefault();
 	prev_cam_x = camera.x;
@@ -265,8 +264,7 @@ document.getElementById('renderLayers').addEventListener('touchmove', function(e
 	event.clientX = event.targetTouches[0].clientX;// Touch X
 	event.clientY = event.targetTouches[0].clientY;// Touch Y
 	if (swch.tapCamMove && mouse.leftDown && !camera.hasTarget()){
-		camera.x += (mouse.x - event.clientX)/camera.animZoom;
-		camera.y += (mouse.y - event.clientY)/camera.animZoom;
+		setCamPos(event);
 		navMenu.menuVisibility(false);
 	}
 	[mouse.x, mouse.y] = [event.clientX, event.clientY]; // Set cursor position
@@ -508,8 +506,7 @@ document.onmousemove = function(event){
 		mouse.middleDown 
 		|| (swch.tapCamMove && mouse.leftDown)
 	){
-		camera.x += (mouse.x - event.clientX)/camera.animZoom;
-		camera.y += (mouse.y - event.clientY)/camera.animZoom;
+		setCamPos(event);
 		navMenu.menuVisibility(false);
 		camera.setTarget();
 	}
@@ -528,25 +525,25 @@ document.onmousemove = function(event){
 
 //События клавиатуры
 document.addEventListener('keydown', function(e){
-	// console.log(e.keyCode);
+	// console.log(e.code);
 	if (!e.ctrlKey && !anyTextInputHasFocus){
-		switch (e.keyCode){
-			case 67:  document.querySelector('#create').click(); break; // (C) Create new object menu
-			case 68:  document.querySelector('#delete').click(); break; // (D) Delete object menu
-			case 69:  document.querySelector('#edit').click(); break; // (E) Edit object menu
-			case 84:  document.querySelector('#trajectory').click(); break; // (T) Trajectory menu
-			case 188: document.querySelector('#timedown').click(); break; // (<) Time speed down
-			case 191: document.querySelector('#play').click(); break; // (/) Play button
-			case 190: document.querySelector('#timeup').click(); break; // (>) Time speed up
-			case 77:  document.querySelector('#move').click(); break; // (M) Move object
-			case 80:  document.querySelector('#pause').click(); break; // (P) Pause button
-			case 72:  document.querySelector('#help').click(); break; // (H) Help menu
-			case 83:  document.querySelector('#settings').click(); break; // (S) Settings menu
-			case 86:  document.querySelector('#camera').click(); break; // (V) Camera menu
-			case 70:  document.querySelector('#world_settings').click(); break; // (F) World physics settings
-			case 120: ui.showFPS.state = !ui.showFPS.state; break; // (F9) Show FPS
-			case 39:  nextFrame = true; break; // Show one frame when paused (Right arrow)
-			case 32: // (Space) Create object
+		switch (e.code){
+			case "KeyC":  document.querySelector('#create').click(); break; // (C) Create new object menu
+			case "KeyD":  document.querySelector('#delete').click(); break; // (D) Delete object menu
+			case "KeyE":  document.querySelector('#edit').click(); break; // (E) Edit object menu
+			case "KeyT":  document.querySelector('#trajectory').click(); break; // (T) Trajectory menu
+			case "Comma": document.querySelector('#timedown').click(); break; // (<) Time speed down
+			case "Slash": document.querySelector('#play').click(); break; // (/) Play button
+			case "Period": document.querySelector('#timeup').click(); break; // (>) Time speed up
+			case "KeyM":  document.querySelector('#move').click(); break; // (M) Move object
+			case "KeyP":  document.querySelector('#pause').click(); break; // (P) Pause button
+			case "KeyH":  document.querySelector('#help').click(); break; // (H) Help menu
+			case "KeyS":  document.querySelector('#settings').click(); break; // (S) Settings menu
+			case "KeyV":  document.querySelector('#camera').click(); break; // (V) Camera menu
+			case "KeyF":  document.querySelector('#world_settings').click(); break; // (F) World physics settings
+			case "F9": ui.showFPS.state = !ui.showFPS.state; break; // (F9) Show FPS
+			case "ArrowRight":  nextFrame = true; break; // Show one frame when paused (Right arrow)
+			case "Space": // (Space) Create object
 				if (swch.allowObjCreating){
 					addFrameBeginTask(()=>{ 
 						scene.addNewObject(newObjParams);
@@ -557,22 +554,22 @@ document.addEventListener('keydown', function(e){
 					addFrameBeginTask( () => scene.deleteObject(delete_obj) );
 				}
 				break;
-			case 107:  // (NumPad +) Zoom in
+			case "NumpadAdd":  // (NumPad +) Zoom in
 				camera.zoomTo(2);
 				break;
-			case 109:  // (NumPad -) Zoom out
+			case "NumpadSubtract":  // (NumPad -) Zoom out
 				camera.zoomTo(-2);
 				break;
 		}
 		// (+) Simulation speed up withoud lost accuracity. Max limit is computer performance
-		if (e.keyCode == 187 || e.keyCode == 61){
+		if (e.code == "Equal"){
 			simulationsPerFrame *= 2;
 			console.log(simulationsPerFrame);
 			document.querySelector('.time_speed h2').innerHTML = 'T - X'+ui.timeSpeed.state*simulationsPerFrame;
 			menuStateIcon.temporaryReplace('speedup', 300);
 		} else
 		// (-) Simulation speed down withoud lost accuracity. Min value is realtime
-		if (e.keyCode == 189 || e.keyCode == 173){
+		if (e.code == "Minus"){
 			if (simulationsPerFrame > 1){
 				simulationsPerFrame /= 2;
 				menuStateIcon.temporaryReplace('speeddown', 300);
@@ -583,25 +580,7 @@ document.addEventListener('keydown', function(e){
 	}
 	//Ctrl keys
 	// (Ctrl+Z) Delete last created object
-	if (e.keyCode == 90 && e.ctrlKey) addFrameBeginTask( () => scene.deleteObject( scene.objectSelect('last_created') ) );
-	
-	//Debug
-	if (maxFPS !== false){
-		// (NumPad 9) Increase max FPS
-		if (e.keyCode == 105){ 
-			maxFPS++;
-			clearInterval(frameInterval);
-			frameInterval = setInterval(frame, 1000/maxFPS);
-			console.log(maxFPS);
-		}
-		// (NumPad 7) Decrease max FPS
-		if (e.keyCode == 103){
-			maxFPS--;
-			clearInterval(frameInterval);
-			frameInterval = setInterval(frame, 1000/maxFPS);
-			console.log(maxFPS);
-		}			
-	}
+	if (e.code == "KeyZ" && e.ctrlKey) addFrameBeginTask( () => scene.deleteObject( scene.objectSelect('last_created') ) );
 });
 
 class MenuStateIcon {
@@ -681,6 +660,11 @@ document.addEventListener('click', function(e){
 			break;
 	}
 });
+
+function setCamPos(event) {
+	camera.x += (mouse.x - event.clientX) / camera.animZoom;
+	camera.y += (mouse.y - event.clientY) / camera.animZoom;
+}
 
 function setMaxPerformance(){
 	// In Chrome-based browsers the fastest traces mode is 1
