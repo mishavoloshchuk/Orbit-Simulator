@@ -52,6 +52,8 @@ self.allowRender = function(){
 	renderer.allowFrameRender = true;
 }
 
+const renderLayers = document.getElementById('renderLayers');
+
 self.ui = new Object();
 // Init user interface
 ui.init = function (){
@@ -245,19 +247,19 @@ self.mouse = {
 
 // Touch events ======================================
 // Touch START
-document.getElementById('renderLayers').addEventListener('touchstart', function(event){
+renderLayers.addEventListener('touchstart', function(event){
 	event.preventDefault();
 	prev_cam_x = camera.x;
 	prev_cam_y = camera.y;
 	mouseDownHandler(event);
 });
 // Touch END
-document.getElementById('renderLayers').addEventListener('touchend', function(event){
+renderLayers.addEventListener('touchend', function(event){
 	mouseUpHandler(event);
 	zm_prev = camera.animZoom;
 });
 // Touch MOVE
-document.getElementById('renderLayers').addEventListener('touchmove', function(event){
+renderLayers.addEventListener('touchmove', function(event){
 	event.preventDefault();
 	mouse.move = true;
 	// Touch point
@@ -338,7 +340,7 @@ document.getElementById('renderLayers').addEventListener('touchmove', function(e
 })
 // Mouse events =========================================================
 // Mouse DOWN
-document.getElementById('renderLayers').addEventListener('mousedown', mouseDownHandler);
+renderLayers.addEventListener('mousedown', mouseDownHandler);
 function mouseDownHandler(event){
 	// Touch
 	if (event.type === 'touchstart'){
@@ -357,6 +359,7 @@ function mouseDownHandler(event){
 	// Left mouse down
 	if (event.which == 1 || event.type === 'touchstart'){
 		mouse.leftDown = true;
+		renderLayers.setAttribute('mousedown', 'true');
 
 		if (swch.allowObjCreating){
 			// If pause when creating object enabled
@@ -416,7 +419,9 @@ function moveObjectBegin(){
 	}
 }
 // Mouse UP
-document.getElementById('renderLayers').addEventListener('mouseup', mouseUpHandler);
+document.body.addEventListener('mouseup', (e) => {
+		mouseUpHandler(e);
+});
 function mouseUpHandler(event){
 	if (event.type === 'touchend'){
 		// console.log('touchend');
@@ -427,8 +432,12 @@ function mouseUpHandler(event){
 	[mouse.x, mouse.y] = [event.clientX, event.clientY];
 	avTouchPoint.xd = avTouchPoint.yd = null;
 	// Left mouse up
-	if (event.which == 1 || (event.type === 'touchend' && allowClick)){
+	if (
+		(event.which == 1 && renderLayers.getAttribute('mousedown') === 'true')
+	 	|| (event.type === 'touchend' && allowClick)
+	){
 		mouse.leftDown = false;
+		renderLayers.removeAttribute('mousedown');
 		[mouse.leftUpX, mouse.leftUpY] = [event.clientX, event.clientY] // Set cursor mouseUp position
 		launchPowerLabel.style.display = 'none';
 		// Object delete
@@ -829,8 +838,6 @@ self.navMenu = new NavigationMenu({
 		if (ui.showDistanceFromCursorToMainObj.state) renderer.clearLayer1();
 	}
 });
-
-document.getElementById('launchPowerLabel').addEventListener('mouseup', mouseUpHandler);
 
 // Close menu button handler
 UtilityMethods.byClassElementsLoop('close_button', function(element){

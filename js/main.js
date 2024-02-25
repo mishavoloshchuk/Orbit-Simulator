@@ -44,7 +44,7 @@ self.maxFPS = false;
 self.nextFrame = false;
 
 // FPS indicator init
-self.fpsIndicator = new IndicateFPS();
+self.fpsIndicator = new IndicateFPS(document.getElementById('infoBottomLeft'));
 
 // Scene init
 self.scene = new Scene();

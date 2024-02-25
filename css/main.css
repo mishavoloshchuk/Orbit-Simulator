@@ -172,11 +172,14 @@ a:hover {
 	cursor: default;
 }
 
-#object_count {
-	display: inline-block;
+#infoBottomLeft {
 	position: absolute;
 	left: 10px;
 	bottom: 10px;
+	display: flex;
+	flex-direction: column-reverse;
+	align-items: flex-start;
+	z-index: -1;
 }
 
 .menu_pos_size {
