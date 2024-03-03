@@ -139,7 +139,7 @@ export default class Renderer {
 		const minScreenRadius = 0.5;
 
 		for (let objectId = 0; objectId < scn.objArr.length; objectId++){
-			let obj = scn.objArr[objectId]; // Object to draw
+			const obj = scn.objArr[objectId]; // Object to draw
 
 			// Object screen position
 			const [screenX, screenY] = this.crd2(obj.x, obj.y);
@@ -173,19 +173,16 @@ export default class Renderer {
 			if (tracesMode === 1){
 				// Fix object anti-aliasing while optimal trace mode 1 parameters
 				if (!enoughObjMove && !objOutOfScreen && this.#optimalTraceParams && drawRadius !== minScreenRadius){	
-					Painter.fillCircle(c2, screenX, screenY, drawRadius + 0.4, '#FFF', {
-						"globalCompositeOperation": 'destination-out'
-					});
+					Painter.drawOn(c2)
+					.circle(screenX, screenY, drawRadius + 0.4)
+					.fill('#FFF', {"globalCompositeOperation": 'destination-out'});
 				}
 				// Draw trace
 				if ((enoughObjMove || this.#optimalTraceParams) 
 					&& !(objOutOfScreen && prevPosObjOutOfScreen)
 				){
+					Painter.drawOn(c2);
 					const lineOptimizedWidth = 0.75;
-					c2.strokeStyle = obCol;
-					c2.lineWidth = Math.max(traceDrawRadius * 2 * ui.traceMode1Width.state, minScreenRadius * 2);
-					c2.lineCap = traceDrawRadius > lineOptimizedWidth ? 'round' : 'butt'; // Line cap optimization
-					c2.beginPath();
 
 					// Fix darken dots when objects very small
 					const minScreenDiameter = minScreenRadius * 2;
@@ -194,14 +191,15 @@ export default class Renderer {
 						const koeficient = CPD === 0 ? 1 : (minScreenDiameter / CPD / 2);
 						const diffX = CPD === 0 ? minScreenRadius : (obj.prevScreenX - screenX);
 						const diffY = CPD === 0 ? minScreenRadius : (obj.prevScreenY - screenY);
-						c2.moveTo(screenX + diffX*koeficient, screenY + diffY*koeficient);
-						c2.lineTo(screenX - diffX*koeficient, screenY - diffY*koeficient);
+						Painter.line([screenX + diffX*koeficient, screenY + diffY*koeficient], 
+							[screenX - diffX*koeficient, screenY - diffY*koeficient]);
 					} else {
-						c2.moveTo(obj.prevScreenX, obj.prevScreenY);
-						c2.lineTo(screenX, screenY);
+						Painter.line([obj.prevScreenX, obj.prevScreenY], [screenX, screenY]);
 					}
-					c2.stroke();
-					c2.lineCap = 'butt';
+
+					Painter.stroke(obCol,  
+						Math.max(traceDrawRadius * 2 * ui.traceMode1Width.state, minScreenRadius * 2),
+						{ lineCap: traceDrawRadius > lineOptimizedWidth ? 'round' : 'butt' }); // Line cap optimization
 				}
 			}
 			// Traces mode 2 =====
@@ -213,17 +211,11 @@ export default class Renderer {
 					let randX = 0, randY = 0;
 					traceLength = Math.round(Math.pow(8, traceMode2Length));
 
-					c0.save(); // Save canvas
-
-					c0.fillStyle = obCol;
-					c0.strokeStyle = obCol;
-					c0.globalCompositeOperation = 'destination-over';
 					if (obj.trace[0]){
-						c0.lineWidth = drawRadius*2;
-						c0.beginPath();
-						c0.moveTo(screenX + randX, screenY + randY);
-						c0.lineTo(this.crd(obj.trace[0][0], 'x')+prev_randX, this.crd(obj.trace[0][1], 'y')+prev_randY);
-						c0.stroke();				
+						Painter.drawOn(c0)
+						.line([screenX + randX, screenY + randY], 
+							[this.crd(obj.trace[0][0], 'x') + prev_randX, this.crd(obj.trace[0][1], 'y') + prev_randY])
+						.stroke(obCol, drawRadius * 2, { globalCompositeOperation: 'destination-over' });		
 					}
 					for (let i = obj.trace.length; i--;){
 						let itr = i-1;
@@ -256,27 +248,21 @@ export default class Renderer {
 							&& drawRadius > 1.5
 							&& !point2OutOfScreen
 						){
-							Painter.fillCircle(
-								c0, 
+							Painter.drawOn(c0)
+							.circle(
 								Math.floor(point2ScreenX + randX * 2), 
 								Math.floor(point2ScreenY + randY * 2),
-								lineWidth / 2,
-								obCol
-							);
+								lineWidth / 2)
+							.fill(obCol);
 						}
 						// Line drawing
 						if (!(point1OutOfScreen === true && point2OutOfScreen === true)){ // If both points not out of screen
-							c0.lineWidth = lineWidth;
+							Painter.drawOn(c0)
+							.line([point1ScreenX + randX, point1ScreenY + randY], [point2ScreenX + prev_randX, point2ScreenY + prev_randY])
+							.stroke(obCol, lineWidth, { globalAlpha: (TLength-i/1.5)/TLength });
 							if (traceMode2Trembling === false) randX = randY = 0;
-							c0.globalAlpha = (TLength-i/1.5)/TLength;
-							c0.beginPath();
-							c0.moveTo(point1ScreenX + randX, point1ScreenY + randY);
-							c0.lineTo(point2ScreenX + prev_randX, point2ScreenY + prev_randY);
-							c0.stroke();
-							c0.globalAlpha = 1;
 						}
 					}
-					c0.restore(); // Restore canvas
 				}
 			}
 			// Traces mode 3 =====
@@ -284,9 +270,9 @@ export default class Renderer {
 				if (!obj.lock){
 					traceResolution = 61 - Math.round(Math.pow(traceMode3Quality, 1/8)*60);
 					traceLength = Math.ceil(UtilityMethods.expVal(traceMode3Length) / traceResolution);
-					c0.strokeStyle = obCol;
 					c0.lineWidth = Math.min(drawRadius*1.7, Math.pow(traceMode3Width, 10));
 					c0.globalCompositeOperation = 'destination-over';
+					Painter.drawOn(c0);
 					if (obj.trace.length > 0){
 						// Smooth the end cut of the trace
 						if (obj.trace.length === traceLength && !pauseState){
@@ -300,37 +286,29 @@ export default class Renderer {
 						}
 						// Draw line
 						// Round end of trace if the line width is enough
-						if (c0.lineWidth > 3) {
-							c0.lineCap = 'round';
-							c0.lineJoin = 'round';
-						}
-						c0.beginPath();
-						c0.moveTo(this.crd(obj.x, 'x'), this.crd(obj.y, 'y'));
-						for (let i in obj.trace){
-							let itr = i;
-							c0.lineTo(this.crd(obj.trace[itr][0], 'x'), this.crd(obj.trace[itr][1], 'y'));
-						}
-						c0.stroke();
-						c0.lineCap = 'butt';
-						c0.lineJoin = 'bevel';
+						if (c0.lineWidth > 3) Object.assign(c0, {lineCap: 'round', lineJoin: 'round'});
+						
+						Painter.line([obj.x, obj.y], ...obj.trace, (x, y) => this.crd2(x, y)).stroke(obCol);
+						Object.assign(c0, {lineCap: 'butt', lineJoin: 'bevel'});
 					}
 					// Separate the traces of objects
-					Painter.fillCircle(c0, screenX, screenY, drawRadius + 1.5, "#ffffff", {
-						globalCompositeOperation: 'destination-out'
-					});
+					Painter.circle(screenX, screenY, drawRadius + 1.5)
+					.fill("#ffffff", {globalCompositeOperation: 'destination-out'});
 				}
 			}
 
 			if (!objOutOfScreen) {
 				const optimize = (this.#optimalTraceParams && tracesMode == '1');
 				if (!optimize){
-					Painter.fillCircle(c0, screenX, screenY, drawRadius, obCol);
+					Painter.drawOn(c0)
+					.circle(screenX, screenY, drawRadius)
+					.fill(obCol);
 				}
 
 				// If negative mass, show minus sign on the object
 				if (obj.m < 0 && drawRadius > 2){
-					const ctx = optimize ? c2 : c0;
-					Painter.drawMinusSign(ctx, screenX, screenY, drawRadius * 0.6, "#000")
+					Painter.drawOn(optimize ? c2 : c0);
+					Painter.drawMinusSign(screenX, screenY, drawRadius * 0.6, "#000")
 				}
 			}
 
@@ -369,70 +347,40 @@ export default class Renderer {
 			mcy);// Y2
 		gradient.addColorStop(0, ui.newObjColor.state); // New object color
 		gradient.addColorStop(1, ui.backgroundColor.state + "00"); // Alpha
-		this.ctx1.strokeStyle = gradient;
 
-		this.ctx1.lineWidth = D < 1 ? 1 : D;
-		this.ctx1.beginPath();
-		this.ctx1.moveTo(mouse.leftDownX, mouse.leftDownY);
-		this.ctx1.lineTo(mcx, mcy);
-		this.ctx1.stroke();
-		this.ctx1.globalAlpha = 1;
+		Painter.drawOn(this.ctx1);
+		Painter.line([mouse.leftDownX, mouse.leftDownY], [mcx, mcy])
+		.stroke(gradient, D < 1 ? 1 : D);
 
-		Painter.fillCircle(this.ctx1, mouse.leftDownX, mouse.leftDownY, D/2, ui.newObjColor.state);
+		Painter.circle(mouse.leftDownX, mouse.leftDownY, D/2).fill(ui.newObjColor.state);
 
 		if (ui.newObjMass.state < 0){
-			Painter.drawMinusSign(this.ctx1, mouse.leftDownX, mouse.leftDownY, D/2*0.6, "#000");
+			Painter.drawMinusSign(mouse.leftDownX, mouse.leftDownY, D/2*0.6, "#000");
 		}
 	}
 
 	//Визуальное выделение объекта
-	#visualObjectSelectAnimation = 10;
-	#visualObjectSelectAnimDir = 0;
 	visualObjectSelect(objectId, color, alpha = 0.3) {
 		// console.log(objectId)
 		const obj = this.scene.objArr[objectId];
-		if (obj){ // If there are target object
-			this.canv1.visualSelect = true;
-			this.clearLayer1();
-			let selectObjId = objectId;
+		if (!obj) return // If there is no target object
 
-			// Animation
-			if (this.#visualObjectSelectAnimation <= 5){
-				this.#visualObjectSelectAnimDir = 1;
-			} else 
-			if (this.#visualObjectSelectAnimation >= 30){
-				this.#visualObjectSelectAnimDir = 0;
-			}
+		this.canv1.visualSelect = true;
 
-			if (this.#visualObjectSelectAnimDir){
-				this.#visualObjectSelectAnimation += 1;
-			} else {
-				this.#visualObjectSelectAnimation -= 0.5;
-			}
+		const animSpeed = 2
+		const animPos = Math.sin(Date.now() * Math.PI / 1000 * animSpeed) * 10 + 20
+		const drawRadius = this.getScreenRad(obj.m); // Object screen draw radius
 
-			const drawRadius = this.getScreenRad(obj.m); // Object screen draw radius
-
-			// Fill circle
-			if (alpha > 0){
-				Painter.fillCircle(
-					this.ctx1, 
-					...this.crd2(obj.x, obj.y), 
-					drawRadius + this.#visualObjectSelectAnimation, 
-					color,
-					{ globalAlpha: alpha }
-				)
-			}
-			// Stroke circle
-			this.ctx1.beginPath();
-			this.ctx1.globalAlpha = 1;
-			this.ctx1.strokeStyle = color;
-			this.ctx1.lineWidth = 2;
-			this.ctx1.arc(
-				...this.crd2(obj.x, obj.y), 
-				drawRadius + this.#visualObjectSelectAnimation, 
-				0, 7);
-			this.ctx1.stroke();
+		// Fill circle
+		if (alpha > 0){
+			Painter.drawOn(this.ctx1)
+			.circle(...this.crd2(obj.x, obj.y), drawRadius + animPos)
+			.fill(color, { globalAlpha: alpha });
 		}
+		// Stroke circle
+		Painter.drawOn(this.ctx1)
+		.circle(...this.crd2(obj.x, obj.y), drawRadius + animPos)
+		.stroke(color, 2, {globalAlpha: 1});
 	}
 
 	isOutOfScreen(x, y, r = 0){
@@ -444,89 +392,63 @@ export default class Renderer {
 		// Fill circle
 		let drawRadius = this.getScreenRad(mass);
 		this.canv1.visualSelect = true;
-		this.clearLayer1();
+		Painter.drawOn(this.ctx1);
 
 		// Darken background
-		this.ctx1.globalAlpha = 0.5;
-		
-		this.ctx1.beginPath();
-		this.ctx1.fillStyle = "#000000";
-		this.ctx1.fillRect(0, 0, this.resolutionX, this.resolutionY);
+		Painter.rect(0, 0, this.resolutionX, this.resolutionY)
+		.fill("#000000", { globalAlpha: 0.5 });
 
 		// Set alpha
 		this.ctx1.globalAlpha = 0.8;
 
 		// Draw object size
-		Painter.fillCircle(
-			this.ctx1, 
-			posX, posY, 
-			this.getScreenRad(mass), 
-			color
-		);
-
-		this.ctx1.strokeStyle = "#fff";
-		this.ctx1.lineWidth = 1;
-		this.ctx1.beginPath();
-		this.ctx1.arc(posX, posY, drawRadius, 0, 7);
-		this.ctx1.stroke();	
+		Painter.circle(posX, posY, this.getScreenRad(mass)).fill(color);
+		// Draw border
+		Painter.circle(posX, posY, drawRadius).stroke("#fff", 1);
 
 		// Draw object negative mass indication
-		if (mass < 0){
-			Painter.drawMinusSign(
-				this.ctx1,
-				posX, posY,
-				drawRadius * 0.6,
-				"#000"
-			);
-		}
+		if (mass < 0) Painter.drawMinusSign(posX, posY, drawRadius * 0.6, "#000");
+		
+		// Reset alpha
 		this.ctx1.globalAlpha = 1;
 	}
 
 	// Show distance to main object
 	visDistance(obj_cord, color = '#888888', objId = scene.objIdToOrbit){
 		const tObj = scene.objArr[objId];
-		if (tObj){
-			const radius = dist(obj_cord[0], obj_cord[1], ...this.crd2(tObj.x, tObj.y));
-			const ctx = this.ctx1;
-			if (radius > this.getScreenRad(tObj.m)){
-				ctx.strokeStyle = color;
-				ctx.lineWidth = 2;
-				// Line
-				ctx.beginPath();
-				ctx.moveTo(obj_cord[0], obj_cord[1]);
-				ctx.lineTo(...this.crd2(tObj.x, tObj.y));
-				ctx.stroke();
-				// Circle
-				ctx.lineWidth = 0.5;
-				ctx.beginPath();
-				ctx.arc(...this.crd2(tObj.x, tObj.y), radius, 0, 7);
-				ctx.stroke();
-				// Points
-				Painter.fillCircle(ctx, ...this.crd2(tObj.x, tObj.y), 3, color);
-				Painter.fillCircle(ctx, obj_cord[0], obj_cord[1], 3, color);
+		if (!tObj) return // If there is no target object
 
-				Object.assign(launchPowerLabel.style, {
-					left: `calc(${mouse.x}px + 1em)`,
-					top: `calc(${mouse.y}px - 1em)`,
-					display: 'block', color: color
-				});
-				launchPowerLabel.innerHTML = Math.round(radius / camera.animZoom*1000)/1000;
-			} else {
-				if (!mouse.leftDown){
-					launchPowerLabel.style.display = 'none';	
-				}
-			}		
+		const radius = dist(obj_cord[0], obj_cord[1], ...this.crd2(tObj.x, tObj.y));
+		if (radius > this.getScreenRad(tObj.m)){
+			Painter.drawOn(this.ctx1);
+			// Line
+			Painter.line([obj_cord[0], obj_cord[1]], this.crd2(tObj.x, tObj.y)).stroke(color, 2);
+			// Circle
+			Painter.circle(...this.crd2(tObj.x, tObj.y), radius).stroke(color, 0.5);
+			// Points
+			Painter.circle(...this.crd2(tObj.x, tObj.y), 3).fill(color);
+			Painter.circle(obj_cord[0], obj_cord[1], 3).fill(color);
+
+			Object.assign(launchPowerLabel.style, {
+				left: `calc(${mouse.x}px + 1em)`,
+				top: `calc(${mouse.y}px - 1em)`,
+				display: 'block', color: color
+			});
+			launchPowerLabel.innerHTML = Math.round(radius / camera.animZoom*1000)/1000;
+		} else {
+			if (!mouse.leftDown){
+				launchPowerLabel.style.display = 'none';	
+			}
 		}
 	}
 
 	tracesMode1Wiping(){
 		//console.log('clear layer 1');
-		this.ctx2.save();
-		this.ctx2.globalAlpha = ui.traceMode1Length.value;
-		this.ctx2.globalCompositeOperation = 'destination-out';
-		this.ctx2.fillStyle = "#FFF";
-		this.ctx2.fillRect(0, 0, this.resolutionX, this.resolutionY);
-		this.ctx2.restore();
+		Painter.drawOn(this.ctx2)
+		.rect(0, 0, this.resolutionX, this.resolutionY)
+		.fill("#FFF", { 
+			globalCompositeOperation: 'destination-out',
+			globalAlpha: ui.traceMode1Length.value });
 	}
 	clearLayer0(){
 		//console.log('clear layer 1');
@@ -549,46 +471,89 @@ export default class Renderer {
 }
 
 export class Painter {
-	static fillCircle(tctx, x, y, radius, color, options = {}) {
-		tctx.save();
-	
-		tctx.fillStyle = color;
-		Object.assign(tctx, options);
+	static #tctx;
+	static drawOn(tctx) {
+		this.#tctx = tctx;
 		tctx.beginPath();
-		tctx.arc(x, y, radius, 0, 6.3);
-		tctx.fill();
-		tctx.restore();		
+		return this;
 	}
 
-	static drawCross(tctx, x, y, width = 1, size = 5, color = '#ff0000'){
-		tctx.save();
-		tctx.strokeStyle = ui.backgroundColor.state;
-		tctx.lineWidth = width;
-		tctx.lineCap = 'round';
-		for (let i = 0; i < 2; i++){
-			tctx.beginPath();
-			tctx.moveTo(x - size, y - size);
-			tctx.lineTo(x + size, y + size);
-			tctx.moveTo(x + size, y - size);
-			tctx.lineTo(x - size, y + size);
-			tctx.stroke();
-			tctx.strokeStyle = color;
-			tctx.lineWidth = width;
+	static circle(x, y, radius) {
+		const c = this.#tctx;
+		c.beginPath();
+
+		c.arc(x, y, radius, 0, 6.2832);
+
+		return this;
+	}
+
+	static line(...args) {
+		const c = this.#tctx;
+
+		const modificator = typeof args[args.length - 1] === "function" 
+			? args.pop()
+			: (x, y) => [x, y];
+
+		const points = args;
+		c.moveTo(...modificator(points[0][0], points[0][1])); // Start
+		for (let i = 1; i < points.length; i++) {
+			const point = points[i];
+			c.lineTo(...modificator(point[0], point[1]));
 		}
-		tctx.restore();	
+
+		return this;
 	}
 
-	static drawMinusSign(tctx, x, y, radius, color, options = {}) {
-		tctx.save();
-		tctx.strokeStyle = color;
-		tctx.lineWidth = radius / 5;
-		Object.assign(tctx, options);
-		tctx.beginPath();
-		tctx.arc(x, y, radius, 0, 6.3);
+	static rect(posX, posY, width, height) {
+		const c = this.#tctx;
+		c.rect(posX, posY, width, height);
 
-		tctx.moveTo(x - (radius * 0.66), y);
-		tctx.lineTo(x + (radius * 0.66), y)
-		tctx.stroke();
-		tctx.restore();
+		return this;
+	}
+
+	static fill(color = undefined, options = {}) {
+		const c = this.#tctx;
+		c.save();
+
+		color && (c.fillStyle = color);
+		Object.assign(c, options);
+
+		c.fill();
+		c.restore();
+	}
+
+	static stroke(color = undefined, lineWidth = undefined, options = {}) {
+		const c = this.#tctx;
+		c.save();
+
+		color && (c.strokeStyle = color);
+		lineWidth && (c.lineWidth = lineWidth);
+		Object.assign(c, options);
+
+		c.stroke();
+		c.restore();
+	}
+
+	static drawCross(x, y, width = 1, size = 5, color = '#ff0000'){
+		const c = this.#tctx;
+		c.strokeStyle = ui.backgroundColor.state;
+		for (let i = 0; i < 2; i++){
+			Painter.drawOn(c)
+			.line([x - size, y - size], [x + size, y + size])
+			.line([x + size, y - size], [x - size, y + size])
+			.stroke(undefined, width, {lineCap: 'round'});
+			c.strokeStyle = color;
+		}
+	}
+
+	static drawMinusSign(x, y, radius, color, options = {}) {
+		const c = this.#tctx;
+		c.strokeStyle = color;
+		c.lineWidth = radius / 5;
+		Object.assign(c, options);
+		Painter.drawOn(c);
+		Painter.circle(x, y, radius).stroke();
+
+		Painter.line([x - (radius * 0.66), y], [x + (radius * 0.66), y]).stroke();
 	}
 }

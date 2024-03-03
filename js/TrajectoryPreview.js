@@ -67,15 +67,10 @@ export default class TrajectoryPreview {
 						}
 					}
 				}
-				ctx1.beginPath();
 				ctx1.setLineDash(dashPattern); // Dash line
-				ctx1.strokeStyle = color;
-				ctx1.lineWidth = R;
-				ctx1.moveTo(...this.renderer.crd2(tracesArray[trace][0][0], tracesArray[trace][0][1]));
-				for (let point of tracesArray[trace]){
-					ctx1.lineTo(...this.renderer.crd2(point[0], point[1]));
-				}
-				ctx1.stroke();
+				Painter.drawOn(ctx1)
+				.line(...tracesArray[trace], (x, y) => this.renderer.crd2(x, y))
+				.stroke(color, R);
 				ctx1.setLineDash([]); // Solid line
 			}
 		}
@@ -88,21 +83,15 @@ export default class TrajectoryPreview {
 				// New object
 				let drawRadius = this.renderer.getScreenRad(ui.newObjMass.state);
 				drawRadius = drawRadius < 2 ? 2 : drawRadius;
-				Painter.fillCircle(ctx1, 
-					...this.renderer.crd2(dObj.x, dObj.y), 
-					drawRadius, 
-					ui.newObjColor.state,
-					{ globalAlpha: 0.7 }
-				);
+				Painter.drawOn(ctx1)
+				.circle(...this.renderer.crd2(dObj.x, dObj.y), drawRadius)
+				.fill(ui.newObjColor.state, { globalAlpha: 0.7 });
+
 				// Second object arc
 				drawRadius = this.renderer.getScreenRad(this.scene.objArr[dObj.obj2Id].m);
 				drawRadius = drawRadius < 2 ? 2 : drawRadius;
-				Painter.fillCircle(ctx1, 
-					...this.renderer.crd2(dObj.x2, dObj.y2), 
-					drawRadius, 
-					this.scene.objArr[dObj.obj2Id].color,
-					{ globalAlpha: 0.7 }
-				);
+				Painter.circle(...this.renderer.crd2(dObj.x2, dObj.y2), drawRadius)
+				.fill(this.scene.objArr[dObj.obj2Id].color, { globalAlpha: 0.7 });
 			} else {
 				ctx1.globalAlpha = 0.3;
 				if (this.renderer.isOutOfScreen(...this.renderer.crd2(dObj.x2, dObj.y2), 0)) continue;
@@ -111,10 +100,8 @@ export default class TrajectoryPreview {
 			// The line between approachment points	
 			if (isNearest){
 				let gradient = ctx1.createLinearGradient(// Line gradient
-					this.renderer.crd(dObj.x, 'x'),//   X1
-					this.renderer.crd(dObj.y, 'y'),//   Y1
-					this.renderer.crd(dObj.x2, 'x'),//  X2
-					this.renderer.crd(dObj.y2, 'y'));// Y2
+					...this.renderer.crd2(dObj.x, dObj.y),// X1Y1
+					...this.renderer.crd2(dObj.x2, dObj.y2));// X2Y2
 				gradient.addColorStop(0, ui.newObjColor.state); // New object color
 				gradient.addColorStop(1, this.scene.objArr[dObj.obj2Id].color); // Second object color
 				ctx1.strokeStyle = gradient;
@@ -123,10 +110,9 @@ export default class TrajectoryPreview {
 				ctx1.strokeStyle = otherObjTraceColor;
 				ctx1.lineWidth = 1; // Line width between approachment points
 			}
-			ctx1.beginPath();
-			ctx1.moveTo(this.renderer.crd(dObj.x, 'x'), this.renderer.crd(dObj.y, 'y'));
-			ctx1.lineTo(this.renderer.crd(dObj.x2, 'x'), this.renderer.crd(dObj.y2, 'y'));
-			ctx1.stroke();
+			Painter.drawOn(ctx1)
+			.line(this.renderer.crd2(dObj.x, dObj.y), this.renderer.crd2(dObj.x2, dObj.y2))
+			.stroke();
 			ctx1.globalAlpha = 1;
 		}
 		// Draw the cross if object(s) deleted after collision
@@ -135,15 +121,11 @@ export default class TrajectoryPreview {
 			// Circle
 			let drawRadius = this.renderer.getScreenRad(deletedObj.m);
 			drawRadius = drawRadius < 2 ? 2 : drawRadius;
-			Painter.fillCircle(ctx1,
-				...this.renderer.crd2(deletedObj.x, deletedObj.y), 
-				drawRadius,
-				'#f30',
-				{ globalAlpha: 0.3 }
-			);
+			Painter.drawOn(ctx1)
+			.circle(...this.renderer.crd2(deletedObj.x, deletedObj.y), drawRadius)
+			.fill('#f30', { globalAlpha: 0.3 });
 
 			Painter.drawCross(
-				this.renderer.ctx1,
 				this.renderer.crd(deletedObj.x, 'x'),
 				this.renderer.crd(deletedObj.y, 'y'), 
 				1.5, 
