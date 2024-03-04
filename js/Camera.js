@@ -91,7 +91,7 @@ export default class Camera{
 	frame(){
 		// If camera changed position or zoom
 		if (this.#clrDelay){ 
-			renderer.clearLayer2();
+			renderer.clearLayer(2);
 			renderer.allowFrameRender = true;
 		}
 		if (this.switchTarget){

@@ -272,7 +272,7 @@ export default class Physics {
 			obj.vy = (objA.m*objA.vy+objB.m*objB.vy)/(objA.m+objB.m);// Формула абсолютно-неупругого столкновения
 
 			obj.m = objA.m + objB.m; // Set new mass to obj
-			obj.r = this.scene.getRadiusFromMass(obj.m);
+			obj.updateRadius();
 			obj.color = mixedColor;
 
 			// Change camera target
@@ -372,11 +372,11 @@ export default class Physics {
 					object.vy *= ui.movementResistance.getResistance(timeSpeed);
 
 					if (ui.interactMode.state == 1){
-						let mainObj = objArr[object.main_obj];
+						let mainObj = objArr[object.parentObj];
 						while(mainObj != undefined){
 							object.x += mainObj.vx * timeSpeed;
 							object.y += mainObj.vy * timeSpeed;
-							mainObj = objArr[mainObj.main_obj];
+							mainObj = objArr[mainObj.parentObj];
 						}
 					}
 					// Allow frame render if object moves

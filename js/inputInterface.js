@@ -77,7 +77,7 @@ ui.init = function (){
 		}
 	}}); // Menu circle orbit on click input
 	this.newObjCreateReverseOrbit = new UIConnect.CheckboxInput({id: 'objReverseCheck', stateSaving: true, initState: false}); // Menu reverse ordit direction input
-	this.showDistanceFromCursorToMainObj = new UIConnect.CheckboxInput({id: 'vis_distance_check', stateSaving: true, callback: ()=>{ launchPowerLabel.style.display = 'none'; renderer.clearLayer1(); }}); // Menu visual distance
+	this.showDistanceFromCursorToMainObj = new UIConnect.CheckboxInput({id: 'vis_distance_check', stateSaving: true, callback: ()=>{ launchPowerLabel.style.display = 'none'; renderer.clearLayer(1); }}); // Menu visual distance
 	//
 	this.showNewObjTrajectory = new UIConnect.CheckboxInput({id: 'traj_prev_check', stateSaving: true, initState: true}); // Enable trajectory calculation before create object
 	this.newObjTrajLength = new UIConnect.RangeInput({id: 'traj_calc_samples', stateSaving: true}); // Trajectory calutulation length input
@@ -126,8 +126,8 @@ ui.init = function (){
 		}
 		if (elem.prevState != val){ // If state changed
 			addFrameBeginTask(()=>{
-				renderer.clearLayer0();
-				renderer.clearLayer2();
+				renderer.clearLayer(0);
+				renderer.clearLayer(2);
 				allowRender();
 			}); // Clear render layers
 		}
@@ -306,7 +306,7 @@ renderLayers.addEventListener('touchmove', function(event){
 			if (ui.pauseWhenCreatingObject.state){
 				setTimeFreeze(false);
 			}
-			renderer.clearLayer1();
+			renderer.clearLayer(1);
 		}
 
 		mouse.leftDown = false;
@@ -383,7 +383,7 @@ function mouseDownHandler(event){
 		mouse.rightDown = true;
 		if (swch.allowObjCreating && mouse.leftDown){
 			launchPowerLabel.style.display = 'none';
-			renderer.clearLayer1();		
+			renderer.clearLayer(1);		
 		}
 	}
 }
@@ -468,7 +468,7 @@ function mouseUpHandler(event){
 			if (ui.pauseWhenCreatingObject.state){
 				setTimeFreeze(false);
 			}
-			renderer.clearLayer1();
+			renderer.clearLayer(1);
 		}
 		if (navMenu.menuSelected == 'camera' && swch.s_track){
 			camera.setTarget(scene.objectSelect('nearest', camera.Target));
@@ -659,7 +659,7 @@ document.addEventListener('click', function(e){
 			document.querySelector('#select_file').click();
 			break;
 		case 'clear_traces': // Clear traces
-			renderer.clearLayer2();			
+			renderer.clearLayer(2);			
 			for (let i in scene.objArr){
 				scene.objArr[i].trace = [];
 			}
@@ -835,7 +835,7 @@ self.navMenu = new NavigationMenu({
 		default:
 			swch.allowObjCreating = (buttonId === 'create' && !swch.s_mainObj); // Allow object creating if menu is "Creation menu"
 		}
-		if (ui.showDistanceFromCursorToMainObj.state) renderer.clearLayer1();
+		if (ui.showDistanceFromCursorToMainObj.state) renderer.clearLayer(1);
 	}
 });
 
@@ -941,7 +941,7 @@ function readFile(file) {
 
 			scene.show_obj_count();
 			renderer.allowFrameRender = true;
-			renderer.clearLayer2();
+			renderer.clearLayer(2);
 			console.log('File loaded successfully!');
 		} catch(err){
 			console.error(err);

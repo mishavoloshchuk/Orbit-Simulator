@@ -33,8 +33,8 @@ function calculate({
 			obj2.vy -= vector[3];
 		}
 	} else
-	if (interactMode === 1 && obj1.main_obj !== undefined ){
-		const object2Id = obj1.main_obj;
+	if (interactMode === 1 && obj1.parentObj !== undefined ){
+		const object2Id = obj1.parentObj;
 		const obj2 = objectsArray[object2Id];
 
 		if (obj2 !== undefined) {

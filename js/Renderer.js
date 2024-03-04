@@ -106,7 +106,6 @@ export default class Renderer {
 	renderObjects(){
 		// console.log('Render objects');
 		const scn = this.scene;
-
 		const tracesMode = +ui.tracesMode.state;
 
 		const {
@@ -128,9 +127,9 @@ export default class Renderer {
 		// Optimized canvas clearing
 		if (tracesMode === 1){
 			this.tracesMode1Wiping();
-			if (!this.#optimalTraceParams) this.clearLayer0();
+			if (!this.#optimalTraceParams) this.clearLayer(0);
 		} else {
-			this.clearLayer0();
+			this.clearLayer(0);
 		}
 
 		this.#optimalTraceParams = (ui.traceMode1Blur.state === 0 && ui.traceMode1Opacity.state === 1 && ui.traceMode1Width.state === 1);
@@ -147,6 +146,7 @@ export default class Renderer {
 			const screenRadius = this.getScreenRad(obj.m) // Object draw radius
 			const drawRadius = screenRadius < minScreenRadius ? minScreenRadius : screenRadius; // Minimal draw radius
 			const obCol = obj.color; // Object draw color
+
 			if (obj.prevScreenR === undefined) obj.prevScreenR = drawRadius;
 			const traceDrawRadius = Math.min(drawRadius, obj.prevScreenR);
 
@@ -181,9 +181,9 @@ export default class Renderer {
 				if ((enoughObjMove || this.#optimalTraceParams) 
 					&& !(objOutOfScreen && prevPosObjOutOfScreen)
 				){
-					Painter.drawOn(c2);
 					const lineOptimizedWidth = 0.75;
 
+					Painter.drawOn(c2);
 					// Fix darken dots when objects very small
 					const minScreenDiameter = minScreenRadius * 2;
 					if (currPrevDistance < minScreenDiameter && drawRadius < lineOptimizedWidth){
@@ -329,14 +329,14 @@ export default class Renderer {
 	}
 
 	visualizeLaunchPower(){
-		this.clearLayer1();
+		this.clearLayer(1);
 		let [mcx, mcy] = mouse.ctrlModificatedMousePosition(); // CTRL mouse precision modificator
 
 		let offsX = 0;
 		let offsY = -30;
 		if (['mobile', 'tablet'].includes(UtilityMethods.getDeviceType()) ){ offsX = -25; offsY = -70; } // If device is mobile or tablet
 		Object.assign(launchPowerLabel.style, {left: (mouse.x+offsX)+'px', top: (mouse.y+offsY)+'px', display: 'block', color: ui.newObjColor.state});
-		launchPowerLabel.innerHTML = Math.round(Math.hypot(newObjParams.vx, newObjParams.vy)*10000)/1000;
+		launchPowerLabel.innerHTML = Math.round(Math.hypot(...newObjParams.vel)*10000)/1000;
 		const D = this.getScreenRad(ui.newObjMass.state)*2;
 
 		// Gradient
@@ -443,24 +443,21 @@ export default class Renderer {
 	}
 
 	tracesMode1Wiping(){
-		//console.log('clear layer 1');
+		// console.log('Wipe layer 1');
 		Painter.drawOn(this.ctx2)
 		.rect(0, 0, this.resolutionX, this.resolutionY)
 		.fill("#FFF", { 
 			globalCompositeOperation: 'destination-out',
 			globalAlpha: ui.traceMode1Length.value });
 	}
-	clearLayer0(){
-		//console.log('clear layer 1');
-		this.ctx0.clearRect(0, 0, this.resolutionX, this.resolutionY);
-	}
-	clearLayer1(){
-		// console.log('clear layer 2');
-		this.ctx1.clearRect(0, 0, this.resolutionX, this.resolutionY);
-	}
-	clearLayer2(){
-		//console.log('clear layer 3');
-		this.ctx2.clearRect(0, 0, this.resolutionX, this.resolutionY);
+
+	// Clear layer
+	clearLayer(layerId) {
+		// layerId === 2 &&
+		// console.log('Clear layer: ', layerId);
+		const layer = this['ctx' + layerId];
+		if (layer === undefined) throw new Error('There is no layer with given ID: ' + layerId);
+		layer.clearRect(0, 0, this.resolutionX, this.resolutionY);
 	}
 
 	// Get object screen radius

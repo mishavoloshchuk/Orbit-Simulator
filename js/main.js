@@ -29,14 +29,12 @@ let renderStopLatency; // Frames to render after render disabled
 
 // Parameters of new object that will be created, if user will want to create an object
 self.newObjParams = {
-	screenX: 0, // Position X
-	screenY: 0, // Position Y
-	vx: 0, // Velocity X equals vx if given and svx if not
-	vy: 0, // Velocity Y equals vy if given and svy if not
+	screenPos: [0, 0], // Position
+	vel: [0, 0], // Velocity X/Y equals v(x/y) if given and sv(x/y) if not
 	mass: null, // Object mass via given radius || Radius
 	color: null,
 	objLck: null,
-	main_obj: null		
+	parentObj: null		
 }
 
 //Debug
@@ -85,7 +83,7 @@ self.swch = {
 	tapCamMove: false
 };
 
-scene.addNewObject({x: 0, y: 0, vx: 0, vy: 0, mass: 1000, color: '#ffff00', objLck: false, callback: newObjectCreatedCallback}); // First object init
+scene.addNewObject({pos: [0, 0], vel: [0, 0], mass: 1000, color: '#ffff00', objLck: false, callback: newObjectCreatedCallback}); // First object init
 
 // Set params to the new object
 function setParameterToNewObject(){
@@ -103,19 +101,15 @@ function setParameterToNewObject(){
 				}
 			}
 			newObjParams = {
-				screenX: mouse.leftDownX, // Position X
-				screenY: mouse.leftDownY, // Position Y
-				vx: svx, // Velocity X equals vx if given and svx if not
-				vy: svy, // Velocity Y equals vy if given and svy if not	
+				screenPos: [mouse.leftDownX, mouse.leftDownY], // Position X
+				vel: [svx, svy], // Velocity X equals vx if given and svx if not
 				circularOrbit: circularOrbit,
 				callback: newObjectCreatedCallback
 			};
 		} else {
 			newObjParams = {
-				screenX: mouse.x, // Position X
-				screenY: mouse.y, // Position Y
-				vx: 0, // Velocity X equals vx if given and svx if not
-				vy: 0, // Velocity Y equals vy if given and svy if not	
+				screenPos: [mouse.x, mouse.y], // Position
+				vel: [0, 0], // Velocity
 				circularOrbit: ui.newObjCircularOrbit.state, // Circular orbit
 				callback: newObjectCreatedCallback
 			};
@@ -173,7 +167,7 @@ function frame(){
 		// Set objects radiuses
 		let maxDiameter = 0;
 		for (let obj of scene.objArr){
-			obj.r = scene.getRadiusFromMass(obj.m);
+			obj.updateRadius();
 			maxDiameter = Math.max(maxDiameter, Math.abs(obj.r) * 2);
 		}
 		// Set collision ceil size
@@ -209,7 +203,7 @@ function frame(){
 
 	// Show distance
 	if (navMenu.menuSelected == 'create' && !mouse.leftDown && ui.showDistanceFromCursorToMainObj.state && !renderer.canv1.visualSelect){
-		renderer.clearLayer1();
+		renderer.clearLayer(1);
 		renderer.visDistance([mouse.x, mouse.y], '#888888');
 	}
 	// Hide launch power label
@@ -218,7 +212,7 @@ function frame(){
 	}
 
 	if (renderer.canv1.visualSelect){
-		renderer.clearLayer1();
+		renderer.clearLayer(1);
 		delete renderer.canv1.visualSelect;
 	}
 	const nearObjId = scene.objectSelect('nearest');

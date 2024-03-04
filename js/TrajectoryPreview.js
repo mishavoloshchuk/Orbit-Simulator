@@ -25,54 +25,54 @@ export default class TrajectoryPreview {
 		const trajectoryEndSmooth = 300; // Trajectory end smooth length
 		// Iterating trajectory traces
 		for (let trace = 0; trace < tracesArray.length; trace ++){
-			if (tracesArray[trace] !== undefined){ // Don't draw if the object is locked
-				let R, color;
-				// Set styles to new object trajectory trace
-				if (trace === newObjId){
-					color  = ui.newObjColor.state;
-					R = 2.5;
-				} else {
-					color = otherObjTraceColor;
-					R = 0.75;
-				}
-				// ==== Making line dash pattern ===========================
-				const dashPattern = []; // Dashed line pattern array
-				// Trajectory trace length in pixels
-				let traceLenInPixs = tracesArray[trace].reduce((trajLength, point, pId, pArr)=>{
-					if (pId != 0) {
-						return trajLength + dist(point[0], point[1], pArr[pId-1][0], pArr[pId-1][1]);
-					}
-					return trajLength;
-				}, 0) * this.camera.animZoom;
-				 // Minimal value between trajectory end smooth length and trajectory trace length in pixels
-				const possibleTrajEndSmooth = Math.min(trajectoryEndSmooth, traceLenInPixs);
-				// Form dash pattern to smooth the end of trajectory
-				while (traceLenInPixs > 0){
-					if (traceLenInPixs > possibleTrajEndSmooth){ // Trajecroty pattern
-						if (dashPattern.length % 2 === 0){ // Line
-							traceLenInPixs -= dashLineLen;
-							dashPattern.push(dashLineLen); // Add pattern
-						} else { // Space
-							traceLenInPixs -= dashSpaceLen;
-							dashPattern.push(dashSpaceLen); // Add pattern
-						}
-					} else { // Trajectory end smoothing pattern
-						if (dashPattern.length % 2 === 0){ // Line
-							const line = traceLenInPixs / possibleTrajEndSmooth * dashLineLen;
-							traceLenInPixs -= line;
-							dashPattern.push(line); // Add pattern
-						} else { // Space
-							traceLenInPixs -= dashSpaceLen;
-							dashPattern.push(dashSpaceLen); // Add pattern
-						}
-					}
-				}
-				ctx1.setLineDash(dashPattern); // Dash line
-				Painter.drawOn(ctx1)
-				.line(...tracesArray[trace], (x, y) => this.renderer.crd2(x, y))
-				.stroke(color, R);
-				ctx1.setLineDash([]); // Solid line
+			if (tracesArray[trace] === undefined) continue; // Don't draw if the object is locked
+			
+			let R, color;
+			// Set styles to new object trajectory trace
+			if (trace === newObjId){
+				color  = ui.newObjColor.state;
+				R = 2.5;
+			} else {
+				color = otherObjTraceColor;
+				R = 0.75;
 			}
+			// ==== Making line dash pattern ===========================
+			const dashPattern = []; // Dashed line pattern array
+			// Trajectory trace length in pixels
+			let traceLenInPixs = tracesArray[trace].reduce((trajLength, point, pId, pArr)=>{
+				if (pId != 0) {
+					return trajLength + dist(point[0], point[1], pArr[pId-1][0], pArr[pId-1][1]);
+				}
+				return trajLength;
+			}, 0) * this.camera.animZoom;
+				// Minimal value between trajectory end smooth length and trajectory trace length in pixels
+			const possibleTrajEndSmooth = Math.min(trajectoryEndSmooth, traceLenInPixs);
+			// Form dash pattern to smooth the end of trajectory
+			while (traceLenInPixs > 0){
+				if (traceLenInPixs > possibleTrajEndSmooth){ // Trajecroty pattern
+					if (dashPattern.length % 2 === 0){ // Line
+						traceLenInPixs -= dashLineLen;
+						dashPattern.push(dashLineLen); // Add pattern
+					} else { // Space
+						traceLenInPixs -= dashSpaceLen;
+						dashPattern.push(dashSpaceLen); // Add pattern
+					}
+				} else { // Trajectory end smoothing pattern
+					if (dashPattern.length % 2 === 0){ // Line
+						const line = traceLenInPixs / possibleTrajEndSmooth * dashLineLen;
+						traceLenInPixs -= line;
+						dashPattern.push(line); // Add pattern
+					} else { // Space
+						traceLenInPixs -= dashSpaceLen;
+						dashPattern.push(dashSpaceLen); // Add pattern
+					}
+				}
+			}
+			ctx1.setLineDash(dashPattern); // Dash line
+			Painter.drawOn(ctx1)
+			.line(...tracesArray[trace], (x, y) => this.renderer.crd2(x, y))
+			.stroke(color, R);
+			ctx1.setLineDash([]); // Solid line
 		}
 		// Proximity display
 		for (let distance of distances){

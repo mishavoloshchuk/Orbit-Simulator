@@ -1,23 +1,41 @@
+class Body {
+	constructor ({
+		pos = [0, 0], 
+		vel = [0, 0], 
+		m = 10, 
+		color = "#FFFFFF", 
+		lock = false, 
+		parentObj = undefined
+	}) {
+		[this.x, this.y] = pos;
+		[this.vx, this.vy] = vel;
+		this.m = m;
+		this.updateRadius();
+		this.color = color;
+		this.lock = lock;
+		this.parentObj = parentObj;
+		this.trace = [];
+	}
+
+	// Get object radius from mass
+	updateRadius(){
+		this.r = Math.pow(Math.abs(this.m), 1/2);
+	}
+}
+
 export default class Scene {
 	objArr = Array(); // Scene objects array
 	objIdToOrbit = null; // The ID of the object around which the new object will orbit
 
-
-	constructor() {
-		//
-	}
 	//Создание нового объекта
 	addNewObject({
-		x,
-		y,
-		screenX,
-		screenY,
-		vx,
-		vy,
+		pos = [],
+		screenPos = [],
+		vel = [],
 		mass = ui.newObjMass.state,
 		objLck = ui.newObjLock.state,
 		color = ui.newObjColor.state,
-		main_obj = this.objIdToOrbit,
+		parentObj = this.objIdToOrbit,
 		circularOrbit = false,
 		callback
 	}){
@@ -25,30 +43,27 @@ export default class Scene {
 		const newObjId = objArr.length; // The ID of a new object
 
 		// If received a screen coordinates convert it to a world coordinates
-		if (screenX !== undefined && screenY !== undefined){
-			[x, y] = camera.screenPix2(screenX, screenY);
+		if (screenPos.length){
+			pos = camera.screenPix2(...screenPos);
 		}
 
-		const newObj = {
-			x: x, // Position X
-			y: y, // Position Y
-			vx: vx, // Velocity X 
-			vy: vy, // Velocity Y 
+		const newObj = new Body ({
+			pos: pos, // Position
+			vel: vel, // Velocity
 			m: mass, // Object mass
-			r: this.getRadiusFromMass(mass), // Object radius
 			color: color, // Object color
 			lock: objLck, // Object locked (boolean)
 			trace: [], // Array of trace points (traces mode 2-3)
-			main_obj: main_obj // Affects in interaction mode 1 (interact with only main objecgt)
-		};
+			parentObj: parentObj // Affects in interaction mode 1 (interact with only main objecgt)
+		});
 
-		let velX, velY, centerOfMass;
-		const mainObj = objArr[main_obj];
+		let newVel, centerOfMass;
+		const mainObj = objArr[parentObj];
 
 		// Creation relative to
 		if (ui.creationRelativeTo.state == 0){
 			centerOfMass = this.getCenterOfMass();
-			// Lock, if more than 50% of global mass maked by locked objects
+			// Lock, if more than 50% of global mass made by locked objects
 			centerOfMass.lock = objArr.reduce((mSum, obj) => obj.lock ? mSum + obj.m : mSum, 0) / centerOfMass.m > 0.5;
 		} else {
 			if (mainObj){
@@ -61,24 +76,24 @@ export default class Scene {
 
 		if (circularOrbit && centerOfMass.m > 0) {
 			if (newObj.m + centerOfMass.m === 0 && newObj.m !== 0){ // Spawn object with negative mass that equals to the total positive mass of all objects
-				[velX, velY] = [0, 0];
+				newVel = [0, 0];
 			} else {
 				// Force to circular orbit
 				const m = centerOfMass.lock ? 0 : mass;
-				[velX, velY] = this.forceToCircularOrbit({...newObj, m: m}, centerOfMass);
+				newVel = this.forceToCircularOrbit({...newObj, m: m}, centerOfMass);
 			}
 		} else {
-			[velX, velY] = [vx, vy];
+			newVel = vel;
 		}
 
-		[newObj.vx, newObj.vy] = [velX, velY];
+		[newObj.vx, newObj.vy] = newVel;
 
 	
 		// Circular orbit
 		if (circularOrbit){
 			// Circular orbit correction
-			newObj.x += velX / 2 * ui.timeSpeed.state;
-			newObj.y += velY / 2 * ui.timeSpeed.state;
+			newObj.x += newVel[0] / 2 * ui.timeSpeed.state;
+			newObj.y += newVel[1] / 2 * ui.timeSpeed.state;
 
 			// Circular orbit relative to the center of mass
 			if (!centerOfMass.lock && ui.interactMode.state == 0){
@@ -130,8 +145,8 @@ export default class Scene {
 		for (let objectId of objectsToDelete){
 			// Change main object in child objects before delete
 			for (let obj of objArr){
-				if (obj.main_obj == objectId){
-					obj.main_obj = objArr[objectId].main_obj;
+				if (obj.parentObj == objectId){
+					obj.parentObj = objArr[objectId].parentObj;
 				}
 			}
 			deletedObjectsList = deletedObjectsList.concat(objArr.splice(objectId, 1));
@@ -157,6 +172,10 @@ export default class Scene {
 	makeCopy(){
 		const newScn = new Scene();
 		for (let key in this){
+			if (key === "objArr") {
+				newScn.objArr = this.objArr.map((body) => Object.assign(Object.create(Object.getPrototypeOf(body)), body));
+				continue;
+			}
 			const prop = this[key];
 			if (typeof prop !== 'function'){
 				newScn[key] = UtilityMethods.deepClone(prop);
@@ -266,10 +285,6 @@ export default class Scene {
 
 		return centerOfMass;
 	}
-	// Get object radius
-	getRadius(objId){
-		return this.objArr[objId].r;
-	}
 	// Get object radius from mass
 	getRadiusFromMass(mass){
 		return Math.pow(Math.abs(mass), 1/2);
@@ -285,8 +300,7 @@ export default class Scene {
 		for (let i = 0; i < count; i++){
 		  	addFrameBeginTask(()=>{ 
 				scene.addNewObject({...newObjParams,
-					screenX: Math.random() * innerWidth,
-					screenY: Math.random() * innerHeight
+					screenPos: [Math.random() * innerWidth, Math.random() * innerHeight],
 				});
 			});
 		}
