@@ -122,16 +122,16 @@ ui.init = function (){
 				element.style.display = 'inline';
 			} else {
 				element.style.display = 'none';
-				}
+			}
 		}
 		if (elem.prevState != val){ // If state changed
 			addFrameBeginTask(()=>{
 				renderer.clearLayer(0);
 				renderer.clearLayer(2);
+				renderer.resetTracesAndPrevScrnPos(scene.objArr);
 				allowRender();
-			}); // Clear render layers
+			}); // Clear render layers and traces
 		}
-
 	} });
 	// Mode 1
 	this.traceMode1Length = new UIConnect.RangeInput({id: 'trace1Lnth', stateSaving: true, eventName: 'input', callback: (val, ths) => {ths.value = Math.pow(1 - val, 2)} });
@@ -660,9 +660,7 @@ document.addEventListener('click', function(e){
 			break;
 		case 'clear_traces': // Clear traces
 			renderer.clearLayer(2);			
-			for (let i in scene.objArr){
-				scene.objArr[i].trace = [];
-			}
+			renderer.resetTracesAndPrevScrnPos(scene.objArr);
 			break;
 		case 'max_performance_btn':
 			setMaxPerformance();
@@ -882,12 +880,7 @@ function worldSave(){
 	// Objects array saving
 	const objArrWrite = UtilityMethods.deepClone(scene.objArr);
 	// Remove unnecessary data from objects array
-	for(let i in objArrWrite){
-		objArrWrite[i].trace = [];
-		delete objArrWrite[i].prevScreenX;
-		delete objArrWrite[i].prevScreenY;
-		delete objArrWrite[i].prevScreenR;
-	}
+	renderer.resetTracesAndPrevScrnPos(objArrWrite);
 
 	// Simulation state saving
 	const uiToSave = {};

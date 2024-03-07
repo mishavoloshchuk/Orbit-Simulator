@@ -73,7 +73,8 @@ export default class Scene {
 				centerOfMass.lock = false;
 			}
 		}
-
+		
+		// Circular orbit
 		if (circularOrbit && centerOfMass.m > 0) {
 			if (newObj.m + centerOfMass.m === 0 && newObj.m !== 0){ // Spawn object with negative mass that equals to the total positive mass of all objects
 				newVel = [0, 0];
@@ -87,9 +88,7 @@ export default class Scene {
 		}
 
 		[newObj.vx, newObj.vy] = newVel;
-
 	
-		// Circular orbit
 		if (circularOrbit){
 			// Circular orbit correction
 			newObj.x += newVel[0] / 2 * ui.timeSpeed.state;
@@ -290,12 +289,6 @@ export default class Scene {
 		return Math.pow(Math.abs(mass), 1/2);
 	}
 
-	// Reset preview screen positions
-	resetPrevScreenPositions(){
-		for (let obj of this.objArr){
-			obj.prevScreenX = obj.prevScreenY = undefined;
-		}
-	}
 	addObjects = function(count = 100){
 		for (let i = 0; i < count; i++){
 		  	addFrameBeginTask(()=>{ 

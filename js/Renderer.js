@@ -35,6 +35,12 @@ export default class Renderer {
 
 		document.getElementById('renderLayers').appendChild(this.layersDiv);
 
+		this.traceModes = [
+			new Trace(this), 
+			new TraceMode1(this), 
+			new TraceMode2(this), 
+			new TraceMode3(this)];
+
 		Renderer.rendererId ++;
 	}
 
@@ -102,240 +108,58 @@ export default class Renderer {
 	}
 
 	//Draw objects
-	#optimalTraceParams = false;
 	renderObjects(){
 		// console.log('Render objects');
-		const scn = this.scene;
 		const tracesMode = +ui.tracesMode.state;
+		const MIN_SCREEN_RADIUS = 0.5;
 
-		const {
-			ctx0: c0,
-			ctx1: c1,
-			ctx2: c2
-		} = this;
-
-		// Trace mode 2 UI
-		const traceMode2Particles = ui.traceMode2Particles.state;
-		const traceMode2Trembling = ui.traceMode2Trembling.state;
-		const traceMode2Length = ui.traceMode2Length.state;
-
-		// Trace mode 3 UI
-		const traceMode3Width = ui.traceMode3Width.state;
-		const traceMode3Quality = ui.traceMode3Quality.state;
-		const traceMode3Length = ui.traceMode3Length.state;
-
-		// Optimized canvas clearing
-		if (tracesMode === 1){
-			this.tracesMode1Wiping();
-			if (!this.#optimalTraceParams) this.clearLayer(0);
-		} else {
-			this.clearLayer(0);
-		}
-
-		this.#optimalTraceParams = (ui.traceMode1Blur.state === 0 && ui.traceMode1Opacity.state === 1 && ui.traceMode1Width.state === 1);
-
-		const pixelsToEnoughMove = 0.3;
-		const minScreenRadius = 0.5;
-
-		for (let objectId = 0; objectId < scn.objArr.length; objectId++){
-			const obj = scn.objArr[objectId]; // Object to draw
-
+		this.traceModes[tracesMode].frame();
+		for (let obj of this.scene.objArr){
 			// Object screen position
-			const [screenX, screenY] = this.crd2(obj.x, obj.y);
+			const screenPos = this.crd2(obj.x, obj.y);
 
 			const screenRadius = this.getScreenRad(obj.m) // Object draw radius
-			const drawRadius = screenRadius < minScreenRadius ? minScreenRadius : screenRadius; // Minimal draw radius
+			const drawRadius = Math.max(screenRadius, MIN_SCREEN_RADIUS); // Minimal draw radius
 			const obCol = obj.color; // Object draw color
 
-			if (obj.prevScreenR === undefined) obj.prevScreenR = drawRadius;
-			const traceDrawRadius = Math.min(drawRadius, obj.prevScreenR);
+			this.traceModes[tracesMode].draw(obj);
 
-			// Distance between current and previous screen position
-			const currPrevDistance = dist(screenX, screenY, obj.prevScreenX, obj.prevScreenY);
+			const optimalTraceParams = (ui.traceMode1Blur.state === 0
+			&& ui.traceMode1Opacity.state === 1 
+			&& ui.traceMode1Width.state === 1);
 
-			let enoughObjMove = true; // If object screen speed is enough to render or anything else
-
-			if (obj.prevScreenX === undefined || obj.prevScreenY === undefined){
-				// Set prev screen position if there is no prev screen position
-				[obj.prevScreenX, obj.prevScreenY] = [screenX, screenY];
-			} else {
-				enoughObjMove = (currPrevDistance > pixelsToEnoughMove);
-			}
-
-			// If object out of screen space
-			const objOutOfScreen = this.isOutOfScreen(screenX, screenY, drawRadius);
-			const prevPosObjOutOfScreen = this.isOutOfScreen(obj.prevScreenX, obj.prevScreenY, traceDrawRadius);
-
-			let traceLength = false;
-			let traceResolution = 1;
-
-			// Traces mode 1 =====
-			if (tracesMode === 1){
-				// Fix object anti-aliasing while optimal trace mode 1 parameters
-				if (!enoughObjMove && !objOutOfScreen && this.#optimalTraceParams && drawRadius !== minScreenRadius){	
-					Painter.drawOn(c2)
-					.circle(screenX, screenY, drawRadius + 0.4)
-					.fill('#FFF', {"globalCompositeOperation": 'destination-out'});
-				}
-				// Draw trace
-				if ((enoughObjMove || this.#optimalTraceParams) 
-					&& !(objOutOfScreen && prevPosObjOutOfScreen)
-				){
-					const lineOptimizedWidth = 0.75;
-
-					Painter.drawOn(c2);
-					// Fix darken dots when objects very small
-					const minScreenDiameter = minScreenRadius * 2;
-					if (currPrevDistance < minScreenDiameter && drawRadius < lineOptimizedWidth){
-						const CPD = currPrevDistance;
-						const koeficient = CPD === 0 ? 1 : (minScreenDiameter / CPD / 2);
-						const diffX = CPD === 0 ? minScreenRadius : (obj.prevScreenX - screenX);
-						const diffY = CPD === 0 ? minScreenRadius : (obj.prevScreenY - screenY);
-						Painter.line([screenX + diffX*koeficient, screenY + diffY*koeficient], 
-							[screenX - diffX*koeficient, screenY - diffY*koeficient]);
-					} else {
-						Painter.line([obj.prevScreenX, obj.prevScreenY], [screenX, screenY]);
-					}
-
-					Painter.stroke(obCol,  
-						Math.max(traceDrawRadius * 2 * ui.traceMode1Width.state, minScreenRadius * 2),
-						{ lineCap: traceDrawRadius > lineOptimizedWidth ? 'round' : 'butt' }); // Line cap optimization
-				}
-			}
-			// Traces mode 2 =====
-			else if (tracesMode === 2){
-				if (!obj.lock){
-					let randKff = 0.8;
-					const TLength = obj.trace.length; // Length of trace array
-					let prev_randX = 0, prev_randY = 0;
-					let randX = 0, randY = 0;
-					traceLength = Math.round(Math.pow(8, traceMode2Length));
-
-					if (obj.trace[0]){
-						Painter.drawOn(c0)
-						.line([screenX + randX, screenY + randY], 
-							[this.crd(obj.trace[0][0], 'x') + prev_randX, this.crd(obj.trace[0][1], 'y') + prev_randY])
-						.stroke(obCol, drawRadius * 2, { globalCompositeOperation: 'destination-over' });		
-					}
-					for (let i = obj.trace.length; i--;){
-						let itr = i-1;
-						itr = itr < 0 ? 0 : itr;
-
-						// Set prev random point
-						prev_randX = randX; prev_randY = randY;
-
-						// Random limit
-						const rnd_lim = drawRadius*(i/TLength)*randKff;
-						if (traceMode2Trembling === true || traceMode2Particles === true){
-							randX = UtilityMethods.getRandomArbitrary(-rnd_lim, rnd_lim);
-							randY = UtilityMethods.getRandomArbitrary(-rnd_lim, rnd_lim);
-						}
-
-						// Line width
-						const lineWidth = drawRadius * (1-i/TLength) * 1.8;
-
-						// Point screen position
-						const [point1ScreenX, point1ScreenY] = this.crd2(obj.trace[i][0], obj.trace[i][1]);
-						const [point2ScreenX, point2ScreenY] = this.crd2(obj.trace[itr][0], obj.trace[itr][1]);
-
-						// Is point out of screen
-						const point1OutOfScreen = this.isOutOfScreen(point1ScreenX, point1ScreenY);
-						const point2OutOfScreen = this.isOutOfScreen(point2ScreenX, point2ScreenY);
-
-						// Particles drawing
-						if (traceMode2Particles 
-							&& i % 4 === 0 // Draw particle in every 5-th point in trace array
-							&& drawRadius > 1.5
-							&& !point2OutOfScreen
-						){
-							Painter.drawOn(c0)
-							.circle(
-								Math.floor(point2ScreenX + randX * 2), 
-								Math.floor(point2ScreenY + randY * 2),
-								lineWidth / 2)
-							.fill(obCol);
-						}
-						// Line drawing
-						if (!(point1OutOfScreen === true && point2OutOfScreen === true)){ // If both points not out of screen
-							Painter.drawOn(c0)
-							.line([point1ScreenX + randX, point1ScreenY + randY], [point2ScreenX + prev_randX, point2ScreenY + prev_randY])
-							.stroke(obCol, lineWidth, { globalAlpha: (TLength-i/1.5)/TLength });
-							if (traceMode2Trembling === false) randX = randY = 0;
-						}
-					}
-				}
-			}
-			// Traces mode 3 =====
-			else if (tracesMode === 3){
-				if (!obj.lock){
-					traceResolution = 61 - Math.round(Math.pow(traceMode3Quality, 1/8)*60);
-					traceLength = Math.ceil(UtilityMethods.expVal(traceMode3Length) / traceResolution);
-					c0.lineWidth = Math.min(drawRadius*1.7, Math.pow(traceMode3Width, 10));
-					c0.globalCompositeOperation = 'destination-over';
-					Painter.drawOn(c0);
-					if (obj.trace.length > 0){
-						// Smooth the end cut of the trace
-						if (obj.trace.length === traceLength && !pauseState){
-							let point = obj.trace[obj.trace.length-1];
-							let pPoint = obj.trace[obj.trace.length-2];
-							// The difference between the last and pre-last trace array points divided by traceResolution
-							point[2] = point[2] === undefined ? (point[0] - pPoint[0]) / traceResolution : point[2];
-							point[3] = point[3] === undefined ? (point[1] - pPoint[1]) / traceResolution : point[3];
-							point[0] = point[0] - point[2];
-							point[1] = point[1] - point[3];
-						}
-						// Draw line
-						// Round end of trace if the line width is enough
-						if (c0.lineWidth > 3) Object.assign(c0, {lineCap: 'round', lineJoin: 'round'});
-						
-						Painter.line([obj.x, obj.y], ...obj.trace, (x, y) => this.crd2(x, y)).stroke(obCol);
-						Object.assign(c0, {lineCap: 'butt', lineJoin: 'bevel'});
-					}
-					// Separate the traces of objects
-					Painter.circle(screenX, screenY, drawRadius + 1.5)
-					.fill("#ffffff", {globalCompositeOperation: 'destination-out'});
-				}
-			}
-
-			if (!objOutOfScreen) {
-				const optimize = (this.#optimalTraceParams && tracesMode == '1');
+			if (!this.isOutOfScreen(...screenPos, drawRadius)) {
+				const optimize = (optimalTraceParams && tracesMode == '1');
 				if (!optimize){
-					Painter.drawOn(c0)
-					.circle(screenX, screenY, drawRadius)
+					Painter.drawOn(this.ctx0)
+					.circle(...screenPos, drawRadius)
 					.fill(obCol);
 				}
 
 				// If negative mass, show minus sign on the object
 				if (obj.m < 0 && drawRadius > 2){
-					Painter.drawOn(optimize ? c2 : c0);
-					Painter.drawMinusSign(screenX, screenY, drawRadius * 0.6, "#000")
+					Painter.drawOn(optimize ? this.ctx2 : this.ctx0);
+					Painter.drawMinusSign(...screenPos, drawRadius * 0.6, "#000")
 				}
 			}
-
-			if (!obj.lock && !pauseState && this.renderedSceneFrames % traceResolution === 0){
-				obj.trace.unshift([obj.x, obj.y]);
-				while (obj.trace.length > traceLength){
-					obj.trace.pop();
-				}
-			}
-			// Set prev screen position if object moved enough
-			if (enoughObjMove) [obj.prevScreenX, obj.prevScreenY] = [screenX, screenY];
-			// Set prev screen radius
-			obj.prevScreenR = drawRadius;
 		}
-		if (!pauseState){
-			this.renderedSceneFrames ++;
-		}
+		!pauseState && this.renderedSceneFrames ++;
 	}
 
 	visualizeLaunchPower(){
 		this.clearLayer(1);
 		let [mcx, mcy] = mouse.ctrlModificatedMousePosition(); // CTRL mouse precision modificator
 
-		let offsX = 0;
-		let offsY = -30;
-		if (['mobile', 'tablet'].includes(UtilityMethods.getDeviceType()) ){ offsX = -25; offsY = -70; } // If device is mobile or tablet
-		Object.assign(launchPowerLabel.style, {left: (mouse.x+offsX)+'px', top: (mouse.y+offsY)+'px', display: 'block', color: ui.newObjColor.state});
+		let offsX = 0, offsY = -30;
+
+		// If device is mobile or tablet
+		if (['mobile', 'tablet'].includes(UtilityMethods.getDeviceType())) offsX = -25; offsY = -70;
+
+		Object.assign(launchPowerLabel.style, {
+			left: (mouse.x + offsX)+'px', 
+			top: (mouse.y + offsY)+'px', 
+			display: 'block', 
+			color: ui.newObjColor.state });
 		launchPowerLabel.innerHTML = Math.round(Math.hypot(...newObjParams.vel)*10000)/1000;
 		const D = this.getScreenRad(ui.newObjMass.state)*2;
 
@@ -465,6 +289,19 @@ export default class Renderer {
 		let screenRad = this.scene.getRadiusFromMass(mass) * this.camera.animZoom;
 		return screenRad < 0.25 ? 0.25 : screenRad;
 	}
+
+	// Reset preview screen positions
+	resetPrevScreenPositions(objArr){
+		for (let obj of objArr){
+			obj.prevScreenX = obj.prevScreenY = undefined;
+		}
+	}
+	resetTracesAndPrevScrnPos(objArr) {
+		for (let obj of objArr) {
+			obj.trace = [];
+			obj.prevScreenX = obj.prevScreenY = obj.prevScreenR = undefined;
+		}
+	}
 }
 
 export class Painter {
@@ -552,5 +389,250 @@ export class Painter {
 		Painter.circle(x, y, radius).stroke();
 
 		Painter.line([x - (radius * 0.66), y], [x + (radius * 0.66), y]).stroke();
+	}
+}
+
+class Trace {
+	MIN_SCREEN_RADIUS = 0.5;
+	constructor(renderer) {
+		this.renderer = renderer;
+	}
+
+	frame() {
+		this.renderer.clearLayer(0);
+	}
+
+	draw() {
+		//
+	}
+}
+
+class TraceMode1 extends Trace {
+	#optimalTraceParams = false;
+	#PIXELS_TO_ENOUGH_MOVE = 0.3;
+
+	frame() {
+		// Optimized canvas clearing
+		this.renderer.tracesMode1Wiping();
+		if (!this.#optimalTraceParams) this.renderer.clearLayer(0);
+
+		this.#optimalTraceParams = (ui.traceMode1Blur.state === 0
+			&& ui.traceMode1Opacity.state === 1 
+			&& ui.traceMode1Width.state === 1);
+	}
+
+	draw(obj) {	
+		const renderer = this.renderer;
+		const obCol = obj.color; // Object draw color
+		const screenRadius = renderer.getScreenRad(obj.m) // Object draw radius
+		const drawRadius = Math.max(screenRadius, this.MIN_SCREEN_RADIUS); // Minimal draw radius
+
+		// Object screen position
+		const [screenX, screenY] = renderer.crd2(obj.x, obj.y);
+		
+		// Distance between current and previous screen position
+		const currPrevDistance = dist(screenX, screenY, obj.prevScreenX, obj.prevScreenY);
+
+		let enoughObjMove = true; // If object screen speed is enough to render or anything else
+		// Set prev screen position if there is no prev screen position
+		if (obj.prevScreenX === undefined || obj.prevScreenY === undefined){
+			[obj.prevScreenX, obj.prevScreenY] = [screenX, screenY];
+		} else {
+			enoughObjMove = (currPrevDistance > this.#PIXELS_TO_ENOUGH_MOVE);
+		}
+
+		// If object out of screen space
+		const objOutOfScreen = renderer.isOutOfScreen(screenX, screenY, drawRadius);
+		
+		// Fix object anti-aliasing while optimal parameters active
+		if (this.#optimalTraceParams 
+			&& !enoughObjMove 
+			&& !objOutOfScreen 
+			&& drawRadius !== this.MIN_SCREEN_RADIUS
+		){	
+			Painter.drawOn(renderer.ctx2)
+			.circle(screenX, screenY, drawRadius + 0.4)
+			.fill('#FFF', { globalCompositeOperation: 'destination-out' });
+		}
+				
+		if (obj.prevScreenR === undefined) obj.prevScreenR = drawRadius;
+		const traceDrawRadius = Math.min(drawRadius, obj.prevScreenR);
+		const prevPosOutOfScreen = renderer.isOutOfScreen(obj.prevScreenX, obj.prevScreenY, traceDrawRadius);
+		
+		// Draw trace
+		if ((enoughObjMove || this.#optimalTraceParams) 
+			&& !(objOutOfScreen && prevPosOutOfScreen)
+		){
+			const LINE_OPTIMIZATION_WIDTH = 0.75;
+			Painter.drawOn(renderer.ctx2);
+
+			// Fix darken dots when objects very small
+			if (currPrevDistance < (this.MIN_SCREEN_RADIUS * 2) 
+				&& drawRadius < LINE_OPTIMIZATION_WIDTH
+			){
+				let kff = 1; 
+				let diff = [(obj.prevScreenX - screenX), (obj.prevScreenY - screenY)];
+				if (currPrevDistance === 0) {
+					kff = (this.MIN_SCREEN_RADIUS / currPrevDistance);
+					diff = [this.MIN_SCREEN_RADIUS, this.MIN_SCREEN_RADIUS];
+				}
+				Painter.line([screenX + diff[0]*kff, screenY + diff[1]*kff], 
+					[screenX - diff[0]*kff, screenY - diff[1]*kff]);
+			} else {
+				Painter.line([obj.prevScreenX, obj.prevScreenY], [screenX, screenY]);
+			}
+
+			Painter.stroke(obCol,  
+				Math.max(traceDrawRadius * ui.traceMode1Width.state, this.MIN_SCREEN_RADIUS) * 2,
+				{ lineCap: traceDrawRadius > LINE_OPTIMIZATION_WIDTH ? 'round' : 'butt' });
+			
+		}
+		// Set prev screen position if object moved enough
+		if (enoughObjMove) [obj.prevScreenX, obj.prevScreenY] = [screenX, screenY];
+		
+		// Set prev screen radius
+		obj.prevScreenR = drawRadius;
+	}
+}
+
+
+class TraceMode2 extends Trace {
+	#traceLength;
+	frame() {
+		this.renderer.clearLayer(0);
+		this.#traceLength = Math.round(Math.pow(8, ui.traceMode2Length.state));
+	}
+
+	draw(obj) {
+		if (obj.lock) return;
+		
+		const traceResolution = 1;
+		const renderer = this.renderer;
+		
+		// Update trace
+		if (!pauseState && (renderer.renderedSceneFrames % traceResolution === 0)){
+			obj.trace.unshift([obj.x, obj.y]);
+			while (obj.trace.length > this.#traceLength){
+				obj.trace.pop();
+			}
+		}
+
+		const screenRadius = renderer.getScreenRad(obj.m) // Object draw radius
+		const drawRadius = Math.max(screenRadius, this.MIN_SCREEN_RADIUS); // Minimal draw radius
+		const obCol = obj.color; // Object draw color
+		
+		let prev_randX = 0, prev_randY = 0;
+		let randX = 0, randY = 0;
+		const RAND_KFF = 0.8;
+		const TLength = obj.trace.length; // Length of trace array
+
+		// Iterate trace
+		for (let i = obj.trace.length; i--;){
+			const itr = i > 0 ? i - 1 : i;
+
+			// Set prev random point
+			[prev_randX, prev_randY] = [randX, randY];
+
+			// Random limit
+			const rndLim = drawRadius*(i/TLength)*RAND_KFF;
+			if (ui.traceMode2Trembling.state || ui.traceMode2Particles.state){
+				randX = UtilityMethods.getRandomArbitrary(-rndLim, rndLim);
+				randY = UtilityMethods.getRandomArbitrary(-rndLim, rndLim);
+			}
+
+			// Line width
+			const lineWidth = drawRadius * (1-i/TLength) * 1.8;
+
+			// Point screen position
+			const [point1ScreenX, point1ScreenY] = renderer.crd2(...obj.trace[i]);
+			const [point2ScreenX, point2ScreenY] = renderer.crd2(...obj.trace[itr]);
+
+			// Is point out of screen
+			const point1OutOfScreen = renderer.isOutOfScreen(point1ScreenX, point1ScreenY);
+			const point2OutOfScreen = renderer.isOutOfScreen(point2ScreenX, point2ScreenY);
+			
+			// Particles drawing
+			if (ui.traceMode2Particles.state 
+				&& i % 4 === 0 // Draw particle in every 4-th point in trace array
+				&& drawRadius > 1.5
+				&& !point2OutOfScreen
+			){
+				Painter.drawOn(renderer.ctx0)
+				.circle(
+					Math.floor(point2ScreenX + randX * 2), 
+					Math.floor(point2ScreenY + randY * 2),
+					lineWidth / 2)
+				.fill(obCol);
+			}
+			
+			// Line drawing
+			if (!(point1OutOfScreen && point2OutOfScreen)){ // If both points not out of screen
+				// Remove trembling if disabled
+				if (!ui.traceMode2Trembling.state) randX = randY = 0;
+				
+				Painter.drawOn(renderer.ctx0)
+				.line([point1ScreenX + randX, point1ScreenY + randY], 
+					[point2ScreenX + prev_randX, point2ScreenY + prev_randY])
+				.stroke(obCol, lineWidth, { globalAlpha: (TLength-i/1.5)/TLength });
+			}
+		}
+	}
+}
+
+class TraceMode3 extends Trace {
+	#traceResolution;
+	#traceLength;
+
+	frame() {
+		this.renderer.clearLayer(0);
+		this.#traceResolution = 61 - Math.round(Math.pow(ui.traceMode3Quality.state, 1/8) * 60);
+		this.#traceLength = Math.ceil(UtilityMethods.expVal(ui.traceMode3Length.state) / this.#traceResolution);
+	}
+
+	draw(obj) {
+		if (obj.lock) return;
+		
+		const renderer = this.renderer;
+		
+		// Update trace
+		if (!pauseState && (renderer.renderedSceneFrames % this.#traceResolution === 0)){
+			obj.trace.unshift([obj.x, obj.y]);
+			while (obj.trace.length > this.#traceLength){
+				obj.trace.pop();
+			}
+		}
+		
+		// Smooth the tail of the trace
+		if (obj.trace.length === this.#traceLength && !pauseState) this.#smoothTail(obj);
+
+		const screenRadius = renderer.getScreenRad(obj.m) // Object draw radius
+		const drawRadius = Math.max(screenRadius, this.MIN_SCREEN_RADIUS); // Minimal draw radius
+		const obCol = obj.color; // Object draw color
+
+		// Draw line
+		const traceWidth = Math.min(drawRadius*1.7, Math.pow(ui.traceMode3Width.state, 10));
+		const c0 = this.renderer.ctx0;
+
+		// Round end of trace if the line width is enough
+		if (traceWidth > 3) Object.assign(c0, {lineCap: 'round', lineJoin: 'round'});
+
+		Painter.drawOn(c0);
+		Painter.line([obj.x, obj.y], ...obj.trace, (x, y) => renderer.crd2(x, y))
+		.stroke(obCol, traceWidth, { globalCompositeOperation: 'destination-over' });
+		Object.assign(c0, {lineCap: 'butt', lineJoin: 'bevel'});
+				
+		// Separate the traces of objects
+		Painter.circle(...renderer.crd2(obj.x, obj.y), drawRadius + 1.5)
+		.fill("#ffffff", { globalCompositeOperation: 'destination-out' });
+	}
+	
+	#smoothTail(obj) {
+		let point = obj.trace[obj.trace.length-1];
+		let pPoint = obj.trace[obj.trace.length-2];
+		// The difference between the last and pre-last trace array points divided by traceResolution
+		point[2] = point[2] === undefined ? (point[0] - pPoint[0]) / this.#traceResolution : point[2];
+		point[3] = point[3] === undefined ? (point[1] - pPoint[1]) / this.#traceResolution : point[3];
+		point[0] = point[0] - point[2];
+		point[1] = point[1] - point[3];
 	}
 }
