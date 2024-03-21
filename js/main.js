@@ -124,7 +124,7 @@ window.onresize = function(){
 	camera.centerX = innerWidth / 2;
 	camera.centerY = innerHeight / 2;
 	UIConnect.MassInput.update();
-	scene.resetPrevScreenPositions(); // Reset objects prev screen positions 'cause they're not relevant
+	renderer.resetPrevScreenPositions(); // Reset objects prev screen positions 'cause they're not relevant
 }
 //===================================================================================
 
