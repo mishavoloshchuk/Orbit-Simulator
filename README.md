@@ -1,0 +1,5 @@
+![Знімок екрана (32)](https://github.com/mishavoloshchuk/Orbit-Simulator/assets/54890360/91370fde-f1f9-4b50-b426-c329e0186498)
+![ScreenShot Tool -20231005231754](https://github.com/mishavoloshchuk/Orbit-Simulator/assets/54890360/a8e8ba20-6870-4028-a763-db6a2778b0bf)
+![Знімок екрана (33)](https://github.com/mishavoloshchuk/Orbit-Simulator/assets/54890360/0839380f-c7a4-400c-94de-c04baaf60dc7)
+![Знімок екрана (39)](https://github.com/mishavoloshchuk/Orbit-Simulator/assets/54890360/6348dbe8-0e5b-419c-b1ed-06dee2814ba9)
+![Знімок екрана (71)](https://github.com/mishavoloshchuk/Orbit-Simulator/assets/54890360/d8950313-46f6-4213-8e06-d6af3be614d7)
