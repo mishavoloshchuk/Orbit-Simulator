@@ -1,4 +1,5 @@
 import * as UIConnect from './UIConnect.js';
+import { Body } from './Scene.js';
 
 // Camera touch control
 let prev_cam_x = 0;
@@ -920,7 +921,14 @@ function readFile(file) {
 		try {
 			const fileData = JSON.parse(reader.result);
 			// Sync objects array to the saved objects array
-			scene.objArr = fileData.objArr;
+			scene.objArr = [];
+			fileData.objArr.forEach(obj => {
+				scene.objArr.push(new Body({
+					...obj,
+					pos: [obj.x, obj.y],
+					vel: [obj.vx, obj.vy]
+				}));
+			})
 
 			// Sync user interface state
 			for (let uiId in fileData.ui){

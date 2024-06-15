@@ -1,4 +1,4 @@
-class Body {
+export class Body {
 	constructor ({
 		pos = [0, 0], 
 		vel = [0, 0], 
