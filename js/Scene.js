@@ -192,7 +192,7 @@ export default class Scene {
 		const massCenter = this.getCenterOfMass([objA, objB]);
 
 		// Distance between objA and center of mass
-		const D = dist(objA.x, objA.y, massCenter.x, massCenter.y);
+		const D = UtilityMethods.distance(objA.x, objA.y, massCenter.x, massCenter.y);
 
 		if (D <= 0) return [0, 0];
 
@@ -221,7 +221,7 @@ export default class Scene {
 		if (mode == 'nearest' || mode == 'furthest'){
 			for (let i in this.objArr){
 				if (i == not) continue;
-				let r = dist(mouse.x, mouse.y, ...renderer.crd2(this.objArr[i].x, this.objArr[i].y));
+				let r = UtilityMethods.distance(mouse.x, mouse.y, ...renderer.crd2(this.objArr[i].x, this.objArr[i].y));
 				if (r < sel[0] && mode == 'nearest'){
 					sel[0] = r;
 					sel[1] = +i;

@@ -1,4 +1,5 @@
-import { Painter } from './Renderer.js';
+import CollisionMode from "./Enums/CollisionMode.js";
+import Painter from "./Painter.js";
 export default class TrajectoryPreview {
 	constructor ({scene, renderer, camera, physics}){
 		this.scene = scene;
@@ -41,7 +42,7 @@ export default class TrajectoryPreview {
 			// Trajectory trace length in pixels
 			let traceLenInPixs = tracesArray[trace].reduce((trajLength, point, pId, pArr)=>{
 				if (pId != 0) {
-					return trajLength + dist(point[0], point[1], pArr[pId-1][0], pArr[pId-1][1]);
+					return trajLength + UtilityMethods.distance(point[0], point[1], pArr[pId-1][0], pArr[pId-1][1]);
 				}
 				return trajLength;
 			}, 0) * this.camera.animZoom;
@@ -168,7 +169,7 @@ export default class TrajectoryPreview {
 				const obj = objArrCopy[objectId];
 				// Check distances
 				if (objArrCopy[newObjId]){
-					const D = dist(objArrCopy[newObjId].x, objArrCopy[newObjId].y, obj.x, obj.y);
+					const D = UtilityMethods.distance(objArrCopy[newObjId].x, objArrCopy[newObjId].y, obj.x, obj.y);
 					if (objectId !== newObjId){
 						if (D < distances[objectId].D){
 							distances[objectId].D = D;
@@ -181,7 +182,7 @@ export default class TrajectoryPreview {
 				}
 			}
 			// Merge collision
-			if (ui.collisionMode.state == '0'){
+			if (ui.collisionMode.state === CollisionMode.Merge){
 				const deletedObjsData = this.physics.mergeCollision();
 				deletedObjectsList.push(...deletedObjsData.objArr);
 
@@ -189,20 +190,20 @@ export default class TrajectoryPreview {
 				newObjId = UtilityMethods.getIdAfterArrChange(deletedObjsData.idArr, newObjId);
 			}
 			// Bounce collision preprocessing
-			ui.collisionMode.state == '1' && this.physics.pullOutFromEachOther();
+			ui.collisionMode.state === CollisionMode.Rebound && this.physics.pullOutFromEachOther();
 
 			// Physics compute
 			if (gpuComputeAvailable && ui.gpuCompute.state && objArrCopy.length > 400) { // If objects more than 480, calculate on GPU
 				this.physics.gpuComputeVelocities(
 					undefined, // Call default after physics function
-					+ui.interactMode.state,
+					ui.interactMode.state,
 					ui.timeSpeed.state / accuracity,
 					ui.g.state
 				);
 			} else {
 				this.physics.physicsCalculate(
 					undefined, // Call default after physics function
-					+ui.interactMode.state,
+					ui.interactMode.state,
 					ui.timeSpeed.state / accuracity,
 					ui.g.state
 				);

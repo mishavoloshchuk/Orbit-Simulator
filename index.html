@@ -10,7 +10,6 @@
 	<link rel="stylesheet" type="text/css" href="css/main.css">
 	<script type="text/javascript" src="lib/languageManager.js"></script>
 	<script type="text/javascript" src="lib/gpu-browser.min.js"></script>
-	<script type="text/javascript" src="js/physicsCalculate.js"></script>
 	<script type="text/javascript" src="js/UtilityMethods.js"></script>
 	<script type="module" src="js/main.js"></script>
 </head>
@@ -705,6 +704,16 @@
 						</label>
 						<input type="range" list='gravitationValue' id="movement_resistance_value" min="0" max="1" value="0" step="any" width="100%">
 						<datalist id='gravitationValue'><option value="1"></datalist>
+					</div>
+
+					<!-- Rebounce elasticy -->
+					<div class='option_item option_item_range' id="collision_elasticy_input_item">
+						<label>
+							<l-text>rebounce_elasticy</l-text>
+							<label>Rebounce elasticy: </label>
+							<label id='collision_elasticy_range_title'></label>
+						</label>
+						<input type="range" list='gravitationValue' id="collision_elasticy_range" min="0" max="1" value="1" step="any" width="100%">
 					</div>
 
 					<!-- Turn back time -->

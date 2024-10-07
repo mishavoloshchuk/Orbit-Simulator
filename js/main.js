@@ -7,6 +7,7 @@ import * as UIConnect from './UIConnect.js';
 import './inputInterface.js';
 import IndicateFPS from './IndicateFPS.js';
 import TrajectoryPreview from './TrajectoryPreview.js';
+import InteractionMode from './Enums/InteractionMode.js';
 
 // Tasks to frame begin
 self.frameTasks = new Array(); // Functions array
@@ -178,7 +179,7 @@ function frame(){
 			for(let i = simulationsPerFrame; i--;){
 				// Enable GPU compute, if GPU available, GPU computing is allowed and scene objects count is bigger than 200
 				if ((gpuComputeAvailable && ui.gpuCompute.state && scene.objArr.length > 200)
-					&& ui.interactMode.state === '0'){
+					&& ui.interactMode.state === InteractionMode.All){
 					physics.gpuComputeVelocities();
 				} else {
 					physics.physicsCalculate(); // Scene physics calculations (1 step)

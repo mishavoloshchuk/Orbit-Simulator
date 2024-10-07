@@ -1,5 +1,8 @@
+import CollisionMode from "./Enums/CollisionMode.js";
+import InteractionMode from "./Enums/InteractionMode.js";
+
 // Physics calculations
-function calculate({ 
+export function calculate({ 
 	objectsArray, 
 	object1Id, 
 	interactMode, 
@@ -9,7 +12,7 @@ function calculate({
 	collisionType
 }){
 	const obj1 = objectsArray[object1Id];
-	if (interactMode === 0){
+	if (interactMode === InteractionMode.All){
 		for (let object2Id = object1Id; object2Id--;){
 			const obj2 = objectsArray[object2Id];
 
@@ -18,7 +21,7 @@ function calculate({
 			const sin = (obj2.y - obj1.y)/D; // Sin
 			const cos = (obj2.x - obj1.x)/D; // Cos
 
-			if (collisionType === 2){
+			if (collisionType === CollisionMode.None){
 				const radiusSum = obj1.r + obj2.r;
 				if (D <= radiusSum) gravitMode = 4;
 			}
@@ -33,7 +36,7 @@ function calculate({
 			obj2.vy -= vector[3];
 		}
 	} else
-	if (interactMode === 1 && obj1.parentObj !== undefined ){
+	if (interactMode === InteractionMode.Parent && obj1.parentObj !== undefined ){
 		const object2Id = obj1.parentObj;
 		const obj2 = objectsArray[object2Id];
 
@@ -63,7 +66,7 @@ function calculate({
 }
 
 //Функции притяжения
-function gravity_func(sin, cos, D, gravitMode, mass1, mass2, timeSpeed, g){
+export function gravity_func(sin, cos, D, gravitMode, mass1, mass2, timeSpeed, g){
 	let kff = 0.0, vx = 0.0, vy = 0.0;
 	//Обратно-пропорционально квадрату расстояния
 	if (gravitMode === 1){  // The gravitMode variable must be a number
@@ -101,6 +104,6 @@ function gravity_func(sin, cos, D, gravitMode, mass1, mass2, timeSpeed, g){
 	return [vx*mass1, vy*mass1, vx*mass2, vy*mass2];
 }
 
-function dist(x1, y1, x2, y2) { 
+export function dist(x1, y1, x2, y2) { 
 	return Math.sqrt((x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2));
 }

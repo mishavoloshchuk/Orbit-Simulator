@@ -158,9 +158,12 @@ ui.init = function (){
 	this.gravitationMode = new UIConnect.RadioInput({id: 'gravit_mode_radio_buttons', stateSaving: true}); // Select gravitation mode (radio)
 	this.g = new UIConnect.RangeInput({id: 'g_value', eventName: 'input', callback: (val, ths)=>{g_value_title.innerHTML = ths.value = UtilityMethods.expVal(val)}, initState: 1}); // Set gravitation (G) value
 	this.movementResistance = new UIConnect.RangeInput({id: 'movement_resistance_value', stateSaving: true, eventName: 'input', callback: (val, ths)=>{m_resistance_value_title.innerHTML = ths.value = UtilityMethods.roundTo(Math.pow(val, 3), 5); ths.value = 1 - ths.value; }, initState: 0}); // Set gravitation (G) value
-	this.movementResistance.getResistance = function (timeSpeed) { return 1 - (1 - this.value) * timeSpeed; } // Get working resistance value
+	this.movementResistance.getResistance = function (timeSpeed) { return 1 - (1 - this.value) * timeSpeed; }; // Get working resistance value
+	this.collisionElasticity = new UIConnect.RangeInput({id: 'collision_elasticy_range', stateSaving: true, eventName: 'input', callback: (val, ths)=>{ collision_elasticy_range_title.innerHTML = ths.value = UtilityMethods.roundTo(Math.pow(val, 0.25), 5); }});
 	this.interactMode = new UIConnect.RadioInput({id: 'interact_radio_buttons', stateSaving: true}); // Select interactions mode
-	this.collisionMode = new UIConnect.RadioInput({id: 'collision_radio_buttons', stateSaving: true}); // Select collision mode
+	this.collisionMode = new UIConnect.RadioInput({id: 'collision_radio_buttons', stateSaving: true, callback: (val) => {
+		collision_elasticy_input_item.classList.toggle('disabled', val !== '1');
+	}}); // Select collision mode
 
 	// Settings menu ======================================================
 	// Select background color
@@ -271,7 +274,7 @@ renderLayers.addEventListener('touchmove', function(event){
 		navMenu.menuVisibility(false);
 	}
 	[mouse.x, mouse.y] = [event.clientX, event.clientY]; // Set cursor position
-	isMinMouseMove = isMinMouseMove ? true : dist(mouse.x, mouse.y, mouse.leftDownX, mouse.leftDownY) >= minMouseMove;
+	isMinMouseMove = isMinMouseMove ? true : UtilityMethods.distance(mouse.x, mouse.y, mouse.leftDownX, mouse.leftDownY) >= minMouseMove;
 	// Averrage point of touchs
 	let av_touch_x = [];
 	let av_touch_y = [];
@@ -299,7 +302,7 @@ renderLayers.addEventListener('touchmove', function(event){
 		avTouchPoint.x = UtilityMethods.sumArray(av_touch_x)/av_touch_x.length;
 		avTouchPoint.y = UtilityMethods.sumArray(av_touch_y)/av_touch_x.length;
 		 // Distance between touchs
-		let touchZoom = dist(event.changedTouches[0].clientX, event.changedTouches[0].clientY, event.changedTouches[1].clientX, event.changedTouches[1].clientY);
+		let touchZoom = UtilityMethods.distance(event.changedTouches[0].clientX, event.changedTouches[0].clientY, event.changedTouches[1].clientX, event.changedTouches[1].clientY);
 		 // Clear launch power label display
 		launchPowerLabel.style.display = 'none';
 
@@ -319,7 +322,7 @@ renderLayers.addEventListener('touchmove', function(event){
 			zm_cff = touchZoom;
 		}
 		// Cancel camera target if touch camera move
-		if (dist(avTouchPoint.xd, avTouchPoint.yd, avTouchPoint.x, avTouchPoint.y) > Math.min(innerWidth, innerHeight)/6){
+		if (UtilityMethods.distance(avTouchPoint.xd, avTouchPoint.yd, avTouchPoint.x, avTouchPoint.y) > Math.min(innerWidth, innerHeight)/6){
 			if (camera.Target !== undefined){
 				avTouchPoint.xd = avTouchPoint.x;
 				avTouchPoint.yd = avTouchPoint.y;
@@ -509,7 +512,7 @@ document.onmousemove = function(event){
 	mouse.move = true;
 	if (mouse.leftDown) {
 		moveObjectBegin();
-		isMinMouseMove = isMinMouseMove ? true : dist(mouse.x, mouse.y, mouse.leftDownX, mouse.leftDownY) >= minMouseMove;
+		isMinMouseMove = isMinMouseMove ? true : UtilityMethods.distance(mouse.x, mouse.y, mouse.leftDownX, mouse.leftDownY) >= minMouseMove;
 	}
 	moveObject(); // Moving object if mouse down && navMenu.menuSelected == "move"
 	if (
