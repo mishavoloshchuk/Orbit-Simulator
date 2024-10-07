@@ -105,7 +105,7 @@
 
 	"constants": "Constants",
 	"movement_resistance": "Movement resistance:",
-	"rebounce_elasticy": "Rebounce elasticy:",
+	"rebounce_elasticity": "Rebounce elasticity:",
 	"force_of_gravity": "Gravity:",
 
 	"interaction_modes": "Interaction modes",

@@ -159,10 +159,10 @@ ui.init = function (){
 	this.g = new UIConnect.RangeInput({id: 'g_value', eventName: 'input', callback: (val, ths)=>{g_value_title.innerHTML = ths.value = UtilityMethods.expVal(val)}, initState: 1}); // Set gravitation (G) value
 	this.movementResistance = new UIConnect.RangeInput({id: 'movement_resistance_value', stateSaving: true, eventName: 'input', callback: (val, ths)=>{m_resistance_value_title.innerHTML = ths.value = UtilityMethods.roundTo(Math.pow(val, 3), 5); ths.value = 1 - ths.value; }, initState: 0}); // Set gravitation (G) value
 	this.movementResistance.getResistance = function (timeSpeed) { return 1 - (1 - this.value) * timeSpeed; }; // Get working resistance value
-	this.collisionElasticity = new UIConnect.RangeInput({id: 'collision_elasticy_range', stateSaving: true, eventName: 'input', callback: (val, ths)=>{ collision_elasticy_range_title.innerHTML = ths.value = UtilityMethods.roundTo(Math.pow(val, 0.25), 5); }});
+	this.collisionElasticity = new UIConnect.RangeInput({id: 'collision_elasticity_range', stateSaving: true, eventName: 'input', callback: (val, ths)=>{ collision_elasticity_range_title.innerHTML = ths.value = UtilityMethods.roundTo(Math.pow(val, 0.25), 5); }});
 	this.interactMode = new UIConnect.RadioInput({id: 'interact_radio_buttons', stateSaving: true}); // Select interactions mode
 	this.collisionMode = new UIConnect.RadioInput({id: 'collision_radio_buttons', stateSaving: true, callback: (val) => {
-		collision_elasticy_input_item.classList.toggle('disabled', val !== '1');
+		collision_elasticity_input_item.classList.toggle('disabled', val !== '1');
 	}}); // Select collision mode
 
 	// Settings menu ======================================================

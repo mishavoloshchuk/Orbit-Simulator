@@ -11,7 +11,7 @@ export default class Physics {
 	// Init GPU.js
 	initGPUjs(){
 		this.gpu = new GPUJS();
-		
+
 		// Add functions to the GPU kernel
 		this.gpu.addFunction(dist);
 		this.gpu.addFunction(gravity_func);
@@ -344,15 +344,15 @@ export default class Physics {
 				objB.vy = (( v2*Math.cos(ag2 - fi)*(m2-m1) + 2*m1*v1*Math.cos(ag1 - fi) ) / (m1+m2) ) * Math.sin(fi) + v2*Math.sin(ag2 - fi)*Math.sin(fi+Math.PI/2);// Формула абсолютно-упругого столкновения
 			}
 
-			// Elasticy
-			const elasticy = ui.collisionElasticity.value;
+			// Elasticity
+			const elasticity = ui.collisionElasticity.value;
 			const centerOfMass = this.scene.getCenterOfMass([objA, objB]);
 
-			objA.vx = (objA.vx - centerOfMass.vx) * elasticy + centerOfMass.vx;
-			objA.vy = (objA.vy - centerOfMass.vy) * elasticy + centerOfMass.vy;
+			objA.vx = (objA.vx - centerOfMass.vx) * elasticity + centerOfMass.vx;
+			objA.vy = (objA.vy - centerOfMass.vy) * elasticity + centerOfMass.vy;
 
-			objB.vx = (objB.vx - centerOfMass.vx) * elasticy + centerOfMass.vx;
-			objB.vy = (objB.vy - centerOfMass.vy) * elasticy + centerOfMass.vy;
+			objB.vx = (objB.vx - centerOfMass.vx) * elasticity + centerOfMass.vx;
+			objB.vy = (objB.vy - centerOfMass.vy) * elasticity + centerOfMass.vy;
 
 			objA.collided = objB.collided = true;
 		}
