@@ -185,12 +185,14 @@ export default class Physics {
 			// Collision
 			const radiusSum = obj1.r + obj2.r;
 
-			if (Math.abs(obj1.x - obj2.x) <= radiusSum && Math.abs(obj1.y - obj2.y) <= radiusSum){
-				const D = UtilityMethods.distance(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
-				if (D - radiusSum <= 0){
-					collidedPairs.push([obj1Id, obj2Id]);
-				}
-			}
+			// Approximate collision check
+			if (Math.abs(obj1.x - obj2.x) > radiusSum && Math.abs(obj1.y - obj2.y) > radiusSum) return;
+
+			// Precise collision check
+			const D = UtilityMethods.distance(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
+			if (D - radiusSum > 0) return;
+			
+			collidedPairs.push([obj1Id, obj2Id]);
 		}
 		return collidedPairs;
 	}
@@ -353,21 +355,45 @@ export default class Physics {
 
 			objB.vx = (objB.vx - centerOfMass.vx) * elasticity + centerOfMass.vx;
 			objB.vy = (objB.vy - centerOfMass.vy) * elasticity + centerOfMass.vy;
-
-			objA.collided = objB.collided = true;
 		}
-		// Add new velocity
-		for (let objId = objArr.length; objId--;){
-			let objA = objArr[objId];
-			if (objA.collided){
-				if (objA.lock){ // If object locked
-					objA.vx = 0;
-					objA.vy = 0;
-				} else {// If object not locked
-					objA.x += objA.vx*ui.timeSpeed.state;
-					objA.y += objA.vy*ui.timeSpeed.state;
+		// Add new velocities
+		for (let collidedPair of collidedPairs) {
+			const [obj1Id, obj2Id] = collidedPair;
+			let [objA, objB] = [ objArr[obj1Id], objArr[obj2Id] ];
+
+			const centerOfMass = this.scene.getCenterOfMass([objA, objB]);
+			const timeSpeed = ui.timeSpeed.state;
+
+			if (objA.lock){
+				objA.vx = 0;
+				objA.vy = 0;
+			} else {
+				if (objB.lock) {
+					objA.x += objB.vx * timeSpeed;
+					objA.y += objB.vy * timeSpeed;
+				} else {
+					objA.x -= centerOfMass.vx * timeSpeed;
+					objA.y -= centerOfMass.vy * timeSpeed;
+					
+					objA.x += objA.vx * timeSpeed;
+					objA.y += objA.vy * timeSpeed;
 				}
-				delete objA.collided;			
+			}
+
+			if (objB.lock){
+				objB.vx = 0;
+				objB.vy = 0;
+			} else {
+				if (objA.lock) {
+					objB.x += objB.vx * timeSpeed;
+					objB.y += objB.vy * timeSpeed;
+				} else {
+					objB.x -= centerOfMass.vx * timeSpeed;
+					objB.y -= centerOfMass.vy * timeSpeed;
+	
+					objB.x += objB.vx * timeSpeed;
+					objB.y += objB.vy * timeSpeed;
+				}
 			}
 		}
 	}

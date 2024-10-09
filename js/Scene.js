@@ -124,8 +124,9 @@ export default class Scene {
 				}
 			}
 		}
-
-		physics.pullOutFromEachOther(objArr);
+		
+		physics.pullOutFromEachOther();
+		
 		// Run callback after an object have been created
 		callback && callback(newObjId);
 		// If object created return its ID, else return false
