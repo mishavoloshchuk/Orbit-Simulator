@@ -310,10 +310,10 @@ export default class Physics {
 
 			let v1 = UtilityMethods.gipot(objA.vx, objA.vy); // Scallar velocity
 			let v2 = UtilityMethods.gipot(objB.vx, objB.vy); // Scallar velocity
-			let vcos1 = v1 == 0?0:objA.vx/v1; // cos vx 1
-			let vsin1 = v1 == 0?0:objA.vy/v1; // sin vy 1
-			let vcos2 = v2 == 0?0:objB.vx/v2; // cos vx 2
-			let vsin2 = v2 == 0?0:objB.vy/v2; // sin vy 2
+			let vcos1 = v1 == 0?0:objA.vx/v1;
+			let vsin1 = v1 == 0?0:objA.vy/v1;
+			let vcos2 = v2 == 0?0:objB.vx/v2;
+			let vsin2 = v2 == 0?0:objB.vy/v2;
 			let ag1 = Math.atan2(vsin1, vcos1);
 			let ag2 = Math.atan2(vsin2, vcos2);
 
@@ -346,7 +346,7 @@ export default class Physics {
 		}
 		// Add new velocities
 		const timeSpeed = ui.timeSpeed.state;
-		const addVelocity = (obj, objBLock, centerOfMass) => {
+		const applyBounceVelocity = (obj, objBLock, centerOfMass) => {
 			if (obj.lock) return;
 
 			if (objBLock) {
@@ -360,15 +360,13 @@ export default class Physics {
 				obj.y += obj.vy * timeSpeed;
 			}
 		}
-		
 		for (let collidedPair of collidedPairs) {
 			const [obj1Id, obj2Id] = collidedPair;
 			let [objA, objB] = [ objArr[obj1Id], objArr[obj2Id] ];
 
 			const centerOfMass = this.scene.getCenterOfMass([objA, objB]);
-
-			addVelocity(objA, objB.lock, centerOfMass);
-			addVelocity(objB, objA.lock, centerOfMass);
+			applyBounceVelocity(objA, objB.lock, centerOfMass);
+			applyBounceVelocity(objB, objA.lock, centerOfMass);
 		}
 	}
 	// Add objects vectors to objects
