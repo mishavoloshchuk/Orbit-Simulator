@@ -21,6 +21,27 @@ export class Body {
 	updateRadius(){
 		this.r = Math.pow(Math.abs(this.m), 1/2);
 	}
+
+	distance(obj) {
+		return UtilityMethods.distance(this.x, this.y, obj.x, obj.y);
+	}
+
+	intersects(obj){
+		const radiusSum = this.r + obj.r;
+
+		// Approximate collision check (optimization)
+		if (Math.abs(this.x - obj.x) > radiusSum && Math.abs(this.y - obj.y) > radiusSum) {
+			return null;
+		}
+
+		// Precise collision check
+		const D = this.distance(obj); // The distance between objects
+		if (D - radiusSum > 0) {
+			return null;
+		}
+		
+		return D;
+	}
 }
 
 export default class Scene {

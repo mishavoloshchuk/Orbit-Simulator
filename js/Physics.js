@@ -1,6 +1,6 @@
 import CollisionMode from "./Enums/CollisionMode.js";
 import InteractionMode from "./Enums/InteractionMode.js";
-import { calculate, gravity_func, dist } from "./physicsCalculate.js";
+import { calculate, gravity_func } from "./physicsCalculate.js";
 
 export default class Physics {
 	collisionCeilSize = innerWidth; // Ceil collision algorithm ceil size
@@ -13,6 +13,10 @@ export default class Physics {
 		this.gpu = new GPUJS();
 
 		// Add functions to the GPU kernel
+		function dist(x1, y1, x2, y2) { 
+			return Math.sqrt((x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2));
+		}
+		
 		this.gpu.addFunction(dist);
 		this.gpu.addFunction(gravity_func);
 		
@@ -168,31 +172,22 @@ export default class Physics {
 				// Iterate neighborhood ceils
 				for (let j = enumObjs.length; j--;){
 					const obj2Id = enumObjs[j];
-					checkCollision(obj1Id, obj2Id);
+					const obj2 = objArr[obj2Id];
+					
+					if (obj1.intersects(obj2) !== null) {
+						collidedPairs.push([obj1Id, obj2Id]);
+					}
 				}
 				// Iterate current ceil
 				for (let j = i; j--;){
 					const obj2Id = iterObjs[j];
-					checkCollision(obj1Id, obj2Id);
+					const obj2 = objArr[obj2Id];
+					
+					if (obj1.intersects(obj2) !== null) {
+						collidedPairs.push([obj1Id, obj2Id]);
+					}
 				}
 			}
-		}
-		// Check collision function
-		function checkCollision(obj1Id, obj2Id){
-			const obj1 = objArr[obj1Id];
-			const obj2 = objArr[obj2Id];
-
-			// Collision
-			const radiusSum = obj1.r + obj2.r;
-
-			// Approximate collision check
-			if (Math.abs(obj1.x - obj2.x) > radiusSum && Math.abs(obj1.y - obj2.y) > radiusSum) return;
-
-			// Precise collision check
-			const D = UtilityMethods.distance(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
-			if (D - radiusSum > 0) return;
-			
-			collidedPairs.push([obj1Id, obj2Id]);
 		}
 		return collidedPairs;
 	}
@@ -214,19 +209,9 @@ export default class Physics {
 
 				if (obj2.lock === true && obj1.lock === true) continue;
 
-				// Collision
-				const radiusSum = obj1.r + obj2.r;
+				const D = obj1.intersects(obj2);
 
-				// Aproximate check collision
-				if (Math.abs(obj1.x - obj2.x) > radiusSum && Math.abs(obj1.y - obj2.y) > radiusSum) {
-					continue;
-				}
-
-				// Precise check collision
-				const D = UtilityMethods.distance(obj1.x, obj1.y, obj2.x, obj2.y); // The distance between objects
-				if (D - radiusSum > 0){
-					continue;
-				}
+				if (D === null) continue;
 				
 				let sin, cos;
 				if (D > 0){ // Angle between objects
@@ -238,6 +223,7 @@ export default class Physics {
 					sin = Math.sin(randAngleRadians);
 				}
 				// Colliding
+				const radiusSum = obj1.r + obj2.r;
 				const mS = obj1.m + obj2.m; // Both objects mass sum
 				const rD = radiusSum - D; // Total move
 				const objAMov = obj1.lock ? 0 : obj2.lock ? rD : rD * (obj2.m / mS); // Object A move
@@ -310,7 +296,8 @@ export default class Physics {
 			const [obj1Id, obj2Id] = collidedPair;
 			let [objA, objB] = [ objArr[obj1Id], objArr[obj2Id] ];
 
-			let D = UtilityMethods.distance(objA.x, objA.y, objB.x, objB.y); // The distance between objects
+			let D = objA.distance(objB);
+			
 			let sin, cos;
 			if (D > 0){ // Angle between objects
 				cos = (objB.x - objA.x)/D;
@@ -331,6 +318,7 @@ export default class Physics {
 			let ag2 = Math.atan2(vsin2, vcos2);
 
 			let fi = Math.atan2(sin, cos);
+			
 			// Object A new velocity
 			if (!objA.lock){
 				const m1 = objB.lock ? 0 : objA.m;
@@ -357,44 +345,30 @@ export default class Physics {
 			objB.vy = (objB.vy - centerOfMass.vy) * elasticity + centerOfMass.vy;
 		}
 		// Add new velocities
+		const timeSpeed = ui.timeSpeed.state;
+		const addVelocity = (obj, objBLock, centerOfMass) => {
+			if (obj.lock) return;
+
+			if (objBLock) {
+				obj.x += obj.vx * timeSpeed;
+				obj.y += obj.vy * timeSpeed;
+			} else {
+				obj.x -= centerOfMass.vx * timeSpeed;
+				obj.y -= centerOfMass.vy * timeSpeed;
+				
+				obj.x += obj.vx * timeSpeed;
+				obj.y += obj.vy * timeSpeed;
+			}
+		}
+		
 		for (let collidedPair of collidedPairs) {
 			const [obj1Id, obj2Id] = collidedPair;
 			let [objA, objB] = [ objArr[obj1Id], objArr[obj2Id] ];
 
 			const centerOfMass = this.scene.getCenterOfMass([objA, objB]);
-			const timeSpeed = ui.timeSpeed.state;
 
-			if (objA.lock){
-				objA.vx = 0;
-				objA.vy = 0;
-			} else {
-				if (objB.lock) {
-					objA.x += objB.vx * timeSpeed;
-					objA.y += objB.vy * timeSpeed;
-				} else {
-					objA.x -= centerOfMass.vx * timeSpeed;
-					objA.y -= centerOfMass.vy * timeSpeed;
-					
-					objA.x += objA.vx * timeSpeed;
-					objA.y += objA.vy * timeSpeed;
-				}
-			}
-
-			if (objB.lock){
-				objB.vx = 0;
-				objB.vy = 0;
-			} else {
-				if (objA.lock) {
-					objB.x += objB.vx * timeSpeed;
-					objB.y += objB.vy * timeSpeed;
-				} else {
-					objB.x -= centerOfMass.vx * timeSpeed;
-					objB.y -= centerOfMass.vy * timeSpeed;
-	
-					objB.x += objB.vx * timeSpeed;
-					objB.y += objB.vy * timeSpeed;
-				}
-			}
+			addVelocity(objA, objB.lock, centerOfMass);
+			addVelocity(objB, objA.lock, centerOfMass);
 		}
 	}
 	// Add objects vectors to objects
@@ -403,35 +377,32 @@ export default class Physics {
 		// Add the vectors
 		for (let objId = objArr.length; objId--;){
 			let object = objArr[objId];
-			// let can = this.activCam.ctx2;
-			// can.beginPath();
-			// can.fillStyle = object.color;
-			// can.arc(...this.activCam.crd2(object.x, object.y), 2, 0, 7);
-			// can.fill();	
-			if (mov_obj !== objId){
-				// Add vectors
-				if (object.lock){ // If object locked
-					object.vx = 0;
-					object.vy = 0;
-				} else {// If object not locked
-					object.x += object.vx * timeSpeed;
-					object.y += object.vy * timeSpeed;
-					object.vx *= ui.movementResistance.getResistance(timeSpeed);
-					object.vy *= ui.movementResistance.getResistance(timeSpeed);
 
-					if (ui.interactMode.state === InteractionMode.Parent){
-						let mainObj = objArr[object.parentObj];
-						while(mainObj != undefined){
-							object.x += mainObj.vx * timeSpeed;
-							object.y += mainObj.vy * timeSpeed;
-							mainObj = objArr[mainObj.parentObj];
-						}
-					}
-					// Allow frame render if object moves
-					if (object.vx || object.vy) renderer.allowFrameRender = true;
-				}
-			} else {
+			// Object moving
+			if (mov_obj === objId){
 				object.vx = object.vy = 0;
+				continue;	
+			}
+
+			// Add vectors
+			if (object.lock){
+				object.vx = object.vy = 0;
+			} else {
+				object.x += object.vx * timeSpeed;
+				object.y += object.vy * timeSpeed;
+				object.vx *= ui.movementResistance.getResistance(timeSpeed);
+				object.vy *= ui.movementResistance.getResistance(timeSpeed);
+
+				if (ui.interactMode.state === InteractionMode.Parent){
+					let mainObj = objArr[object.parentObj];
+					while(mainObj != undefined){
+						object.x += mainObj.vx * timeSpeed;
+						object.y += mainObj.vy * timeSpeed;
+						mainObj = objArr[mainObj.parentObj];
+					}
+				}
+				// Allow frame render if object moves
+				if (object.vx || object.vy) renderer.allowFrameRender = true;
 			}
 		}
 	}

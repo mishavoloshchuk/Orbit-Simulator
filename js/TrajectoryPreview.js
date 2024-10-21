@@ -169,11 +169,17 @@ export default class TrajectoryPreview {
 				const obj = objArrCopy[objectId];
 				// Check distances
 				if (objArrCopy[newObjId]){
-					const D = UtilityMethods.distance(objArrCopy[newObjId].x, objArrCopy[newObjId].y, obj.x, obj.y);
+					const D = objArrCopy[newObjId].distance(obj);
 					if (objectId !== newObjId){
 						if (D < distances[objectId].D){
 							distances[objectId].D = D;
-							distances[objectId].obj = {x: objArrCopy[newObjId].x, y: objArrCopy[newObjId].y, x2: obj.x, y2: obj.y, obj2Id: objectId};
+							distances[objectId].obj = {
+								x: objArrCopy[newObjId].x, 
+								y: objArrCopy[newObjId].y, 
+								x2: obj.x, 
+								y2: obj.y, 
+								obj2Id: objectId
+							};
 						}
 						if (D < minDistance){
 							minDistance = D;
