@@ -130,17 +130,22 @@ export default class Physics {
 		// console.log(Math.hypot(obj.x - pos[0], obj.y - pos[1]), Math.hypot(obj.vx, obj.vy));
 	}
 
-	makeObjPosMatrix(objArr = this.scene.objArr){
-		const positionMatrix = {};
+	makeObjPosMap(objArr = this.scene.objArr){
+		const positionMatrix = new Map();
 		const seilSize = this.collisionCeilSize;
 		for (let objId = objArr.length; objId --;){
 			let obj = objArr[objId];
 			const posX = Math.floor(obj.x / seilSize);
 			const posY = Math.floor(obj.y / seilSize);
-			const strPos = posX.toString() + '|' + posY.toString();
 
-			if (positionMatrix[strPos] === undefined) positionMatrix[strPos] = [];
-			positionMatrix[strPos].push(objId);
+			const mapX = positionMatrix.get(posX) || new Map();
+			
+			const arr = mapX.get(posY) || [];
+			arr.push(objId);
+
+			mapX.set(posY, arr);
+
+			positionMatrix.set(posX, mapX);
 		}
 		return positionMatrix;
 	}
@@ -148,43 +153,43 @@ export default class Physics {
 	collisionCeilAlgorithm(){
 		const objArr = this.scene.objArr;
 		const collidedPairs = [];
-		let posMatrix = this.makeObjPosMatrix();
-		for (let cellPos in posMatrix){
-			let [x, y] = cellPos.split("|");
-			x = +x; y = +y; // To number
-			const iterObjs = posMatrix[cellPos]; // Objects inside current ceil
-			const enumObjs = []; // Objects inside neighborhood ceils
+		let posMap = this.makeObjPosMap();
 
-			const cl1 = (x + 1) + "|" + y; // Right ceil
-			const cl2 = x + "|" + (y + 1); // Bottom ceil
-			const cl3 = (x + 1) + "|" + (y + 1); // Right bottom ceil
-			const cl4 = (x - 1) + "|" + (y + 1); // Left bottom ceil
+		for (let [x, mapX] of posMap){
+			for (let [y, iterObjs] of mapX) {
+				const enumObjs = []; // Objects inside neighborhood ceils
 
-			if (posMatrix[cl1]) enumObjs.push(...posMatrix[cl1]); // ░░░░░░
-			if (posMatrix[cl2]) enumObjs.push(...posMatrix[cl2]); // ░░██▓▓
-			if (posMatrix[cl3]) enumObjs.push(...posMatrix[cl3]); // ▓▓▓▓▓▓ 
-			if (posMatrix[cl4]) enumObjs.push(...posMatrix[cl4]);
+				const cl1 = posMap.get(x + 1)?.get(y); // Right ceil
+				const cl2 = posMap.get(x)?.get(y + 1); // Bottom ceil
+				const cl3 = posMap.get(x + 1)?.get(y + 1); // Right bottom ceil
+				const cl4 = posMap.get(x - 1)?.get(y + 1); // Left bottom ceil
 
-			// Iterate ceil for collision
-			for (let i = iterObjs.length; i--;){
-				const obj1Id = iterObjs[i];
-				const obj1 = objArr[obj1Id];
-				// Iterate neighborhood ceils
-				for (let j = enumObjs.length; j--;){
-					const obj2Id = enumObjs[j];
-					const obj2 = objArr[obj2Id];
-					
-					if (obj1.intersects(obj2) !== null) {
-						collidedPairs.push([obj1Id, obj2Id]);
+				if (cl1) enumObjs.push(...cl1); // ░░░░░░
+				if (cl2) enumObjs.push(...cl2); // ░░██▓▓
+				if (cl3) enumObjs.push(...cl3); // ▓▓▓▓▓▓ 
+				if (cl4) enumObjs.push(...cl4);
+
+				// Iterate ceil for collision
+				for (let i = iterObjs.length; i--;){
+					const obj1Id = iterObjs[i];
+					const obj1 = objArr[obj1Id];
+					// Iterate neighborhood ceils
+					for (let j = enumObjs.length; j--;){
+						const obj2Id = enumObjs[j];
+						const obj2 = objArr[obj2Id];
+						
+						if (obj1.intersects(obj2) !== null) {
+							collidedPairs.push([obj1Id, obj2Id]);
+						}
 					}
-				}
-				// Iterate current ceil
-				for (let j = i; j--;){
-					const obj2Id = iterObjs[j];
-					const obj2 = objArr[obj2Id];
-					
-					if (obj1.intersects(obj2) !== null) {
-						collidedPairs.push([obj1Id, obj2Id]);
+					// Iterate current ceil
+					for (let j = i; j--;){
+						const obj2Id = iterObjs[j];
+						const obj2 = objArr[obj2Id];
+						
+						if (obj1.intersects(obj2) !== null) {
+							collidedPairs.push([obj1Id, obj2Id]);
+						}
 					}
 				}
 			}
