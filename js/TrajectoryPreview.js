@@ -9,11 +9,21 @@ export default class TrajectoryPreview {
 	}
 
 	process ({trajLen = 256, accuracity = 1}){
+		// Save physics params
+		const savedTimeSpeed = this.physics.timeSpeed;
+		
+		
 		this.sceneClone = this.physics.scene = this.scene.makeCopy();
-		this.physics.scene = this.sceneClone; // Set physics scene to clone of given scene
+		this.physics.scene = this.sceneClone;
+		this.physics.timeSpeed = savedTimeSpeed / accuracity;
+
 		const calcInfo = this.calculate({trajLen: trajLen, accuracity: accuracity});
+
 		this.render(calcInfo);
-		this.physics.scene = this.scene; // Restore physiscs scene
+		
+		// Restore physics params
+		this.physics.scene = this.scene;
+		this.physics.timeSpeed = savedTimeSpeed;
 	}
 
 	render({tracesArray, deletedObjectsList, distances, minDistance}){
@@ -187,32 +197,24 @@ export default class TrajectoryPreview {
 					}
 				}
 			}
+						
+			// Before calculation logics
+			const beforeComputeData = this.physics.beforePhysics();
+
 			// Merge collision
 			if (ui.collisionMode.state === CollisionMode.Merge){
-				const deletedObjsData = this.physics.mergeCollision();
-				deletedObjectsList.push(...deletedObjsData.objArr);
+				const {deletedObjectsData} = beforeComputeData;
+				deletedObjectsList.push(...deletedObjectsData.objArr);
 
 				// Change newObjId after delete some objects after collision
-				newObjId = UtilityMethods.getIdAfterArrChange(deletedObjsData.idArr, newObjId);
+				newObjId = UtilityMethods.getIdAfterArrChange(deletedObjectsData.idArr, newObjId);
 			}
-			// Bounce collision preprocessing
-			ui.collisionMode.state === CollisionMode.Rebound && this.physics.pullOutFromEachOther();
 
 			// Physics compute
-			if (gpuComputeAvailable && ui.gpuCompute.state && objArrCopy.length > 400) { // If objects more than 480, calculate on GPU
-				this.physics.gpuComputeVelocities(
-					undefined, // Call default after physics function
-					ui.interactMode.state,
-					ui.timeSpeed.state / accuracity,
-					ui.g.state
-				);
+			if (gpuComputeAvailable && ui.gpuCompute.state && objArrCopy.length > 400) { // If objects more than 400, calculate on GPU
+				this.physics.gpuComputeVelocities();
 			} else {
-				this.physics.physicsCalculate(
-					undefined, // Call default after physics function
-					ui.interactMode.state,
-					ui.timeSpeed.state / accuracity,
-					ui.g.state
-				);
+				this.physics.physicsCalculate();
 			}
 
 			// Add points to trajectory trace array
@@ -224,12 +226,11 @@ export default class TrajectoryPreview {
 			}
 		}
 		// Params to return
-		const params = {
+		return {
 			tracesArray: trajectoryTraces,
 			deletedObjectsList: deletedObjectsList,
 			distances: distances,
 			minDistance: minDistance
 		};
-		return params;
 	}
 }

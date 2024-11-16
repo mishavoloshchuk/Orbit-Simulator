@@ -1,13 +1,21 @@
 import CollisionMode from "./Enums/CollisionMode.js";
 import InteractionMode from "./Enums/InteractionMode.js";
-import { calculate, gravity_func } from "./physicsCalculate.js";
 
 export default class Physics {
+	// Simulation params
+	interactMode = InteractionMode.All;
+	timeSpeed = 1;
+	g = 1;
+	gravitMode = 0;
+	collisionType = CollisionMode.Merge;
+	
 	collisionCeilSize = innerWidth; // Ceil collision algorithm ceil size
+	
 	constructor(scene) {
 		// Set scene
 		this.scene = scene;
 	}
+	
 	// Init GPU.js
 	initGPUjs(){
 		this.gpu = new GPUJS();
@@ -18,7 +26,7 @@ export default class Physics {
 		}
 		
 		this.gpu.addFunction(dist);
-		this.gpu.addFunction(gravity_func);
+		this.gpu.addFunction(this.processGravity);
 		
 		// Compute function
 		this.computeVelocities = this.gpu.createKernel(function(arr, len, timeSpeed, g, gravitMode) {
@@ -41,7 +49,7 @@ export default class Physics {
 
 					const gMod = D <= obj1Radius + obj2Radius ? 4 : gravitMode;
 
-					const velocity = gravity_func(sin, cos, D, gMod, obj2Mass, obj1Mass, timeSpeed, g);
+					const velocity = processGravity(sin, cos, D, gMod, obj2Mass, obj1Mass, timeSpeed, g);
 					// Add calculated vectors to object 1
 					if (obj1Lock === 0){
 						obj1Vel[0] += velocity[0];
@@ -54,82 +62,155 @@ export default class Physics {
 		}, {dynamicOutput: true, dynamicArguments: true, constants: {objLen: 5}})
 			.setLoopMaxIterations(1000000);
 	}
-	gpuComputeVelocities = function(
-		callback = this.afterPhysics,
-		interactMode = ui.interactMode.state, 
-		timeSpeed = ui.timeSpeed.state, 
-		g = ui.g.value, 
-		gravitMode = +ui.gravitationMode.state, 
-		collisionType = ui.collisionMode.state
-	){
+
+	gpuComputeVelocities() {
 		// Init GPU if not
 		this.gpu || this.initGPUjs();
 
 		const objArr = this.scene.objArr; // Objects array
 		if (objArr.length > 1){
-			ui.collisionMode.state === CollisionMode.Merge && this.mergeCollision();
-			ui.collisionMode.state === CollisionMode.Rebound && this.pullOutFromEachOther();
+			this.beforePhysics();
 
 			const prepairedArr = objArr.map(obj => [obj.x, obj.y, obj.m, obj.r, obj.lock]);
 			this.computeVelocities.setOutput([objArr.length]);
-			const newVelosities = this.computeVelocities(prepairedArr, objArr.length, timeSpeed, g, gravitMode);
+			const newVelosities = this.computeVelocities(
+				prepairedArr, 
+				objArr.length, 
+				this.timeSpeed, 
+				this.g, 
+				this.gravitMode
+			);
+			
 			// After physics
-			let collidedObjectsIDs = [];
 			for (let obj1Id = objArr.length; obj1Id--;){
 				const obj1 = objArr[obj1Id];
 				obj1.vx += newVelosities[obj1Id][0];
 				obj1.vy += newVelosities[obj1Id][1];
 			}
+			this.afterPhysics(this.timeSpeed);
 		}
-		callback && callback(interactMode, collisionType, timeSpeed);
 	}
-	physicsCalculate = function (
-		callback = this.afterPhysics,
-		interactMode = ui.interactMode.state, 
-		timeSpeed = ui.timeSpeed.state, 
-		g = ui.g.value, 
-		gravitMode = +ui.gravitationMode.state, 
-		collisionType = ui.collisionMode.state
-	){
+	
+	physicsCalculate() {
 		const objArr = this.scene.objArr;
 		// console.log('Calculate begin:');
-
-		// Console log global velocity (only if all objects in scene have the same mass)
-		// console.log(objArr.reduce((vel2, obj) => [vel2[0] + obj.vx, vel2[1] + obj.vy], [0, 0]));
-
-		// Merge collision
-		ui.collisionMode.state === CollisionMode.Merge && this.mergeCollision();
-		// Bounce collision preprocessing
-		ui.collisionMode.state === CollisionMode.Rebound && this.pullOutFromEachOther();
+		
+		this.beforePhysics();
 
 		// Physics calculating
-		for (let object1Id = objArr.length; object1Id--;){
-			calculate({
-				objectsArray: objArr,
-				object1Id: object1Id,
-				interactMode: interactMode,
-				gravitMode: gravitMode,
-				g: g,
-				timeSpeed: timeSpeed,
-				collisionType: collisionType
-			});
+		for (let objectId = objArr.length; objectId--;){
+			this.calculate(objectId);
 		}
-		callback && callback(interactMode, collisionType, timeSpeed);
+		this.afterPhysics(this.timeSpeed);
 	}
 
+	// Runs before computing physics
+	beforePhysics = () => {
+		const data = {};
+		const collidedPairs = this.collisionCeilAlgorithm();
+		
+		// Bounce collision
+		if (ui.collisionMode.state === CollisionMode.Rebound) this.bounceCollision(collidedPairs);
+
+		// Merge collision
+		if (ui.collisionMode.state === CollisionMode.Merge) data.deletedObjectsData = this.mergeCollision(collidedPairs);
+
+		// Bounce collision preprocessing
+		if (ui.collisionMode.state === CollisionMode.Rebound) this.pullOutFromEachOther(collidedPairs);
+
+		return data;
+	}
+	
 	// Runs after finish computing physics
-	afterPhysics = (interactMode, collisionType, timeSpeed) => {
-		// After physics
-		// const obj = this.scene.objArr[this.scene.objArr.length-1]
-		// const pos = [obj.x, obj.y];
+	afterPhysics = (timeSpeed) => {
 		// Add velocities
 		this.addVelocity(timeSpeed);
-
-		// Bounce collision
-		ui.collisionMode.state === CollisionMode.Rebound && this.bounceCollision();
-		// console.log(Math.hypot(obj.x - pos[0], obj.y - pos[1]), Math.hypot(obj.vx, obj.vy));
 	}
 
+	// Physics calculations
+	calculate(objectId) {
+		const objArr = this.scene.objArr;
+		
+		const interact = (obj1, obj2) => {
+			if (obj2.lock === true && obj1.lock === true) return;
+		
+			const D = obj1.distance(obj2);
+			const sin = (obj2.y - obj1.y)/D;
+			const cos = (obj2.x - obj1.x)/D;
+		
+			let gravitMode = this.gravitMode;
+			if (this.collisionType === CollisionMode.None){
+				const radiusSum = obj1.r + obj2.r;
+				if (D <= radiusSum) gravitMode = 4;
+			}
+			const vector = this.processGravity(sin, cos, D, gravitMode, obj2.m, obj1.m, this.timeSpeed, this.g);
+			
+			// Add calculated vectors to object 1
+			obj1.vx += vector[0];
+			obj1.vy += vector[1];
+			
+			// Add calculated vectors to object 2
+			obj2.vx -= vector[2];
+			obj2.vy -= vector[3];
+		}
+		
+		const obj1 = objArr[objectId];
+		if (this.interactMode === InteractionMode.All){
+			for (let object2Id = objectId; object2Id--;){
+				const obj2 = objArr[object2Id];
+
+				interact(obj1, obj2);
+			}
+		} else
+		if (this.interactMode === InteractionMode.Parent){
+			const obj2 = objArr[obj1.parentObj];
+
+			if (obj2 !== undefined) {
+				interact(obj1, obj2);
+			}
+		}
+	}
+
+	// Функции притяжения
+	// The reason why the function is named assigned as a property is because GPU.js requires this
+	processGravity = function processGravity(sin, cos, D, gravitMode, mass1, mass2, timeSpeed, g) {
+		let vx = 0.0, vy = 0.0;
+		//Обратно-пропорционально квадрату расстояния
+		if (gravitMode === 1){  // The gravitMode variable must be a number
+			const kff = g * timeSpeed * 5;
+			const pow2Distance = D*D;
+			vx = kff*(cos/pow2Distance);
+			vy = kff*(sin/pow2Distance);
+		} else
+		//Обранто-пропорционально кубу расстояния
+		if (gravitMode === 0){
+			const kff = g * timeSpeed * 500;
+			const pow3Distance = D*D*D;
+			vx = kff*(cos/pow3Distance);
+			vy = kff*(sin/pow3Distance);
+		} else
+		//Обранто-пропорционально расстоянию
+		if (gravitMode === 2){
+			const kff = g * timeSpeed * 0.05;
+			vx = kff*(cos/D);
+			vy = kff*(sin/D);
+		} else
+		//Постоянное притяжение
+		if (gravitMode === 3){
+			const kff = g * timeSpeed * 0.00005;
+			vx = kff*(cos);
+			vy = kff*(sin);
+		} else
+		//Пропорционально расстоянию
+		if (gravitMode === 4){
+			const kff = g * timeSpeed * 0.0000005;
+			vx = kff*(cos*D);
+			vy = kff*(sin*D);
+		}
+
+		return [vx*mass1, vy*mass1, vx*mass2, vy*mass2];
+	}
+	
 	makeObjPosMap(objArr = this.scene.objArr){
 		const positionMatrix = new Map();
 		const seilSize = this.collisionCeilSize;
@@ -144,7 +225,6 @@ export default class Physics {
 			arr.push(objId);
 
 			mapX.set(posY, arr);
-
 			positionMatrix.set(posX, mapX);
 		}
 		return positionMatrix;
@@ -197,16 +277,16 @@ export default class Physics {
 		return collidedPairs;
 	}
 
-	pullOutFromEachOther(){
+	pullOutFromEachOther(collidedPairs = this.collisionCeilAlgorithm()){
 		if ( !(ui.collisionMode.state == CollisionMode.Rebound && ui.interactMode.state == InteractionMode.All) ) {
 			return;
 		}
 		
 		const objArr = this.scene.objArr;
-
 		const iterations = 1;
-		for (let i = iterations; i--;){
-			const collidedPairs = this.collisionCeilAlgorithm();
+		for (let i = 0; i < iterations; i++){
+			if (i > 0) collidedPairs = this.collisionCeilAlgorithm();
+			
 			for (let collidedPair of collidedPairs){
 				const [object1Id, object2Id] = collidedPair;
 				const obj1 = objArr[object1Id];
@@ -239,11 +319,10 @@ export default class Physics {
 		}
 	}
 
-	mergeCollision(){
+	mergeCollision(collidedPairs){
 		const objArr = this.scene.objArr;
 		let deleteObjectList = [];
-
-		const collidedPairs = this.collisionCeilAlgorithm();
+		
 		for (let collidedPair of collidedPairs){
 			let [obj1Id, obj2Id] = collidedPair;
 			let [objA, objB] = [ objArr[obj1Id], objArr[obj2Id] ];
@@ -294,9 +373,8 @@ export default class Physics {
 		}		
 	}
 
-	bounceCollision(){
+	bounceCollision(collidedPairs){
 		const objArr = this.scene.objArr;
-		const collidedPairs = this.collisionCeilAlgorithm();
 		for (let collidedPair of collidedPairs) {
 			const [obj1Id, obj2Id] = collidedPair;
 			let [objA, objB] = [ objArr[obj1Id], objArr[obj2Id] ];

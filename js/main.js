@@ -54,6 +54,13 @@ self.camera = new Camera();
 
 // Physics init
 self.physics = new Physics(scene);
+function syncPhysicsParams() {
+	physics.interactMode = ui.interactMode.state;
+	physics.timeSpeed = ui.timeSpeed.state;
+	physics.g = ui.g.value;
+	physics.gravitMode = +ui.gravitationMode.state;
+	physics.collisionType = ui.collisionMode.state;
+}
 
 // Init render
 self.renderer = new Renderer({camera: camera, scene: scene});
@@ -156,8 +163,10 @@ function frame(){
 		scene.objIdToOrbit = scene.objectSelect('biggest');		
 	}
 
+	// Sync params
 	setParameterToNewObject();
-	syncEditObjUi(); // Sync edit object ui
+	syncEditObjUi();
+	syncPhysicsParams();
 
 	// Set move cursor style
 	if (mouse.middleDown || navMenu.menuSelected == 'move' || (mouse.leftDown && swch.tapCamMove)){renderer.layersDiv.style.cursor = "move";}else{renderer.layersDiv.style.cursor = "default";};
