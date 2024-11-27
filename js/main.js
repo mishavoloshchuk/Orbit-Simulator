@@ -95,33 +95,33 @@ scene.addNewObject({pos: [0, 0], vel: [0, 0], mass: 1000, color: '#ffff00', objL
 
 // Set params to the new object
 function setParameterToNewObject(){
-	if (swch.allowObjCreating){
-		if (mouse.leftDown){
-			let circularOrbit = false;
-			let [svx, svy] = [0, 0];
-			if ( !isMinMouseMove && ui.newObjCircularOrbit.state) {
-				circularOrbit = true;
-			} else {
-				const [mcx, mcy] = mouse.ctrlModificatedMousePosition();
-				if (!ui.newObjLock.state){
-					svx = ((mouse.leftDownX-mcx)/30) * UtilityMethods.expVal(ui.launchForce.state);
-					svy = ((mouse.leftDownY-mcy)/30) * UtilityMethods.expVal(ui.launchForce.state);	
-				}
-			}
-			newObjParams = {
-				screenPos: [mouse.leftDownX, mouse.leftDownY], // Position X
-				vel: [svx, svy], // Velocity X equals vx if given and svx if not
-				circularOrbit: circularOrbit,
-				callback: newObjectCreatedCallback
-			};
+	if (!swch.allowObjCreating) return;
+	
+	if (mouse.leftDown){
+		let circularOrbit = false;
+		let [svx, svy] = [0, 0];
+		if ( !isMinMouseMove && ui.newObjCircularOrbit.state) {
+			circularOrbit = true;
 		} else {
-			newObjParams = {
-				screenPos: [mouse.x, mouse.y], // Position
-				vel: [0, 0], // Velocity
-				circularOrbit: ui.newObjCircularOrbit.state, // Circular orbit
-				callback: newObjectCreatedCallback
-			};
+			const [mcx, mcy] = mouse.ctrlModificatedMousePosition();
+			if (!ui.newObjLock.state){
+				svx = ((mouse.leftDownX-mcx)/30) * UtilityMethods.expVal(ui.launchForce.state);
+				svy = ((mouse.leftDownY-mcy)/30) * UtilityMethods.expVal(ui.launchForce.state);	
+			}
 		}
+		newObjParams = {
+			screenPos: [mouse.leftDownX, mouse.leftDownY], // Position X
+			vel: [svx, svy], // Velocity X equals vx if given and svx if not
+			circularOrbit: circularOrbit,
+			callback: newObjectCreatedCallback
+		};
+	} else {
+		newObjParams = {
+			screenPos: [mouse.x, mouse.y], // Position
+			vel: [0, 0], // Velocity
+			circularOrbit: ui.newObjCircularOrbit.state, // Circular orbit
+			callback: newObjectCreatedCallback
+		};
 	}
 }
 

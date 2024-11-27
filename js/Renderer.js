@@ -130,19 +130,19 @@ export default class Renderer {
 			&& ui.traceMode1Opacity.state === 1 
 			&& ui.traceMode1Width.state === 1);
 
-			if (!this.isOutOfScreen(...screenPos, drawRadius)) {
-				const optimize = (optimalTraceParams && tracesMode == '1');
-				if (!optimize){
-					Painter.drawOn(this.ctx0)
-					.circle(...screenPos, drawRadius)
-					.fill(obCol);
-				}
+			if (this.isOutOfScreen(...screenPos, drawRadius)) continue;
+			
+			const optimize = (optimalTraceParams && tracesMode == '1');
+			if (!optimize){
+				Painter.drawOn(this.ctx0)
+				.circle(...screenPos, drawRadius)
+				.fill(obCol);
+			}
 
-				// If negative mass, show minus sign on the object
-				if (obj.m < 0 && drawRadius > 2){
-					Painter.drawOn(optimize ? this.ctx2 : this.ctx0);
-					Painter.drawMinusSign(...screenPos, drawRadius * 0.6, "#000")
-				}
+			// If negative mass, show minus sign on the object
+			if (obj.m < 0 && drawRadius > 2){
+				Painter.drawOn(optimize ? this.ctx2 : this.ctx0);
+				Painter.drawMinusSign(...screenPos, drawRadius * 0.6, "#000")
 			}
 		}
 		!pauseState && this.renderedSceneFrames ++;

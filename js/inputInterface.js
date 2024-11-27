@@ -92,17 +92,21 @@ ui.init = function (){
 		negativeMassCheckboxParams: {
 			id: 'edit_obj_negative_mass',
 			callback: (state) => {
-				if (this.editMass){
-					allowRender();
-					addFrameBeginTask(()=>{
-						if (scene.objArr[swch.editObjId]) scene.objArr[swch.editObjId].m = this.editMass.state;
-					});
-				}
+				if (!this.editMass) return;
+
+				allowRender();
+				addFrameBeginTask(()=>{
+					if (scene.objArr[swch.editObjId]) scene.objArr[swch.editObjId].m = this.editMass.state;
+				});
 			}
 		},
 		onChange: ()=>{
 			addFrameBeginTask(() => {
-				if (scene.objArr[swch.editObjId]){ scene.objArr[swch.editObjId].m = ui.editMass.state; allowRender();}
+				const editObj = scene.objArr[swch.editObjId];
+				if (!editObj) return;
+
+				editObj.m = ui.editMass.state; 
+				allowRender();
 			});
 		}
 	});
@@ -118,12 +122,8 @@ ui.init = function (){
 	// Trace settings =====================================================
 	this.tracesMode = new UIConnect.RadioInput({id: 'traj_radio_buttons', stateSaving: true, initState: 1, callback: (val, elem) => {
 		for (let element of traj_menu.getElementsByClassName('additionalOption')){
-			// Show additional options by radio value
-			if ( element.id.includes(val.toString()) && !element.hasAttribute('disabled')) { 
-				element.style.display = 'inline';
-			} else {
-				element.style.display = 'none';
-			}
+			const showAddidionalMenu = element.id.includes(val.toString()) && !element.hasAttribute('disabled');
+			element.style.display = showAddidionalMenu ? 'inline' : 'none';
 		}
 		if (elem.prevState != val){ // If state changed
 			addFrameBeginTask(()=>{
@@ -131,7 +131,7 @@ ui.init = function (){
 				renderer.clearLayer(2);
 				renderer.resetTracesAndPrevScrnPos(scene.objArr);
 				allowRender();
-			}); // Clear render layers and traces
+			});
 		}
 	} });
 	// Mode 1
@@ -201,14 +201,14 @@ ui.init = function (){
 		let changedVal = val / inpVar.prevState;
 		inpVar.changed = inpVar.changed !== undefined ? inpVar.changed * changedVal : changedVal;
 		addFrameBeginTask(()=>{ // Frame begin taks
+			if (this.timeSpeed.changed === undefined) return;
+			
 			// Change time speed correction
-			if (this.timeSpeed.changed !== undefined){
-				for (let object of scene.objArr){
-					object.x += (object.vx * this.timeSpeed.state - object.vx * (this.timeSpeed.state / this.timeSpeed.changed))/2;
-					object.y += (object.vy * this.timeSpeed.state - object.vy * (this.timeSpeed.state / this.timeSpeed.changed))/2;
-				}
-				delete this.timeSpeed.changed;
+			for (let object of scene.objArr){
+				object.x += (object.vx * this.timeSpeed.state - object.vx * (this.timeSpeed.state / this.timeSpeed.changed))/2;
+				object.y += (object.vy * this.timeSpeed.state - object.vy * (this.timeSpeed.state / this.timeSpeed.changed))/2;
 			}
+			delete this.timeSpeed.changed;
 		});
 		
 	}, eventName: 'input'}); // Time speed control
