@@ -1,5 +1,6 @@
 import * as UIConnect from './UIConnect.js';
 import { Body } from './Scene.js';
+import TraceMode from './Enums/TraceMode.js';
 
 // Camera touch control
 let prev_cam_x = 0;
@@ -49,10 +50,6 @@ const setTimeFreeze = (state) => {
 	}
 }
 
-self.allowRender = function(){
-	renderer.allowFrameRender = true;
-}
-
 const renderLayers = document.getElementById('renderLayers');
 
 self.ui = new Object();
@@ -94,7 +91,7 @@ ui.init = function (){
 			callback: (state) => {
 				if (!this.editMass) return;
 
-				allowRender();
+				renderer.allowRender();
 				addFrameBeginTask(()=>{
 					if (scene.objArr[swch.editObjId]) scene.objArr[swch.editObjId].m = this.editMass.state;
 				});
@@ -106,17 +103,17 @@ ui.init = function (){
 				if (!editObj) return;
 
 				editObj.m = ui.editMass.state; 
-				allowRender();
+				renderer.allowRender();
 			});
 		}
 	});
 	this.editMass.dontSaveToFile = true; // Don't save this parameter when saving file
 	this.editColor = new UIConnect.ColorInput({id: 'col_edit', eventName: 'input', callback: (state) => addFrameBeginTask(() => {
-		if (scene.objArr[swch.editObjId]){ scene.objArr[swch.editObjId].color = state; allowRender();}
+		if (scene.objArr[swch.editObjId]){ scene.objArr[swch.editObjId].color = state; renderer.allowRender();}
 	}), });
 	this.editColor.dontSaveToFile = true; // Don't save this parameter when saving file
 	this.editLock = new UIConnect.CheckboxInput({id: 'lck_edit_chbox', callback: (state) => addFrameBeginTask(() => {
-		if (scene.objArr[swch.editObjId]){ scene.objArr[swch.editObjId].lock = state; allowRender();}
+		if (scene.objArr[swch.editObjId]){ scene.objArr[swch.editObjId].lock = state; renderer.allowRender();}
 	}), });
 	this.editLock.dontSaveToFile = true; // Don't save this parameter when saving file
 	// Trace settings =====================================================
@@ -125,31 +122,25 @@ ui.init = function (){
 			const showAddidionalMenu = element.id.includes(val.toString()) && !element.hasAttribute('disabled');
 			element.style.display = showAddidionalMenu ? 'inline' : 'none';
 		}
-		if (elem.prevState != val){ // If state changed
-			addFrameBeginTask(()=>{
-				renderer.clearLayer(0);
-				renderer.clearLayer(2);
-				renderer.resetTracesAndPrevScrnPos(scene.objArr);
-				allowRender();
-			});
-		}
+
+		renderer.setTraceMode(val);
 	} });
 	// Mode 1
 	this.traceMode1Length = new UIConnect.RangeInput({id: 'trace1Lnth', stateSaving: true, eventName: 'input', callback: (val, ths) => {ths.value = Math.pow(1 - val, 2)} });
 	this.traceMode1Opacity = new UIConnect.RangeInput({id: 'trace_opacity', stateSaving: true, eventName: 'input', callback: (val)=>{
 		renderer.canv2.style.opacity = val;
-		allowRender();
+		renderer.allowRender();
 	} });
-	this.traceMode1Width = new UIConnect.RangeInput({id: 'trace1WdInp', stateSaving: true, initState: 1, eventName: 'input', callback: allowRender});
-	this.traceMode1Blur = new UIConnect.RangeInput({id: 'trace_blur', stateSaving: true, eventName: 'input', callback: (val)=>{renderer.canv2.style.filter = `blur(${val*val}px)`; allowRender();} });
+	this.traceMode1Width = new UIConnect.RangeInput({id: 'trace1WdInp', stateSaving: true, initState: 1, eventName: 'input', callback: renderer.allowRender});
+	this.traceMode1Blur = new UIConnect.RangeInput({id: 'trace_blur', stateSaving: true, eventName: 'input', callback: (val)=>{renderer.canv2.style.filter = `blur(${val*val}px)`; renderer.allowRender();} });
 	// Mode 2
-	this.traceMode2Particles = new UIConnect.CheckboxInput({id: 'trc2PrtclsChck', stateSaving: true, initState: true, callback: allowRender});
-	this.traceMode2Trembling = new UIConnect.CheckboxInput({id: 'trc2TrembChck', stateSaving: true, initState: true, callback: allowRender});
-	this.traceMode2Length = new UIConnect.RangeInput({id: 'trace2Lnth', stateSaving: true, eventName: 'input', callback: allowRender});
+	this.traceMode2Particles = new UIConnect.CheckboxInput({id: 'trc2PrtclsChck', stateSaving: true, initState: true, callback: renderer.allowRender});
+	this.traceMode2Trembling = new UIConnect.CheckboxInput({id: 'trc2TrembChck', stateSaving: true, initState: true, callback: renderer.allowRender});
+	this.traceMode2Length = new UIConnect.RangeInput({id: 'trace2Lnth', stateSaving: true, eventName: 'input', callback: renderer.allowRender});
 	// Mode 3 
-	this.traceMode3Width = new UIConnect.RangeInput({id: 'trace3WdInp', stateSaving: true, eventName: 'input', callback: allowRender});
-	this.traceMode3Quality = new UIConnect.RangeInput({id: 'trace3Qu', stateSaving: true, eventName: 'input', callback: allowRender});
-	this.traceMode3Length = new UIConnect.RangeInput({id: 'trace3Lnth', stateSaving: true, eventName: 'input', callback: allowRender});
+	this.traceMode3Width = new UIConnect.RangeInput({id: 'trace3WdInp', stateSaving: true, eventName: 'input', callback: renderer.allowRender});
+	this.traceMode3Quality = new UIConnect.RangeInput({id: 'trace3Qu', stateSaving: true, eventName: 'input', callback: renderer.allowRender});
+	this.traceMode3Length = new UIConnect.RangeInput({id: 'trace3Lnth', stateSaving: true, eventName: 'input', callback: renderer.allowRender});
 
 	// Camera menu ========================================================
 	this.zoomToScreenCenter = new UIConnect.CheckboxInput({id: 'chck_zoomToScreenCenter', stateSaving: true, initState: false}); // Zoom to cursor as default. If enabled zoom, zooming to screen center
@@ -678,9 +669,8 @@ function setCamPos(event) {
 }
 
 function setMaxPerformance(){
-	// In Chrome-based browsers the fastest traces mode is 1
-	const isChromium = navigator.userAgent.match(/Chrome\/\d+/) !== null;
-	ui.tracesMode.state = isChromium ? 1 : 0; // Set fastest traces mode
+	// Set fastest traces mode
+	ui.tracesMode.state = TraceMode.None;
 
 	// Trace mode 1 optimal parameters
 	ui.traceMode1Opacity.state = 1;

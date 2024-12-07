@@ -1,3 +1,4 @@
+import TraceMode from "./Enums/TraceMode.js";
 import Painter from "./Painter.js";
 
 export default class Renderer {
@@ -5,6 +6,8 @@ export default class Renderer {
 
 	#resolutionX = window.innerWidth;
 	#resolutionY = window.innerHeight;
+
+	#tracesMode = TraceMode.Drawing;
 
 	set resolutionX (resolutionX){
 		this.#resolutionX = this.canv0.width = this.canv1.width = this.canv2.width = resolutionX;
@@ -112,10 +115,11 @@ export default class Renderer {
 	//Draw objects
 	renderObjects(){
 		// console.log('Render objects');
-		const tracesMode = +ui.tracesMode.state;
-		const MIN_SCREEN_RADIUS = 0.5;
+		const tracesMode = this.#tracesMode;
+		const MIN_SCREEN_RADIUS = 1;
 
 		this.traceModes[tracesMode].frame();
+
 		for (let obj of this.scene.objArr){
 			// Object screen position
 			const screenPos = this.crd2(obj.x, obj.y);
@@ -132,7 +136,7 @@ export default class Renderer {
 
 			if (this.isOutOfScreen(...screenPos, drawRadius)) continue;
 			
-			const optimize = (optimalTraceParams && tracesMode == '1');
+			const optimize = (optimalTraceParams && tracesMode === TraceMode.Drawing);
 			if (!optimize){
 				Painter.drawOn(this.ctx0)
 				.circle(...screenPos, drawRadius)
@@ -304,10 +308,23 @@ export default class Renderer {
 			obj.prevScreenX = obj.prevScreenY = obj.prevScreenR = undefined;
 		}
 	}
+
+	setTraceMode(traceMode = TraceMode.None) {
+		const newTraceMode = Number(traceMode);
+		if (newTraceMode === this.#tracesMode) return;
+
+		this.traceModes[this.#tracesMode].disconnect();
+		this.#tracesMode = newTraceMode;
+		this.traceModes[this.#tracesMode].connect();
+	}
+
+	allowRender = () => {
+		this.allowFrameRender = true;
+	}
 }
 
 class Trace {
-	MIN_SCREEN_RADIUS = 0.5;
+	MIN_SCREEN_RADIUS = 1;
 	constructor(renderer) {
 		this.renderer = renderer;
 	}
@@ -318,6 +335,18 @@ class Trace {
 
 	draw() {
 		//
+	}
+
+	connect() {
+		//
+	}
+
+	disconnect() {
+		//
+		this.renderer.clearLayer(0);
+		this.renderer.clearLayer(2);
+		this.renderer.resetTracesAndPrevScrnPos(scene.objArr);
+		this.renderer.allowRender();
 	}
 }
 
