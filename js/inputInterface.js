@@ -109,7 +109,11 @@ ui.init = function (){
 	});
 	this.editMass.dontSaveToFile = true; // Don't save this parameter when saving file
 	this.editColor = new UIConnect.ColorInput({id: 'col_edit', eventName: 'input', callback: (state) => addFrameBeginTask(() => {
-		if (scene.objArr[swch.editObjId]){ scene.objArr[swch.editObjId].color = state; renderer.allowRender();}
+		if (scene.objArr[swch.editObjId]){ 
+			scene.objArr[swch.editObjId].color = state; 
+			recorder.syncFrameColors();
+			renderer.allowRender();
+		}
 	}), });
 	this.editColor.dontSaveToFile = true; // Don't save this parameter when saving file
 	this.editLock = new UIConnect.CheckboxInput({id: 'lck_edit_chbox', callback: (state) => addFrameBeginTask(() => {

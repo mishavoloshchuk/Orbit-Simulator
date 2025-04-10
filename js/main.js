@@ -56,7 +56,7 @@ self.recorder = new Recorder(scene);
 const recordBtn = getById('record');
 recordBtn.addEventListener('click', () => {
 	if (recorder.state === 'recording') {
-		recorder.pause();
+		finishRecording();
 		recordBtn.innerText = 'Record';
 	} else {
 		recorder.record();
@@ -68,7 +68,7 @@ const playPauseBtn = getById('play_pause');
 playPauseBtn.addEventListener('click', (e) => {
 	switch(recorder.state) {
 		case 'recording':
-			recorder.pause();
+			finishRecording();
 			break;
 		case 'stopped':
 			recorder.play();
@@ -78,6 +78,13 @@ playPauseBtn.addEventListener('click', (e) => {
 			break;
 	}	
 })
+
+const finishRecording = () => {
+	recorder.pause();
+	recorder.setPlaybackPosition(1);
+	recorder.playFrame();
+	updatePlaybackBar();
+}
 
 const playbackBar = getById('playback_bar');
 playbackBar.addEventListener('input', (e) => {

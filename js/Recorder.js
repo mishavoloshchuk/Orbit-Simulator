@@ -100,4 +100,16 @@ export default class Recorder {
         this.frames = [];
         renderer.allowRender();
     }
+
+    syncFrameColors(frameIndex = this.currentFrame) {
+        if (!this.frames.length) return;
+        
+        this.frames[frameIndex].forEach((obj, objIndex) => {
+            this.frames.forEach((objArr, i) => {
+                if (i === frameIndex) return;
+        
+                objArr[objIndex].color = obj.color;
+            })
+        })
+    }
 }
