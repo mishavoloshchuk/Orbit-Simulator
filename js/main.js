@@ -10,6 +10,8 @@ import TrajectoryPreview from './TrajectoryPreview.js';
 import InteractionMode from './Enums/InteractionMode.js';
 import Recorder from './Recorder.js';
 
+self.getById = (id) => document.getElementById(id);
+
 // Tasks to frame begin
 self.frameTasks = new Array(); // Functions array
 self.addFrameBeginTask = function (func, ...args){
@@ -51,6 +53,52 @@ self.scene = new Scene();
 scene.frame = frame;
 
 self.recorder = new Recorder(scene);
+const recordBtn = getById('record');
+recordBtn.addEventListener('click', () => {
+	if (recorder.state === 'recording') {
+		recorder.pause();
+		recordBtn.innerText = 'Record';
+	} else {
+		recorder.record();
+		recordBtn.innerText = 'Stop';
+	}
+})
+
+const playPauseBtn = getById('play_pause');
+playPauseBtn.addEventListener('click', (e) => {
+	switch(recorder.state) {
+		case 'recording':
+			recorder.pause();
+			break;
+		case 'stopped':
+			recorder.play();
+			break;
+		case 'playing':
+			recorder.pause();
+			break;
+	}	
+})
+
+const playbackBar = getById('playback_bar');
+playbackBar.addEventListener('input', (e) => {
+	const value = e.target.value;
+	const frames = recorder.frames.length;
+	if (frames < 1) return;
+	
+	const frame = Math.floor((frames - 1) * value);
+	recorder.playFrame(frame);
+});
+const updatePlaybackBar = () => {
+	const frames = recorder.frames.length;
+	const value = recorder.currentFrame / frames;
+	playbackBar.value = value;
+};
+
+const clearRecord = getById('recording_reset');
+clearRecord.addEventListener('click', () => {
+	recorder.cancel();
+	recorder.reset();
+})
 
 // Init camera
 self.camera = new Camera();
@@ -177,8 +225,9 @@ function frame(){
 	swch.tapCamMove = navMenu.menuSelected !== 'create' && !renderer.canv1.visualSelect;
 
 	recorder.frame();
+	if (recorder.state === 'playing') updatePlaybackBar();
 	
-	if (scene.objArr.length){
+	if (scene.objArr.length && recorder.state !== 'playing'){
 		// Set objects radiuses
 		let maxDiameter = 0;
 		for (let obj of scene.objArr){

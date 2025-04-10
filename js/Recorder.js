@@ -1,6 +1,6 @@
 export default class Recorder {
     frames = [];
-    originalArray = [];
+    originalArray;
     currentFrame = 0;
     state = 'stopped';
     playbackSpeed = 1;
@@ -86,7 +86,9 @@ export default class Recorder {
 
     cancel() {
         this.state = 'stopped';
-        this.scene.objArr = this.originalArray;
+        if (this.originalArray) {
+            this.scene.objArr = this.originalArray;
+        }
         renderer.allowRender();
     }
 
