@@ -106,9 +106,10 @@ export default class Recorder {
         
         this.frames[frameIndex].forEach((obj, objIndex) => {
             this.frames.forEach((objArr, i) => {
-                if (i === frameIndex) return;
+                const targetObj = objArr[objIndex];
+                if (i === frameIndex || !targetObj) return;
         
-                objArr[objIndex].color = obj.color;
+                targetObj.color = obj.color;
             })
         })
     }
