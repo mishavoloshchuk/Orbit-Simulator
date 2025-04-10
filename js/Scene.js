@@ -194,7 +194,7 @@ export default class Scene {
 		const newScn = new Scene();
 		for (let key in this){
 			if (key === "objArr") {
-				newScn.objArr = this.objArr.map((body) => Object.assign(Object.create(Object.getPrototypeOf(body)), body));
+				newScn.objArr = this.makeObjArrCopy();
 				continue;
 			}
 			const prop = this[key];
@@ -205,6 +205,11 @@ export default class Scene {
 		}
 		return newScn;
 	}
+
+	makeObjArrCopy() {
+		return this.objArr.map((body) => Object.assign(Object.create(Object.getPrototypeOf(body)), body));
+	}
+	
 	// Force to circular orbit
 	forceToCircularOrbit(objA, objB){
 		if (objB === undefined) return [0, 0];

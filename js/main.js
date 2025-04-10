@@ -8,6 +8,7 @@ import './inputInterface.js';
 import IndicateFPS from './IndicateFPS.js';
 import TrajectoryPreview from './TrajectoryPreview.js';
 import InteractionMode from './Enums/InteractionMode.js';
+import Recorder from './Recorder.js';
 
 // Tasks to frame begin
 self.frameTasks = new Array(); // Functions array
@@ -48,6 +49,8 @@ self.fpsIndicator = new IndicateFPS(document.getElementById('infoBottomLeft'));
 // Scene init
 self.scene = new Scene();
 scene.frame = frame;
+
+self.recorder = new Recorder(scene);
 
 // Init camera
 self.camera = new Camera();
@@ -173,6 +176,8 @@ function frame(){
 
 	swch.tapCamMove = navMenu.menuSelected !== 'create' && !renderer.canv1.visualSelect;
 
+	recorder.frame();
+	
 	if (scene.objArr.length){
 		// Set objects radiuses
 		let maxDiameter = 0;
