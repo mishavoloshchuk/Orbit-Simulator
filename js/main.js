@@ -85,8 +85,8 @@ playbackBar.addEventListener('input', (e) => {
 	const frames = recorder.frames.length;
 	if (frames < 1) return;
 	
-	const frame = Math.floor((frames - 1) * value);
-	recorder.playFrame(frame);
+	recorder.setPlaybackPosition(value);
+	recorder.playFrame();
 });
 const updatePlaybackBar = () => {
 	const frames = recorder.frames.length;
@@ -227,7 +227,8 @@ function frame(){
 	recorder.frame();
 	if (recorder.state === 'playing') updatePlaybackBar();
 	
-	if (scene.objArr.length && recorder.state !== 'playing'){
+	const safeRecorder = !recorder.frames.length || recorder.state === 'recording';
+	if (scene.objArr.length && safeRecorder){
 		// Set objects radiuses
 		let maxDiameter = 0;
 		for (let obj of scene.objArr){

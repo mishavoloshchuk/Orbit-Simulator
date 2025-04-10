@@ -14,13 +14,14 @@ export default class Recorder {
         objArr.forEach(obj => {
             obj.x = Math.round(obj.x);
             obj.y = Math.round(obj.y);
-            obj.r = Math.round(obj.r);
+            obj.m = Math.round(obj.m);
             
             delete obj.vx;
             delete obj.vy;
             delete obj.r;
             delete obj.trace;
             delete obj.lock;
+            delete obj.parentObj;
         });
         
         this.frames.push(objArr);
@@ -61,7 +62,7 @@ export default class Recorder {
         this.state = 'stopped';
     }
 
-    playFrame(frame) {
+    playFrame(frame = this.currentFrame) {
         frame = this.getProperFrameIndex(frame);
         this.scene.objArr = this.frames[frame];
 
@@ -69,7 +70,9 @@ export default class Recorder {
     }
 
     setPlaybackPosition(position) {
-        this.setCurrentFrame(position * this.frames.length);
+        const frame = position * (this.frames.length - 1);
+        this.setCurrentFrame(frame);
+        return frame;
     }
 
     setCurrentFrame(frame) {
