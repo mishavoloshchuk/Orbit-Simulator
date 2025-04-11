@@ -55,7 +55,6 @@ export default class Recorder {
     
     play() {
         this.state = 'playing';
-        this.originalArray = this.scene.makeObjArrCopy();
     }
 
     pause() {
@@ -63,6 +62,9 @@ export default class Recorder {
     }
 
     playFrame(frame = this.currentFrame) {
+        if(!this.originalArray){
+            this.originalArray = this.scene.makeObjArrCopy();
+        }
         frame = this.getProperFrameIndex(frame);
         this.scene.objArr = this.frames[frame];
 
@@ -91,6 +93,7 @@ export default class Recorder {
         this.state = 'stopped';
         if (this.originalArray) {
             this.scene.objArr = this.originalArray;
+            this.originalArray = null;
         }
         renderer.allowRender();
     }
