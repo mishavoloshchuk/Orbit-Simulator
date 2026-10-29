@@ -21,6 +21,6 @@
   },
   "homepage": "https://github.com/mishavoloshchuk/Orbit-Simulator#readme",
   "devDependencies": {
-    "jest": "^29.7.0"
+    "jest": "^30.5.2"
   }
 }
